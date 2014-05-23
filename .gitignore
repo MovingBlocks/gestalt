@@ -1,4 +1,9 @@
-*.class
+# Ignore general
+/.*
+!.gitignore
+*~
+._*
+*.bak
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
@@ -10,3 +15,30 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# Ignore Gradle
+/.gradle/
+build/
+
+# Ignore IntelliJ
+/out/
+/*.iml
+/*.ipr
+/*.iws
+
+# Ignore Eclipse
+.checkstyle
+.project
+.classpath
+.settings/
+bin/
+
+# Ignore Linux
+*.directory
+
+#Ignore OSX
+Icon
+
+#Ignore Windows
+ehthumbs.db
+Thumbs.db
