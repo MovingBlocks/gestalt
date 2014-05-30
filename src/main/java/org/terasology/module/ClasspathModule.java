@@ -38,7 +38,6 @@ public class ClasspathModule extends BaseModule {
     /**
      * @param paths
      * @param metadata
-     * @param,
      */
     public ClasspathModule(Collection<Path> paths, ModuleMetadata metadata) {
         super(paths, metadata);
