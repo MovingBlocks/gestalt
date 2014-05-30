@@ -68,11 +68,6 @@ group = 'org.terasology'
 description = 'Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment'
 version = '0.1.0-SNAPSHOT'
 
-// Check to see if we're running in Jenkins and in that case attach a snapshot+job build number
-/*if (env.BUILD_NUMBER != null) {
-    version += '-SNAPSHOT+' + env.BUILD_NUMBER
-}*/
-
 distributions {
     main{
         baseName = 'gestalt-module'
@@ -108,35 +103,6 @@ artifacts {
 artifactoryPublish {
     dependsOn jar, sourceJar, javadocJar
 }
-
-// This configures what we need to interact with the MovingBlocks Artifactory instance
-/*artifactory {
-    contextUrl = 'http://artifactory.movingblocks.net/artifactory'
-
-    // This is the target for publishing artifacts
-    publish {
-        repository {
-            // User and pass are overridden in Jenkins. You can supply your own for manual use in a local prop file, such as gradle.properties
-            // This way we make it so you can run locally without having the user/pass set - but if the artifactoryPublish task is called it'll fail
-            if (rootProject.hasProperty("artifactoryUser") && rootProject.hasProperty("artifactoryPass")) {
-                username = "$artifactoryUser"
-                password = "$artifactoryPass"
-            }
-        }
-
-        defaults {
-            // These configurations are defined for modules. The root project doesn't publish anything so they're not needed there
-            publishConfigs('archives', 'published')
-        }
-    }
-
-    // This is the source where we get dependencies
-    resolve {
-        repository {
-            repoKey = 'terasology-snapshot-local'
-        }
-    }
-}*/
 
 checkstyle {
     ignoreFailures = true
