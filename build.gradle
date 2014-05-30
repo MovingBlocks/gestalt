@@ -63,11 +63,6 @@ dependencies {
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
-// Library and distribution config
-group = 'org.terasology'
-description = 'Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment'
-version = '0.1.0-SNAPSHOT'
-
 distributions {
     main{
         baseName = 'gestalt-module'
