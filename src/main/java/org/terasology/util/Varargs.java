@@ -39,6 +39,7 @@ public final class Varargs {
      * @param additional Any additional values
      * @return A set of the combined values
      */
+    @SafeVarargs
     public static <T> Set<T> combineToSet(T first, T... additional) {
         Set<T> full = Sets.newLinkedHashSetWithExpectedSize(additional.length + 1);
         full.add(first);
