@@ -23,6 +23,7 @@ import java.util.Set;
 
 /**
  * Utility class for methods to help with the use of vararg parameters
+ *
  * @author Immortius
  */
 public final class Varargs {
@@ -33,11 +34,12 @@ public final class Varargs {
     /**
      * Combines a single value and array into a set. Iteration of the set maintains the order of the times.
      * This is intended to aid methods using the mandatory-first optional-additional varargs trick
+     *
      * @param first      The first, single value
      * @param additional Any additional values
      * @return A set of the combined values
      */
-    public static <T> Set<T> combineToSet(T first, T ... additional) {
+    public static <T> Set<T> combineToSet(T first, T... additional) {
         Set<T> full = Sets.newLinkedHashSetWithExpectedSize(additional.length + 1);
         full.add(first);
         full.addAll(Arrays.asList(additional));

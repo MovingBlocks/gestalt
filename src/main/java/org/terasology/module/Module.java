@@ -20,6 +20,7 @@ import org.terasology.naming.Version;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Collection;
 
@@ -37,6 +38,11 @@ public interface Module {
     Collection<Path> getLocations();
 
     /**
+     * @return The urls forming the classpath of the module
+     */
+    Collection<URL> getClasspaths();
+
+    /**
      * @return The identifier for the module
      */
     Name getId();
@@ -52,6 +58,11 @@ public interface Module {
      * @return Whether this module is on the classpath
      */
     boolean isOnClasspath();
+
+    /**
+     * @return Whether the module may introduce code elements
+     */
+    boolean isCodeModule();
 
     /**
      * @return Metadata describing the module

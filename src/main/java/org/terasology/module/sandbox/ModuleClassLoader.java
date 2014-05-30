@@ -21,6 +21,7 @@ import javassist.CtClass;
 import javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.naming.Name;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -29,7 +30,6 @@ import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,6 +51,7 @@ public class ModuleClassLoader extends URLClassLoader {
     private APIProvider apiProvider;
     private ClassPool pool;
 
+    private Name moduleId;
     private List<BytecodeInjector> bytecodeInjectors;
 
     /**
@@ -58,8 +59,8 @@ public class ModuleClassLoader extends URLClassLoader {
      * @param parent      The parent classloader, where the API classes can be found
      * @param apiProvider The security manager that sandboxes the classes
      */
-    public ModuleClassLoader(URL[] urls, ClassLoader parent, APIProvider apiProvider) {
-        this(urls, parent, apiProvider, Collections.<BytecodeInjector>emptyList());
+    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, APIProvider apiProvider) {
+        this(module, urls, parent, apiProvider, Collections.<BytecodeInjector>emptyList());
     }
 
     /**
@@ -68,8 +69,9 @@ public class ModuleClassLoader extends URLClassLoader {
      * @param apiProvider The security manager that sandboxes the classes
      * @param injectors   A collection of byte code injectors to pass all loaded module code through
      */
-    public ModuleClassLoader(URL[] urls, ClassLoader parent, APIProvider apiProvider, Collection<BytecodeInjector> injectors) {
+    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, APIProvider apiProvider, Iterable<BytecodeInjector> injectors) {
         super(urls, parent);
+        this.moduleId = module;
         this.apiProvider = apiProvider;
         this.bytecodeInjectors = ImmutableList.copyOf(injectors);
         pool = new ClassPool(ClassPool.getDefault());
@@ -83,10 +85,15 @@ public class ModuleClassLoader extends URLClassLoader {
         }
     }
 
+    public Name getModuleId() {
+        return moduleId;
+    }
+
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        Class<?> clazz = super.loadClass(name, resolve);
-        if (clazz.getClassLoader() != this) {
+        final Class<?> clazz = super.loadClass(name, resolve);
+        ClassLoader parentLoader = AccessController.doPrivileged(new ObtainClassloader(clazz));
+        if (clazz.getClassLoader() != this && !(parentLoader instanceof ModuleClassLoader)) {
             if (apiProvider.isAPIClass(clazz)) {
                 return clazz;
             } else {

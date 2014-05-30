@@ -16,8 +16,13 @@
 
 package org.terasology.module;
 
+import com.google.common.collect.Lists;
+import org.terasology.module.exceptions.InvalidModulePathException;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Collection;
 
@@ -28,12 +33,38 @@ import java.util.Collection;
  */
 public class ClasspathModule extends BaseModule {
 
+    private Collection<URL> classpaths;
+
+    /**
+     * @param paths
+     * @param metadata
+     * @param,
+     */
     public ClasspathModule(Collection<Path> paths, ModuleMetadata metadata) {
         super(paths, metadata);
+        classpaths = Lists.newArrayListWithCapacity(paths.size());
+        for (Path path : paths) {
+            try {
+                classpaths.add(path.toUri().toURL());
+            } catch (MalformedURLException e) {
+                throw new InvalidModulePathException("Path cannot be converted to URL: " + path, e);
+            }
+        }
+    }
+
+
+    @Override
+    public Collection<URL> getClasspaths() {
+        return classpaths;
     }
 
     @Override
     public boolean isOnClasspath() {
+        return true;
+    }
+
+    @Override
+    public boolean isCodeModule() {
         return true;
     }
 

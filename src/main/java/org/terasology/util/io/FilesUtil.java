@@ -43,7 +43,7 @@ public final class FilesUtil {
 
     /**
      * Recusively deletes a path and all sub-paths and contained files.
-     *
+     * <p/>
      * Note: There are certain circumstances in which this can be unsafe due to a lack of atomicity.
      * Keep an eye out for recursive delete being added to the core Java API in the future.
      *

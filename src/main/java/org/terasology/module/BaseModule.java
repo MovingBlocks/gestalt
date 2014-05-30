@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 /**
- * Common base class for modules that live on the file system.
+ * Common base abstract class for modules.
  *
  * @author Immortius
  */
@@ -34,7 +34,7 @@ public abstract class BaseModule implements Module {
     protected ModuleMetadata metadata;
 
     /**
-     * @param paths The paths composing the module
+     * @param paths    The paths composing the module
      * @param metadata The metadata describing the module
      */
     public BaseModule(Collection<Path> paths, ModuleMetadata metadata) {

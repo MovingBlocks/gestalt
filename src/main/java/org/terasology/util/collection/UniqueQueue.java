@@ -57,7 +57,7 @@ public class UniqueQueue<T> implements Queue<T> {
 
     /**
      * @param size The expected size of the queue
-     * @param <T> The type that can be contained in the queue
+     * @param <T>  The type that can be contained in the queue
      * @return A new, empty queue.
      */
     public static <T> UniqueQueue<T> createWithExpectedSize(int size) {
@@ -96,18 +96,12 @@ public class UniqueQueue<T> implements Queue<T> {
 
     @Override
     public boolean add(T t) {
-        if (containedSet.add(t)) {
-            return internalQueue.add(t);
-        }
-        return false;
+        return containedSet.add(t) && internalQueue.add(t);
     }
 
     @Override
     public boolean remove(Object o) {
-        if (containedSet.remove(o)) {
-            return internalQueue.remove(o);
-        }
-        return false;
+        return containedSet.remove(o) && internalQueue.remove(o);
     }
 
     @Override
@@ -129,18 +123,12 @@ public class UniqueQueue<T> implements Queue<T> {
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        if (containedSet.removeAll(c)) {
-            return internalQueue.removeAll(c);
-        }
-        return false;
+        return containedSet.removeAll(c) && internalQueue.removeAll(c);
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        if (containedSet.retainAll(c)) {
-            return internalQueue.retainAll(c);
-        }
-        return false;
+        return containedSet.retainAll(c) && internalQueue.retainAll(c);
     }
 
     @Override
@@ -151,10 +139,7 @@ public class UniqueQueue<T> implements Queue<T> {
 
     @Override
     public boolean offer(T t) {
-        if (containedSet.add(t)) {
-            return internalQueue.offer(t);
-        }
-        return false;
+        return containedSet.add(t) && internalQueue.offer(t);
     }
 
     @Override

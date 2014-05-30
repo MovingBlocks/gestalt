@@ -47,6 +47,7 @@ public class ModuleMetadata {
 
     /**
      * Sets the identifier of the module
+     *
      * @param id The new identifier
      */
     public void setId(Name id) {
@@ -62,6 +63,7 @@ public class ModuleMetadata {
 
     /**
      * Sets the version of the module
+     *
      * @param version The new version
      */
     public void setVersion(Version version) {
@@ -93,7 +95,7 @@ public class ModuleMetadata {
     }
 
     /**
-     * @param dependencyId
+     * @param dependencyId The id of the module to get dependency information on
      * @return The depdendency information for a specific module, or null if no such dependency exists
      */
     public DependencyInfo getDependencyInfo(Name dependencyId) {

@@ -31,46 +31,36 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
- * A module that exists on the file system, but outside the classpath.
+ * A module that is a archive (zip or jar) file that exists on the file system, but outside the classpath.
  *
  * @author Immortius
  */
-public class PathModule extends BaseModule {
-    private static final Logger logger = LoggerFactory.getLogger(PathModule.class);
+public class ArchiveModule extends BaseModule {
+    private static final Logger logger = LoggerFactory.getLogger(ArchiveModule.class);
 
     private final Path path;
-    private final Collection<URL> classpaths;
+    private final Collection<URL> classpath;
 
     /**
-     * Creates a path module with no code
-     *
-     * @param path     The root path of the module
-     * @param codePath The relative location of code for the module (relative to root path)
+     * @param path     Must be a file, and must be convertable to a url (some limits on special characters)
      * @param metadata
      */
-    public PathModule(Path path, Path codePath, ModuleMetadata metadata) {
+    public ArchiveModule(Path path, ModuleMetadata metadata) {
         super(Arrays.asList(path), metadata);
-        Preconditions.checkArgument(Files.isDirectory(path));
+        Preconditions.checkArgument(Files.isRegularFile(path));
         this.path = path;
-
-        Path fullCodePath = path.resolve(codePath);
-        if (Files.isDirectory(fullCodePath)) {
-            try {
-                classpaths = ImmutableList.of(fullCodePath.toUri().toURL());
-            } catch (MalformedURLException e) {
-                throw new InvalidModulePathException("Unable to convert path to URL: " + fullCodePath, e);
-            }
-        } else {
-            classpaths = Collections.emptyList();
+        try {
+            classpath = ImmutableList.of(path.toUri().toURL());
+        } catch (MalformedURLException e) {
+            throw new InvalidModulePathException("Could not convert path to URL: " + path, e);
         }
     }
 
     @Override
     public Collection<URL> getClasspaths() {
-        return classpaths;
+        return classpath;
     }
 
     @Override
@@ -80,12 +70,12 @@ public class PathModule extends BaseModule {
 
     @Override
     public boolean isCodeModule() {
-        return !classpaths.isEmpty();
+        return true;
     }
 
     @Override
     public boolean isDataAvailable() {
-        return false;
+        return Files.isRegularFile(path);
     }
 
     @Override

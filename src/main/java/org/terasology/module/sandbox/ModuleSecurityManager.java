@@ -30,23 +30,23 @@ import java.util.Set;
 /**
  * ModuleSecurityManager establishes and enforces a sandbox environment for modules. Modules are restricted to make use of specific classes, packages and permissions
  * - they are prevented from accessing anything else.
- *
+ * <p/>
  * The following access may be granted:
  * <ul>
- *     <li>Access to a specific class (API class)</li>
- *     <li>Access to a specific package (API package)</li>
- *     <li>Globally allow a permission</li>
- *     <li>Allow a permission if requested from a specific non-module class or package</li>
- *     <li>Give a non-module package all permissions</li>
+ * <li>Access to a specific class (API class)</li>
+ * <li>Access to a specific package (API package)</li>
+ * <li>Globally allow a permission</li>
+ * <li>Allow a permission if requested from a specific non-module class or package</li>
+ * <li>Give a non-module package all permissions</li>
  * </ul>
- *
+ * <p/>
  * When checking permissions, only the stack down to the calling module (if any) is considered. This means that a module cannot exploit a package with higher
  * permissions.
- *
+ * <p/>
  * AccessController.doPrivileged() is fully supported by this system, so non-module code can use this to avoid needing to be explicitly registered as allowing a permission.
  *
- * @see ModuleClassLoader
  * @author Immortius
+ * @see ModuleClassLoader
  */
 public class ModuleSecurityManager extends SecurityManager implements APIProvider {
 
@@ -101,7 +101,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
     /**
      * Registers a permission that modules are granted when working (directly or indirectly) through the given apiType
      *
-     * @param apiType The type that requires the permission
+     * @param apiType    The type that requires the permission
      * @param permission The class of permission to grant
      */
     public void grantPermission(Class apiType, Class<? extends Permission> permission) {
@@ -117,7 +117,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
     /**
      * Registers a permission that modules are granted when working (directly or indirectly) through the given apiType
      *
-     * @param apiType The type that requires the permission
+     * @param apiType    The type that requires the permission
      * @param permission The permission to grant
      */
     public void grantPermission(Class apiType, Permission permission) {
@@ -134,7 +134,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
      * Registers a permission that modules are granted when working (directly or indirectly) through the given package
      *
      * @param packageName The package that requires the permission
-     * @param permission The class of permission to grant
+     * @param permission  The class of permission to grant
      */
     public void grantPermission(String packageName, Class<? extends Permission> permission) {
         Preconditions.checkNotNull(packageName);
@@ -150,7 +150,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
      * Registers a permission that modules are granted when working (directly or indirectly) through the given package
      *
      * @param packageName The package that requires the permission
-     * @param permission The permission to grant
+     * @param permission  The permission to grant
      */
     public void grantPermission(String packageName, Permission permission) {
         Preconditions.checkNotNull(packageName);
@@ -164,6 +164,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
 
     /**
      * Grants full, unqualified permission to a given package.
+     *
      * @param packageName The package to give full permission to
      */
     public void grantFullPermission(String packageName) {
@@ -177,6 +178,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
 
     /**
      * Adds a class to the API - this allows it to be used directly from a module context.
+     *
      * @param clazz The class to add to the API.
      */
     public void addAPIClass(Class clazz) {
@@ -190,6 +192,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
 
     /**
      * Adds a package to the API - this allows any class from the package to be used directly from a module context.
+     *
      * @param packageName The package to add to the API
      */
     public void addAPIPackage(String packageName) {
@@ -235,7 +238,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
      * Remove a permission that has previously been granted to calls passing through a given class
      * WARNING: Does not revoke permissions granted at a package level
      *
-     * @param apiType The api class to revoke the permission from
+     * @param apiType    The api class to revoke the permission from
      * @param permission The permission to revoke
      * @return whether the permission had previously been granted to the given class.
      */
@@ -253,7 +256,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
      * Remove a permission that has previously been granted to calls passing through a given class
      * WARNING: Does not revoke permissions granted at a package level
      *
-     * @param apiType The api class to revoke the permission from
+     * @param apiType    The api class to revoke the permission from
      * @param permission The permission to revoke
      * @return whether the permission had previously been granted to the given class.
      */
@@ -272,7 +275,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
      * This will also revoke permissions granted at a class level, for classes within the package
      *
      * @param packageName The package to revoke the permission from
-     * @param permission The class of permission to revoke
+     * @param permission  The class of permission to revoke
      */
     public void revokePermission(String packageName, Class<? extends Permission> permission) {
         Preconditions.checkNotNull(packageName);
@@ -298,7 +301,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
      * This will also revoke permissions granted at a class level, for classes within the package
      *
      * @param packageName The package to revoke the permission from
-     * @param permission The permission to revoke
+     * @param permission  The permission to revoke
      */
     public void revokePermission(String packageName, Permission permission) {
         Preconditions.checkNotNull(packageName);
@@ -320,6 +323,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
 
     /**
      * Removes unqualified permission for the given package
+     *
      * @param packageName The name of the package
      * @return Whether full permission was originally granted to the granted to the package
      */
@@ -335,6 +339,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
     /**
      * Removes a specific class from the list of API classes.
      * WARNING: This does not revoke access if granted at the package level.
+     *
      * @param clazz The class to remove from the API
      * @return Whether the class was perviously an API class
      */
@@ -349,6 +354,7 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
 
     /**
      * Removes a package and all contained classes from the list of API classes and packages.
+     *
      * @param packageName The package to remove from the API
      */
     public void revokeAPIPackage(String packageName) {
@@ -430,9 +436,10 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
 
     /**
      * Checks the stack down to the first module to see if the given permission is allowed to be triggered from a module context.
-     * @param permission The permission being checked
+     *
+     * @param permission  The permission being checked
      * @param moduleDepth The depth of the first module class
-     * @param stack The classes involved in the current stack
+     * @param stack       The classes involved in the current stack
      * @return Whether the permission has been granted to any of the API classes involved.
      */
     private boolean checkAPIPermissionsFor(Permission permission, int moduleDepth, Class[] stack) {

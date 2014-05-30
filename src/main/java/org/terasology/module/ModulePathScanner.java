@@ -17,6 +17,7 @@
 package org.terasology.module;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.gson.JsonIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -44,6 +46,37 @@ public class ModulePathScanner {
     private static final Logger logger = LoggerFactory.getLogger(ModulePathScanner.class);
     private String moduleMetadataFilename = "module.txt";
     private ModuleMetadataReader metadataReader = new ModuleMetadataReader();
+    private Path directoryCodeLocation = Paths.get("build", "classes");
+
+    /**
+     * @return The metadata reader used to load metadata from discovered modules
+     */
+    public ModuleMetadataReader getMetadataReader() {
+        return metadataReader;
+    }
+
+    /**
+     * @param metadataReader The metadata reader to use to load metadata from discovered modules
+     */
+    public void setMetadataReader(ModuleMetadataReader metadataReader) {
+        Preconditions.checkNotNull(metadataReader);
+        this.metadataReader = metadataReader;
+    }
+
+    /**
+     * @return The relative location of code for directory modules
+     */
+    public Path getDirectoryCodeLocation() {
+        return directoryCodeLocation;
+    }
+
+    /**
+     * @param directoryCodeLocation The relative location of code for directory modules. Must be a relative path
+     */
+    public void setDirectoryCodeLocation(Path directoryCodeLocation) {
+        Preconditions.checkArgument(!directoryCodeLocation.isAbsolute(), "Directory code location must be a relative path");
+        this.directoryCodeLocation = directoryCodeLocation;
+    }
 
     /**
      * @return The file name for module metadata.
@@ -134,7 +167,12 @@ public class ModulePathScanner {
      */
     private void processModuleInfo(ModuleMetadata moduleMetadata, Path modulePath, ModuleRegistry registry) {
         if (moduleMetadata.getId() != null && moduleMetadata.getVersion() != null) {
-            Module module = new PathModule(modulePath, moduleMetadata);
+            Module module;
+            if (Files.isDirectory(modulePath)) {
+                module = new PathModule(modulePath, directoryCodeLocation, moduleMetadata);
+            } else {
+                module = new ArchiveModule(modulePath, moduleMetadata);
+            }
             if (registry.add(module)) {
                 logger.info("Discovered module: {}", module);
             } else {

@@ -36,6 +36,7 @@ public final class Version implements Comparable<Version> {
 
     /**
      * Constructs a version with the given values
+     *
      * @param major
      * @param minor
      * @param patch

@@ -21,6 +21,7 @@ import org.terasology.naming.VersionRange;
 
 /**
  * Describes a dependency on a module. Dependencies apply to a range of versions - anything from the min version (inclusive) to the max version (exclusive) are supported.
+ *
  * @author Immortius
  */
 public class DependencyInfo {
@@ -54,6 +55,7 @@ public class DependencyInfo {
 
     /**
      * The first unsupported version. If not explicitly specified, it is the next major version from minVersion.
+     *
      * @return The maximum supported version (exclusive).
      */
     public Version getMaxVersion() {
@@ -72,6 +74,7 @@ public class DependencyInfo {
 
     /**
      * Sets the id of the module
+     *
      * @param id The id of the module
      */
     public void setId(Name id) {
@@ -80,6 +83,7 @@ public class DependencyInfo {
 
     /**
      * The minimum supported version.
+     *
      * @param value The minimum version
      */
     public void setMinVersion(Version value) {
@@ -88,6 +92,7 @@ public class DependencyInfo {
 
     /**
      * The upperbound of supported versions (exclusive)
+     *
      * @param value The new upperbound
      */
     public void setMaxVersion(Version value) {

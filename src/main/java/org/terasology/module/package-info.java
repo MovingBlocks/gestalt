@@ -17,5 +17,14 @@
 /**
  * Provides a system for defining and loading "modules" providing code and content. These modules can be loaded and unloaded at runtime. This provides the core of a plugin
  * system.
+ *
+ * Important classes:
+ * <ul>
+ *     <li>ModuleRegistry provides a collection for enumerating modules</li>
+ *     <li>ModulePathScanner is used to scan a file location for modules</li>
+ *     <li>ClasspathModule is used to create module(s) for the libraries on the classpath</li>
+ *     <li>DependencyResolver can be used to determine a compatible set of modules from multiple available versions</li>
+ *     <li>ModuleEnvironment allows a set of compatible modules to be actively used</li>
+ * </ul>
  */
 package org.terasology.module;

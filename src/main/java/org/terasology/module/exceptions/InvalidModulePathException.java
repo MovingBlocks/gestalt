@@ -14,30 +14,31 @@
  * limitations under the License.
  */
 
-package org.terasology.naming.exception;
+package org.terasology.module.exceptions;
 
 /**
- * Exception when a version string fails to be parsed.
+ * Exception when a module path cannot be converted to a url.
  *
  * @author Immortius
  */
-public class VersionParseException extends RuntimeException {
-    public VersionParseException() {
+public class InvalidModulePathException extends RuntimeException {
+
+    public InvalidModulePathException() {
     }
 
-    public VersionParseException(String message) {
+    public InvalidModulePathException(String message) {
         super(message);
     }
 
-    public VersionParseException(String message, Throwable cause) {
+    public InvalidModulePathException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public VersionParseException(Throwable cause) {
+    public InvalidModulePathException(Throwable cause) {
         super(cause);
     }
 
-    public VersionParseException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public InvalidModulePathException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

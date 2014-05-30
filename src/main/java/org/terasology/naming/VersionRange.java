@@ -31,6 +31,7 @@ public class VersionRange {
 
     /**
      * lowerBound must be less than or equal to upperBound
+     *
      * @param lowerBound The lower bound of the range. Cannot be null
      * @param upperBound The upper bound of the range. Cannot be null
      */

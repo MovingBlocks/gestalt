@@ -34,10 +34,10 @@ public class FileTypesFilter implements DirectoryStream.Filter<Path> {
     private ImmutableList<String> fileTypes;
 
     /**
-     * @param fileType The first file type
+     * @param fileType  The first file type
      * @param fileTypes Zero or more additional file types
      */
-    public FileTypesFilter(String fileType, String ... fileTypes) {
+    public FileTypesFilter(String fileType, String... fileTypes) {
         Preconditions.checkNotNull(fileType);
         Preconditions.checkNotNull(fileTypes);
         ImmutableList.Builder<String> builder = ImmutableList.builder();

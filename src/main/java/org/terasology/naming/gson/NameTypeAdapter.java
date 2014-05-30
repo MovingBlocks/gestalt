@@ -28,6 +28,7 @@ import java.lang.reflect.Type;
 
 /**
  * Gson type adapter for serializing and deserializing Names
+ *
  * @author Immortius
  */
 public class NameTypeAdapter implements JsonDeserializer<Name>, JsonSerializer<Name> {

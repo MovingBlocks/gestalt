@@ -28,6 +28,7 @@ import java.lang.reflect.Type;
 
 /**
  * Gson type adapter for serializing and deserializing Versions
+ *
  * @author Immortius
  */
 public class VersionTypeAdapter implements JsonDeserializer<Version>, JsonSerializer<Version> {

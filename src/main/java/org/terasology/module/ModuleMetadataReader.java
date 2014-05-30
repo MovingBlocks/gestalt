@@ -55,9 +55,15 @@ import java.io.Reader;
  */
 public class ModuleMetadataReader {
 
-    private Gson gson;
+    private final Gson gson;
+    private final Class<? extends ModuleMetadata> metadataClass;
 
     public ModuleMetadataReader() {
+        this(ModuleMetadata.class);
+    }
+
+    public ModuleMetadataReader(Class<? extends ModuleMetadata> metadataClass) {
+        this.metadataClass = metadataClass;
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(Version.class, new VersionTypeAdapter())
                 .registerTypeAdapter(Name.class, new NameTypeAdapter())
@@ -72,6 +78,6 @@ public class ModuleMetadataReader {
      * @throws com.google.gson.JsonSyntaxException if json is not valid
      */
     public ModuleMetadata read(Reader reader) {
-        return gson.fromJson(reader, ModuleMetadata.class);
+        return gson.fromJson(reader, metadataClass);
     }
 }
