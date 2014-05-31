@@ -103,14 +103,6 @@ artifactoryPublish {
     dependsOn jar, sourceJar, javadocJar
 }
 
-artifactory {
-  publish {
-    repository {
-      repoKey = repositoryKey
-	}
-  }
-}
-
 checkstyle {
     ignoreFailures = true
     configProperties.samedir = checkstyle.configFile.parentFile

@@ -32,6 +32,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -102,7 +103,19 @@ public class ModulePathScanner {
      */
     public void scan(ModuleRegistry registry, Path path, Path... additionalPaths) {
         Set<Path> discoveryPaths = Varargs.combineToSet(path, additionalPaths);
-        for (Path discoveryPath : discoveryPaths) {
+        scan(registry, discoveryPaths);
+    }
+
+    /**
+     * Scans a collection of paths for modules.
+     * Paths are scanned in order, with directories scanned before files. If a module is discovered multiple times (same id and version), the first copy of the module
+     * found is used.
+     *
+     * @param registry The registry to populate with discovered modules
+     * @param paths    The paths to scan
+     */
+    public void scan(ModuleRegistry registry, Collection<Path> paths) {
+        for (Path discoveryPath : paths) {
             try {
                 scanModuleDirectories(discoveryPath, registry);
                 scanModuleArchives(discoveryPath, registry);
