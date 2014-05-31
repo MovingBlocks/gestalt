@@ -17,4 +17,7 @@
 /**
  * This package provides classes related to naming/identity - such as case-insensitive names, versions and version ranges.
  */
+@API
 package org.terasology.naming;
+
+import org.terasology.module.sandbox.API;

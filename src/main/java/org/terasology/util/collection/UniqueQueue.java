@@ -19,6 +19,7 @@ package org.terasology.util.collection;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
+import org.terasology.module.sandbox.API;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,6 +31,7 @@ import java.util.Set;
  *
  * @author Immortius
  */
+@API
 public class UniqueQueue<T> implements Queue<T> {
 
     private Set<T> containedSet;

@@ -17,4 +17,7 @@
 /**
  * This package provides exceptions for naming classes
  */
+@API
 package org.terasology.naming.exception;
+
+import org.terasology.module.sandbox.API;
