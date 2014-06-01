@@ -30,6 +30,11 @@ import java.util.Locale;
  * @author Immortius
  */
 public final class Name implements Comparable<Name> {
+    /**
+     * The Name equivalent of an empty String
+     */
+    public static final Name EMPTY = new Name("");
+
     private final String originalName;
     private final String normalisedName;
 
@@ -37,6 +42,13 @@ public final class Name implements Comparable<Name> {
         Preconditions.checkNotNull(name);
         this.originalName = name;
         this.normalisedName = name.toLowerCase(Locale.ENGLISH);
+    }
+
+    /**
+     * @return Whether this name is empty (equivalent to an empty string)
+     */
+    public boolean isEmpty() {
+        return normalisedName.isEmpty();
     }
 
     @Override

@@ -17,6 +17,7 @@
 package org.terasology.util;
 
 import com.google.common.collect.Sets;
+import org.terasology.module.sandbox.API;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -26,6 +27,7 @@ import java.util.Set;
  *
  * @author Immortius
  */
+@API
 public final class Varargs {
 
     private Varargs() {
