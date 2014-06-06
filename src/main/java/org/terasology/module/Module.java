@@ -15,6 +15,7 @@
  */
 package org.terasology.module;
 
+import org.reflections.Reflections;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
@@ -63,6 +64,17 @@ public interface Module {
      * @return Whether the module may introduce code elements
      */
     boolean isCodeModule();
+
+    /**
+     * Provides the partial reflection information for this module, in isolation of other modules.  This information is of limited use by itself - without combining
+     * it with the information from its dependencies, it will be unable to resolve subtypes if an intermediate class is missing. Discovered classes will also not be
+     * instantiable.
+     * <p/>
+     * Intended for use in building a reflection information for a complete environment.
+     *
+     * @return The partial reflection information for this module in isolation
+     */
+    Reflections getReflectionsFragment();
 
     /**
      * @return Metadata describing the module

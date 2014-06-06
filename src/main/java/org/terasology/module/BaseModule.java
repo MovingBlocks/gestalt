@@ -16,7 +16,13 @@
 
 package org.terasology.module;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
@@ -32,6 +38,8 @@ import java.util.Objects;
 public abstract class BaseModule implements Module {
     protected Collection<Path> paths;
     protected ModuleMetadata metadata;
+
+    private Reflections reflectionsFragment;
 
     /**
      * @param paths    The paths composing the module
@@ -60,6 +68,19 @@ public abstract class BaseModule implements Module {
     @Override
     public ModuleMetadata getMetadata() {
         return metadata;
+    }
+
+    @Override
+    public Reflections getReflectionsFragment() {
+        Preconditions.checkState(isCodeModule(), "Cannot get reflections fragment for non-code module");
+        if (reflectionsFragment == null) {
+            reflectionsFragment = new ConfigurationBuilder()
+                    .addUrls(getClasspaths())
+                    .setScanners(new TypeAnnotationsScanner(), new SubTypesScanner())
+                    .addClassLoader(ClasspathHelper.staticClassLoader())
+                    .build();
+        }
+        return reflectionsFragment;
     }
 
     @Override
