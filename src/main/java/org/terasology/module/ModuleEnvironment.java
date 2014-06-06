@@ -19,9 +19,8 @@ package org.terasology.module;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +29,7 @@ import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleClassLoader;
 import org.terasology.module.sandbox.ObtainClassloader;
 import org.terasology.naming.Name;
+import org.terasology.util.collection.UniqueQueue;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -38,6 +38,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An environment composed of a set of modules. A chain of class loaders is created for each module that isn't on the classpath, such that dependencies appear before
@@ -83,7 +84,7 @@ public class ModuleEnvironment implements AutoCloseable {
         for (final Module module : orderedModules) {
             if (module.isCodeModule()) {
                 lastClassloader = determineClassloaderFor(module, lastClassloader, apiProvider, injectors);
-                reflectionsByModule.put(module.getId(), buildReflectionsForModule(module, lastClassloader));
+                reflectionsByModule.put(module.getId(), module.getReflectionsFragment());
             }
         }
         this.finalClassLoader = lastClassloader;
@@ -105,10 +106,10 @@ public class ModuleEnvironment implements AutoCloseable {
     }
 
     /**
-     * @param module The module to determine the classloader for
-     * @param parent The classloader to parent any new classloader off of
+     * @param module      The module to determine the classloader for
+     * @param parent      The classloader to parent any new classloader off of
      * @param apiProvider The provider of api information
-     * @param injectors Any Bytecode Injectors that should be run over any loaded module class.
+     * @param injectors   Any Bytecode Injectors that should be run over any loaded module class.
      * @return The classloader to use for module - may be a newly created classloader.
      */
     private ClassLoader determineClassloaderFor(final Module module, final ClassLoader parent, final APIProvider apiProvider, final Iterable<BytecodeInjector> injectors) {
@@ -128,20 +129,8 @@ public class ModuleEnvironment implements AutoCloseable {
     }
 
     /**
-     * @param module The module
-     * @param classloader The final classloader
-     * @return Reflections information for the given module
-     */
-    private Reflections buildReflectionsForModule(Module module, ClassLoader classloader) {
-        return new ConfigurationBuilder()
-                .addUrls(module.getClasspaths())
-                .setScanners(new TypeAnnotationsScanner(), new SubTypesScanner())
-                .addClassLoader(classloader)
-                .build();
-    }
-
-    /**
      * Builds Reflections information over the entire module environment, combining the information of all individual modules
+     *
      * @param reflectionsByModule A map of reflection information for each module
      */
     private void buildFullReflections(Map<Name, Reflections> reflectionsByModule) {
@@ -223,10 +212,28 @@ public class ModuleEnvironment implements AutoCloseable {
         return null;
     }
 
+    /**
+     * @param moduleId The id of the module to get the dependencies
+     * @return The ids of the dependencies of the desired module
+     */
+    public Set<Name> getDependencyNamesOf(Name moduleId) {
+        Set<Name> result = Sets.newLinkedHashSet();
+        UniqueQueue<Name> toProcess = new UniqueQueue<>();
+        toProcess.add(moduleId);
+        while (!toProcess.isEmpty()) {
+            Name id = toProcess.remove();
+            Module module = get(id);
+            for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
+                result.add(dependency.getId());
+                toProcess.add(dependency.getId());
+            }
+        }
+        return result;
+    }
 
     /**
      * @param type The type to find subtypes of
-     * @param <U> The type to find subtypes of
+     * @param <U>  The type to find subtypes of
      * @return A Iterable over all subtypes of type that appear in the module environment
      */
     public <U> Iterable<Class<? extends U>> getSubtypesOf(Class<U> type) {
@@ -242,7 +249,7 @@ public class ModuleEnvironment implements AutoCloseable {
     }
 
     /**
-     * @param annotation The annotation of interest
+     * @param annotation            The annotation of interest
      * @param includeViaInheritance Whether to include classes that inherit a class marked with the annotation
      * @return All types marked with the annotation, or subtypes of types marked with the annotation if includeViaInheritance is true
      */
