@@ -18,6 +18,7 @@ package org.terasology.module;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
@@ -66,8 +67,15 @@ public class DependencyResolver {
      * @return A set of compatible modules based on the required modules.
      */
     public Set<Module> resolve(Name rootModule, Name... additionalModules) {
-        rootModules = Varargs.combineToSet(rootModule, additionalModules);
+        return resolve(Varargs.combineToSet(rootModule, additionalModules));
+    }
 
+    /**
+     * @param moduleIds The set of module ids to build a set of compatible modules from
+     * @return A set of compatible modules based on the required modules.
+     */
+    public Set<Module> resolve(Iterable<Name> moduleIds) {
+        rootModules = ImmutableSet.copyOf(moduleIds);
         populateDomains();
         populateConstraints();
         if (!includesModules(rootModules)) {
@@ -99,7 +107,7 @@ public class DependencyResolver {
 
         while (!moduleQueue.isEmpty()) {
             Name id = moduleQueue.pop();
-            for (Module version : registry.getModules(id)) {
+            for (Module version : registry.getModuleVersions(id)) {
                 moduleVersionPool.put(id, version.getVersion());
                 for (DependencyInfo dependency : version.getMetadata().getDependencies()) {
                     if (involvedModules.add(dependency.getId())) {
@@ -118,7 +126,7 @@ public class DependencyResolver {
         constraints = ArrayListMultimap.create();
         for (Name name : moduleVersionPool.keySet()) {
             Set<Name> dependencies = Sets.newLinkedHashSet();
-            for (Module module : registry.getModules(name)) {
+            for (Module module : registry.getModuleVersions(name)) {
                 for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
                     dependencies.add(dependency.getId());
                 }

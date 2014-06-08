@@ -33,15 +33,10 @@ import java.util.Set;
 public interface ModuleRegistry extends Collection<Module> {
 
     /**
-     * @return A complete list of all available modules
-     */
-    List<Module> getModules();
-
-    /**
      * @param id The name of the modules to return
      * @return A list of all versions of the module with the given id
      */
-    Collection<Module> getModules(Name id);
+    Collection<Module> getModuleVersions(Name id);
 
     /**
      * @return A complete collection of all available module names

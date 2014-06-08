@@ -140,17 +140,12 @@ public class TableModuleRegistry implements ModuleRegistry {
     }
 
     @Override
-    public List<Module> getModules() {
-        return Lists.newArrayList(modules.values());
-    }
-
-    @Override
     public Set<Name> getModuleIds() {
         return Sets.newLinkedHashSet(modules.rowKeySet());
     }
 
     @Override
-    public Collection<Module> getModules(Name id) {
+    public Collection<Module> getModuleVersions(Name id) {
         return Collections.unmodifiableCollection(modules.row(id).values());
     }
 
