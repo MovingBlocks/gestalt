@@ -244,7 +244,7 @@ public class ModuleEnvironment implements AutoCloseable {
      * @param annotation The annotation of interest
      * @return All types in the environment that are either marked by the given annotation, or are subtypes of a type marked with the annotation
      */
-    public Iterable<Class<?>> getClassesAnnotatedWith(Class<? extends Annotation> annotation) {
+    public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation) {
         return fullReflections.getTypesAnnotatedWith(annotation);
     }
 
@@ -253,7 +253,7 @@ public class ModuleEnvironment implements AutoCloseable {
      * @param includeViaInheritance Whether to include classes that inherit a class marked with the annotation
      * @return All types marked with the annotation, or subtypes of types marked with the annotation if includeViaInheritance is true
      */
-    public Iterable<Class<?>> getClassesAnnotatedWith(Class<? extends Annotation> annotation, boolean includeViaInheritance) {
+    public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation, boolean includeViaInheritance) {
         return fullReflections.getTypesAnnotatedWith(annotation, includeViaInheritance);
     }
 

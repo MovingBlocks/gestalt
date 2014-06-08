@@ -16,6 +16,7 @@
 
 package org.terasology.util;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.terasology.module.sandbox.API;
 
@@ -34,7 +35,7 @@ public final class Varargs {
     }
 
     /**
-     * Combines a single value and array into a set. Iteration of the set maintains the order of the times.
+     * Combines a single value and array into an immutable set. Iteration of the set maintains the order of the times.
      * This is intended to aid methods using the mandatory-first optional-additional varargs trick
      *
      * @param first      The first, single value
@@ -42,10 +43,10 @@ public final class Varargs {
      * @return A set of the combined values
      */
     @SafeVarargs
-    public static <T> Set<T> combineToSet(T first, T... additional) {
-        Set<T> full = Sets.newLinkedHashSetWithExpectedSize(additional.length + 1);
-        full.add(first);
-        full.addAll(Arrays.asList(additional));
-        return full;
+    public static <T> ImmutableSet<T> combineToSet(T first, T... additional) {
+        ImmutableSet.Builder<T> builder = ImmutableSet.builder();
+        builder.add(first);
+        builder.addAll(Arrays.asList(additional));
+        return builder.build();
     }
 }
