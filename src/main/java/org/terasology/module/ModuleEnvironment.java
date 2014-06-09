@@ -17,6 +17,7 @@
 package org.terasology.module;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -36,6 +37,7 @@ import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +51,7 @@ import java.util.Set;
  *
  * @author Immortius
  */
-public class ModuleEnvironment implements AutoCloseable {
+public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleEnvironment.class);
 
@@ -180,6 +182,21 @@ public class ModuleEnvironment implements AutoCloseable {
         return result;
     }
 
+    /**
+     * @return A list of modules in the environment, sorted so any dependencies appear before a module
+     */
+    public final List<Name> getModuleIdsOrderedByDependencies() {
+        List<Module> orderedModules = Lists.newArrayList();
+        for (Module module : modules.values()) {
+            addModuleAfterDependencies(module, orderedModules);
+        }
+        List<Name> result = Lists.newArrayListWithCapacity(orderedModules.size());
+        for (Module module : orderedModules) {
+            result.add(module.getId());
+        }
+        return result;
+    }
+
     private void addModuleAfterDependencies(Module module, List<Module> out) {
         if (!out.contains(module)) {
             for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
@@ -257,4 +274,8 @@ public class ModuleEnvironment implements AutoCloseable {
         return fullReflections.getTypesAnnotatedWith(annotation, includeViaInheritance);
     }
 
+    @Override
+    public Iterator<Module> iterator() {
+        return Iterators.unmodifiableIterator(modules.values().iterator());
+    }
 }
