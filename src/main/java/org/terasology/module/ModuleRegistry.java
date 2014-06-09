@@ -20,7 +20,6 @@ import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 /**

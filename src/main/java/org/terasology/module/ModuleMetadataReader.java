@@ -80,4 +80,5 @@ public class ModuleMetadataReader {
     public ModuleMetadata read(Reader reader) {
         return gson.fromJson(reader, metadataClass);
     }
+
 }

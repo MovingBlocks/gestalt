@@ -16,26 +16,17 @@
 
 package org.terasology.module;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.gson.JsonIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.util.Varargs;
 import org.terasology.util.io.FileTypesFilter;
 import org.terasology.util.io.FilesUtil;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * A scanner for reading modules off of the filesystem. These modules may either be archives (zip or jar) or directories. To qualify as a module they must contain a
@@ -45,52 +36,18 @@ import java.util.zip.ZipFile;
  */
 public class ModulePathScanner {
     private static final Logger logger = LoggerFactory.getLogger(ModulePathScanner.class);
-    private String moduleMetadataFilename = "module.txt";
-    private ModuleMetadataReader metadataReader = new ModuleMetadataReader();
-    private Path directoryCodeLocation = Paths.get("build", "classes");
+    private final ModuleLoader moduleLoader;
 
-    /**
-     * @return The metadata reader used to load metadata from discovered modules
-     */
-    public ModuleMetadataReader getMetadataReader() {
-        return metadataReader;
+    public ModulePathScanner() {
+        this.moduleLoader = new ModuleLoader();
     }
 
-    /**
-     * @param metadataReader The metadata reader to use to load metadata from discovered modules
-     */
-    public void setMetadataReader(ModuleMetadataReader metadataReader) {
-        Preconditions.checkNotNull(metadataReader);
-        this.metadataReader = metadataReader;
+    public ModulePathScanner(ModuleLoader loader) {
+        this.moduleLoader = loader;
     }
 
-    /**
-     * @return The relative location of code for directory modules
-     */
-    public Path getDirectoryCodeLocation() {
-        return directoryCodeLocation;
-    }
-
-    /**
-     * @param directoryCodeLocation The relative location of code for directory modules. Must be a relative path
-     */
-    public void setDirectoryCodeLocation(Path directoryCodeLocation) {
-        Preconditions.checkArgument(!directoryCodeLocation.isAbsolute(), "Directory code location must be a relative path");
-        this.directoryCodeLocation = directoryCodeLocation;
-    }
-
-    /**
-     * @return The file name for module metadata.
-     */
-    public String getModuleMetadataFilename() {
-        return moduleMetadataFilename;
-    }
-
-    /**
-     * @param moduleMetadataFilename The new file name for module metadata
-     */
-    public void setModuleMetadataFilename(String moduleMetadataFilename) {
-        this.moduleMetadataFilename = moduleMetadataFilename;
+    public ModuleLoader getModuleLoader() {
+        return moduleLoader;
     }
 
     /**
@@ -134,15 +91,7 @@ public class ModulePathScanner {
      */
     private void scanModuleArchives(Path discoveryPath, ModuleRegistry registry) throws IOException {
         for (Path modulePath : Files.newDirectoryStream(discoveryPath, new FileTypesFilter("jar", "zip"))) {
-            Path modInfoFile = modulePath.resolve(moduleMetadataFilename);
-            if (Files.isRegularFile(modInfoFile)) {
-                try (Reader reader = Files.newBufferedReader(modInfoFile, Charsets.UTF_8)) {
-                    ModuleMetadata moduleMetadata = metadataReader.read(reader);
-                    processModuleInfo(moduleMetadata, modulePath, registry);
-                } catch (FileNotFoundException | JsonIOException e) {
-                    logger.warn("Failed to load module manifest for module at {}", modulePath, e);
-                }
-            }
+            loadModule(registry, modulePath);
         }
     }
 
@@ -155,42 +104,24 @@ public class ModulePathScanner {
      */
     private void scanModuleDirectories(Path discoveryPath, ModuleRegistry registry) throws IOException {
         for (Path modulePath : Files.newDirectoryStream(discoveryPath, FilesUtil.DIRECTORY_FILTER)) {
-            try (ZipFile zipFile = new ZipFile(modulePath.toFile())) {
-                ZipEntry modInfoEntry = zipFile.getEntry(moduleMetadataFilename);
-                if (modInfoEntry != null) {
-                    try (Reader reader = new InputStreamReader(zipFile.getInputStream(modInfoEntry), Charsets.UTF_8)) {
-                        ModuleMetadata moduleMetadata = metadataReader.read(reader);
-                        processModuleInfo(moduleMetadata, modulePath, registry);
-                    } catch (FileNotFoundException | JsonIOException e) {
-                        logger.warn("Failed to load module manifest for module at {}", modulePath, e);
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("Invalid module file: {}", modulePath, e);
-            }
+            loadModule(registry, modulePath);
         }
     }
 
-    /**
-     * Processes module information to build a module.
-     *
-     * @param moduleMetadata The metadata of the module
-     * @param modulePath     The location of the module
-     * @param registry       The registry of modules to populate
-     */
-    private void processModuleInfo(ModuleMetadata moduleMetadata, Path modulePath, ModuleRegistry registry) {
-        if (moduleMetadata.getId() != null && moduleMetadata.getVersion() != null) {
-            Module module;
-            if (Files.isDirectory(modulePath)) {
-                module = new PathModule(modulePath, directoryCodeLocation, moduleMetadata);
+    private void loadModule(ModuleRegistry registry, Path modulePath) {
+        try {
+            Module module = moduleLoader.load(modulePath);
+            if (module != null) {
+                if (registry.add(module)) {
+                    logger.info("Discovered module: {}", module);
+                } else {
+                    logger.info("Discovered duplicate module: {}-{}, skipping", module.getId(), module.getVersion());
+                }
             } else {
-                module = new ArchiveModule(modulePath, moduleMetadata);
+                logger.warn("Not a module: {}", modulePath);
             }
-            if (registry.add(module)) {
-                logger.info("Discovered module: {}", module);
-            } else {
-                logger.info("Discovered duplicate module: {}-{}, skipping", moduleMetadata.getId(), moduleMetadata.getVersion());
-            }
+        } catch (IOException e) {
+            logger.warn("Failed to load module at '{}'", modulePath, e);
         }
     }
 }
