@@ -17,11 +17,9 @@
 package org.terasology.util;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import org.terasology.module.sandbox.API;
 
 import java.util.Arrays;
-import java.util.Set;
 
 /**
  * Utility class for methods to help with the use of vararg parameters

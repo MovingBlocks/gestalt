@@ -44,7 +44,7 @@ public class ArchiveModule extends BaseModule {
     private final Collection<URL> classpath;
 
     /**
-     * @param path     Must be a file, and must be convertable to a url (some limits on special characters)
+     * @param path     Must be a file, and must be convertible to a url (some limits on special characters)
      * @param metadata
      */
     public ArchiveModule(Path path, ModuleMetadata metadata) {
