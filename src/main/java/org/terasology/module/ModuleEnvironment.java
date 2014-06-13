@@ -136,15 +136,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @param reflectionsByModule A map of reflection information for each module
      */
     private void buildFullReflections(Map<Name, Reflections> reflectionsByModule) {
-        List<URL> urls = Lists.newArrayList();
-        for (Module module : modules.values()) {
-            if (module.isCodeModule()) {
-                urls.addAll(module.getClasspaths());
-            }
-        }
-
         ConfigurationBuilder fullBuilder = new ConfigurationBuilder()
-                .addUrls(urls)
                 .addClassLoader(finalClassLoader);
         fullReflections = new Reflections(fullBuilder);
         for (Reflections moduleReflection : reflectionsByModule.values()) {
