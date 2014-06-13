@@ -21,9 +21,8 @@ import org.junit.Test;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
-import java.util.Set;
-
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -39,8 +38,9 @@ public class DependencyResolverTest {
         Module core = createStubModule(registry, "core", "1.0.0");
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        Set<Module> results = resolver.resolve(new Name("core"));
-        assertEquals(Sets.newHashSet(core), results);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core), results.getModules());
     }
 
     @Test
@@ -48,8 +48,8 @@ public class DependencyResolverTest {
         ModuleRegistry registry = new TableModuleRegistry();
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        Set<Module> results = resolver.resolve(new Name("core"));
-        assertTrue(results.isEmpty());
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertFalse(results.isSuccess());
     }
 
     @Test
@@ -59,8 +59,8 @@ public class DependencyResolverTest {
         addDependency(core, "base");
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        Set<Module> results = resolver.resolve(new Name("core"));
-        assertTrue(results.isEmpty());
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertFalse(results.isSuccess());
     }
 
     @Test
@@ -71,8 +71,8 @@ public class DependencyResolverTest {
         registry.add(createStubModule(registry, "base", "2.0.0"));
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        Set<Module> results = resolver.resolve(new Name("core"));
-        assertTrue(results.isEmpty());
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertFalse(results.isSuccess());
     }
 
     @Test
@@ -82,8 +82,9 @@ public class DependencyResolverTest {
         registry.add(createStubModule(registry, "core", "1.0.0"));
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        Set<Module> results = resolver.resolve(new Name("core"));
-        assertEquals(Sets.newHashSet(latestCore), results);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(latestCore), results.getModules());
     }
 
     @Test
@@ -98,8 +99,9 @@ public class DependencyResolverTest {
         addDependency(coreV1, "depends", "0.1.0", "1.0.0");
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        Set<Module> results = resolver.resolve(new Name("core"));
-        assertEquals(Sets.newHashSet(coreV2, availableDependency), results);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(coreV2, availableDependency), results.getModules());
     }
 
     @Test
@@ -108,14 +110,14 @@ public class DependencyResolverTest {
         Module core = createStubModule(registry, "core", "1.0.0");
         Module moduleA = createStubModule(registry, "a", "1.0.0");
         Module moduleB = createStubModule(registry, "b", "1.0.0");
-        Module moduleC = createStubModule(registry, "c", "1.0.0");
+        createStubModule(registry, "c", "1.0.0");
         addDependency(core, "a");
         addDependency(core, "b");
         addDependency(moduleA, "c");
         addDependency(moduleB, "c", "2.0.0", "3.0.0");
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        assertTrue(resolver.resolve(new Name("core")).isEmpty());
+        assertFalse(resolver.resolve(new Name("core")).isSuccess());
     }
 
     private void addDependency(Module dependant, String dependencyId) {

@@ -66,7 +66,7 @@ public class DependencyResolver {
      * @param additionalModules Any further root modules
      * @return A set of compatible modules based on the required modules.
      */
-    public Set<Module> resolve(Name rootModule, Name... additionalModules) {
+    public ResolutionResult resolve(Name rootModule, Name... additionalModules) {
         return resolve(Varargs.combineToSet(rootModule, additionalModules));
     }
 
@@ -74,12 +74,12 @@ public class DependencyResolver {
      * @param moduleIds The set of module ids to build a set of compatible modules from
      * @return A set of compatible modules based on the required modules.
      */
-    public Set<Module> resolve(Iterable<Name> moduleIds) {
+    public ResolutionResult resolve(Iterable<Name> moduleIds) {
         rootModules = ImmutableSet.copyOf(moduleIds);
         populateDomains();
         populateConstraints();
         if (!includesModules(rootModules)) {
-            return Collections.emptySet();
+            return new ResolutionResult(false, Collections.<Module>emptySet());
         }
 
         constraintQueue = UniqueQueue.createWithExpectedSize(constraints.size());
@@ -87,10 +87,10 @@ public class DependencyResolver {
         processConstraints();
 
         if (!includesModules(rootModules)) {
-            return Collections.emptySet();
+            return new ResolutionResult(false, Collections.<Module>emptySet());
         }
 
-        return finaliseModules();
+        return new ResolutionResult(true, finaliseModules());
     }
 
     /**
