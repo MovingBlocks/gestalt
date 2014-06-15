@@ -82,24 +82,4 @@ public class PathModule extends BaseModule {
     public boolean isCodeModule() {
         return !classpaths.isEmpty();
     }
-
-    @Override
-    public boolean isDataAvailable() {
-        return false;
-    }
-
-    @Override
-    public InputStream getData() throws IOException {
-        return new BufferedInputStream(Files.newInputStream(path));
-    }
-
-    @Override
-    public long size() {
-        try {
-            return Files.size(path);
-        } catch (IOException e) {
-            logger.warn("Failed to read file size for '{}'", path);
-            return 0;
-        }
-    }
 }

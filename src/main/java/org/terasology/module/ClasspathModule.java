@@ -17,14 +17,18 @@
 package org.terasology.module;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.terasology.module.exceptions.InvalidModulePathException;
+import org.terasology.util.Varargs;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * A module that exists on the classpath. This means that it is always loaded and available, so should not be loaded in a secondary class loader.
@@ -36,10 +40,10 @@ public class ClasspathModule extends BaseModule {
     private Collection<URL> classpaths;
 
     /**
-     * @param paths
-     * @param metadata
+     * @param metadata Module metadata describing this module
+     * @param paths a collection of paths to the module locations - may be a mixture of file and directory paths
      */
-    public ClasspathModule(Collection<Path> paths, ModuleMetadata metadata) {
+    private ClasspathModule(ModuleMetadata metadata, Collection<Path> paths) {
         super(paths, metadata);
         classpaths = Lists.newArrayListWithCapacity(paths.size());
         for (Path path : paths) {
@@ -51,6 +55,37 @@ public class ClasspathModule extends BaseModule {
         }
     }
 
+    /**
+     * Creates a classpath module from a set of code sources
+     * @param metadata Metadata describing the module to create
+     * @param primarySource The first source to include in this module
+     * @param additionalSources Any additional sources to include
+     * @return A new ClasspathModule
+     * @throws URISyntaxException If a source location cannot be converted to a proper URI (typically because the path to the source includes an invalid character).
+     */
+    public static ClasspathModule create(ModuleMetadata metadata, CodeSource primarySource, CodeSource ... additionalSources) throws URISyntaxException {
+        Set<Path> paths = Sets.newLinkedHashSet();
+        for (CodeSource source : Varargs.combineToSet(primarySource, additionalSources)) {
+            paths.add(Paths.get(source.getLocation().toURI()));
+        }
+        return new ClasspathModule(metadata, paths);
+    }
+
+    /**
+     * Creates a classpath module from a set of representative classes. The code source (e.g. Jar or directory) for each class is included in the Classpath module
+     * @param metadata Metadata describing the module to create
+     * @param primaryClass The first representative class to include in the module
+     * @param additionalClasses Any additional representative classes to include.
+     * @return A new ClasspathModule
+     * @throws URISyntaxException If a source location cannot be converted to a proper URI (typically because the path to the source includes an invalid character).
+     */
+    public static ClasspathModule create(ModuleMetadata metadata, Class<?> primaryClass, Class<?> ... additionalClasses) throws URISyntaxException {
+        Set<Path> paths = Sets.newLinkedHashSet();
+        for (Class<?> type : Varargs.combineToSet(primaryClass, additionalClasses)) {
+            paths.add(Paths.get(type.getProtectionDomain().getCodeSource().getLocation().toURI()));
+        }
+        return new ClasspathModule(metadata, paths);
+    }
 
     @Override
     public Collection<URL> getClasspaths() {
@@ -67,18 +102,4 @@ public class ClasspathModule extends BaseModule {
         return true;
     }
 
-    @Override
-    public boolean isDataAvailable() {
-        return false;
-    }
-
-    @Override
-    public InputStream getData() throws IOException {
-        throw new UnsupportedOperationException("Built in modules cannot be streamed");
-    }
-
-    @Override
-    public long size() {
-        return 0;
-    }
 }

@@ -81,21 +81,4 @@ public interface Module {
      */
     ModuleMetadata getMetadata();
 
-    /**
-     * Whether the module is available in a packaged form that can be retrieved.
-     *
-     * @return Whether the module data is available
-     */
-    boolean isDataAvailable();
-
-    /**
-     * @return A stream of the module
-     * @throws IOException
-     */
-    InputStream getData() throws IOException;
-
-    /**
-     * @return The size of the moduel
-     */
-    long size();
 }
