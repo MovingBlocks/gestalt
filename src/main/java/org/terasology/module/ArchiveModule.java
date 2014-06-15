@@ -73,23 +73,4 @@ public class ArchiveModule extends BaseModule {
         return true;
     }
 
-    @Override
-    public boolean isDataAvailable() {
-        return Files.isRegularFile(path);
-    }
-
-    @Override
-    public InputStream getData() throws IOException {
-        return new BufferedInputStream(Files.newInputStream(path));
-    }
-
-    @Override
-    public long size() {
-        try {
-            return Files.size(path);
-        } catch (IOException e) {
-            logger.warn("Failed to read file size for '{}'", path);
-            return 0;
-        }
-    }
 }
