@@ -36,7 +36,6 @@ import java.util.Arrays;
 public class PathModule extends BaseModule {
     private static final Logger logger = LoggerFactory.getLogger(PathModule.class);
 
-    private final Path path;
     private final ImmutableList<URL> classpaths;
 
     /**
@@ -44,19 +43,17 @@ public class PathModule extends BaseModule {
      *
      * @param path     The root path of the module
      * @param codePath The relative location of code for the module (relative to root path)
-     * @param metadata
+     * @param metadata Metadata describing this module
      */
     public PathModule(Path path, Path codePath, ModuleMetadata metadata) {
         super(Arrays.asList(path), metadata);
         Preconditions.checkArgument(Files.isDirectory(path));
-        this.path = path;
 
-        Path fullCodePath = path.resolve(codePath);
-        if (Files.isDirectory(fullCodePath)) {
+        if (Files.isDirectory(codePath)) {
             try {
-                classpaths = ImmutableList.of(fullCodePath.toUri().toURL());
+                classpaths = ImmutableList.of(codePath.toUri().toURL());
             } catch (MalformedURLException e) {
-                throw new InvalidModulePathException("Unable to convert path to URL: " + fullCodePath, e);
+                throw new InvalidModulePathException("Unable to convert path to URL: " + codePath, e);
             }
         } else {
             classpaths = ImmutableList.<URL>builder().build();
