@@ -56,6 +56,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private static final Logger logger = LoggerFactory.getLogger(ModuleEnvironment.class);
 
     private final Map<Name, Module> modules;
+    private final ClassLoader apiClassLoader;
     private final ClassLoader finalClassLoader;
     private final List<ModuleClassLoader> managedClassLoaders = Lists.newArrayList();
     private Reflections fullReflections;
@@ -74,14 +75,15 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @param modules        The modules this environment should encompass.
      * @param apiProvider    The provider that determines what classes are API.
      * @param injectors      Any Bytecode Injectors that should be run over any loaded module class.
-     * @param apiClassloader The base classloader the module environment should build upon.
+     * @param apiClassLoader The base classloader the module environment should build upon.
      * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
      */
-    public ModuleEnvironment(Iterable<Module> modules, final APIProvider apiProvider, final Iterable<BytecodeInjector> injectors, ClassLoader apiClassloader) {
+    public ModuleEnvironment(Iterable<Module> modules, final APIProvider apiProvider, final Iterable<BytecodeInjector> injectors, ClassLoader apiClassLoader) {
         Map<Name, Reflections> reflectionsByModule = Maps.newLinkedHashMap();
         this.modules = buildModuleMap(modules);
+        this.apiClassLoader = apiClassLoader;
 
-        ClassLoader lastClassloader = apiClassloader;
+        ClassLoader lastClassloader = apiClassLoader;
         List<Module> orderedModules = getModulesOrderedByDependencies();
         for (final Module module : orderedModules) {
             if (module.isCodeModule()) {
@@ -137,6 +139,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      */
     private void buildFullReflections(Map<Name, Reflections> reflectionsByModule) {
         ConfigurationBuilder fullBuilder = new ConfigurationBuilder()
+                .addClassLoader(apiClassLoader)
                 .addClassLoader(finalClassLoader);
         fullReflections = new Reflections(fullBuilder);
         for (Reflections moduleReflection : reflectionsByModule.values()) {
