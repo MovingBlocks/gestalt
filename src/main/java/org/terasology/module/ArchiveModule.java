@@ -22,15 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.exceptions.InvalidModulePathException;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * A module that is a archive (zip or jar) file that exists on the file system, but outside the classpath.
@@ -41,7 +37,7 @@ public class ArchiveModule extends BaseModule {
     private static final Logger logger = LoggerFactory.getLogger(ArchiveModule.class);
 
     private final Path path;
-    private final Collection<URL> classpath;
+    private final ImmutableList<URL> classpath;
 
     /**
      * @param path     Must be a file, and must be convertible to a url (some limits on special characters)
@@ -59,7 +55,7 @@ public class ArchiveModule extends BaseModule {
     }
 
     @Override
-    public Collection<URL> getClasspaths() {
+    public ImmutableList<URL> getClasspaths() {
         return classpath;
     }
 

@@ -36,7 +36,7 @@ import java.util.Objects;
  * @author Immortius
  */
 public abstract class BaseModule implements Module {
-    protected Collection<Path> paths;
+    protected ImmutableList<Path> paths;
     protected ModuleMetadata metadata;
 
     private Reflections reflectionsFragment;
@@ -51,7 +51,7 @@ public abstract class BaseModule implements Module {
     }
 
     @Override
-    public Collection<Path> getLocations() {
+    public ImmutableList<Path> getLocations() {
         return paths;
     }
 

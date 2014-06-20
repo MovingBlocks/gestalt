@@ -15,15 +15,13 @@
  */
 package org.terasology.module;
 
+import com.google.common.collect.ImmutableList;
 import org.reflections.Reflections;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Collection;
 
 /**
  * A module is an identified and versioned set of code and/or resources that can be loaded and used at runtime. This class encapsulates information on a
@@ -36,12 +34,12 @@ public interface Module {
     /**
      * @return The locations composing the module
      */
-    Collection<Path> getLocations();
+    ImmutableList<Path> getLocations();
 
     /**
      * @return The urls forming the classpath of the module
      */
-    Collection<URL> getClasspaths();
+    ImmutableList<URL> getClasspaths();
 
     /**
      * @return The identifier for the module
