@@ -22,16 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.exceptions.InvalidModulePathException;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * A module that exists on the file system, but outside the classpath.
@@ -42,7 +37,7 @@ public class PathModule extends BaseModule {
     private static final Logger logger = LoggerFactory.getLogger(PathModule.class);
 
     private final Path path;
-    private final Collection<URL> classpaths;
+    private final ImmutableList<URL> classpaths;
 
     /**
      * Creates a path module with no code
@@ -64,12 +59,12 @@ public class PathModule extends BaseModule {
                 throw new InvalidModulePathException("Unable to convert path to URL: " + fullCodePath, e);
             }
         } else {
-            classpaths = Collections.emptyList();
+            classpaths = ImmutableList.<URL>builder().build();
         }
     }
 
     @Override
-    public Collection<URL> getClasspaths() {
+    public ImmutableList<URL> getClasspaths() {
         return classpaths;
     }
 

@@ -16,7 +16,7 @@
 
 package org.terasology.module;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import org.terasology.module.exceptions.InvalidModulePathException;
 import org.terasology.util.Varargs;
@@ -35,35 +35,37 @@ import java.util.Set;
  *
  * @author Immortius
  */
-public class ClasspathModule extends BaseModule {
+public final class ClasspathModule extends BaseModule {
 
-    private Collection<URL> classpaths;
+    private final ImmutableList<URL> classpaths;
 
     /**
      * @param metadata Module metadata describing this module
-     * @param paths a collection of paths to the module locations - may be a mixture of file and directory paths
+     * @param paths    a collection of paths to the module locations - may be a mixture of file and directory paths
      */
     private ClasspathModule(ModuleMetadata metadata, Collection<Path> paths) {
         super(paths, metadata);
-        classpaths = Lists.newArrayListWithCapacity(paths.size());
+        ImmutableList.Builder<URL> builder = ImmutableList.builder();
         for (Path path : paths) {
             try {
-                classpaths.add(path.toUri().toURL());
+                builder.add(path.toUri().toURL());
             } catch (MalformedURLException e) {
                 throw new InvalidModulePathException("Path cannot be converted to URL: " + path, e);
             }
         }
+        classpaths = builder.build();
     }
 
     /**
      * Creates a classpath module from a set of code sources
-     * @param metadata Metadata describing the module to create
-     * @param primarySource The first source to include in this module
+     *
+     * @param metadata          Metadata describing the module to create
+     * @param primarySource     The first source to include in this module
      * @param additionalSources Any additional sources to include
      * @return A new ClasspathModule
      * @throws URISyntaxException If a source location cannot be converted to a proper URI (typically because the path to the source includes an invalid character).
      */
-    public static ClasspathModule create(ModuleMetadata metadata, CodeSource primarySource, CodeSource ... additionalSources) throws URISyntaxException {
+    public static ClasspathModule create(ModuleMetadata metadata, CodeSource primarySource, CodeSource... additionalSources) throws URISyntaxException {
         Set<Path> paths = Sets.newLinkedHashSet();
         for (CodeSource source : Varargs.combineToSet(primarySource, additionalSources)) {
             paths.add(Paths.get(source.getLocation().toURI()));
@@ -73,13 +75,14 @@ public class ClasspathModule extends BaseModule {
 
     /**
      * Creates a classpath module from a set of representative classes. The code source (e.g. Jar or directory) for each class is included in the Classpath module
-     * @param metadata Metadata describing the module to create
-     * @param primaryClass The first representative class to include in the module
+     *
+     * @param metadata          Metadata describing the module to create
+     * @param primaryClass      The first representative class to include in the module
      * @param additionalClasses Any additional representative classes to include.
      * @return A new ClasspathModule
      * @throws URISyntaxException If a source location cannot be converted to a proper URI (typically because the path to the source includes an invalid character).
      */
-    public static ClasspathModule create(ModuleMetadata metadata, Class<?> primaryClass, Class<?> ... additionalClasses) throws URISyntaxException {
+    public static ClasspathModule create(ModuleMetadata metadata, Class<?> primaryClass, Class<?>... additionalClasses) throws URISyntaxException {
         Set<Path> paths = Sets.newLinkedHashSet();
         for (Class<?> type : Varargs.combineToSet(primaryClass, additionalClasses)) {
             paths.add(Paths.get(type.getProtectionDomain().getCodeSource().getLocation().toURI()));
@@ -88,7 +91,7 @@ public class ClasspathModule extends BaseModule {
     }
 
     @Override
-    public Collection<URL> getClasspaths() {
+    public ImmutableList<URL> getClasspaths() {
         return classpaths;
     }
 
