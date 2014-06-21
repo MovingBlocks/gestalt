@@ -35,7 +35,7 @@ import java.util.zip.ZipFile;
  */
 public class ModuleLoader {
 
-    private Path moduleInfoPath = Paths.get("module.txt");
+    private Path moduleInfoPath = Paths.get("module.info");
     private Path directoryCodeLocation = Paths.get("build", "classes");
     private final ModuleMetadataReader metadataReader;
 
