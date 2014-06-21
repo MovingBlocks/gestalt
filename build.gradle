@@ -13,7 +13,8 @@ apply plugin: 'checkstyle'
 apply plugin: 'pmd'
 apply plugin: 'findbugs'
 apply plugin: 'maven'
-apply plugin: 'artifactory'
+apply plugin: 'artifactory-publish'
+apply plugin: 'maven-publish'
 
 // gradle wrapper version
 wrapper {
@@ -96,6 +97,23 @@ artifacts {
     published jar
     published sourceJar
     published javadocJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar {
+            }
+			
+			artifact sourceJar {
+                classifier "sources"
+            }
+			
+			artifact javadocJar {
+                classifier "javadoc"
+            }
+        }
+    }
 }
 
 // Technically the plain "jar" both here and above is included automatically, but leaving it explicit for clarity
