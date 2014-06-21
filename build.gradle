@@ -103,15 +103,21 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             artifact jar {
-            }
-			
-			artifact sourceJar {
+            }	
+            artifact sourceJar {
                 classifier "sources"
             }
-			
-			artifact javadocJar {
+            artifact javadocJar {
                 classifier "javadoc"
             }
+        }
+    }
+}
+
+artifactory {
+    publish {
+        defaults {
+            publications ('mavenJava')
         }
     }
 }
