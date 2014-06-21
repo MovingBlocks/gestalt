@@ -16,6 +16,8 @@
 
 package org.terasology.module;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -253,6 +255,16 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * @param type The type to find subtypes of
+     * @param <U>  The type to find subtypes of
+     * @param filter A filter to apply to the returned subtypes
+     * @return A Iterable over all subtypes of type that appear in the module environment
+     */
+    public <U> Iterable<Class<? extends U>> getSubtypesOf(Class<U> type, Predicate<Class<?>> filter) {
+        return Collections2.filter(fullReflections.getSubTypesOf(type), filter);
+    }
+
+    /**
      * @param annotation The annotation of interest
      * @return All types in the environment that are either marked by the given annotation, or are subtypes of a type marked with the annotation
      */
@@ -267,6 +279,25 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      */
     public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation, boolean includeViaInheritance) {
         return fullReflections.getTypesAnnotatedWith(annotation, includeViaInheritance);
+    }
+
+    /**
+     * @param annotation The annotation of interest
+     * @param filter     Further filter on the returned types
+     * @return All types in the environment that are either marked by the given annotation, or are subtypes of a type marked with the annotation
+     */
+    public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation, Predicate<Class<?>> filter) {
+        return Collections2.filter(fullReflections.getTypesAnnotatedWith(annotation), filter);
+    }
+
+    /**
+     * @param annotation            The annotation of interest
+     * @param includeViaInheritance Whether to include classes that inherit a class marked with the annotation
+     * @param filter                Further filter on the returned types
+     * @return All types marked with the annotation, or subtypes of types marked with the annotation if includeViaInheritance is true
+     */
+    public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation, boolean includeViaInheritance, Predicate<Class<?>> filter) {
+        return Collections2.filter(fullReflections.getTypesAnnotatedWith(annotation, includeViaInheritance), filter);
     }
 
     @Override
