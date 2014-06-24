@@ -21,7 +21,9 @@ import org.terasology.i18n.I18nMap;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -35,8 +37,12 @@ public class ModuleMetadata {
     private Version version;
     private I18nMap displayName = new I18nMap("");
     private I18nMap description = new I18nMap("");
-    private boolean serverSideOnly;
     private List<DependencyInfo> dependencies = Lists.newArrayList();
+    private final Map<String, Object> extensions;
+
+    public ModuleMetadata() {
+        this.extensions = Collections.emptyMap();
+    }
 
     /**
      * @return The identifier of the module
@@ -78,10 +84,24 @@ public class ModuleMetadata {
     }
 
     /**
+     * @param displayName The new human-readable name of the module
+     */
+    public void setDisplayName(I18nMap displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
      * @return A human readable description of the module
      */
     public I18nMap getDescription() {
         return description;
+    }
+
+    /**
+     * @param description The new human-readable description of the module
+     */
+    public void setDescription(I18nMap description) {
+        this.description = description;
     }
 
     /**
@@ -108,18 +128,27 @@ public class ModuleMetadata {
     }
 
     /**
-     * @return Whether this module is only required server-side
+     * @param extensionId  The identifier of the extension
+     * @param expectedType The expected type of the extension
+     * @param <T>          The expected type of the extension
+     * @return The extension object, or null if it is missing or of an incompatible type
      */
-    public boolean isServerSideOnly() {
-        return serverSideOnly;
+    public <T> T getExtension(String extensionId, Class<T> expectedType) {
+        Object extension = extensions.get(extensionId);
+        if (expectedType.isInstance(extension)) {
+            return expectedType.cast(extension);
+        }
+        return null;
     }
 
     /**
-     * @param serverSideOnly whether the module is only required server-side
+     * Sets the value of an extension
+     *
+     * @param extensionId The identifier of the extension
+     * @param extension   The extension object
      */
-    public void setServerSideOnly(boolean serverSideOnly) {
-        this.serverSideOnly = serverSideOnly;
+    public void setExtension(String extensionId, Object extension) {
+        extensions.put(extensionId, extension);
     }
-
 
 }

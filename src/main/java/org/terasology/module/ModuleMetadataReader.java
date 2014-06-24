@@ -16,8 +16,15 @@
 
 package org.terasology.module;
 
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import org.terasology.i18n.I18nMap;
 import org.terasology.i18n.gson.I18nMapTypeAdapter;
 import org.terasology.naming.Name;
@@ -26,6 +33,9 @@ import org.terasology.naming.gson.NameTypeAdapter;
 import org.terasology.naming.gson.VersionTypeAdapter;
 
 import java.io.Reader;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Reads ModuleMetadata from a json format.
@@ -50,25 +60,62 @@ import java.io.Reader;
  *          ]
  *     }
  * </pre>
+ * Extensions can be registered, as a mapping of identifier to Type, and optionally with a JsonDeserializer or TypeAdapter.
  *
  * @author Immortius
  */
 public class ModuleMetadataReader {
 
-    private final Gson gson;
-    private final Class<? extends ModuleMetadata> metadataClass;
+    private static final Type DEPENDENCY_LIST_TYPE = new TypeToken<List<DependencyInfo>>() {
+    }.getType();
+
+    private final GsonBuilder builder;
+    private transient Gson cachedGson;
+    private Map<String, Type> extensionMap = Maps.newHashMap();
 
     public ModuleMetadataReader() {
-        this(ModuleMetadata.class);
-    }
-
-    public ModuleMetadataReader(Class<? extends ModuleMetadata> metadataClass) {
-        this.metadataClass = metadataClass;
-        this.gson = new GsonBuilder()
+        this.builder = new GsonBuilder()
                 .registerTypeAdapter(Version.class, new VersionTypeAdapter())
                 .registerTypeAdapter(Name.class, new NameTypeAdapter())
                 .registerTypeAdapter(I18nMap.class, new I18nMapTypeAdapter())
-                .create();
+                .registerTypeAdapter(ModuleMetadata.class, new ModuleMetadataTypeAdapter());
+    }
+
+    /**
+     * Registers an extension for deserialization. An entry in the json file with a matching identifier to the extension id will be deserialized with the given type
+     * and stored as an extension in the metadata.
+     *
+     * @param extensionId   The identifier for this extension.
+     * @param extensionType The type of object this extension holds.
+     */
+    public void registerExtension(String extensionId, Type extensionType) {
+        extensionMap.put(extensionId, extensionType);
+    }
+
+    /**
+     * Registers an extension for deserialization. An entry in the json file with a matching identifier to the extension id will be deserialized with the given type
+     * and stored as an extension in the resultant metadata. Additionally, the given gson-compatiable typeAdapter will be used to deserialize the extensionType.
+     *
+     * @param extensionId   The identifier for this extension.
+     * @param extensionType The type of object this extension holds.
+     * @param typeAdapter   The Gson compatible type handler to use for the extension type.
+     */
+    public void registerExtension(String extensionId, Type extensionType, Object typeAdapter) {
+        registerExtension(extensionId, extensionType);
+        addTypeHandler(extensionType, typeAdapter);
+    }
+
+    /**
+     * Adds a type handler to use when deserializing the given type
+     *
+     * @param type        The type to handle
+     * @param typeHandler The handler to handle type
+     */
+    public void addTypeHandler(Type type, Object typeHandler) {
+        if (cachedGson != null) {
+            cachedGson = null;
+        }
+        builder.registerTypeAdapter(type, typeHandler);
     }
 
     /**
@@ -78,7 +125,47 @@ public class ModuleMetadataReader {
      * @throws com.google.gson.JsonSyntaxException if json is not valid
      */
     public ModuleMetadata read(Reader reader) {
-        return gson.fromJson(reader, metadataClass);
+        if (cachedGson == null) {
+            cachedGson = builder.create();
+        }
+        return cachedGson.fromJson(reader, ModuleMetadata.class);
+    }
+
+    private class ModuleMetadataTypeAdapter implements JsonDeserializer<ModuleMetadata> {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public ModuleMetadata deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject metadataObject = json.getAsJsonObject();
+            ModuleMetadata metadata = new ModuleMetadata();
+            for (Map.Entry<String, JsonElement> entry : metadataObject.entrySet()) {
+                switch (entry.getKey()) {
+                    case "id":
+                        metadata.setId(context.<Name>deserialize(entry.getValue(), Name.class));
+                        break;
+                    case "version":
+                        metadata.setVersion(context.<Version>deserialize(entry.getValue(), Version.class));
+                        break;
+                    case "displayName":
+                        metadata.setDisplayName(context.<I18nMap>deserialize(entry.getValue(), I18nMap.class));
+                        break;
+                    case "description":
+                        metadata.setDescription(context.<I18nMap>deserialize(entry.getValue(), I18nMap.class));
+                        break;
+                    case "dependencies":
+                        metadata.getDependencies().addAll((List<DependencyInfo>) context.deserialize(entry.getValue(), DEPENDENCY_LIST_TYPE));
+                        break;
+                    default:
+                        Type extensionType = extensionMap.get(entry.getKey());
+                        if (extensionType != null) {
+                            Object extensionObject = context.deserialize(entry.getValue(), extensionType);
+                            metadata.setExtension(entry.getKey(), extensionObject);
+                        }
+                        break;
+                }
+            }
+            return metadata;
+        }
     }
 
 }
