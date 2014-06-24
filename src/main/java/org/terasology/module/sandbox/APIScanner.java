@@ -16,12 +16,12 @@
 
 package org.terasology.module.sandbox;
 
-import com.google.common.base.Preconditions;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleRegistry;
 
 /**
  * Scans classpath modules for API annotated classes and packages, registering them with a ModuleSecurityManager.
+ *
  * @author Immortius
  */
 public class APIScanner {
@@ -34,6 +34,7 @@ public class APIScanner {
 
     /**
      * Scans all modules in a registry that are on the class path, adding all packages and classes marked with the @API annotation to the securityManager's api
+     *
      * @param registry The registry of modules to scan
      */
     public void scan(ModuleRegistry registry) {
@@ -46,6 +47,7 @@ public class APIScanner {
 
     /**
      * Scans a module, adding any class or package marked with the @API annotation to the securityManager's api.
+     *
      * @param module The module to scan
      */
     public void scan(Module module) {
