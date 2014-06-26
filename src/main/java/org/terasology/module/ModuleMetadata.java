@@ -16,6 +16,8 @@
 
 package org.terasology.module;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import org.terasology.i18n.I18nMap;
 import org.terasology.naming.Name;
@@ -25,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Information describing a module.
@@ -32,6 +35,20 @@ import java.util.Objects;
  * @author Immortius
  */
 public class ModuleMetadata {
+
+    /*
+     * Constants for the names of each of the core metadata attributes.
+     */
+    public static final String ID = "id";
+    public static final String VERSION = "version";
+    public static final String DISPLAY_NAME = "displayName";
+    public static final String DESCRIPTION = "description";
+    public static final String DEPENDENCIES = "dependencies";
+
+    /**
+     * The set of reserved ids that cannot be used by extensions.
+     */
+    public static final Set<String> RESERVED_IDS = ImmutableSet.of(ID, VERSION, DISPLAY_NAME, DESCRIPTION, DEPENDENCIES);
 
     private Name id;
     private Version version;
@@ -146,8 +163,10 @@ public class ModuleMetadata {
      *
      * @param extensionId The identifier of the extension
      * @param extension   The extension object
+     * @throws IllegalArgumentException if extensionId is a ReservedIds
      */
     public void setExtension(String extensionId, Object extension) {
+        Preconditions.checkArgument(!RESERVED_IDS.contains(extensionId), "Reserved id '" + extensionId + "' cannot be used to identify an extension");
         extensions.put(extensionId, extension);
     }
 

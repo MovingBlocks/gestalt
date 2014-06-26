@@ -16,6 +16,7 @@
 
 package org.terasology.module;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -89,6 +90,7 @@ public class ModuleMetadataReader {
      * @param extensionType The type of object this extension holds.
      */
     public void registerExtension(String extensionId, Type extensionType) {
+        Preconditions.checkArgument(!ModuleMetadata.RESERVED_IDS.contains(extensionId), "Id '" + extensionId + "' is a reserved id and cannot be used for an extension");
         extensionMap.put(extensionId, extensionType);
     }
 
@@ -140,19 +142,19 @@ public class ModuleMetadataReader {
             ModuleMetadata metadata = new ModuleMetadata();
             for (Map.Entry<String, JsonElement> entry : metadataObject.entrySet()) {
                 switch (entry.getKey()) {
-                    case "id":
+                    case ModuleMetadata.ID:
                         metadata.setId(context.<Name>deserialize(entry.getValue(), Name.class));
                         break;
-                    case "version":
+                    case ModuleMetadata.VERSION:
                         metadata.setVersion(context.<Version>deserialize(entry.getValue(), Version.class));
                         break;
-                    case "displayName":
+                    case ModuleMetadata.DISPLAY_NAME:
                         metadata.setDisplayName(context.<I18nMap>deserialize(entry.getValue(), I18nMap.class));
                         break;
-                    case "description":
+                    case ModuleMetadata.DESCRIPTION:
                         metadata.setDescription(context.<I18nMap>deserialize(entry.getValue(), I18nMap.class));
                         break;
-                    case "dependencies":
+                    case ModuleMetadata.DEPENDENCIES:
                         metadata.getDependencies().addAll((List<DependencyInfo>) context.deserialize(entry.getValue(), DEPENDENCY_LIST_TYPE));
                         break;
                     default:
