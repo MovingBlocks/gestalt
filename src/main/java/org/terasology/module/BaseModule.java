@@ -90,6 +90,8 @@ public abstract class BaseModule implements Module {
                     collectCacheFromPath(path);
                 } else if (Files.isRegularFile(path)) {
                     collectCacheFromArchive(path);
+                } else {
+                    collectCacheFromPath(path);
                 }
             }
             if (reflectionsFragment == null) {
