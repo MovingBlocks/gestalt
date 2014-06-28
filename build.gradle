@@ -51,13 +51,13 @@ repositories {
 dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.6'
     compile group: 'com.google.guava', name: 'guava', version: '15.0'
-	compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
-	compile group: 'com.google.code.gson', name: 'gson', version: '2.2.4'
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.2.4'
     
     // These dependencies are only needed for running tests
     testCompile group: 'junit', name: 'junit', version: '4.11'
     testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.1'
-	testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
 }
 
 // Set the expected module Java level (can use a higher Java to run, but should not use features from a higher Java)
@@ -103,7 +103,7 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             artifact jar {
-            }	
+            }    
             artifact sourceJar {
                 classifier "sources"
             }
