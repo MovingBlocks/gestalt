@@ -29,8 +29,8 @@ import java.util.Objects;
  */
 public class FromModule implements Predicate<Class<?>> {
 
-    private ModuleEnvironment environment;
-    private Name moduleId;
+    private final ModuleEnvironment environment;
+    private final Name moduleId;
 
     public FromModule(ModuleEnvironment environment, Name moduleId) {
         this.environment = environment;

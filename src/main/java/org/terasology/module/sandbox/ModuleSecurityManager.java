@@ -54,16 +54,16 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
     private static final Permission UPDATE_ALLOWED_PERMISSIONS = new ModuleSecurityPermission(ModuleSecurityPermission.UPDATE_ALLOWED_PERMISSIONS);
     private static final Permission UPDATE_API_CLASSES = new ModuleSecurityPermission(ModuleSecurityPermission.UPDATE_API_CLASSES);
 
-    private Set<Class> apiClasses = Sets.newHashSet();
-    private Set<String> apiPackages = Sets.newHashSet();
-    private Set<String> fullPrivilegePackages = Sets.newHashSet();
+    private final Set<Class> apiClasses = Sets.newHashSet();
+    private final Set<String> apiPackages = Sets.newHashSet();
+    private final Set<String> fullPrivilegePackages = Sets.newHashSet();
 
-    private Set<Class<? extends Permission>> globallyAllowedPermissionsTypes = Sets.newHashSet();
-    private Set<Permission> globallyAllowedPermissionsInstances = Sets.newHashSet();
-    private SetMultimap<Class<? extends Permission>, Class> allowedPermissionsTypes = HashMultimap.create();
-    private SetMultimap<Permission, Class> allowedPermissionInstances = HashMultimap.create();
-    private SetMultimap<Class<? extends Permission>, String> allowedPackagePermissionsTypes = HashMultimap.create();
-    private SetMultimap<Permission, String> allowedPackagePermissionInstances = HashMultimap.create();
+    private final Set<Class<? extends Permission>> globallyAllowedPermissionsTypes = Sets.newHashSet();
+    private final Set<Permission> globallyAllowedPermissionsInstances = Sets.newHashSet();
+    private final SetMultimap<Class<? extends Permission>, Class> allowedPermissionsTypes = HashMultimap.create();
+    private final SetMultimap<Permission, Class> allowedPermissionInstances = HashMultimap.create();
+    private final SetMultimap<Class<? extends Permission>, String> allowedPackagePermissionsTypes = HashMultimap.create();
+    private final SetMultimap<Permission, String> allowedPackagePermissionInstances = HashMultimap.create();
 
     private ThreadLocal<Boolean> calculatingPermission = new ThreadLocal<>();
 
@@ -385,14 +385,14 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
 
     @Override
     public void checkPermission(Permission perm) {
-        if (!checkModAccess(perm)) {
+        if (checkModuleDeniedAccess(perm)) {
             super.checkPermission(perm);
         }
     }
 
     @Override
     public void checkPermission(Permission perm, Object context) {
-        if (!checkModAccess(perm)) {
+        if (checkModuleDeniedAccess(perm)) {
             super.checkPermission(perm);
         }
     }
@@ -408,14 +408,14 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
      *
      * @param perm The permission under question
      */
-    private boolean checkModAccess(Permission perm) {
+    private boolean checkModuleDeniedAccess(Permission perm) {
 
         if (calculatingPermission.get() != null) {
-            return true;
+            return false;
         }
 
         if (globallyAllowedPermissionsTypes.contains(perm.getClass()) || globallyAllowedPermissionsInstances.contains(perm)) {
-            return true;
+            return false;
         }
 
         calculatingPermission.set(true);
@@ -425,13 +425,13 @@ public class ModuleSecurityManager extends SecurityManager implements APIProvide
             for (int i = 0; i < stack.length; ++i) {
                 ClassLoader owningLoader = stack[i].getClassLoader();
                 if (owningLoader != null && owningLoader instanceof ModuleClassLoader) {
-                    return checkAPIPermissionsFor(perm, i, stack);
+                    return !checkAPIPermissionsFor(perm, i, stack);
                 }
             }
         } finally {
             calculatingPermission.set(null);
         }
-        return false;
+        return true;
     }
 
     /**

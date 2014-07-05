@@ -303,9 +303,9 @@ public class DependencyResolver {
      * Describes a constraint, in the form of a mapping of Versions of the "from" module to allowed ranges of the "to" modules.
      */
     private static final class Constraint {
-        private Name from;
-        private Name to;
-        private Map<Version, VersionRange> versionCompatibilities;
+        private final Name from;
+        private final Name to;
+        private final Map<Version, VersionRange> versionCompatibilities;
 
         private Constraint(Name from, Name to, Map<Version, VersionRange> versionCompatibilities) {
             this.from = from;

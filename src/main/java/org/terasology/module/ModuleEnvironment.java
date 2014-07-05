@@ -100,7 +100,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     /**
      * Builds a map of modules, keyed by id, from an iterable.
      *
-     * @param moduleList
+     * @param moduleList The list of modules to map
      * @return The final map
      */
     private ImmutableMap<Name, Module> buildModuleMap(Iterable<Module> moduleList) {

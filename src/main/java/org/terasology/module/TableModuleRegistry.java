@@ -22,8 +22,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
@@ -39,8 +37,6 @@ import java.util.Set;
  * @author Immortius
  */
 public class TableModuleRegistry implements ModuleRegistry {
-
-    private static final Logger logger = LoggerFactory.getLogger(TableModuleRegistry.class);
 
     private final Table<Name, Version, Module> modules = HashBasedTable.create();
     private final Map<Name, Module> latestModules = Maps.newHashMap();

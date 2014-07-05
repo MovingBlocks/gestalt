@@ -51,6 +51,20 @@ public final class Name implements Comparable<Name> {
         return normalisedName.isEmpty();
     }
 
+    /**
+     * @return The Name in lowercase consistent with Name equality (so two names that are equal will have the same lowercase)
+     */
+    public String toLowerCase() {
+        return normalisedName;
+    }
+
+    /**
+     * @return The Name in uppercase consistent with Name equality (so two names that are equal will have the same uppercase)
+     */
+    public String toUpperCase() {
+        return originalName.toUpperCase(Locale.ENGLISH);
+    }
+
     @Override
     public int compareTo(Name o) {
         return normalisedName.compareTo(o.normalisedName);

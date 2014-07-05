@@ -25,8 +25,8 @@ import java.util.Set;
  * @author Immortius
  */
 public class ResolutionResult {
-    private boolean success;
-    private Set<Module> modules;
+    private final boolean success;
+    private final Set<Module> modules;
 
     public ResolutionResult(boolean success, Set<Module> modules) {
         this.success = success;

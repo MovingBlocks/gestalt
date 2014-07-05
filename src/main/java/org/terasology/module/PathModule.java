@@ -18,8 +18,6 @@ package org.terasology.module;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terasology.module.exceptions.InvalidModulePathException;
 
 import java.net.MalformedURLException;
@@ -29,20 +27,18 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 /**
- * A module that exists on the file system, but outside the classpath.
+ * A module that exists on the file system as a directory
  *
  * @author Immortius
  */
 public class PathModule extends BaseModule {
-    private static final Logger logger = LoggerFactory.getLogger(PathModule.class);
-
     private final ImmutableList<URL> classpaths;
 
     /**
      * Creates a path module with no code
      *
      * @param path     The root path of the module
-     * @param codePath The relative location of code for the module (relative to root path)
+     * @param codePath The location of code for the module
      * @param metadata Metadata describing this module
      */
     public PathModule(Path path, Path codePath, ModuleMetadata metadata) {

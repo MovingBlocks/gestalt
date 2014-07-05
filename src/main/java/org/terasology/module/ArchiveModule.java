@@ -18,8 +18,6 @@ package org.terasology.module;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terasology.module.exceptions.InvalidModulePathException;
 
 import java.net.MalformedURLException;
@@ -34,19 +32,15 @@ import java.util.Arrays;
  * @author Immortius
  */
 public class ArchiveModule extends BaseModule {
-    private static final Logger logger = LoggerFactory.getLogger(ArchiveModule.class);
-
-    private final Path path;
     private final ImmutableList<URL> classpath;
 
     /**
      * @param path     Must be a file, and must be convertible to a url (some limits on special characters)
-     * @param metadata
+     * @param metadata The metadata describing this module
      */
     public ArchiveModule(Path path, ModuleMetadata metadata) {
         super(Arrays.asList(path), metadata);
         Preconditions.checkArgument(Files.isRegularFile(path));
-        this.path = path;
         try {
             classpath = ImmutableList.of(path.toUri().toURL());
         } catch (MalformedURLException e) {

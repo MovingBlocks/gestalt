@@ -40,7 +40,7 @@ import java.util.Map;
  * @author Immortius
  */
 public class I18nMap implements Iterable<Map.Entry<Locale, String>> {
-    private Map<Locale, String> values;
+    private final Map<Locale, String> values;
 
     /**
      * Constructor when a mapping of Locale to String is available.
