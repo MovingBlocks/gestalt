@@ -26,8 +26,8 @@ import java.util.Objects;
  * @author Immortius
  */
 public class VersionRange {
-    private Version lowerBound;
-    private Version upperBound;
+    private final Version lowerBound;
+    private final Version upperBound;
 
     /**
      * lowerBound must be less than or equal to upperBound

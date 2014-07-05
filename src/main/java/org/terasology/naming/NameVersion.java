@@ -25,8 +25,8 @@ import java.util.Objects;
  * @author Immortius
  */
 public class NameVersion {
-    private Name name;
-    private Version version;
+    private final Name name;
+    private final Version version;
 
     public NameVersion(Name name, Version version) {
         this.name = name;

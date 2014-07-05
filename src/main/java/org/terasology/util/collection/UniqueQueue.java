@@ -34,8 +34,8 @@ import java.util.Set;
 @API
 public class UniqueQueue<T> implements Queue<T> {
 
-    private Set<T> containedSet;
-    private Queue<T> internalQueue;
+    private final Set<T> containedSet;
+    private final Queue<T> internalQueue;
 
     /**
      * Creates a new, empty queue

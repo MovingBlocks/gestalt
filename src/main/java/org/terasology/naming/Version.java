@@ -37,9 +37,9 @@ public final class Version implements Comparable<Version> {
     /**
      * Constructs a version with the given values
      *
-     * @param major
-     * @param minor
-     * @param patch
+     * @param major The major version number (generally incremented for breaking changes)
+     * @param minor The minot version number (generally changes for non-breaking feature enhancements)
+     * @param patch The patch version number (generally changes for non-breaking bug fixes)
      * @throws IllegalArgumentException if a version part is negative
      */
     public Version(int major, int minor, int patch) {

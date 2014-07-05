@@ -31,7 +31,7 @@ import java.nio.file.Path;
  */
 public class FileTypesFilter implements DirectoryStream.Filter<Path> {
 
-    private ImmutableList<String> fileTypes;
+    private final ImmutableList<String> fileTypes;
 
     /**
      * @param fileType  The first file type

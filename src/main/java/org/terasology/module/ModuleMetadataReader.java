@@ -51,7 +51,6 @@ import java.util.Map;
  *          "description": {
  *              "en": "A longer description of the module"
  *          },
- *          "serverSideOnly": false,
  *          "dependencies": [
  *              {
  *                  "id": "baseModule",
@@ -72,7 +71,7 @@ public class ModuleMetadataReader {
 
     private final GsonBuilder builder;
     private transient Gson cachedGson;
-    private Map<String, Type> extensionMap = Maps.newHashMap();
+    private final Map<String, Type> extensionMap = Maps.newHashMap();
 
     public ModuleMetadataReader() {
         this.builder = new GsonBuilder()

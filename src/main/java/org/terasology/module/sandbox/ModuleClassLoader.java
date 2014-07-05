@@ -48,11 +48,11 @@ import java.util.List;
 public class ModuleClassLoader extends URLClassLoader {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleClassLoader.class);
-    private APIProvider apiProvider;
-    private ClassPool pool;
+    private final APIProvider apiProvider;
+    private final ClassPool pool;
 
-    private Name moduleId;
-    private List<BytecodeInjector> bytecodeInjectors;
+    private final Name moduleId;
+    private final List<BytecodeInjector> bytecodeInjectors;
 
     /**
      * @param urls        The urls where the module classes can be found
