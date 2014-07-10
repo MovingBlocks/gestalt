@@ -93,7 +93,7 @@ public class ModuleClassLoader extends URLClassLoader {
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         final Class<?> clazz = super.loadClass(name, resolve);
         ClassLoader parentLoader = AccessController.doPrivileged(new ObtainClassloader(clazz));
-        if (clazz.getClassLoader() != this && !(parentLoader instanceof ModuleClassLoader)) {
+        if (parentLoader != this && !(parentLoader instanceof ModuleClassLoader)) {
             if (apiProvider.isAPIClass(clazz)) {
                 return clazz;
             } else {
