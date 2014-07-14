@@ -219,7 +219,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         }
         URL sourceUrl = type.getProtectionDomain().getCodeSource().getLocation();
         for (Module module : modules.values()) {
-            if (module.isOnClasspath() && module.getClasspaths().contains(sourceUrl)) {
+            if (module.isCodeModule() && module.getClasspaths().contains(sourceUrl)) {
                 return module.getId();
             }
         }
