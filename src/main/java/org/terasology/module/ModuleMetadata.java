@@ -19,11 +19,11 @@ package org.terasology.module;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.terasology.i18n.I18nMap;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,10 +55,9 @@ public class ModuleMetadata {
     private I18nMap displayName = new I18nMap("");
     private I18nMap description = new I18nMap("");
     private List<DependencyInfo> dependencies = Lists.newArrayList();
-    private final Map<String, Object> extensions;
+    private final Map<String, Object> extensions = Maps.newHashMap();
 
     public ModuleMetadata() {
-        this.extensions = Collections.emptyMap();
     }
 
     /**
