@@ -31,17 +31,17 @@ public class ModuleSecurityPolicy extends Policy {
         return !(domain.getClassLoader() instanceof ModuleClassLoader) || super.implies(domain, permission);
     }
 
-	/**
-	 * Returns a modifiable Permissions collection, which is not used again, so JVisualVM can connect via RMI.
-	 */
-	@Override
+    /**
+     * Returns a modifiable Permissions collection, which is not used again, so JVisualVM can connect via RMI.
+     */
+    @Override
     public PermissionCollection getPermissions(CodeSource codesource) {
         return new Permissions();
     }
 
-	/**
-	 * Returns a modifiable Permissions collection, which is not used again, so JVisualVM can connect via RMI.
-	 */
+    /**
+     * Returns a modifiable Permissions collection, which is not used again, so JVisualVM can connect via RMI.
+     */
     @Override
     public PermissionCollection getPermissions(ProtectionDomain domain) {
         return new Permissions();
