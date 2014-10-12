@@ -16,10 +16,8 @@
 
 package org.terasology.module.sandbox;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.Module;
@@ -27,7 +25,6 @@ import org.terasology.module.Module;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * ModuleSecurityManager establishes and enforces a sandbox environment for modules. Modules are restricted to make use of specific classes, packages and permissions

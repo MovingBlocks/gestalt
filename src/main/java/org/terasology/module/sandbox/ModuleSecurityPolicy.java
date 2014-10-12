@@ -15,7 +15,10 @@
  */
 package org.terasology.module.sandbox;
 
+import java.security.CodeSource;
 import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.Permissions;
 import java.security.Policy;
 import java.security.ProtectionDomain;
 
