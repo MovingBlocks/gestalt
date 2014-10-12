@@ -19,6 +19,7 @@ package org.terasology.module;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Maps;
 import org.terasology.i18n.I18nMap;
 import org.terasology.naming.Name;
@@ -54,6 +55,7 @@ public class ModuleMetadata {
     private Version version;
     private I18nMap displayName = new I18nMap("");
     private I18nMap description = new I18nMap("");
+    private Set<String> requiredPermissions = Sets.newLinkedHashSet();
     private List<DependencyInfo> dependencies = Lists.newArrayList();
     private final Map<String, Object> extensions = Maps.newHashMap();
 
@@ -118,6 +120,13 @@ public class ModuleMetadata {
      */
     public void setDescription(I18nMap description) {
         this.description = description;
+    }
+
+    /**
+     * @return A list of the permissions required by this module, corresponding to permission sets installed in the security manager.
+     */
+    public Set<String> getRequiredPermissions() {
+        return requiredPermissions;
     }
 
     /**

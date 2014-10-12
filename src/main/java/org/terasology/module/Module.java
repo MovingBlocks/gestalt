@@ -16,6 +16,7 @@
 package org.terasology.module;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.reflections.Reflections;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
@@ -50,6 +51,11 @@ public interface Module {
      * @return The version of the module
      */
     Version getVersion();
+
+    /**
+     * @return The list of permission sets required by this module
+     */
+    ImmutableSet<String> getRequiredPermissions();
 
     /**
      * Whether the module is included in the classpath of the application. These are not loaded dynamically and hence are not sandboxed and are always active.

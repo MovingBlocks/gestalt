@@ -37,8 +37,8 @@ import java.util.List;
  * A classloader to use when loading modules. This classloader ties into the sandboxing of modules by:
  * <ul>
  * <li>Acting as an indicator that a class belongs to a module - any class whose classloader is an instance of ModuleClassLoader comes from a module.</li>
- * <li>Restricting the classes visible to modules to those registered as API classes or belonging to an API package. Accessing any other class outside of the
- * modules results in a ClassNotFoundException</li>
+ * <li>Restricting the classes visible to modules to those belonging those the module module has access to - as determined by the PermissionProvider.
+ * Accessing any other class outside of the modules results in a ClassNotFoundException</li>
  * </ul>
  * <p/>
  * Additionally, the ModuleClassLoader provides hooks for any injection that needs to be done to module classes as they are loaded, via javassist.
@@ -48,31 +48,33 @@ import java.util.List;
 public class ModuleClassLoader extends URLClassLoader {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleClassLoader.class);
-    private final APIProvider apiProvider;
+    private final PermissionProvider permissionProvider;
     private final ClassPool pool;
 
     private final Name moduleId;
     private final List<BytecodeInjector> bytecodeInjectors;
 
     /**
+     * @param module      The name of the module this classloader belongs to
      * @param urls        The urls where the module classes can be found
      * @param parent      The parent classloader, where the API classes can be found
-     * @param apiProvider The security manager that sandboxes the classes
+     * @param permissionProvider The security manager that sandboxes the classes
      */
-    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, APIProvider apiProvider) {
-        this(module, urls, parent, apiProvider, Collections.<BytecodeInjector>emptyList());
+    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, PermissionProvider permissionProvider) {
+        this(module, urls, parent, permissionProvider, Collections.<BytecodeInjector>emptyList());
     }
 
     /**
+     * @param module      The name of the module this classloader belongs to
      * @param urls        The urls where the module classes can be found
      * @param parent      The parent classloader, where the API classes can be found
-     * @param apiProvider The security manager that sandboxes the classes
+     * @param permissionProvider The security manager that sandboxes the classes
      * @param injectors   A collection of byte code injectors to pass all loaded module code through
      */
-    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, APIProvider apiProvider, Iterable<BytecodeInjector> injectors) {
+    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, PermissionProvider permissionProvider, Iterable<BytecodeInjector> injectors) {
         super(urls, parent);
         this.moduleId = module;
-        this.apiProvider = apiProvider;
+        this.permissionProvider = permissionProvider;
         this.bytecodeInjectors = ImmutableList.copyOf(injectors);
         pool = new ClassPool(ClassPool.getDefault());
         for (URL url : urls) {
@@ -85,19 +87,43 @@ public class ModuleClassLoader extends URLClassLoader {
         }
     }
 
+    /**
+     * @return The id of the module this ClassLoader belongs to
+     */
     public Name getModuleId() {
         return moduleId;
     }
 
+    /**
+     * @return The permission provider for this ModuleClassLoader
+     */
+    public PermissionProvider getPermissionProvider() {
+        return permissionProvider;
+    }
+
+    /**
+     * @return The non-ModuleClassLoader that the module classloader chain is based on
+     */
+    ClassLoader getBaseClassLoader() {
+        if (getParent() instanceof ModuleClassLoader) {
+            return ((ModuleClassLoader) getParent()).getBaseClassLoader();
+        }
+        return getParent();
+    }
+
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        final Class<?> clazz = super.loadClass(name, resolve);
+        Class<?> clazz = super.loadClass(name, resolve);
+        // Skip back to the API classloader (in case the class is allowed in this module but disallowed in an early module in the chain)
+        if (clazz == null) {
+            clazz = getBaseClassLoader().loadClass(name);
+        }
         ClassLoader parentLoader = AccessController.doPrivileged(new ObtainClassloader(clazz));
         if (parentLoader != this && !(parentLoader instanceof ModuleClassLoader)) {
-            if (apiProvider.isAPIClass(clazz)) {
+            if (permissionProvider.isPermitted(clazz)) {
                 return clazz;
             } else {
-                logger.error("Denied access to class (not available to modules): {}", name);
+                logger.error("Denied access to class (not allowed with this module's permissions): {}", name);
                 return null;
             }
         }

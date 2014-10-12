@@ -16,21 +16,18 @@
 
 package org.terasology.module.sandbox;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.terasology.module.Module;
 
 /**
- * The API annotation can be used to mark classes to be available to modules.
+ * Interface for factories that produce permission providers for modules.
  *
  * @author Immortius
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.PACKAGE})
-public @interface API {
+public interface PermissionProviderFactory {
+
     /**
-     * @return The permission sets that should be granted access to the marked class
+     * @param module The module to create a permission provider for.
+     * @return A permission provider suitable for the given module
      */
-    String[] permissionSet() default {ModuleSecurityManager.BASE_PERMISSION_SET};
+    PermissionProvider createPermissionProviderFor(Module module);
 }
