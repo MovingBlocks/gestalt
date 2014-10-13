@@ -62,6 +62,10 @@ public class ModuleSecurityManager extends SecurityManager implements Permission
         permissionSets.put(BASE_PERMISSION_SET, new PermissionSet());
     }
 
+    public PermissionSet getBasePermissionSet() {
+        return getPermissionSet(BASE_PERMISSION_SET);
+    }
+
     public PermissionSet getPermissionSet(String name) {
         return permissionSets.get(name);
     }
