@@ -18,6 +18,7 @@ package org.terasology.module;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
@@ -74,6 +75,11 @@ public abstract class BaseModule implements Module {
     @Override
     public Version getVersion() {
         return metadata.getVersion();
+    }
+
+    @Override
+    public ImmutableSet<String> getRequiredPermissions() {
+        return ImmutableSet.copyOf(metadata.getRequiredPermissions());
     }
 
     @Override

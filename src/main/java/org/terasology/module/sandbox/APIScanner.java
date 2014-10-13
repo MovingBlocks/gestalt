@@ -33,7 +33,8 @@ public class APIScanner {
     }
 
     /**
-     * Scans all modules in a registry that are on the class path, adding all packages and classes marked with the @API annotation to the securityManager's api
+     * Scans all modules in a registry that are on the class path, adding all packages and classes marked with the @API annotation into appropriate permission set(s).
+     * Permission sets will be created if necessary.
      *
      * @param registry The registry of modules to scan
      */
@@ -46,17 +47,24 @@ public class APIScanner {
     }
 
     /**
-     * Scans a module, adding any class or package marked with the @API annotation to the securityManager's api.
+     * Scans a module, adding any class or package marked with the @API annotation into appropriate permission sets. Permission sets will be created if necessary.
      *
      * @param module The module to scan
      */
     public void scan(Module module) {
         for (Class<?> apiClass : module.getReflectionsFragment().getTypesAnnotatedWith(API.class)) {
-            if (apiClass.isSynthetic()) {
-                // This is a package-info
-                securityManager.addAPIPackage(apiClass.getPackage().getName());
-            } else {
-                securityManager.addAPIClass(apiClass);
+            for (String permissionSetId : apiClass.getAnnotation(API.class).permissionSet()) {
+                PermissionSet permissionSet = securityManager.getPermissionSet(permissionSetId);
+                if (permissionSet == null) {
+                    permissionSet = new PermissionSet();
+                    securityManager.addPermissionSet(permissionSetId, permissionSet);
+                }
+                if (apiClass.isSynthetic()) {
+                    // This is a package-info
+                    permissionSet.addAPIPackage(apiClass.getPackage().getName());
+                } else {
+                    permissionSet.addAPIClass(apiClass);
+                }
             }
         }
     }

@@ -27,10 +27,10 @@ import org.reflections.Reflections;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.module.sandbox.APIProvider;
 import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleClassLoader;
 import org.terasology.module.sandbox.ObtainClassloader;
+import org.terasology.module.sandbox.PermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.util.collection.UniqueQueue;
 
@@ -48,8 +48,8 @@ import java.util.Set;
  * An environment composed of a set of modules. A chain of class loaders is created for each module that isn't on the classpath, such that dependencies appear before
  * dependants. Classes of interest can then be discovered by the types they inherit or annotations they have.
  * <p/>
- * When the environment is no longer in use it should be closed - this closes all the class loaders. Memory used by the classloaders will then be available for collection
- * once the last instance of a class loaded from it is freed.
+ * When the environment is no longer in use it should be closed - this closes all the class loaders. Memory used by the ClassLoaders will then be available for garbage
+ * collection once the last instance of a class loaded from it is freed.
  *
  * @author Immortius
  */
@@ -64,23 +64,24 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private Reflections fullReflections;
 
     /**
-     * @param modules     The modules this environment should encompass.
-     * @param apiProvider The provider that determines what classes are API.
-     * @param injectors   Any Bytecode Injectors that should be run over any loaded module class.
+     * @param modules                   The modules this environment should encompass.
+     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
+     * @param injectors                 Any Bytecode Injectors that should be run over any loaded module class.
      * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
      */
-    public ModuleEnvironment(Iterable<Module> modules, APIProvider apiProvider, Iterable<BytecodeInjector> injectors) {
-        this(modules, apiProvider, injectors, ModuleEnvironment.class.getClassLoader());
+    public ModuleEnvironment(Iterable<Module> modules, PermissionProviderFactory permissionProviderFactory, Iterable<BytecodeInjector> injectors) {
+        this(modules, permissionProviderFactory, injectors, ModuleEnvironment.class.getClassLoader());
     }
 
     /**
-     * @param modules        The modules this environment should encompass.
-     * @param apiProvider    The provider that determines what classes are API.
-     * @param injectors      Any Bytecode Injectors that should be run over any loaded module class.
-     * @param apiClassLoader The base classloader the module environment should build upon.
+     * @param modules                   The modules this environment should encompass.
+     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
+     * @param injectors                 Any Bytecode Injectors that should be run over any loaded module class.
+     * @param apiClassLoader            The base classloader the module environment should build upon.
      * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
      */
-    public ModuleEnvironment(Iterable<Module> modules, final APIProvider apiProvider, final Iterable<BytecodeInjector> injectors, ClassLoader apiClassLoader) {
+    public ModuleEnvironment(Iterable<Module> modules, final PermissionProviderFactory permissionProviderFactory,
+                             final Iterable<BytecodeInjector> injectors, ClassLoader apiClassLoader) {
         Map<Name, Reflections> reflectionsByModule = Maps.newLinkedHashMap();
         this.modules = buildModuleMap(modules);
         this.apiClassLoader = apiClassLoader;
@@ -89,7 +90,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         List<Module> orderedModules = getModulesOrderedByDependencies();
         for (final Module module : orderedModules) {
             if (module.isCodeModule()) {
-                lastClassloader = determineClassloaderFor(module, lastClassloader, apiProvider, injectors);
+                lastClassloader = determineClassloaderFor(module, lastClassloader, permissionProviderFactory, injectors);
                 reflectionsByModule.put(module.getId(), module.getReflectionsFragment());
             }
         }
@@ -112,19 +113,20 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
-     * @param module      The module to determine the classloader for
-     * @param parent      The classloader to parent any new classloader off of
-     * @param apiProvider The provider of api information
-     * @param injectors   Any Bytecode Injectors that should be run over any loaded module class.
+     * @param module                    The module to determine the classloader for
+     * @param parent                    The classloader to parent any new classloader off of
+     * @param permissionProviderFactory The provider of api information
+     * @param injectors                 Any Bytecode Injectors that should be run over any loaded module class.
      * @return The classloader to use for module - may be a newly created classloader.
      */
-    private ClassLoader determineClassloaderFor(final Module module, final ClassLoader parent, final APIProvider apiProvider, final Iterable<BytecodeInjector> injectors) {
+    private ClassLoader determineClassloaderFor(final Module module, final ClassLoader parent,
+                                                final PermissionProviderFactory permissionProviderFactory, final Iterable<BytecodeInjector> injectors) {
         if (!module.isOnClasspath()) {
             ModuleClassLoader moduleClassloader = AccessController.doPrivileged(new PrivilegedAction<ModuleClassLoader>() {
                 @Override
                 public ModuleClassLoader run() {
                     return new ModuleClassLoader(module.getId(), module.getClasspaths().toArray(new URL[module.getClasspaths().size()]),
-                            parent, apiProvider, injectors);
+                            parent, permissionProviderFactory.createPermissionProviderFor(module), injectors);
                 }
             });
             managedClassLoaders.add(moduleClassloader);
@@ -255,8 +257,8 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
-     * @param type The type to find subtypes of
-     * @param <U>  The type to find subtypes of
+     * @param type   The type to find subtypes of
+     * @param <U>    The type to find subtypes of
      * @param filter A filter to apply to the returned subtypes
      * @return A Iterable over all subtypes of type that appear in the module environment
      */

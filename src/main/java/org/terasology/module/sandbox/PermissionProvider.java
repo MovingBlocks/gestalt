@@ -16,16 +16,25 @@
 
 package org.terasology.module.sandbox;
 
+import java.security.Permission;
+
 /**
- * Determines what classes are "API" classes and thus available for modules to use.
+ * Provides checks for what classes and permissions are permitted to a module/ModuleClassLoader.
  *
  * @author Immortius
  */
-public interface APIProvider {
+public interface PermissionProvider {
 
     /**
      * @param type The class to check
-     * @return Whether the given class is available to modules
+     * @return Whether access to the given class is permitted
      */
-    boolean isAPIClass(Class type);
+    boolean isPermitted(Class type);
+
+    /**
+     * @param permission The permission to check
+     * @param context The type invoking the permission check
+     * @return Whether access to the given permission is permitted
+     */
+    boolean isPermitted(Permission permission, Class<?> context);
 }
