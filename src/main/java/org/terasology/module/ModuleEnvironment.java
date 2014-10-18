@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.reflections.Reflections;
+import org.reflections.ReflectionsException;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,7 +254,11 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @return A Iterable over all subtypes of type that appear in the module environment
      */
     public <U> Iterable<Class<? extends U>> getSubtypesOf(Class<U> type) {
-        return fullReflections.getSubTypesOf(type);
+        try {
+            return fullReflections.getSubTypesOf(type);
+        } catch (ReflectionsException e) {
+            throw new ReflectionsException("Could not obtain subtypes of '" + type + "' - possible subclass without permission", e);
+        }
     }
 
     /**

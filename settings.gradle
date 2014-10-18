@@ -1,1 +1,3 @@
 rootProject.name = 'gestalt-module'
+
+include 'testpack', 'testpack:moduleA', 'testpack:moduleB', 'testpack:moduleC'

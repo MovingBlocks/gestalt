@@ -1,0 +1,6 @@
+{
+    "id" : "ModuleA",
+    "version" : "1.0.0",
+    "displayName" : "Module A",
+    "description" : "This is a root module with no dependencies or required permissions"
+}
