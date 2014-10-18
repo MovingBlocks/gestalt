@@ -22,7 +22,7 @@ build/
 
 # Ignore IntelliJ
 /out/
-/*.iml
+*.iml
 /*.ipr
 /*.iws
 

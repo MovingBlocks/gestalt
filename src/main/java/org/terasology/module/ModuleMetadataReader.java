@@ -37,6 +37,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Reads ModuleMetadata from a json format.
@@ -67,6 +68,8 @@ import java.util.Map;
 public class ModuleMetadataReader {
 
     private static final Type DEPENDENCY_LIST_TYPE = new TypeToken<List<DependencyInfo>>() {
+    }.getType();
+    private static final Type STRING_SET_TYPE = new TypeToken<Set<String>>() {
     }.getType();
 
     private final GsonBuilder builder;
@@ -155,6 +158,9 @@ public class ModuleMetadataReader {
                         break;
                     case ModuleMetadata.DEPENDENCIES:
                         metadata.getDependencies().addAll((List<DependencyInfo>) context.deserialize(entry.getValue(), DEPENDENCY_LIST_TYPE));
+                        break;
+                    case ModuleMetadata.REQUIRED_PERMISSIONS:
+                        metadata.getRequiredPermissions().addAll((Set<String>) context.deserialize(entry.getValue(), STRING_SET_TYPE));
                         break;
                     default:
                         Type extensionType = extensionMap.get(entry.getKey());

@@ -132,6 +132,9 @@ public class ModuleClassLoader extends URLClassLoader {
 
     @Override
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
+        if (name.startsWith("java.")) {
+            return null;
+        }
         try {
             return AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
                 @Override

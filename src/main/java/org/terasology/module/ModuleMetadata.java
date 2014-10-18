@@ -45,11 +45,12 @@ public class ModuleMetadata {
     public static final String DISPLAY_NAME = "displayName";
     public static final String DESCRIPTION = "description";
     public static final String DEPENDENCIES = "dependencies";
+    public static final String REQUIRED_PERMISSIONS = "requiredPermissions";
 
     /**
      * The set of reserved ids that cannot be used by extensions.
      */
-    public static final Set<String> RESERVED_IDS = ImmutableSet.of(ID, VERSION, DISPLAY_NAME, DESCRIPTION, DEPENDENCIES);
+    public static final Set<String> RESERVED_IDS = ImmutableSet.of(ID, VERSION, DISPLAY_NAME, DESCRIPTION, DEPENDENCIES, REQUIRED_PERMISSIONS);
 
     private Name id;
     private Version version;

@@ -1,0 +1,13 @@
+{
+    "id" : "ModuleC",
+    "version" : "1.0.0",
+    "displayName" : "Module C",
+    "description" : "This module requires ModuleB, but does not require additional permissions",
+    "dependencies": [
+        {
+            "id": "ModuleB",
+            "minVersion": "1.0.0",
+            "maxVersion": "2.0.0"
+        }
+    ]
+}
