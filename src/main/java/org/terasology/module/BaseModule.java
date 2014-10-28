@@ -106,11 +106,10 @@ public abstract class BaseModule implements Module {
     }
 
     private void scanForReflections() {
-        reflectionsFragment = new ConfigurationBuilder()
+        reflectionsFragment = new Reflections(new ConfigurationBuilder()
                 .addUrls(getClasspaths())
                 .setScanners(new TypeAnnotationsScanner(), new SubTypesScanner())
-                .addClassLoader(ClasspathHelper.staticClassLoader())
-                .build();
+                .addClassLoader(ClasspathHelper.staticClassLoader()));
     }
 
     private void collectCacheFromArchive(Path path) {
@@ -118,7 +117,7 @@ public abstract class BaseModule implements Module {
             Path cachePath = archive.getPath(REFLECTIONS_CACHE_FILE);
             if (Files.isRegularFile(cachePath)) {
                 if (reflectionsFragment == null) {
-                    reflectionsFragment = new ConfigurationBuilder().addClassLoader(ClasspathHelper.staticClassLoader()).build();
+                    reflectionsFragment = new Reflections(new ConfigurationBuilder().addClassLoader(ClasspathHelper.staticClassLoader()));
                 }
                 try (InputStream stream = new BufferedInputStream(Files.newInputStream(cachePath))) {
                     reflectionsFragment.collect(stream);
@@ -131,7 +130,7 @@ public abstract class BaseModule implements Module {
 
     private void collectCacheFromPath(Path path) {
         if (reflectionsFragment == null) {
-            reflectionsFragment = new ConfigurationBuilder().addClassLoader(ClasspathHelper.staticClassLoader()).build();
+            reflectionsFragment = new Reflections(new ConfigurationBuilder().addClassLoader(ClasspathHelper.staticClassLoader()));
         }
         reflectionsFragment.collect(path.resolve(REFLECTIONS_CACHE_FILE).toFile());
     }
