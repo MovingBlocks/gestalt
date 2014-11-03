@@ -6,9 +6,6 @@
  */
 apply plugin: 'java'
 apply plugin: 'project-report'
-apply plugin: 'checkstyle'
-apply plugin: 'pmd'
-apply plugin: 'findbugs'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 
