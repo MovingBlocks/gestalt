@@ -79,6 +79,7 @@ gatherModules {
 }
 
 ideaModule.dependsOn gatherModules
+test.dependsOn gatherModules
 
 distributions {
     main{
