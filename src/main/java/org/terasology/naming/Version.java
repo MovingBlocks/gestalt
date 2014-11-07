@@ -15,6 +15,7 @@
  */
 package org.terasology.naming;
 
+import com.google.common.base.Strings;
 import org.terasology.naming.exception.VersionParseException;
 
 import java.util.Objects;
@@ -28,11 +29,12 @@ import java.util.regex.Pattern;
  * @author Immortius
  */
 public final class Version implements Comparable<Version> {
-    private static final Pattern VERSION_PATTERN = Pattern.compile("(0|[1-9][0-9]*).(0|[1-9][0-9]*).(0|[1-9][0-9]*)");
+    private static final Pattern VERSION_PATTERN = Pattern.compile("(0|[1-9][0-9]*).(0|[1-9][0-9]*).(0|[1-9][0-9]*)(-SNAPSHOT)?");
 
     private int major;
     private int minor;
     private int patch;
+    private boolean snapshot;
 
     /**
      * Constructs a version with the given values
@@ -43,13 +45,28 @@ public final class Version implements Comparable<Version> {
      * @throws IllegalArgumentException if a version part is negative
      */
     public Version(int major, int minor, int patch) {
+        this(major, minor, patch, false);
+    }
+
+    /**
+     * Constructs a version with the given values
+     *
+     * @param major The major version number (generally incremented for breaking changes)
+     * @param minor The minot version number (generally changes for non-breaking feature enhancements)
+     * @param patch The patch version number (generally changes for non-breaking bug fixes)
+     * @param snapshot Whether this version is a snapshot (work in progress, not yet released)
+     * @throws IllegalArgumentException if a version part is negative
+     */
+    public Version(int major, int minor, int patch, boolean snapshot) {
         if (major < 0 || minor < 0 || patch < 0) {
             throw new IllegalArgumentException("Illegal version " + major + "." + minor + "." + patch + " - all version parts must be positive");
         }
         this.major = major;
         this.minor = minor;
         this.patch = patch;
+        this.snapshot = snapshot;
     }
+
 
     /**
      * @param version The string of the version
@@ -61,6 +78,7 @@ public final class Version implements Comparable<Version> {
             major = Integer.parseInt(matcher.group(1));
             minor = Integer.parseInt(matcher.group(2));
             patch = Integer.parseInt(matcher.group(3));
+            snapshot = !Strings.isNullOrEmpty(matcher.group(4));
         } else {
             throw new VersionParseException("Invalid version '" + version + "' - must be of the form MAJOR.minor.patch");
         }
@@ -76,6 +94,13 @@ public final class Version implements Comparable<Version> {
 
     public int getPatch() {
         return patch;
+    }
+
+    /**
+     * @return Whether this version is a snapshot (work in progress)
+     */
+    public boolean isSnapshot() {
+        return snapshot;
     }
 
     public Version getNextMajorVersion() {

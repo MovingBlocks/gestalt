@@ -44,7 +44,7 @@ public class TableModuleRegistry implements ModuleRegistry {
     @Override
     public boolean add(Module module) {
         Preconditions.checkNotNull(module);
-        if (!modules.contains(module.getId(), module.getVersion())) {
+        if (!modules.contains(module.getId(), module.getVersion()) || modules.get(module.getId(), module.getVersion()).getVersion().isSnapshot()) {
             modules.put(module.getId(), module.getVersion(), module);
             Module previousLatest = latestModules.get(module.getId());
             if (previousLatest == null || previousLatest.getVersion().compareTo(module.getVersion()) <= 0) {
