@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.terasology.naming.exception.VersionParseException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Immortius
@@ -31,6 +33,16 @@ public class VersionTest {
         assertEquals(1, version.getMajor());
         assertEquals(2, version.getMinor());
         assertEquals(3, version.getPatch());
+        assertFalse(version.isSnapshot());
+    }
+
+    @Test
+    public void parseSnapshotVersion() {
+        Version version = new Version("1.2.3-SNAPSHOT");
+        assertEquals(1, version.getMajor());
+        assertEquals(2, version.getMinor());
+        assertEquals(3, version.getPatch());
+        assertTrue(version.isSnapshot());
     }
 
     @Test
