@@ -71,11 +71,11 @@ description = 'Provides support for modules - java libraries that can be activat
 task gatherModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar'], type: Copy) 
 
 gatherModules {
-	from 'testpack/moduleA/build/libs/'
-	from 'testpack/moduleB/build/libs/'
-	from 'testpack/moduleC/build/libs/'
-	into 'test-modules'
-	include('*.jar')
+    from 'testpack/moduleA/build/libs/'
+    from 'testpack/moduleB/build/libs/'
+    from 'testpack/moduleC/build/libs/'
+    into 'test-modules'
+    include('*.jar')
 }
 
 ideaModule.dependsOn gatherModules
@@ -115,6 +115,7 @@ artifacts {
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            from components.java
             artifact jar {
             }    
             artifact sourceJar {
