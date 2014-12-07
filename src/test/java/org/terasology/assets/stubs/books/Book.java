@@ -16,33 +16,37 @@
 
 package org.terasology.assets.stubs.books;
 
-import com.google.common.collect.ImmutableSet;
-import org.terasology.assets.AbstractAssetFormat;
-import org.terasology.assets.AssetFormat;
-import org.terasology.assets.AssetInput;
+import org.terasology.assets.Asset;
 import org.terasology.naming.ResourceUrn;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Immortius
  */
-public class TextBookFormat extends AbstractAssetFormat<BookData> {
-    private static final ImmutableSet<String> FILE_EXTENSIONS = ImmutableSet.of("txt");
+public class Book extends Asset<BookData> {
 
-    public TextBookFormat() {
-        super(FILE_EXTENSIONS);
+    private String title;
+    private String body;
+
+    public Book(ResourceUrn urn, BookData data) {
+        super(urn);
+        reload(data);
     }
 
     @Override
-    public String getAssetName(String filename) {
-        return null;
+    protected void doReload(BookData data) {
+        title = data.getHeading();
+        body = data.getBody();
     }
 
     @Override
-    public BookData load(ResourceUrn urn, List<AssetInput> inputs) throws IOException {
-        return null;
+    protected void doDispose() {
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getBody() {
+        return body;
     }
 }

@@ -42,7 +42,7 @@ public abstract class AbstractAssetFormat<T extends AssetData> implements AssetF
     }
 
     @Override
-    public Set<String> getFileExtensions() {
+    public final Set<String> getFileExtensions() {
         return fileExtensions;
     }
 

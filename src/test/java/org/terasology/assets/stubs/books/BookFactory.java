@@ -14,25 +14,17 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.stubs;
+package org.terasology.assets.stubs.books;
 
-import org.terasology.assets.AssetType;
+import org.terasology.assets.AssetFactory;
+import org.terasology.naming.ResourceUrn;
 
 /**
  * @author Immortius
  */
-public enum TestAssetTypes implements AssetType {
-    // An asset type with a multi-file format
-    BOOK("Book");
-
-    private String id;
-
-    private TestAssetTypes(String id) {
-        this.id = id;
-    }
-
+public class BookFactory implements AssetFactory<Book, BookData> {
     @Override
-    public String getId() {
-        return id;
+    public Book build(ResourceUrn urn, BookData data) {
+        return new Book(urn, data);
     }
 }

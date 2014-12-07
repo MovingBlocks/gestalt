@@ -28,46 +28,23 @@ import java.util.Map;
  */
 public class AssetManager {
 
-    private Map<AssetType, AssetTypeInfo> assetTypeInfoLookup = Maps.newHashMap();
-    private Map<String, AssetType> assetTypeLookup = Maps.newHashMap();
+    private Map<String, AssetType<?, ?>> assetTypeLookup = Maps.newHashMap();
+    private Map<Class<? extends Asset<?>>, AssetType> assetClassToTypeLookup = Maps.newHashMap();
     private ModuleEnvironment environment;
 
-    /**
-     * Registers an asset type
-     *
-     * @param type          The type to register
-     * @param subfolderName The module asset subfolder to associate with this type.
-     * @return Whether the type was added. If a type with same id has already been registered, registration will fail.
-     */
-    public boolean registerAssetType(AssetType type, String subfolderName) {
-        if (assetTypeLookup.containsKey(type.getId())) {
-            return false;
-        }
-        assetTypeLookup.put(type.getId(), type);
-        assetTypeInfoLookup.put(type, new AssetTypeInfo(type, subfolderName));
-        return true;
+    public AssetType getAssetType(String id) {
+        return assetTypeLookup.get(id);
     }
 
-    public void registerAssetFormat(AssetType type, AssetFormat format) {
-
-    }
-
-    /**
-     * Unregisters an asset type. All loaded assets of this type are disposed.
-     *
-     * @param type The type to unregister
-     */
-    public void unregister(AssetType type) {
-        if (assetTypeInfoLookup.remove(type) != null) {
-            assetTypeLookup.remove(type.getId());
-        }
+    public <T extends Asset<U>, U extends AssetData> AssetType<T, U> getAssetType(Class<? extends T> assetClass) {
+        return assetClassToTypeLookup.get(assetClass);
     }
 
     /**
      * @return An unmodifiable collection of registered asset types
      */
-    public Collection<AssetType> getAssetTypes() {
-        return Collections.unmodifiableSet(assetTypeInfoLookup.keySet());
+    public Collection<AssetType<?, ?>> getAssetTypes() {
+        return Collections.unmodifiableCollection(assetTypeLookup.values());
     }
 
     /**
