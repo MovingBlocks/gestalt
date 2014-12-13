@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
+import org.terasology.util.FileScanning;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -65,6 +67,48 @@ public abstract class BaseModule implements Module {
     @Override
     public ImmutableList<Path> getLocations() {
         return paths;
+    }
+
+    @Override
+    public ImmutableList<Path> findFiles() throws IOException {
+        return findFiles(FileScanning.acceptAll(), FileScanning.acceptAll());
+    }
+
+    @Override
+    public ImmutableList<Path> findFiles(String fileFilterGlob) throws IOException {
+        final ImmutableList.Builder<Path> resultBuilder = ImmutableList.builder();
+        for (Path location : getLocations()) {
+            if (Files.isRegularFile(location)) {
+                try (FileSystem moduleArchive = FileSystems.newFileSystem(location, null)) {
+                    PathMatcher globMatcher = moduleArchive.getPathMatcher(fileFilterGlob);
+                    for (Path scanPath : moduleArchive.getRootDirectories()) {
+                        resultBuilder.addAll(FileScanning.findFilesInPath(scanPath, FileScanning.acceptAll(), globMatcher));
+                    }
+                }
+            } else if (Files.isDirectory(location)) {
+                logger.info("Directory {}", location);
+                PathMatcher globMatcher = location.getFileSystem().getPathMatcher(fileFilterGlob);
+                resultBuilder.addAll(FileScanning.findFilesInPath(location, FileScanning.acceptAll(), globMatcher));
+            }
+        }
+        return resultBuilder.build();
+    }
+
+    @Override
+    public ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter) throws IOException {
+        final ImmutableList.Builder<Path> resultBuilder = ImmutableList.builder();
+        for (Path location : getLocations()) {
+            if (Files.isRegularFile(location)) {
+                try (FileSystem moduleArchive = FileSystems.newFileSystem(location, null)) {
+                    for (Path scanPath : moduleArchive.getRootDirectories()) {
+                        resultBuilder.addAll(FileScanning.findFilesInPath(scanPath, scanFilter, fileFilter));
+                    }
+                }
+            } else if (Files.isDirectory(location)) {
+                resultBuilder.addAll(FileScanning.findFilesInPath(location, scanFilter, fileFilter));
+            }
+        }
+        return resultBuilder.build();
     }
 
     @Override

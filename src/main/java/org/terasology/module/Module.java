@@ -21,8 +21,10 @@ import org.reflections.Reflections;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 
 /**
  * A module is an identified and versioned set of code and/or resources that can be loaded and used at runtime. This class encapsulates information on a
@@ -36,6 +38,35 @@ public interface Module {
      * @return The locations composing the module
      */
     ImmutableList<Path> getLocations();
+
+    /**
+     * Finds files in a module. This will return all files (including class files)
+     * @return A collection of discovered files
+     */
+    ImmutableList<Path> findFiles() throws IOException;
+
+    /**
+     * Finds files in a module. This method allows a globbing filter to be provided to restrict the discovered files.
+     * @param fileFilterGlob  A globbing filter, see {@link java.nio.file.FileSystem#getPathMatcher(String) java.nio.file.FileSystem.getPathMatcher}
+     * @return A collection of discovered files
+     */
+    ImmutableList<Path> findFiles(String fileFilterGlob) throws IOException;
+
+    /**
+     * Finds files in a module. This method allows a directory filter and file filter to be provided to restrict the discovered files.
+     * <p>
+     *     The scan filter determines what directories will be scanned. The scan starts at the root path, and then will drill down into subdirectories as they are
+     *     encountered. This means that if you are only interested in files under 'some/sub/dir', you will need to permit '', 'some', 'some/sub' and 'some/sub/dir', and use
+     *     the fileFilter to filter out files from higher in the hierarchy.
+     * </p>
+     * <p>
+     *     The file filter determines what files will be returned.
+     * </p>
+     * @param scanFilter A filter on the paths to scan.
+     * @param fileFilter A filter on the files to be returned
+     * @return A collection of discovered files
+     */
+    ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter) throws IOException;
 
     /**
      * @return The urls forming the classpath of the module

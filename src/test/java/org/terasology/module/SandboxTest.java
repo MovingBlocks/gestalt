@@ -25,7 +25,6 @@ import org.terasology.module.sandbox.PermissionSet;
 import org.terasology.naming.Name;
 
 import java.io.FilePermission;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.security.Policy;
@@ -62,7 +61,7 @@ public class SandboxTest {
 
     // Ensure a normal method using globally allowed classes works
     @Test
-     public void accessToNormalMethod() throws Exception {
+    public void accessToNormalMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList());
 
