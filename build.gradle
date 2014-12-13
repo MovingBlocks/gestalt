@@ -45,6 +45,9 @@ buildscript {
 repositories {
     // Main Maven repo
     mavenCentral()
+    maven {
+        url "http://artifactory.terasology.org/artifactory/repo"
+    }
 }
 
 // Primary dependencies definition
