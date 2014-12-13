@@ -196,7 +196,7 @@ public class DependencyResolver {
             Version dependencyVersion = dependencyVersions.next();
             boolean valid = false;
             for (Version version : moduleVersionPool.get(constraint.from)) {
-                VersionRange versionRange = constraint.versionCompatibilities.get(version);
+                VersionRange versionRange = constraint.getVersionCompatibilities().get(version);
                 if (versionRange == null || versionRange.contains(dependencyVersion)) {
                     valid = true;
                     break;
@@ -222,7 +222,7 @@ public class DependencyResolver {
         Iterator<Version> validVersions = moduleVersionPool.get(constraint.from).iterator();
         while (validVersions.hasNext()) {
             Version version = validVersions.next();
-            VersionRange versionRange = constraint.versionCompatibilities.get(version);
+            VersionRange versionRange = constraint.getVersionCompatibilities().get(version);
             if (versionRange != null) {
                 boolean valid = false;
                 for (Version dependencyVersion : moduleVersionPool.get(constraint.to)) {
@@ -311,6 +311,10 @@ public class DependencyResolver {
             this.from = from;
             this.to = to;
             this.versionCompatibilities = versionCompatibilities;
+        }
+
+        public Map<Version, VersionRange> getVersionCompatibilities() {
+            return versionCompatibilities;
         }
 
         @Override

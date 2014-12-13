@@ -105,7 +105,6 @@ public class SandboxTest {
 
     private Class<?> findClass(String name, ModuleEnvironment environment) {
         for (Class<?> type : environment.getSubtypesOf(Comparator.class)) {
-            System.out.println(type.getSimpleName());
             if (type.getSimpleName().equals(name)) {
                 return type;
             }
