@@ -158,10 +158,9 @@ public class TableModuleRegistry implements ModuleRegistry {
             if (module.getVersion().compareTo(minVersion) >= 0) {
                 Module result = null;
                 for (Map.Entry<Version, Module> item : modules.row(id).entrySet()) {
-                    if (item.getKey().compareTo(minVersion) >= 0 && item.getKey().compareTo(maxVersion) < 0) {
-                        if (result == null || item.getKey().compareTo(result.getVersion()) > 0) {
-                            result = item.getValue();
-                        }
+                    if (item.getKey().compareTo(minVersion) >= 0 && item.getKey().compareTo(maxVersion) < 0
+                            && (result == null || item.getKey().compareTo(result.getVersion()) > 0)) {
+                        result = item.getValue();
                     }
                 }
                 return result;
