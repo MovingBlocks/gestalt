@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.util;
+package org.terasology.util.io;
 
 import com.google.common.collect.ImmutableList;
 

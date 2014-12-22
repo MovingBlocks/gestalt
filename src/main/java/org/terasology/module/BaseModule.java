@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
-import org.terasology.util.FileScanning;
+import org.terasology.util.io.FileScanning;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
