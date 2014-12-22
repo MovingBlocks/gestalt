@@ -95,9 +95,12 @@ public abstract class BaseModule implements Module {
     }
 
     @Override
-    public ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter) throws IOException {
+    public ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter, String ... relativePath) throws IOException {
         final ImmutableList.Builder<Path> resultBuilder = ImmutableList.builder();
         for (Path location : getLocations()) {
+            for (String pathPart : relativePath) {
+                location = location.resolve(pathPart);
+            }
             if (Files.isRegularFile(location)) {
                 try (FileSystem moduleArchive = FileSystems.newFileSystem(location, null)) {
                     for (Path scanPath : moduleArchive.getRootDirectories()) {
