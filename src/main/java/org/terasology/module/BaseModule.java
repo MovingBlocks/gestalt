@@ -97,18 +97,19 @@ public abstract class BaseModule implements Module {
     @Override
     public ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter, String ... relativePath) throws IOException {
         final ImmutableList.Builder<Path> resultBuilder = ImmutableList.builder();
-        for (Path location : getLocations()) {
+        for (Path moduleLocation : getLocations()) {
+            Path scanLocation = moduleLocation;
             for (String pathPart : relativePath) {
-                location = location.resolve(pathPart);
+                scanLocation = scanLocation.resolve(pathPart);
             }
-            if (Files.isRegularFile(location)) {
-                try (FileSystem moduleArchive = FileSystems.newFileSystem(location, null)) {
+            if (Files.isRegularFile(scanLocation)) {
+                try (FileSystem moduleArchive = FileSystems.newFileSystem(scanLocation, null)) {
                     for (Path scanPath : moduleArchive.getRootDirectories()) {
                         resultBuilder.addAll(FileScanning.findFilesInPath(scanPath, scanFilter, fileFilter));
                     }
                 }
-            } else if (Files.isDirectory(location)) {
-                resultBuilder.addAll(FileScanning.findFilesInPath(location, scanFilter, fileFilter));
+            } else if (Files.isDirectory(scanLocation)) {
+                resultBuilder.addAll(FileScanning.findFilesInPath(scanLocation, scanFilter, fileFilter));
             }
         }
         return resultBuilder.build();
