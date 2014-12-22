@@ -38,7 +38,7 @@ public class VersionRange {
     public VersionRange(Version lowerBound, Version upperBound) {
         Preconditions.checkNotNull(lowerBound);
         Preconditions.checkNotNull(upperBound);
-        Preconditions.checkArgument(lowerBound.compareTo(upperBound) <= 0, "upperBound must be greater than lowerBound");
+        Preconditions.checkArgument(lowerBound.compareTo(upperBound) < 0, "upperBound must be greater than lowerBound");
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
     }
