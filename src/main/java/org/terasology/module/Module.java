@@ -55,18 +55,17 @@ public interface Module {
     /**
      * Finds files in a module. This method allows a directory filter and file filter to be provided to restrict the discovered files.
      * <p>
-     *     The scan filter determines what directories will be scanned. The scan starts at the root path, and then will drill down into subdirectories as they are
-     *     encountered. This means that if you are only interested in files under 'some/sub/dir', you will need to permit '', 'some', 'some/sub' and 'some/sub/dir', and use
-     *     the fileFilter to filter out files from higher in the hierarchy.
+     *     The scan filter determines what directories will be visited, starting from the given relative path.
      * </p>
      * <p>
      *     The file filter determines what files will be returned.
      * </p>
-     * @param scanFilter A filter on the paths to scan.
+     * @param scanFilter A filter on the directories to visit
      * @param fileFilter A filter on the files to be returned
+     * @param relativePath the relative path within the module to scan
      * @return A collection of discovered files
      */
-    ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter) throws IOException;
+    ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter, String ... relativePath) throws IOException;
 
     /**
      * @return The urls forming the classpath of the module
