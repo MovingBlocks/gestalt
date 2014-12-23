@@ -52,7 +52,7 @@ repositories {
 
 // Primary dependencies definition
 dependencies {
-    compile group: 'org.terasology', name: 'gestalt-module', version: '2.1.1'
+    compile group: 'org.terasology', name: 'gestalt-module', version: '2.2.2'
 
     // These dependencies are only needed for running tests
     testCompile group: 'junit', name: 'junit', version: '4.11'
@@ -147,6 +147,7 @@ findbugs {
 
 // Setup IntelliJ-IDEA
 idea {
+
     project {
         jdkName = '1.7'
         languageLevel = 'JDK_1_7'
@@ -169,6 +170,7 @@ idea {
         // Exclude Eclipse dirs
         excludeDirs += file('bin')
         excludeDirs += file('.settings')
+        downloadSources = true
     }
 
     workspace {

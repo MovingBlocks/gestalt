@@ -16,44 +16,54 @@
 
 package org.terasology.assets;
 
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 /**
  * @author Immortius
  */
-public class AssetInput implements Closeable {
+public class AssetInput {
 
-    private final String filename;
-    private final InputStream inputStream;
+    private final Path path;
 
-    public AssetInput(String filename, InputStream inputStream) {
-        this.filename = filename;
-        this.inputStream = inputStream;
+    public AssetInput(Path path) {
+        this.path = path;
     }
 
     public String getFilename() {
-        return filename;
+        return path.getFileName().toString();
     }
 
     public String getFileExtension() {
+        String filename = getFilename();
         if (filename.contains(".")) {
             return filename.substring(filename.lastIndexOf(".") + 1);
         }
         return "";
     }
 
-    public InputStream getInputStream() {
-        return inputStream;
-    }
-
-    public void close() throws IOException {
-        inputStream.close();
+    public BufferedInputStream openStream() throws IOException {
+        try {
+            return AccessController.doPrivileged(new PrivilegedExceptionAction<BufferedInputStream>() {
+                @Override
+                public BufferedInputStream run() throws IOException {
+                    return new BufferedInputStream(Files.newInputStream(path));
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            throw new IOException("Failed to open stream for '" + path + "'", e);
+        }
     }
 
     @Override
     public String toString() {
-        return filename;
+        return path.getFileName().toString();
     }
 }

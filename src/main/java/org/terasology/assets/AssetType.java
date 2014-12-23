@@ -18,14 +18,29 @@ package org.terasology.assets;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terasology.assets.exceptions.InvalidAssetFilenameException;
+import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+import org.terasology.util.io.FileScanning;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class AssetType<T extends Asset<U>, U extends AssetData> {
+
+    private static final String ASSET_FOLDER = "assets";
+    private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
     private final Name id;
     private final String folderName;
@@ -33,8 +48,12 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
 
     private ModuleEnvironment moduleEnvironment;
     private AssetFactory<T, U> factory;
+    private List<AssetFormat<U>> formats = Lists.newArrayList();
 
     private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
+
+    private Table<Name, Name, UnloadedAsset<U>> unloadedAssetLookup = HashBasedTable.create();
+
 
     public AssetType(String id, String folderName, Class<T> assetClass) {
         this(new Name(id), folderName, assetClass);
@@ -58,8 +77,20 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         return assetClass;
     }
 
+    public ModuleEnvironment getEnvironment() {
+        return moduleEnvironment;
+    }
+
     public void setEnvironment(ModuleEnvironment environment) {
         this.moduleEnvironment = environment;
+        unloadedAssetLookup.clear();
+        for (AssetFormat<U> format : formats) {
+            scanForFormat(format);
+        }
+    }
+
+    public AssetFactory<T, U> getFactory() {
+        return factory;
     }
 
     public void setFactory(AssetFactory<T, U> factory) {
@@ -68,6 +99,67 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
             asset.dispose();
         }
         loadedAssets.clear();
+    }
+
+    public List<AssetFormat<U>> getFormats() {
+        return Collections.unmodifiableList(formats);
+    }
+
+    public void addFormat(AssetFormat<U> format) {
+        formats.add(format);
+        if (moduleEnvironment != null) {
+            scanForFormat(format);
+        }
+    }
+
+    private void scanForFormat(AssetFormat<U> format) {
+        for (Module module : moduleEnvironment) {
+            Map<Name, UnloadedAsset<U>> moduleSources = Maps.newLinkedHashMap();
+            try {
+                for (Path file : module.findFiles(FileScanning.acceptAll(), format.getFileMatcher(), ASSET_FOLDER, folderName)) {
+                    try {
+                        Name assetName = format.getAssetName(file.getFileName().toString());
+                        UnloadedAsset<U> source = unloadedAssetLookup.get(assetName, module.getId());
+                        if (source == null) {
+                            source = new UnloadedAsset<>(new ResourceUrn(module.getId(), assetName), format);
+                            moduleSources.put(assetName, source);
+                        }
+                        source.addInput(file);
+                    } catch (InvalidAssetFilenameException e) {
+                        logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), id, e);
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Failed to scan module '{}' for assets", module.getId(), e);
+            }
+
+            unloadedAssetLookup.column(module.getId()).putAll(moduleSources);
+        }
+    }
+
+    public void removeFormat(AssetFormat<U> format) {
+        formats.remove(format);
+    }
+
+    public void removeAllFormats() {
+        formats.clear();
+    }
+
+    public T getAsset(ResourceUrn urn) {
+        Preconditions.checkNotNull(urn);
+        T asset = loadedAssets.get(urn);
+        if (asset == null && moduleEnvironment != null && urn.getFragmentName().isEmpty()) {
+            UnloadedAsset<U> source = unloadedAssetLookup.get(urn.getResourceName(), urn.getModuleName());
+            if (source != null) {
+                try {
+                    U assetData = source.load();
+                    return loadAsset(urn, assetData);
+                } catch (IOException e) {
+                    logger.error("Failed to load asset '" + urn + "'", e);
+                }
+            }
+        }
+        return asset;
     }
 
     public void dispose(ResourceUrn urn) {
@@ -120,7 +212,5 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         return id.toString();
     }
 
-    public T getAsset(ResourceUrn urn) {
-        return loadedAssets.get(urn);
-    }
+
 }

@@ -16,8 +16,12 @@
 
 package org.terasology.assets;
 
-import com.google.common.collect.ImmutableSet;
+import org.terasology.assets.exceptions.InvalidAssetFilenameException;
+import org.terasology.util.io.FileExtensionPathMatcher;
+import org.terasology.naming.Name;
 
+import java.nio.file.PathMatcher;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -26,24 +30,23 @@ import java.util.Set;
  */
 public abstract class AbstractAssetFormat<T extends AssetData> implements AssetFormat<T> {
 
-    private ImmutableSet<String> fileExtensions;
+    private FileExtensionPathMatcher fileMatcher;
 
-    public AbstractAssetFormat(Set<String> fileExtensions) {
-        this.fileExtensions = ImmutableSet.copyOf(fileExtensions);
+    public AbstractAssetFormat(String ... fileExtensions) {
+        this.fileMatcher = new FileExtensionPathMatcher(fileExtensions);
     }
 
     @Override
-    public String getAssetName(String filename) {
+    public Name getAssetName(String filename) throws InvalidAssetFilenameException {
         int extensionStart = filename.lastIndexOf('.');
         if (extensionStart != -1) {
-            return filename.substring(extensionStart);
+            return new Name(filename.substring(extensionStart));
         }
-        return filename;
+        return new Name(filename);
     }
 
     @Override
-    public final Set<String> getFileExtensions() {
-        return fileExtensions;
+    public PathMatcher getFileMatcher() {
+        return fileMatcher;
     }
-
 }

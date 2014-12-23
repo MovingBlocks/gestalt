@@ -16,17 +16,32 @@
 
 package org.terasology.assets;
 
+import com.google.common.collect.Lists;
 import org.junit.Test;
-import org.terasology.assets.stubs.books.Book;
-import org.terasology.assets.stubs.books.BookData;
-import org.terasology.assets.stubs.books.BookFactory;
+import org.terasology.util.io.FileExtensionPathMatcher;
+import org.terasology.assets.stubs.text.Text;
+import org.terasology.assets.stubs.text.TextData;
+import org.terasology.assets.stubs.text.TextFactory;
+import org.terasology.module.ClasspathModule;
+import org.terasology.module.Module;
+import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.ModuleMetadata;
+import org.terasology.module.sandbox.BytecodeInjector;
+import org.terasology.module.sandbox.PermissionProvider;
+import org.terasology.module.sandbox.PermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+
+import java.security.Permission;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,63 +51,62 @@ import static org.mockito.Mockito.when;
  */
 public class AssetTypeTest {
 
-    public static final String ASSET_TYPE_ID = "book";
-    public static final String FOLDER_NAME = "books";
+    public static final String ASSET_TYPE_ID = "text";
+    public static final String FOLDER_NAME = "text";
 
     public static final ResourceUrn URN = new ResourceUrn("engine", "testAssetPleaseIgnore");
 
 
-    private AssetType<Book, BookData> assetType = new AssetType<>(ASSET_TYPE_ID, FOLDER_NAME, Book.class);
+    private AssetType<Text, TextData> assetType = new AssetType<>(ASSET_TYPE_ID, FOLDER_NAME, Text.class);
 
     @Test
     public void construction() {
 
         assertEquals(new Name(ASSET_TYPE_ID), assetType.getId());
         assertEquals(FOLDER_NAME, assetType.getFolderName());
-        assertEquals(Book.class,  assetType.getAssetClass());
+        assertEquals(Text.class,  assetType.getAssetClass());
     }
 
     @Test
     public void loadData() {
-        AssetFactory<Book, BookData> factory = mock(AssetFactory.class);
-        BookData data = new BookData("Title", "Body");
+        AssetFactory<Text, TextData> factory = mock(AssetFactory.class);
+        TextData data = new TextData("Value");
         assetType.setFactory(factory);
-        Book book = new Book(URN, data);
+        Text book = new Text(URN, data);
         when(factory.build(URN, data)).thenReturn(book);
 
-        Book createdBook = assetType.loadAsset(URN, data);
+        Text createdBook = assetType.loadAsset(URN, data);
         assertEquals(book, createdBook);
         verify(factory).build(URN, data);
     }
 
     @Test
     public void retrieveLoadedDataByUrn() {
-        assetType.setFactory(new BookFactory());
-        BookData data = new BookData("Title", "Body");
+        assetType.setFactory(new TextFactory());
+        TextData data = new TextData("Body");
 
-        Book loadedBook = assetType.loadAsset(URN, data);
-        Book retrievedBook = assetType.getAsset(URN);
+        Text loadedBook = assetType.loadAsset(URN, data);
+        Text retrievedBook = assetType.getAsset(URN);
         assertEquals(loadedBook, retrievedBook);
     }
 
     @Test
     public void loadingAssetWithSameUrnReloadsExistingAsset() {
-        assetType.setFactory(new BookFactory());
-        BookData initialData = new BookData("Title", "Body");
-        Book initialBook = assetType.loadAsset(URN, initialData);
-        BookData newData = new BookData("Title2", "Body2");
+        assetType.setFactory(new TextFactory());
+        TextData initialData = new TextData("Body");
+        Text initialBook = assetType.loadAsset(URN, initialData);
+        TextData newData = new TextData("Body2");
 
-        Book newBook = assetType.loadAsset(URN, newData);
+        Text newBook = assetType.loadAsset(URN, newData);
         assertSame(initialBook, newBook);
-        assertEquals(newData.getHeading(), initialBook.getTitle());
-        assertEquals(newData.getBody(), initialBook.getBody());
+        assertEquals(newData.getValue(), initialBook.getValue());
     }
 
     @Test
     public void changingFactoryDisposesAllAssets() {
-        assetType.setFactory(new BookFactory());
-        BookData data = new BookData("Title", "Body");
-        Book asset = assetType.loadAsset(URN, data);
+        assetType.setFactory(new TextFactory());
+        TextData data = new TextData("Body");
+        Text asset = assetType.loadAsset(URN, data);
 
         assetType.setFactory(mock(AssetFactory.class));
         assertTrue(asset.isDisposed());
@@ -101,13 +115,51 @@ public class AssetTypeTest {
 
     @Test
     public void disposingAsset() {
-        assetType.setFactory(new BookFactory());
-        BookData data = new BookData("Title", "Body");
-        Book asset = assetType.loadAsset(URN, data);
+        assetType.setFactory(new TextFactory());
+        TextData data = new TextData("Body");
+        Text asset = assetType.loadAsset(URN, data);
 
         assetType.dispose(URN);
         assertTrue(asset.isDisposed());
         assertNull(assetType.getAsset(URN));
+    }
+
+    @Test
+    public void resolveAssetWithUrn() throws Exception {
+        AssetFactory<Text, TextData> factory = mock(AssetFactory.class);
+        TextData data = new TextData("value");
+        assetType.setFactory(factory);
+        Text book = new Text(new ResourceUrn("test:example"), data);
+        when(factory.build(new ResourceUrn("test:example"), data)).thenReturn(book);
+
+        AssetFormat<TextData> format = mock(AssetFormat.class);
+        when(format.getAssetName("example.txt")).thenReturn(new Name("example"));
+        when(format.getFileMatcher()).thenReturn(new FileExtensionPathMatcher("txt"));
+        when(format.load(eq(new ResourceUrn("test:example")), any(List.class))).thenReturn(data);
+        assetType.addFormat(format);
+
+        ModuleMetadata testModuleMetadata = new ModuleMetadata();
+        testModuleMetadata.setId(new Name("test"));
+        ClasspathModule module = ClasspathModule.create(testModuleMetadata, true, getClass());
+        ModuleEnvironment environment = new ModuleEnvironment(Lists.<Module>newArrayList(module), new PermissionProviderFactory() {
+            @Override
+            public PermissionProvider createPermissionProviderFor(Module module) {
+                return new PermissionProvider() {
+                    @Override
+                    public boolean isPermitted(Class aClass) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isPermitted(Permission permission, Class<?> aClass) {
+                        return false;
+                    }
+                };
+            }
+        }, Collections.<BytecodeInjector>emptyList());
+        assetType.setEnvironment(environment);
+
+        assertEquals(book, assetType.getAsset(new ResourceUrn("test:example")));
     }
 
 }
