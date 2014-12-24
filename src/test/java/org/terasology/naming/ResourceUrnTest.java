@@ -17,6 +17,7 @@
 package org.terasology.naming;
 
 import org.junit.Test;
+import org.terasology.naming.exceptions.InvalidUrnException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -35,22 +36,11 @@ public class ResourceUrnTest {
     private static final String URN_WITH_FRAGMENT_STRING = URN_STRING + "#" + TEST_FRAGMENT;
 
     @Test
-    public void emptyConstructor() {
-        ResourceUrn urn = new ResourceUrn();
-        assertTrue(urn.getModuleName().isEmpty());
-        assertTrue(urn.getResourceName().isEmpty());
-        assertTrue(urn.getFragmentName().isEmpty());
-        assertFalse(urn.isValid());
-        assertEquals("", urn.toString());
-    }
-
-    @Test
     public void moduleAndResourceConstructor() {
         ResourceUrn urn = new ResourceUrn(TEST_MODULE, TEST_RESOURCE);
         assertEquals(new Name(TEST_MODULE), urn.getModuleName());
         assertEquals(new Name(TEST_RESOURCE), urn.getResourceName());
         assertTrue(urn.getFragmentName().isEmpty());
-        assertTrue(urn.isValid());
         assertEquals(URN_STRING, urn.toString());
     }
 
@@ -60,7 +50,6 @@ public class ResourceUrnTest {
         assertEquals(new Name(TEST_MODULE), urn.getModuleName());
         assertEquals(new Name(TEST_RESOURCE), urn.getResourceName());
         assertEquals(new Name(TEST_FRAGMENT), urn.getFragmentName());
-        assertTrue(urn.isValid());
         assertEquals(URN_WITH_FRAGMENT_STRING, urn.toString());
     }
 
@@ -70,7 +59,6 @@ public class ResourceUrnTest {
         assertEquals(new Name(TEST_MODULE), urn.getModuleName());
         assertEquals(new Name(TEST_RESOURCE), urn.getResourceName());
         assertTrue(urn.getFragmentName().isEmpty());
-        assertTrue(urn.isValid());
         assertEquals(URN_STRING, urn.toString());
     }
 
@@ -80,18 +68,12 @@ public class ResourceUrnTest {
         assertEquals(new Name(TEST_MODULE), urn.getModuleName());
         assertEquals(new Name(TEST_RESOURCE), urn.getResourceName());
         assertEquals(new Name(TEST_FRAGMENT), urn.getFragmentName());
-        assertTrue(urn.isValid());
         assertEquals(URN_WITH_FRAGMENT_STRING, urn.toString());
     }
 
-    @Test
+    @Test(expected = InvalidUrnException.class)
     public void invalidUrnStringConstructor() {
-        ResourceUrn urn = new ResourceUrn("blerg");
-        assertTrue(urn.getModuleName().isEmpty());
-        assertTrue(urn.getResourceName().isEmpty());
-        assertTrue(urn.getFragmentName().isEmpty());
-        assertFalse(urn.isValid());
-        assertEquals("", urn.toString());
+        new ResourceUrn("blerg");
     }
 
     @Test

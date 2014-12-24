@@ -162,6 +162,13 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         return asset;
     }
 
+    public T getAsset(String urn) {
+        if (ResourceUrn.isValid(urn)) {
+            return getAsset(new ResourceUrn(urn));
+        }
+        return null;
+    }
+
     public void dispose(ResourceUrn urn) {
         T asset = loadedAssets.remove(urn);
         if (asset != null) {
@@ -211,6 +218,7 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
     public String toString() {
         return id.toString();
     }
+
 
 
 }

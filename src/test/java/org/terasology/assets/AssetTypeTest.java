@@ -18,10 +18,10 @@ package org.terasology.assets;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
-import org.terasology.util.io.FileExtensionPathMatcher;
 import org.terasology.assets.stubs.text.Text;
 import org.terasology.assets.stubs.text.TextData;
 import org.terasology.assets.stubs.text.TextFactory;
+import org.terasology.assets.stubs.text.TextFormat;
 import org.terasology.module.ClasspathModule;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
@@ -31,12 +31,15 @@ import org.terasology.module.sandbox.PermissionProvider;
 import org.terasology.module.sandbox.PermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+import org.terasology.util.io.FileExtensionPathMatcher;
 
+import java.net.URISyntaxException;
 import java.security.Permission;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -64,7 +67,7 @@ public class AssetTypeTest {
 
         assertEquals(new Name(ASSET_TYPE_ID), assetType.getId());
         assertEquals(FOLDER_NAME, assetType.getFolderName());
-        assertEquals(Text.class,  assetType.getAssetClass());
+        assertEquals(Text.class, assetType.getAssetClass());
     }
 
     @Test
@@ -138,6 +141,23 @@ public class AssetTypeTest {
         when(format.load(eq(new ResourceUrn("test:example")), any(List.class))).thenReturn(data);
         assetType.addFormat(format);
 
+        assetType.setEnvironment(createEnvironment());
+
+        assertEquals(book, assetType.getAsset(new ResourceUrn("test:example")));
+    }
+
+    @Test
+    public void stringResolveFullUrn() throws Exception {
+        assetType.setFactory(new TextFactory());
+        assetType.addFormat(new TextFormat());
+        assetType.setEnvironment(createEnvironment());
+
+        Text asset = assetType.getAsset("test:example");
+        assertNotNull(asset);
+        assertEquals(new ResourceUrn("test:example"), asset.getUrn());
+    }
+
+    private ModuleEnvironment createEnvironment() throws URISyntaxException {
         ModuleMetadata testModuleMetadata = new ModuleMetadata();
         testModuleMetadata.setId(new Name("test"));
         ClasspathModule module = ClasspathModule.create(testModuleMetadata, true, getClass());
@@ -157,9 +177,7 @@ public class AssetTypeTest {
                 };
             }
         }, Collections.<BytecodeInjector>emptyList());
-        assetType.setEnvironment(environment);
-
-        assertEquals(book, assetType.getAsset(new ResourceUrn("test:example")));
+        return environment;
     }
 
 }

@@ -40,7 +40,7 @@ public abstract class AbstractAssetFormat<T extends AssetData> implements AssetF
     public Name getAssetName(String filename) throws InvalidAssetFilenameException {
         int extensionStart = filename.lastIndexOf('.');
         if (extensionStart != -1) {
-            return new Name(filename.substring(extensionStart));
+            return new Name(filename.substring(0, extensionStart));
         }
         return new Name(filename);
     }
