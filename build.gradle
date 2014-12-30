@@ -58,6 +58,8 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
     testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.2'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
+    testCompile group: 'org.jboss.shrinkwrap', name: 'shrinkwrap-impl-base', version: '1.2.2'
+    testCompile group: 'org.jboss.shrinkwrap', name: 'shrinkwrap-impl-nio2', version: '1.2.2'
 }
 
 // Set the expected module Java level (can use a higher Java to run, but should not use features from a higher Java)

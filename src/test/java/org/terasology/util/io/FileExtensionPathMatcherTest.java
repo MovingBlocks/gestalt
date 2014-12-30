@@ -19,7 +19,6 @@ package org.terasology.util.io;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.terasology.util.io.FileExtensionPathMatcher;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

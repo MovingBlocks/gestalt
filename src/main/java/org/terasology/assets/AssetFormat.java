@@ -23,7 +23,6 @@ import org.terasology.naming.ResourceUrn;
 import java.io.IOException;
 import java.nio.file.PathMatcher;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Immortius
@@ -44,7 +43,8 @@ public interface AssetFormat<T extends AssetData> {
 
     /**
      * Loads an asset.
-     * @param urn The urn identifying the asset being loaded.
+     *
+     * @param urn    The urn identifying the asset being loaded.
      * @param inputs The inputs corresponding to this asset
      * @return The loaded asset
      * @throws IOException If there are any errors loading the asset

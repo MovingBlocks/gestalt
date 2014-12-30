@@ -1,0 +1,13 @@
+{
+    "id": "moduleB",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "dependencies" : [
+        {
+            "id": "test",
+            "minVersion": "1.0.0"
+        }
+    ]
+}

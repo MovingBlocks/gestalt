@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.terasology.naming.exceptions.InvalidUrnException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**

@@ -37,8 +37,8 @@ import java.util.regex.Pattern;
  */
 public final class ResourceUrn implements Comparable<ResourceUrn> {
 
-    private static final String RESOURCE_SEPARATOR = ":";
-    private static final String FRAGMENT_SEPARATOR = "#";
+    public static final String RESOURCE_SEPARATOR = ":";
+    public static final String FRAGMENT_SEPARATOR = "#";
     private static final Pattern URN_PATTERN = Pattern.compile("([^:#]+):([^#]+)(?:#([^#]+))?");
 
     private Name moduleName = Name.EMPTY;
