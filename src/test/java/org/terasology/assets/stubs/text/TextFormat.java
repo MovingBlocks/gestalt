@@ -17,7 +17,6 @@
 package org.terasology.assets.stubs.text;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 import org.terasology.assets.AbstractAssetFormat;
 import org.terasology.assets.AssetInput;

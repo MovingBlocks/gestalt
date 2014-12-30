@@ -17,22 +17,19 @@
 package org.terasology.assets;
 
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
-import org.terasology.util.io.FileExtensionPathMatcher;
 import org.terasology.naming.Name;
+import org.terasology.util.io.FileExtensionPathMatcher;
 
 import java.nio.file.PathMatcher;
-import java.util.Collection;
-import java.util.Set;
 
 /**
- *
  * @author Immortius
  */
 public abstract class AbstractAssetFormat<T extends AssetData> implements AssetFormat<T> {
 
     private FileExtensionPathMatcher fileMatcher;
 
-    public AbstractAssetFormat(String ... fileExtensions) {
+    public AbstractAssetFormat(String... fileExtensions) {
         this.fileMatcher = new FileExtensionPathMatcher(fileExtensions);
     }
 
@@ -40,7 +37,7 @@ public abstract class AbstractAssetFormat<T extends AssetData> implements AssetF
     public Name getAssetName(String filename) throws InvalidAssetFilenameException {
         int extensionStart = filename.lastIndexOf('.');
         if (extensionStart != -1) {
-            return new Name(filename.substring(extensionStart));
+            return new Name(filename.substring(0, extensionStart));
         }
         return new Name(filename);
     }

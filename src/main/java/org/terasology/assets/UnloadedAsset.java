@@ -48,4 +48,9 @@ public class UnloadedAsset<T extends AssetData> {
     public T load() throws IOException {
         return format.load(urn, inputs);
     }
+
+    @Override
+    public String toString() {
+        return urn.toString();
+    }
 }

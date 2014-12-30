@@ -19,6 +19,7 @@ package org.terasology.naming;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.terasology.naming.exceptions.InvalidUrnException;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,19 +37,14 @@ import java.util.regex.Pattern;
  */
 public final class ResourceUrn implements Comparable<ResourceUrn> {
 
-    private static final String RESOURCE_SEPARATOR = ":";
-    private static final String FRAGMENT_SEPARATOR = "#";
+    public static final String RESOURCE_SEPARATOR = ":";
+    public static final String FRAGMENT_SEPARATOR = "#";
     private static final Pattern URN_PATTERN = Pattern.compile("([^:#]+):([^#]+)(?:#([^#]+))?");
 
     private Name moduleName = Name.EMPTY;
     private Name resourceName = Name.EMPTY;
     private Name fragmentName = Name.EMPTY;
 
-    /**
-     * Creates an empty, invalid SimpleUri
-     */
-    public ResourceUrn() {
-    }
 
     /**
      * Creates a ModuleUri for the given module:resource combo
@@ -67,8 +63,8 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
      * @param resourceName
      */
     public ResourceUrn(Name moduleName, Name resourceName) {
-        Preconditions.checkNotNull(moduleName);
-        Preconditions.checkNotNull(resourceName);
+        Preconditions.checkArgument(moduleName != null && !moduleName.isEmpty(), "moduleName must not be null or empty");
+        Preconditions.checkArgument(resourceName != null && !resourceName.isEmpty(), "resourceName must not be null or empty");
         this.moduleName = moduleName;
         this.resourceName = resourceName;
     }
@@ -92,9 +88,9 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
      * @param fragmentName
      */
     public ResourceUrn(Name moduleName, Name resourceName, Name fragmentName) {
-        Preconditions.checkNotNull(moduleName);
-        Preconditions.checkNotNull(resourceName);
-        Preconditions.checkNotNull(fragmentName);
+        Preconditions.checkArgument(moduleName != null && !moduleName.isEmpty(), "moduleName must not be null or empty");
+        Preconditions.checkArgument(resourceName != null && !resourceName.isEmpty(), "resourceName must not be null or empty");
+        Preconditions.checkArgument(fragmentName != null && !fragmentName.isEmpty(), "fragmentName must not be null or empty");
         this.moduleName = moduleName;
         this.resourceName = resourceName;
         this.fragmentName = fragmentName;
@@ -104,6 +100,7 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
      * Creates a ModuleUrn from a string in the format "module:object(#fragment)". If the string does not match this format, an invalid urn is returned.
      *
      * @param urn
+     * @throws org.terasology.naming.exceptions.InvalidUrnException
      */
     public ResourceUrn(String urn) {
         Matcher match = URN_PATTERN.matcher(urn);
@@ -113,7 +110,13 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
             if (!Strings.isNullOrEmpty(match.group(3))) {
                 fragmentName = new Name(match.group(3));
             }
+        } else {
+            throw new InvalidUrnException("Invalid Urn: '" + urn + "'");
         }
+    }
+
+    public static boolean isValid(String urn) {
+        return URN_PATTERN.matcher(urn).matches();
     }
 
     /**
@@ -147,18 +150,8 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
         return new ResourceUrn(moduleName, resourceName);
     }
 
-    /**
-     * @return Whether this urn is valid - has both a moduleName and resourceName.
-     */
-    public boolean isValid() {
-        return !moduleName.isEmpty() && !resourceName.isEmpty();
-    }
-
     @Override
     public String toString() {
-        if (!isValid()) {
-            return "";
-        }
         if (fragmentName.isEmpty()) {
             return moduleName + RESOURCE_SEPARATOR + resourceName;
         } else {

@@ -16,8 +16,10 @@
 
 package org.terasology.assets;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -31,6 +33,7 @@ import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
 import org.terasology.util.io.FileScanning;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -39,7 +42,7 @@ import java.util.Map;
 
 public class AssetType<T extends Asset<U>, U extends AssetData> {
 
-    private static final String ASSET_FOLDER = "assets";
+    public static final String ASSET_FOLDER = "assets";
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
     private final Name id;
@@ -162,6 +165,58 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         return asset;
     }
 
+    public T getAsset(String urn) {
+        return getAsset(urn, null);
+    }
+
+    public T getAsset(String urn, Name moduleContext) {
+        List<ResourceUrn> resolvedUrns = resolve(urn, moduleContext);
+        if (resolvedUrns.size() == 1) {
+            return getAsset(resolvedUrns.get(0));
+        } else if (resolvedUrns.size() > 1) {
+            logger.warn("Failed to resolve asset '{}' - multiple possibilities discovered", urn);
+        } else {
+            logger.warn("Failed to resolve asset '{}' - no matches found", urn);
+        }
+        return null;
+    }
+
+    public List<ResourceUrn> resolve(String urn) {
+        return resolve(urn, null);
+    }
+
+    public List<ResourceUrn> resolve(String urn, Name moduleContext) {
+        if (ResourceUrn.isValid(urn)) {
+            return Lists.newArrayList(new ResourceUrn(urn));
+        }
+        final Name resourceName = new Name(urn);
+        if (moduleContext != null) {
+            if (unloadedAssetLookup.contains(resourceName, moduleContext)) {
+                return Lists.newArrayList(new ResourceUrn(moduleContext, resourceName));
+            }
+            List<ResourceUrn> resources = Lists.newArrayList();
+            for (Name dependency : moduleEnvironment.getDependencyNamesOf(moduleContext)) {
+                if (unloadedAssetLookup.contains(resourceName, dependency)) {
+                    resources.add(new ResourceUrn(dependency, resourceName));
+                }
+            }
+            if (!resources.isEmpty()) {
+                return resources;
+            }
+        }
+        //if (urn.contains(ResourceUrn.FRAGMENT_SEPARATOR)) {
+        //    resourceName = urn.split(ResourceUrn.FRAGMENT_SEPARATOR, 2)[0];
+        //}
+        Map<Name, UnloadedAsset<U>> availableResources = unloadedAssetLookup.row(resourceName);
+        return Lists.newArrayList(Collections2.transform(availableResources.keySet(), new Function<Name, ResourceUrn>() {
+            @Nullable
+            @Override
+            public ResourceUrn apply(Name moduleName) {
+                return new ResourceUrn(moduleName, resourceName);
+            }
+        }));
+    }
+
     public void dispose(ResourceUrn urn) {
         T asset = loadedAssets.remove(urn);
         if (asset != null) {
@@ -211,6 +266,5 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
     public String toString() {
         return id.toString();
     }
-
 
 }
