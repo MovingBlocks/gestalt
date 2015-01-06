@@ -20,6 +20,7 @@ import org.terasology.naming.exception.VersionParseException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -43,6 +44,15 @@ public class VersionTest {
         assertEquals(2, version.getMinor());
         assertEquals(3, version.getPatch());
         assertTrue(version.isSnapshot());
+        assertEquals("1.2.3-SNAPSHOT", version.toString());
+    }
+
+    @Test
+    public void snapshotVersionLessThanRealVersion() {
+        Version snapshot = new Version("1.2.3-SNAPSHOT");
+        Version real = new Version("1.2.3");
+        assertNotEquals(snapshot, real);
+        assertTrue(snapshot.compareTo(real) < 0);
     }
 
     @Test

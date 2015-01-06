@@ -16,6 +16,7 @@
 
 package org.terasology.util;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.terasology.module.sandbox.API;
 
@@ -33,16 +34,34 @@ public final class Varargs {
     }
 
     /**
-     * Combines a single value and array into an immutable set. Iteration of the set maintains the order of the times.
-     * This is intended to aid methods using the mandatory-first optional-additional varargs trick
+     * Combines a single value and array into an immutable set. Iteration of the set maintains the order of the items.
+     * This is intended to aid methods using the mandatory-first optional-additional varargs trick.
      *
      * @param first      The first, single value
      * @param additional Any additional values
+     * @param <T>        The type of the items
      * @return A set of the combined values
      */
     @SafeVarargs
     public static <T> ImmutableSet<T> combineToSet(T first, T... additional) {
         ImmutableSet.Builder<T> builder = ImmutableSet.builder();
+        builder.add(first);
+        builder.addAll(Arrays.asList(additional));
+        return builder.build();
+    }
+
+    /**
+     * Combines a single value and array into an immutable list.
+     * This is intended to aid methods using the mandatory-first optional-additional varargs trick.
+     *
+     * @param first      The first, single value
+     * @param additional Any additional values
+     * @param <T>        The type of the items
+     * @return A set of the combined values
+     */
+    @SafeVarargs
+    public static <T> ImmutableList<T> combineToList(T first, T... additional) {
+        ImmutableList.Builder<T> builder = ImmutableList.builder();
         builder.add(first);
         builder.addAll(Arrays.asList(additional));
         return builder.build();

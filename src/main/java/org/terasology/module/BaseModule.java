@@ -70,6 +70,11 @@ public abstract class BaseModule implements Module {
     }
 
     @Override
+    public FileSystem getAsFileSystem() {
+        return null;
+    }
+
+    @Override
     public ImmutableList<Path> findFiles() throws IOException {
         return findFiles(FileScanning.acceptAll(), FileScanning.acceptAll());
     }
@@ -98,18 +103,22 @@ public abstract class BaseModule implements Module {
     public ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter, String ... relativePath) throws IOException {
         final ImmutableList.Builder<Path> resultBuilder = ImmutableList.builder();
         for (Path moduleLocation : getLocations()) {
-            Path scanLocation = moduleLocation;
-            for (String pathPart : relativePath) {
-                scanLocation = scanLocation.resolve(pathPart);
-            }
-            if (Files.isRegularFile(scanLocation)) {
-                try (FileSystem moduleArchive = FileSystems.newFileSystem(scanLocation, null)) {
-                    for (Path scanPath : moduleArchive.getRootDirectories()) {
+            if (Files.isRegularFile(moduleLocation)) {
+                try (FileSystem moduleArchive = FileSystems.newFileSystem(moduleLocation, null)) {
+                    for (Path scanLocation : moduleArchive.getRootDirectories()) {
+                        Path scanPath = scanLocation;
+                        for (String pathPart : relativePath) {
+                            scanPath = scanPath.resolve(pathPart);
+                        }
                         resultBuilder.addAll(FileScanning.findFilesInPath(scanPath, scanFilter, fileFilter));
                     }
                 }
-            } else if (Files.isDirectory(scanLocation)) {
-                resultBuilder.addAll(FileScanning.findFilesInPath(scanLocation, scanFilter, fileFilter));
+            } else if (Files.isDirectory(moduleLocation)) {
+                Path scanPath = moduleLocation;
+                for (String pathPart : relativePath) {
+                    scanPath = scanPath.resolve(pathPart);
+                }
+                resultBuilder.addAll(FileScanning.findFilesInPath(scanPath, scanFilter, fileFilter));
             }
         }
         return resultBuilder.build();

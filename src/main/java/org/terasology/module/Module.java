@@ -23,6 +23,7 @@ import org.terasology.naming.Version;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 
@@ -38,6 +39,11 @@ public interface Module {
      * @return The locations composing the module
      */
     ImmutableList<Path> getLocations();
+
+    /**
+     * @return A filesystem interface to the contents of the module.
+     */
+    FileSystem getAsFileSystem();
 
     /**
      * Finds files in a module. This will return all files (including class files)
