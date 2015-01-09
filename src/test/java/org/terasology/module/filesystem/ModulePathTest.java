@@ -17,7 +17,6 @@
 package org.terasology.module.filesystem;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.terasology.module.ClasspathModule;
@@ -29,9 +28,11 @@ import org.terasology.naming.Version;
 
 import java.io.BufferedReader;
 import java.net.URI;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -302,6 +303,29 @@ public class ModulePathTest {
         Path path = fileSystem.getPath("/", "subfolder", "test.resource");
         try (BufferedReader reader = Files.newBufferedReader(path, Charsets.UTF_8)) {
             assertEquals("this space intentionally left blank", reader.readLine());
+        }
+    }
+
+    @Test
+    public void exists() throws Exception {
+        assertTrue(Files.exists(fileSystem.getPath("/", "subfolder")));
+        assertFalse(Files.exists(fileSystem.getPath("/", "makebelieverubbish")));
+    }
+
+    @Test
+    public void isDirectory() throws Exception {
+        Path path = fileSystem.getPath("/");
+        assertTrue(Files.isDirectory(path));
+        assertFalse(Files.isRegularFile(path));
+    }
+
+    @Test
+    public void getContents() throws Exception {
+        Path path = fileSystem.getPath("/", "subfolder");
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path);) {
+            List<Path> contents = Lists.newArrayList(stream.iterator());
+            assertEquals(1, contents.size());
+            assertEquals(fileSystem.getPath("/", "subfolder", "test.resource"), contents.get(0));
         }
     }
 }

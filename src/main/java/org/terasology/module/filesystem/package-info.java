@@ -14,28 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.moduleA;
-
-import java.nio.file.Files;
-import java.util.Comparator;
-
 /**
- * @author Immortius
+ * This package provides support for a virtual readonly file system access to modules, that hides the details of the location or locations composing the module.
  */
-public class ModuleCClass implements Comparator<String> {
-
-    public void standardMethod() {
-        float a = 10;
-        float b = 22;
-        String result = String.format("%f + %f", a, b);
-    }
-
-    public void requiresIoMethod() throws Exception {
-        Files.createTempFile("Temp", "txt");
-    }
-
-    @Override
-    public int compare(String o1, String o2) {
-        return 0;
-    }
-}
+package org.terasology.module.filesystem;

@@ -26,6 +26,8 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.module.filesystem.ModuleFileSystem;
+import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.util.io.FileScanning;
@@ -54,6 +56,7 @@ public abstract class BaseModule implements Module {
     protected ModuleMetadata metadata;
 
     private Reflections reflectionsFragment;
+    private final ModuleFileSystem fileSystem;
 
     /**
      * @param paths    The paths composing the module
@@ -62,6 +65,11 @@ public abstract class BaseModule implements Module {
     public BaseModule(Collection<Path> paths, ModuleMetadata metadata) {
         this.paths = ImmutableList.copyOf(paths);
         this.metadata = metadata;
+        try {
+            this.fileSystem = new ModuleFileSystemProvider(this).newFileSystem(this);
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating module '" + metadata.getId() + ":" + metadata.getVersion() + "'", e);
+        }
     }
 
     @Override
@@ -70,58 +78,24 @@ public abstract class BaseModule implements Module {
     }
 
     @Override
-    public FileSystem getAsFileSystem() {
-        return null;
+    public FileSystem getFileSystem() {
+        return fileSystem;
     }
 
     @Override
     public ImmutableList<Path> findFiles() throws IOException {
-        return findFiles(FileScanning.acceptAll(), FileScanning.acceptAll());
+        return findFiles(getFileSystem().getPath(ModuleFileSystem.ROOT), FileScanning.acceptAll(), FileScanning.acceptAll());
     }
 
     @Override
     public ImmutableList<Path> findFiles(String fileFilterGlob) throws IOException {
-        final ImmutableList.Builder<Path> resultBuilder = ImmutableList.builder();
-        for (Path location : getLocations()) {
-            if (Files.isRegularFile(location)) {
-                try (FileSystem moduleArchive = FileSystems.newFileSystem(location, null)) {
-                    PathMatcher globMatcher = moduleArchive.getPathMatcher(fileFilterGlob);
-                    for (Path scanPath : moduleArchive.getRootDirectories()) {
-                        resultBuilder.addAll(FileScanning.findFilesInPath(scanPath, FileScanning.acceptAll(), globMatcher));
-                    }
-                }
-            } else if (Files.isDirectory(location)) {
-                logger.info("Directory {}", location);
-                PathMatcher globMatcher = location.getFileSystem().getPathMatcher(fileFilterGlob);
-                resultBuilder.addAll(FileScanning.findFilesInPath(location, FileScanning.acceptAll(), globMatcher));
-            }
-        }
-        return resultBuilder.build();
+        PathMatcher globFilter = getFileSystem().getPathMatcher(fileFilterGlob);
+        return ImmutableList.copyOf(FileScanning.findFilesInPath(getFileSystem().getPath(ModuleFileSystem.ROOT), FileScanning.acceptAll(), globFilter));
     }
 
     @Override
-    public ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter, String ... relativePath) throws IOException {
-        final ImmutableList.Builder<Path> resultBuilder = ImmutableList.builder();
-        for (Path moduleLocation : getLocations()) {
-            if (Files.isRegularFile(moduleLocation)) {
-                try (FileSystem moduleArchive = FileSystems.newFileSystem(moduleLocation, null)) {
-                    for (Path scanLocation : moduleArchive.getRootDirectories()) {
-                        Path scanPath = scanLocation;
-                        for (String pathPart : relativePath) {
-                            scanPath = scanPath.resolve(pathPart);
-                        }
-                        resultBuilder.addAll(FileScanning.findFilesInPath(scanPath, scanFilter, fileFilter));
-                    }
-                }
-            } else if (Files.isDirectory(moduleLocation)) {
-                Path scanPath = moduleLocation;
-                for (String pathPart : relativePath) {
-                    scanPath = scanPath.resolve(pathPart);
-                }
-                resultBuilder.addAll(FileScanning.findFilesInPath(scanPath, scanFilter, fileFilter));
-            }
-        }
-        return resultBuilder.build();
+    public ImmutableList<Path> findFiles(Path path, PathMatcher scanFilter, PathMatcher fileFilter) throws IOException {
+        return ImmutableList.copyOf(FileScanning.findFilesInPath(path, scanFilter, fileFilter));
     }
 
     @Override

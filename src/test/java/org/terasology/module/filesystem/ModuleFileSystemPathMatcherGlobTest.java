@@ -29,7 +29,6 @@ import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
 
-import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -107,12 +106,8 @@ public class ModuleFileSystemPathMatcherGlobTest {
 
     @Test
     public void test() {
-        logger.info("{} -> {}", glob, ModuleFileSystemUtils.globToRegex(glob));
+        logger.debug("{} -> {}", glob, GlobSupport.globToRegex(glob));
         assertEquals(expectedResult, fileSystem.getPathMatcher("glob:" + glob).matches(fileSystem.getPath(path)));
     }
 
-    @Test
-    public void windowsTest() {
-        assertEquals(expectedResult, FileSystems.getDefault().getPathMatcher("glob:" + glob).matches(FileSystems.getDefault().getPath(path)));
-    }
 }

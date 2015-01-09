@@ -38,11 +38,18 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
+ * A file system providing access to the contents of a Module.
+ * <p>
+ * A ModuleFileSystem has a single root '/', and separates each directory and file with '/'.
+ * Modification and write operations are not supported. WatchService is supported though, for detecting external changes to a module - this is only
+ * supported to changes happening on the default filesystem (so directories, not in archives).
+ *
  * @author Immortius
  */
 public class ModuleFileSystem extends FileSystem {
 
-    private static final String SEPARATOR = "/";
+    public static final String ROOT = "/";
+    public static final String SEPARATOR = "/";
     private static final Set<String> SUPPORTED_FILE_ATTRIBUTE_VIEWS = ImmutableSet.of("basic");
 
     private final ModuleFileSystemProvider provider;
@@ -71,17 +78,6 @@ public class ModuleFileSystem extends FileSystem {
         for (FileSystem openedFileSystem : openedFileSystems.values()) {
             openedFileSystem.close();
         }
-    }
-
-    FileSystem getContainedFileSystem(Path location) throws IOException {
-        Preconditions.checkArgument(module.getLocations().contains(location), "Location not contained in module");
-
-        FileSystem containedFileSystem = openedFileSystems.get(location);
-        if (containedFileSystem == null) {
-            containedFileSystem = FileSystems.newFileSystem(location, null);
-            openedFileSystems.put(location, containedFileSystem);
-        }
-        return containedFileSystem;
     }
 
     @Override
@@ -157,7 +153,7 @@ public class ModuleFileSystem extends FileSystem {
                     };
                 }
                 case "glob": {
-                    final Pattern pattern = Pattern.compile(ModuleFileSystemUtils.globToRegex(parts[1]));
+                    final Pattern pattern = Pattern.compile(GlobSupport.globToRegex(parts[1]));
                     return new PathMatcher() {
                         @Override
                         public boolean matches(Path path) {
@@ -175,11 +171,23 @@ public class ModuleFileSystem extends FileSystem {
 
     @Override
     public UserPrincipalLookupService getUserPrincipalLookupService() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public WatchService newWatchService() throws IOException {
+        // TODO
         return null;
+    }
+
+    FileSystem getContainedFileSystem(Path location) throws IOException {
+        Preconditions.checkArgument(module.getLocations().contains(location), "Location not contained in module");
+
+        FileSystem containedFileSystem = openedFileSystems.get(location);
+        if (containedFileSystem == null) {
+            containedFileSystem = FileSystems.newFileSystem(location, null);
+            openedFileSystems.put(location, containedFileSystem);
+        }
+        return containedFileSystem;
     }
 }

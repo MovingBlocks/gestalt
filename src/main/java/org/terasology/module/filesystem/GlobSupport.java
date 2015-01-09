@@ -22,13 +22,19 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 /**
+ * Provides support for glob expressions when working with ModuleFileSystems.
  * @author Immortius
  */
-public final class ModuleFileSystemUtils {
+public final class GlobSupport {
 
-    private ModuleFileSystemUtils() {
+    private GlobSupport() {
     }
 
+    /**
+     * Converts a glob expression into the equivalent regular expression for use with module file systems.
+     * @param glob A glob expression compatible with ModuleFileSystem.
+     * @return The equivalent regular expression to glob.
+     */
     public static String globToRegex(String glob) {
         StringBuilder regex = new StringBuilder();
         int index = 0;

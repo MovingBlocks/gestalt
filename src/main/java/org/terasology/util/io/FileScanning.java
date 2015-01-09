@@ -106,6 +106,9 @@ public final class FileScanning {
         }
     }
 
+    /**
+     * Trivial path matcher that matches all paths
+     */
     private static class AcceptAllPathMatcher implements PathMatcher {
 
         @Override
