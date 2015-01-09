@@ -50,7 +50,7 @@ public class ModulePathTest {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name("test"));
         metadata.setVersion(new Version("1.0.0"));
-        Module module = ClasspathModule.create(metadata, getClass());
+        Module module = ClasspathModule.create(metadata, true, getClass());
 
         fileSystem = new ModuleFileSystemProvider(new TableModuleRegistry()).newFileSystem(module);
     }
