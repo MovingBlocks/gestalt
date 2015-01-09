@@ -52,7 +52,7 @@ public class APIScanner {
      * @param module The module to scan
      */
     public void scan(Module module) {
-        for (Class<?> apiClass : module.getReflectionsFragment().getTypesAnnotatedWith(API.class)) {
+        for (Class<?> apiClass : module.getReflectionsFragment().getTypesAnnotatedWith(API.class, true)) {
             for (String permissionSetId : apiClass.getAnnotation(API.class).permissionSet()) {
                 PermissionSet permissionSet = securityManager.getPermissionSet(permissionSetId);
                 if (permissionSet == null) {
