@@ -60,12 +60,18 @@ import java.util.concurrent.locks.ReentrantLock;
  * The FileSystemProvider in addition to producing FileSystems, also provides the low level methods that drive many file operations.  ModuleFileSystemProvider does this
  * by delegating down to the underlying file systems, translating ModulePaths to real paths and back again as necessary. In situations where a file occurs in multiple
  * locations in a module the first one found is used.
+ * <p/>
+ * The ModuleFileSystem does support WatchServices/WatchKeys, but only for locations on the default file system. If no such location exists then WatchKeys produced will be
+ * return false from isValid on creation.
  *
  * @author Immortius
  */
 public class ModuleFileSystemProvider extends FileSystemProvider {
 
     public static final String SCHEME = "module";
+    public static final String ROOT = "/";
+    public static final String SEPARATOR = "/";
+
     private static final Logger logger = LoggerFactory.getLogger(ModuleFileSystemProvider.class);
 
     private final ModuleRegistry registry;

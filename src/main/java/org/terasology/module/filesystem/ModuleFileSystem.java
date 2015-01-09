@@ -39,17 +39,15 @@ import java.util.regex.Pattern;
 
 /**
  * A file system providing access to the contents of a Module.
- * <p>
+ * <p/>
  * A ModuleFileSystem has a single root '/', and separates each directory and file with '/'.
  * Modification and write operations are not supported. WatchService is supported though, for detecting external changes to a module - this is only
  * supported to changes happening on the default filesystem (so directories, not in archives).
  *
  * @author Immortius
  */
-public class ModuleFileSystem extends FileSystem {
+class ModuleFileSystem extends FileSystem {
 
-    public static final String ROOT = "/";
-    public static final String SEPARATOR = "/";
     private static final Set<String> SUPPORTED_FILE_ATTRIBUTE_VIEWS = ImmutableSet.of("basic");
 
     private final ModuleFileSystemProvider provider;
@@ -57,7 +55,7 @@ public class ModuleFileSystem extends FileSystem {
     private Map<Path, FileSystem> openedFileSystems = Maps.newConcurrentMap();
     private boolean open = true;
 
-    public ModuleFileSystem(ModuleFileSystemProvider provider, Module module) {
+    ModuleFileSystem(ModuleFileSystemProvider provider, Module module) {
         this.provider = provider;
         this.module = module;
     }
@@ -92,7 +90,7 @@ public class ModuleFileSystem extends FileSystem {
 
     @Override
     public String getSeparator() {
-        return SEPARATOR;
+        return ModuleFileSystemProvider.SEPARATOR;
     }
 
     @Override
@@ -118,18 +116,18 @@ public class ModuleFileSystem extends FileSystem {
         for (String part : parts) {
             String trimmedPart = part.trim();
             if (!trimmedPart.isEmpty()) {
-                if (trimmedPart.charAt(0) == SEPARATOR.charAt(0)) {
-                    builder.append(SEPARATOR);
+                if (trimmedPart.charAt(0) == ModuleFileSystemProvider.SEPARATOR.charAt(0)) {
+                    builder.append(ModuleFileSystemProvider.SEPARATOR);
                 }
                 break;
             }
         }
 
         for (String part : parts) {
-            for (String subPart : part.split(SEPARATOR, 0)) {
+            for (String subPart : part.split(ModuleFileSystemProvider.SEPARATOR, 0)) {
                 if (!subPart.isEmpty()) {
-                    if (builder.length() > 0 && builder.charAt(builder.length() - 1) != SEPARATOR.charAt(0)) {
-                        builder.append(SEPARATOR);
+                    if (builder.length() > 0 && builder.charAt(builder.length() - 1) != ModuleFileSystemProvider.SEPARATOR.charAt(0)) {
+                        builder.append(ModuleFileSystemProvider.SEPARATOR);
                     }
                     builder.append(subPart);
                 }
@@ -176,8 +174,7 @@ public class ModuleFileSystem extends FileSystem {
 
     @Override
     public WatchService newWatchService() throws IOException {
-        // TODO
-        return null;
+        return new ModuleWatchService(this);
     }
 
     FileSystem getContainedFileSystem(Path location) throws IOException {

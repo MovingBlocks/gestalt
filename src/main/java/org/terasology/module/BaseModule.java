@@ -26,7 +26,6 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.module.filesystem.ModuleFileSystem;
 import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
@@ -56,7 +55,7 @@ public abstract class BaseModule implements Module {
     protected ModuleMetadata metadata;
 
     private Reflections reflectionsFragment;
-    private final ModuleFileSystem fileSystem;
+    private final FileSystem fileSystem;
 
     /**
      * @param paths    The paths composing the module
@@ -84,13 +83,13 @@ public abstract class BaseModule implements Module {
 
     @Override
     public ImmutableList<Path> findFiles() throws IOException {
-        return findFiles(getFileSystem().getPath(ModuleFileSystem.ROOT), FileScanning.acceptAll(), FileScanning.acceptAll());
+        return findFiles(getFileSystem().getPath(ModuleFileSystemProvider.ROOT), FileScanning.acceptAll(), FileScanning.acceptAll());
     }
 
     @Override
     public ImmutableList<Path> findFiles(String fileFilterGlob) throws IOException {
         PathMatcher globFilter = getFileSystem().getPathMatcher(fileFilterGlob);
-        return ImmutableList.copyOf(FileScanning.findFilesInPath(getFileSystem().getPath(ModuleFileSystem.ROOT), FileScanning.acceptAll(), globFilter));
+        return ImmutableList.copyOf(FileScanning.findFilesInPath(getFileSystem().getPath(ModuleFileSystemProvider.ROOT), FileScanning.acceptAll(), globFilter));
     }
 
     @Override

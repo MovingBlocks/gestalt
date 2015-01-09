@@ -20,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -30,6 +31,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.ProviderMismatchException;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -39,13 +41,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * The Path implementation used by ModuleFileSystem.
  *
  * @author Immortius
  */
-public class ModulePath implements Path {
+class ModulePath implements Path {
 
     private static final String SAME_DIR_INDICATOR = ".";
     private static final String PREVIOUS_DIR_INDICATOR = "..";
@@ -313,26 +316,17 @@ public class ModulePath implements Path {
 
     @Override
     public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) throws IOException {
-        return null; // TODO
-//        Path underlyingPath = getUnderlyingPath();
-//        if (underlyingPath != null && underlyingPath.getFileSystem().equals(FileSystems.getDefault())) {
-//            return underlyingPath.register(watcher, events, modifiers);
-//        } else if (underlyingPath != null) {
-//            return new NullWatchKey(this);
-//        }
-//        throw new IllegalArgumentException("Path does not exist");
+        if (watcher instanceof ModuleWatchService) {
+            ModuleWatchService moduleWatcher = (ModuleWatchService) watcher;
+            return moduleWatcher.register(this, events, modifiers);
+        } else {
+            throw new ProviderMismatchException("WatchService belongs to a different file system");
+        }
     }
 
     @Override
     public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) throws IOException {
-        return null; // TODO
-//        Path underlyingPath = getUnderlyingPath();
-//        if (underlyingPath != null && underlyingPath.getFileSystem().equals(FileSystems.getDefault())) {
-//            return underlyingPath.register(watcher, events);
-//        } else if (underlyingPath != null) {
-//            return new NullWatchKey(this);
-//        }
-//        throw new IllegalArgumentException("Path does not exist");
+        return register(watcher, events, new WatchEvent.Modifier[0]);
     }
 
     @Override
@@ -441,6 +435,35 @@ public class ModulePath implements Path {
     }
 
     /**
+     * Provides all the underlying paths (from one of the underlying filesystems/locations composing the module) for this path.
+     *
+     * @return A set of all the underlying paths from all locations composing the module
+     * @throws IOException
+     */
+    Set<Path> getUnderlyingPaths() throws IOException {
+        ModulePath normalisedPath = toAbsolutePath().normalize();
+
+        Set<Path> underlyingPaths = Sets.newLinkedHashSet();
+        for (Path location : fileSystem.getModule().getLocations()) {
+            if (Files.isDirectory(location)) {
+                Path actualLocation = applyModulePathToActual(location, normalisedPath);
+                if (Files.exists(actualLocation)) {
+                    underlyingPaths.add(actualLocation);
+                }
+            } else if (Files.isRegularFile(location)) {
+                FileSystem moduleArchive = fileSystem.getContainedFileSystem(location);
+                for (Path archiveRoot : moduleArchive.getRootDirectories()) {
+                    Path actualLocation = applyModulePathToActual(archiveRoot, normalisedPath);
+                    if (Files.exists(actualLocation)) {
+                        underlyingPaths.add(actualLocation);
+                    }
+                }
+            }
+        }
+        return underlyingPaths;
+    }
+
+    /**
      * Applies a modulePath on top of an external path - used to produce the underlying path.
      * @param actualRoot The root path in a different filesystem
      * @param modulePath The module path to convert to a real path
@@ -488,7 +511,7 @@ public class ModulePath implements Path {
         Path actualRealPath = actualPath.toRealPath();
         Path relative = root.relativize(actualRealPath);
         List<String> pathParts = Lists.newArrayListWithCapacity(relative.getNameCount() + 1);
-        pathParts.add(ModuleFileSystem.SEPARATOR);
+        pathParts.add(ModuleFileSystemProvider.SEPARATOR);
         for (Path part : relative) {
             pathParts.add(part.toString());
         }
