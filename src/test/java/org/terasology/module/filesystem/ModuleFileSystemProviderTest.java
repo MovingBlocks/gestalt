@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-package org.terasology.moduleA;
+package org.terasology.module.filesystem;
 
-import java.nio.file.Files;
-import java.util.Comparator;
+import org.junit.Test;
+
+import java.net.URI;
 
 /**
  * @author Immortius
  */
-public class ModuleCClass implements Comparator<String> {
+public class ModuleFileSystemProviderTest {
 
-    public void standardMethod() {
-        float a = 10;
-        float b = 22;
-        String result = String.format("%f + %f", a, b);
+
+    @Test
+    public void test() throws Exception {
+        URI uri = new URI(String.format("%s://%s:%s/assets/text", "module", "test", "1.0.0"));
+        System.out.println(uri.toString());
+        System.out.println(uri.getAuthority());
+        System.out.println(uri.getPath());
     }
 
-    public void requiresIoMethod() throws Exception {
-        Files.createTempFile("Temp", "txt");
-    }
-
-    @Override
-    public int compare(String o1, String o2) {
-        return 0;
-    }
 }

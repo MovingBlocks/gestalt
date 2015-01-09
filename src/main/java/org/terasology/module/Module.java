@@ -23,6 +23,7 @@ import org.terasology.naming.Version;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 
@@ -38,6 +39,11 @@ public interface Module {
      * @return The locations composing the module
      */
     ImmutableList<Path> getLocations();
+
+    /**
+     * @return A filesystem providing read access to the contents of the module.
+     */
+    FileSystem getFileSystem();
 
     /**
      * Finds files in a module. This will return all files (including class files)
@@ -62,10 +68,9 @@ public interface Module {
      * </p>
      * @param scanFilter A filter on the directories to visit
      * @param fileFilter A filter on the files to be returned
-     * @param relativePath the relative path within the module to scan
      * @return A collection of discovered files
      */
-    ImmutableList<Path> findFiles(PathMatcher scanFilter, PathMatcher fileFilter, String ... relativePath) throws IOException;
+    ImmutableList<Path> findFiles(Path rootPath, PathMatcher scanFilter, PathMatcher fileFilter) throws IOException;
 
     /**
      * @return The urls forming the classpath of the module

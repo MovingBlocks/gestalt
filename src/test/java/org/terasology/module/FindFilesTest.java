@@ -18,6 +18,7 @@ package org.terasology.module;
 
 import org.junit.Test;
 import org.terasology.naming.Name;
+import org.terasology.naming.Version;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,16 +36,18 @@ public class FindFilesTest {
     public void findFilesInClasspathModule() throws Exception {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name("test"));
+        metadata.setVersion(new Version("1.0.0"));
         Module module = ClasspathModule.create(metadata, true, getClass());
         List<Path> paths = module.findFiles("glob:**/*.resource");
         assertEquals(1, paths.size());
-        assertTrue(paths.get(0).endsWith(Paths.get("subfolder", "test.resource")));
+        assertTrue(paths.get(0).endsWith(module.getFileSystem().getPath("subfolder", "test.resource")));
     }
 
     @Test
     public void findFilesInArchiveModule() throws Exception {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name("test"));
+        metadata.setVersion(new Version("1.0.0"));
         Module module = new ArchiveModule(Paths.get("test-modules", "moduleA.jar"), metadata);
         List<Path> paths = module.findFiles("glob:**/*.info");
         assertEquals(1, paths.size());

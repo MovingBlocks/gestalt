@@ -53,7 +53,7 @@ public class ModuleMetadata {
     public static final Set<String> RESERVED_IDS = ImmutableSet.of(ID, VERSION, DISPLAY_NAME, DESCRIPTION, DEPENDENCIES, REQUIRED_PERMISSIONS);
 
     private Name id;
-    private Version version;
+    private Version version = Version.DEFAULT;
     private I18nMap displayName = new I18nMap("");
     private I18nMap description = new I18nMap("");
     private Set<String> requiredPermissions = Sets.newLinkedHashSet();

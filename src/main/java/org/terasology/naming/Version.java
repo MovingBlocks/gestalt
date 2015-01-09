@@ -23,12 +23,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Wrapper for a semantic version string - for version numbers of the form MAJOR.minor.patch. Allows the individual
+ * Wrapper for a semantic version string - for version numbers of the form MAJOR.minor.patch(-SNAPSHOT). Allows the individual
  * elements to be retrieved, and for comparison between versions.
  *
  * @author Immortius
  */
 public final class Version implements Comparable<Version> {
+    /**
+     * A default version of 1.0.0
+     */
+    public static final Version DEFAULT = new Version(1, 0, 0);
     private static final Pattern VERSION_PATTERN = Pattern.compile("(0|[1-9][0-9]*).(0|[1-9][0-9]*).(0|[1-9][0-9]*)(-SNAPSHOT)?");
 
     private int major;
@@ -122,18 +126,21 @@ public final class Version implements Comparable<Version> {
         }
         if (obj instanceof Version) {
             Version other = (Version) obj;
-            return other.major == major && other.minor == minor && other.patch == patch;
+            return other.major == major && other.minor == minor && other.patch == patch && other.snapshot == snapshot;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(major, minor, patch);
+        return Objects.hash(major, minor, patch, snapshot);
     }
 
     @Override
     public String toString() {
+        if (isSnapshot()) {
+            return major + "." + minor + "." + patch + "-SNAPSHOT";
+        }
         return major + "." + minor + "." + patch;
     }
 
@@ -145,6 +152,15 @@ public final class Version implements Comparable<Version> {
         if (other.minor != minor) {
             return minor - other.minor;
         }
-        return patch - other.patch;
+        if (other.patch != patch) {
+            return patch - other.patch;
+        }
+        if (other.snapshot && !snapshot) {
+            return 1;
+        }
+        if (!other.snapshot && snapshot) {
+            return -1;
+        }
+        return 0;
     }
 }
