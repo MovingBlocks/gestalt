@@ -26,6 +26,7 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.Watchable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +50,7 @@ class ModuleWatchService implements WatchService {
     @Override
     public void close() throws IOException {
         defaultWatchService.close();
+        keyLookup.clear();
     }
 
     @Override
@@ -95,6 +97,18 @@ class ModuleWatchService implements WatchService {
             }
         }
         return result;
+    }
+
+    void clearInvalidKeys() {
+        synchronized (keyLookup) {
+            Iterator<Map.Entry<WatchKey, ModuleWatchKey>> iterator = keyLookup.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<WatchKey, ModuleWatchKey> entry = iterator.next();
+                if (!entry.getKey().isValid()) {
+                    iterator.remove();
+                }
+            }
+        }
     }
 
     private class ModuleWatchKey implements WatchKey {
@@ -150,9 +164,14 @@ class ModuleWatchService implements WatchService {
 
         @Override
         public void cancel() {
-            for (WatchKey key : realKeys) {
-                key.cancel();
+            Iterator<WatchKey> iterator = realKeys.iterator();
+            while (iterator.hasNext()) {
+                WatchKey next = iterator.next();
+                next.cancel();
+                iterator.remove();
             }
+            clearInvalidKeys();
+
         }
 
         @Override
