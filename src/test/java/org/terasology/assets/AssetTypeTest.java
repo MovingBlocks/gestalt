@@ -41,7 +41,9 @@ import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.Permission;
 import java.util.Collections;
 import java.util.List;
@@ -177,6 +179,7 @@ public class AssetTypeTest {
         assetType.addFormat(format);
 
         assetType.setEnvironment(createEnvironment());
+        assetType.scan();
 
         assertEquals(text, assetType.getAsset(URN));
     }
@@ -186,6 +189,7 @@ public class AssetTypeTest {
         assetType.setFactory(new TextFactory());
         assetType.addFormat(new TextFormat());
         assetType.setEnvironment(createEnvironment());
+        assetType.scan();
 
         Text asset = assetType.getAsset(URN.toString());
         assertNotNull(asset);
@@ -197,6 +201,7 @@ public class AssetTypeTest {
         assetType.setFactory(new TextFactory());
         assetType.addFormat(new TextFormat());
         assetType.setEnvironment(createEnvironment());
+        assetType.scan();
 
         Text asset = assetType.getAsset(URN.getResourceName().toString());
         assertNotNull(asset);
@@ -208,6 +213,7 @@ public class AssetTypeTest {
         assetType.setFactory(new TextFactory());
         assetType.addFormat(new TextFormat());
         assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
+        assetType.scan();
 
         Text asset = assetType.getAsset("example");
         assertNull(asset);
@@ -218,6 +224,7 @@ public class AssetTypeTest {
         assetType.setFactory(new TextFactory());
         assetType.addFormat(new TextFormat());
         assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
+        assetType.scan();
 
         Text asset = assetType.getAsset("example", new Name("moduleA"));
         assertNotNull(asset);
@@ -231,10 +238,53 @@ public class AssetTypeTest {
         assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("moduleA")),
                 moduleRegistry.getLatestModuleVersion(new Name("moduleB"))));
+        assetType.scan();
 
         Text asset = assetType.getAsset("example", new Name("moduleB"));
         assertNotNull(asset);
         assertEquals(URN, asset.getUrn());
+    }
+
+    @Test
+    public void applyOverride() throws Exception {
+        assetType.setFactory(new TextFactory());
+        assetType.addFormat(new TextFormat());
+        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                moduleRegistry.getLatestModuleVersion(new Name("overrideA"))));
+        assetType.scan();
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals("Override text", asset.getValue());
+
+    }
+
+    @Test
+     public void applyOverrideInDependencyChain() throws Exception {
+        assetType.setFactory(new TextFactory());
+        assetType.addFormat(new TextFormat());
+        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideB"))));
+        assetType.scan();
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals("Different text", asset.getValue());
+
+    }
+
+    @Test
+    public void applyOverrideInUnrelatedModulesUsesAlphabeticallyLast() throws Exception {
+        assetType.setFactory(new TextFactory());
+        assetType.addFormat(new TextFormat());
+        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideC"))));
+        assetType.scan();
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals("Final text", asset.getValue());
+
     }
 
     private ModuleEnvironment createEnvironment(Module... modules) throws URISyntaxException {
