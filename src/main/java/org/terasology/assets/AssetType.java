@@ -29,20 +29,25 @@ import org.slf4j.LoggerFactory;
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
 import org.terasology.util.io.FileScanning;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class AssetType<T extends Asset<U>, U extends AssetData> {
 
     public static final String ASSET_FOLDER = "assets";
+    public static final String OVERRIDE_FOLDER = "overrides";
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
     private final Name id;
@@ -86,10 +91,14 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
 
     public void setEnvironment(ModuleEnvironment environment) {
         this.moduleEnvironment = environment;
+
+    }
+
+    public void scan() {
+        Preconditions.checkState(getEnvironment() != null, "Environment not set");
         unloadedAssetLookup.clear();
-        for (AssetFormat<U> format : formats) {
-            scanForFormat(format);
-        }
+        scanForAssets();
+        scanForOverrides();
     }
 
     public AssetFactory<T, U> getFactory() {
@@ -110,34 +119,84 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
 
     public void addFormat(AssetFormat<U> format) {
         formats.add(format);
-        if (moduleEnvironment != null) {
-            scanForFormat(format);
+    }
+
+    private void scanForAssets() {
+        for (AssetFormat<U> format : formats) {
+            for (Module module : moduleEnvironment) {
+                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+                if (Files.exists(rootPath)) {
+                    Map<Name, UnloadedAsset<U>> moduleSources = Maps.newLinkedHashMap();
+                    try {
+                        for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), format.getFileMatcher())) {
+                            try {
+                                Name assetName = format.getAssetName(file.getFileName().toString());
+                                UnloadedAsset<U> source = unloadedAssetLookup.get(assetName, module.getId());
+                                if (source == null) {
+                                    source = new UnloadedAsset<>(new ResourceUrn(module.getId(), assetName), format);
+                                    moduleSources.put(assetName, source);
+                                }
+                                source.addInput(file);
+                            } catch (InvalidAssetFilenameException e) {
+                                logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), id, e);
+                            }
+                        }
+                    } catch (IOException e) {
+                        logger.error("Failed to scan module '{}' for assets", module.getId(), e);
+                    }
+                    unloadedAssetLookup.column(module.getId()).putAll(moduleSources);
+                }
+            }
         }
     }
 
-    private void scanForFormat(AssetFormat<U> format) {
-        for (Module module : moduleEnvironment) {
-            Map<Name, UnloadedAsset<U>> moduleSources = Maps.newLinkedHashMap();
-            try {
-                for (Path file : module.findFiles(FileScanning.acceptAll(), format.getFileMatcher(), ASSET_FOLDER, folderName)) {
-                    try {
-                        Name assetName = format.getAssetName(file.getFileName().toString());
-                        UnloadedAsset<U> source = unloadedAssetLookup.get(assetName, module.getId());
-                        if (source == null) {
-                            source = new UnloadedAsset<>(new ResourceUrn(module.getId(), assetName), format);
-                            moduleSources.put(assetName, source);
-                        }
-                        source.addInput(file);
-                    } catch (InvalidAssetFilenameException e) {
-                        logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), id, e);
-                    }
+    private void scanForOverrides() {
+        Map<ResourceUrn, Name> overriddenByModule = Maps.newHashMap();
+        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
+            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
+            if (Files.exists(rootPath)) {
+                Map<ResourceUrn, UnloadedAsset<U>> moduleOverrides = Maps.newLinkedHashMap();
+                for (AssetFormat<U> format : formats) {
+                    moduleOverrides.putAll(scanForOverridesOfFormat(module, rootPath, format));
                 }
-            } catch (IOException e) {
-                logger.error("Failed to scan module '{}' for assets", module.getId(), e);
+                Set<Name> moduleDependencies = moduleEnvironment.getDependencyNamesOf(module.getId());
+                for (Map.Entry<ResourceUrn, UnloadedAsset<U>> entry : moduleOverrides.entrySet()) {
+                    Name oldModule = overriddenByModule.put(entry.getKey(), module.getId());
+                    if (oldModule != null && !moduleDependencies.contains(oldModule)) {
+                        logger.warn("Conflicting overrides of '{}', applying from '{}' over '{}'", entry.getKey(), module.getId(), oldModule);
+                    }
+                    unloadedAssetLookup.put(entry.getKey().getResourceName(), entry.getKey().getModuleName(), entry.getValue());
+                }
             }
-
-            unloadedAssetLookup.column(module.getId()).putAll(moduleSources);
         }
+    }
+
+    private Map<ResourceUrn, UnloadedAsset<U>> scanForOverridesOfFormat(Module origin, Path rootPath, AssetFormat<U> format) {
+        Map<ResourceUrn, UnloadedAsset<U>> newOverrides = Maps.newLinkedHashMap();
+        try {
+            for (Path file : origin.findFiles(rootPath, FileScanning.acceptAll(), new OverrideMatcher(folderName, format.getFileMatcher()))) {
+                try {
+                    Name assetName = format.getAssetName(file.getFileName().toString());
+                    Name moduleName = new Name(file.getName(1).toString());
+                    if (!moduleEnvironment.getDependencyNamesOf(origin.getId()).contains(moduleName)) {
+                        logger.warn("Module '{}' contains overrides for non-dependency '{}', skipping", origin, moduleName);
+                        continue;
+                    }
+                    ResourceUrn urn = new ResourceUrn(moduleName, assetName);
+                    UnloadedAsset<U> source = newOverrides.get(urn);
+                    if (source == null) {
+                        source = new UnloadedAsset<>(urn, format);
+                        newOverrides.put(urn, source);
+                    }
+                    source.addInput(file);
+                } catch (InvalidAssetFilenameException e) {
+                    logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), id, e);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to scan for overrides of '" + id + "'", e);
+        }
+        return newOverrides;
     }
 
     public void removeFormat(AssetFormat<U> format) {
@@ -267,4 +326,18 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         return id.toString();
     }
 
+    private static class OverrideMatcher implements PathMatcher {
+
+        private final String folderName;
+        private final PathMatcher formatMatcher;
+
+        public OverrideMatcher(String folderName, PathMatcher formatMatcher) {
+            this.folderName = folderName;
+            this.formatMatcher = formatMatcher;
+        }
+
+        @Override
+        public boolean matches(Path path) {
+            return path.getNameCount() > 2 && path.getName(2).toString().equalsIgnoreCase(folderName) && formatMatcher.matches(path);        }
+    }
 }
