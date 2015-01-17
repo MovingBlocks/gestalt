@@ -16,7 +16,11 @@
 
 package org.terasology.assets;
 
+import org.terasology.assets.exceptions.InvalidAssetFilenameException;
+import org.terasology.naming.Name;
+
 import java.io.IOException;
+import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.Set;
 
@@ -26,15 +30,16 @@ import java.util.Set;
 public interface AssetDeltaFormat<T extends AssetData> {
 
     /**
-     * @return The file extension this asset delta format handles
+     * @return A path matcher that will filter for files relevant for this format.
      */
-    Set<String> getFileExtensions();
+    PathMatcher getFileMatcher();
 
     /**
      * @param filename The filename of an asset delta file
      * @return The asset name corresponding to the given filename
+     * @throws InvalidAssetFilenameException if the filename is not valid for this format.
      */
-    String getAssetName(String filename);
+    Name getAssetName(String filename) throws InvalidAssetFilenameException;
 
     /**
      * Applies a delta to the given assetData

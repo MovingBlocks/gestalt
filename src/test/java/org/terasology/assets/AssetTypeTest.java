@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.terasology.assets.stubs.text.Text;
 import org.terasology.assets.stubs.text.TextData;
+import org.terasology.assets.stubs.text.TextDeltaFormat;
 import org.terasology.assets.stubs.text.TextFactory;
 import org.terasology.assets.stubs.text.TextFormat;
 import org.terasology.module.ClasspathModule;
@@ -284,7 +285,35 @@ public class AssetTypeTest {
         Text asset = assetType.getAsset(URN);
         assertNotNull(asset);
         assertEquals("Final text", asset.getValue());
+    }
 
+    @Test
+    public void applyDelta() throws Exception {
+        assetType.setFactory(new TextFactory());
+        assetType.addFormat(new TextFormat());
+        assetType.addDeltaFormat(new TextDeltaFormat());
+        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                moduleRegistry.getLatestModuleVersion(new Name("deltaA"))));
+        assetType.scan();
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals("Example frumple", asset.getValue());
+    }
+
+    @Test
+    public void deltaDroppedBeforeOverride() throws Exception {
+        assetType.setFactory(new TextFactory());
+        assetType.addFormat(new TextFormat());
+        assetType.addDeltaFormat(new TextDeltaFormat());
+        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                moduleRegistry.getLatestModuleVersion(new Name("deltaA")),
+                moduleRegistry.getLatestModuleVersion(new Name("overrideD"))));
+        assetType.scan();
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals("Overridden text without delta", asset.getValue());
     }
 
     private ModuleEnvironment createEnvironment(Module... modules) throws URISyntaxException {
