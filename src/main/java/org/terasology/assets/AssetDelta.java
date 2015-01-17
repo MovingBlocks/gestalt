@@ -17,7 +17,6 @@
 package org.terasology.assets;
 
 import com.google.common.collect.Lists;
-import org.terasology.naming.ResourceUrn;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -26,40 +25,19 @@ import java.util.List;
 /**
  * @author Immortius
  */
-class UnloadedAsset<T extends AssetData> {
-
+class AssetDelta<T extends AssetData> {
     private final List<AssetInput> inputs = Lists.newArrayList();
-    private final AssetFormat<T> format;
-    private final ResourceUrn urn;
-    private final List<AssetDelta<T>> deltas = Lists.newArrayList();
+    private final AssetDeltaFormat<T> format;
 
-    public UnloadedAsset(ResourceUrn urn, AssetFormat<T> format) {
-        this.urn = urn;
+    public AssetDelta(AssetDeltaFormat<T> format) {
         this.format = format;
-    }
-
-    public ResourceUrn getUrn() {
-        return urn;
     }
 
     public void addInput(Path path) {
         inputs.add(new AssetInput(path));
     }
 
-    public void addDelta(AssetDelta<T> delta) {
-        deltas.add(delta);
-    }
-
-    public T load() throws IOException {
-        T result = format.load(urn, inputs);
-        for (AssetDelta<T> delta : deltas) {
-            delta.applyTo(result);
-        }
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return urn.toString();
+    public void applyTo(T data) throws IOException {
+        format.applyDelta(inputs, data);
     }
 }
