@@ -37,6 +37,7 @@ import org.terasology.util.collection.UniqueQueue;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -220,11 +221,19 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         if (classLoader instanceof ModuleClassLoader) {
             return ((ModuleClassLoader) classLoader).getModuleId();
         }
-        URL sourceUrl = type.getProtectionDomain().getCodeSource().getLocation();
-        for (Module module : modules.values()) {
-            if (module.isCodeModule() && module.getClasspaths().contains(sourceUrl)) {
-                return module.getId();
+        try {
+            String sourceLocation = type.getProtectionDomain().getCodeSource().getLocation().toURI().toASCIIString();
+            for (Module module : modules.values()) {
+                if (module.isCodeModule()) {
+                    for (URL classpath : module.getClasspaths()) {
+                        if (classpath.toURI().toASCIIString().equals(sourceLocation)) {
+                            return module.getId();
+                        }
+                    }
+                }
             }
+        } catch (URISyntaxException e) {
+            logger.error("Failed to convert url to uri for comparison", e);
         }
         return null;
     }
