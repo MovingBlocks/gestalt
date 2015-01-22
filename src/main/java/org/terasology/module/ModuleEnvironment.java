@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Iterator;
@@ -222,11 +224,11 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
             return ((ModuleClassLoader) classLoader).getModuleId();
         }
         try {
-            String sourceLocation = type.getProtectionDomain().getCodeSource().getLocation().toURI().toASCIIString();
+            Path sourceLocation = Paths.get(type.getProtectionDomain().getCodeSource().getLocation().toURI());
             for (Module module : modules.values()) {
                 if (module.isCodeModule()) {
                     for (URL classpath : module.getClasspaths()) {
-                        if (classpath.toURI().toASCIIString().equals(sourceLocation)) {
+                        if (Paths.get(classpath.toURI()).equals(sourceLocation)) {
                             return module.getId();
                         }
                     }
