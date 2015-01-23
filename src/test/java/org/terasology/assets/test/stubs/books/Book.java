@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.stubs.books;
+package org.terasology.assets.test.stubs.books;
 
 import org.terasology.assets.Asset;
 import org.terasology.naming.ResourceUrn;

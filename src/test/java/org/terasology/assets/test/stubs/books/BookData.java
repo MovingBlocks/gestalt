@@ -14,30 +14,38 @@
  * limitations under the License.
  */
 
-package org.terasology.assets;
+package org.terasology.assets.test.stubs.books;
 
-import com.google.common.collect.Lists;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
+import org.terasology.assets.AssetData;
 
 /**
  * @author Immortius
  */
-class AssetDelta<T extends AssetData> {
-    private final List<AssetInput> inputs = Lists.newArrayList();
-    private final AssetDeltaFormat<T> format;
+public class BookData implements AssetData {
+    private String heading = "";
+    private String body = "";
 
-    public AssetDelta(AssetDeltaFormat<T> format) {
-        this.format = format;
+    public BookData() {
     }
 
-    public void addInput(Path path) {
-        inputs.add(new AssetInput(path));
+    public BookData(String heading, String body) {
+        this.heading = heading;
+        this.body = body;
     }
 
-    public void applyTo(T data) throws IOException {
-        format.applyDelta(inputs, data);
+    public String getBody() {
+        return body;
+    }
+
+    public String getHeading() {
+        return heading;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public void setHeading(String heading) {
+        this.heading = heading;
     }
 }

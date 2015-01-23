@@ -16,114 +16,61 @@
 
 package org.terasology.assets;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
-import org.terasology.assets.stubs.text.Text;
-import org.terasology.assets.stubs.text.TextData;
-import org.terasology.assets.stubs.text.TextDeltaFormat;
-import org.terasology.assets.stubs.text.TextFactory;
-import org.terasology.assets.stubs.text.TextFormat;
-import org.terasology.module.ClasspathModule;
-import org.terasology.module.Module;
-import org.terasology.module.ModuleEnvironment;
-import org.terasology.module.ModuleMetadata;
-import org.terasology.module.ModulePathScanner;
-import org.terasology.module.ModuleRegistry;
-import org.terasology.module.TableModuleRegistry;
-import org.terasology.module.sandbox.BytecodeInjector;
-import org.terasology.module.sandbox.PermissionProvider;
-import org.terasology.module.sandbox.PermissionProviderFactory;
+import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.stubs.text.Text;
+import org.terasology.assets.test.stubs.text.TextData;
+import org.terasology.assets.test.stubs.text.TextFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
-import org.terasology.naming.Version;
-import org.terasology.util.io.FileExtensionPathMatcher;
 
-import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.security.Permission;
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Immortius
  */
-public class AssetTypeTest {
+public class AssetTypeTest extends VirtualModuleEnvironment {
 
     public static final String ASSET_TYPE_ID = "text";
-    public static final String FOLDER_NAME = "text";
     public static final String TEXT_VALUE = "Value";
     public static final String TEXT_VALUE_2 = "Value";
 
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
-    public static final String ASSET_FILE_NAME = "example.txt";
-    public static final String TXT_EXTENSION = "txt";
 
-
-    private ModuleRegistry moduleRegistry;
-    private AssetType<Text, TextData> assetType = new AssetType<>(ASSET_TYPE_ID, FOLDER_NAME, Text.class);
+    private AssetType<Text, TextData> assetType = new AssetType<>(ASSET_TYPE_ID, Text.class);
 
     public AssetTypeTest() throws Exception {
-        moduleRegistry = new TableModuleRegistry();
-        ModuleMetadata testModuleMetadata = new ModuleMetadata();
-        testModuleMetadata.setId(new Name("test"));
-        testModuleMetadata.setVersion(new Version("1.0.0"));
-        Module testModule = ClasspathModule.create(testModuleMetadata, true, getClass());
-        moduleRegistry.add(testModule);
-
-        ModulePathScanner scanner = new ModulePathScanner();
-        for (Path path : testModule.getLocations()) {
-            Path virtualPath;
-            if (Files.isRegularFile(path)) {
-                FileSystem jarFileSystem = FileSystems.newFileSystem(path, null);
-                virtualPath = jarFileSystem.getPath("virtualModules");
-            } else {
-                virtualPath = path.resolve("virtualModules");
-            }
-            if (Files.isDirectory(virtualPath)) {
-                scanner.scan(moduleRegistry, virtualPath);
-            }
-        }
+        assetType.setFactory(new TextFactory());
     }
 
     @Test
     public void construction() {
         assertEquals(new Name(ASSET_TYPE_ID), assetType.getId());
-        assertEquals(FOLDER_NAME, assetType.getFolderName());
         assertEquals(Text.class, assetType.getAssetClass());
+        assertTrue(assetType.getProducers().isEmpty());
     }
 
     @Test
     public void loadData() {
-        AssetFactory<Text, TextData> factory = mock(AssetFactory.class);
         TextData data = new TextData(TEXT_VALUE);
-        assetType.setFactory(factory);
         Text text = new Text(URN, data);
-        when(factory.build(URN, data)).thenReturn(text);
 
         Text createdText = assetType.loadAsset(URN, data);
         assertEquals(text, createdText);
-        verify(factory).build(URN, data);
     }
 
     @Test
     public void retrieveLoadedDataByUrn() {
-        assetType.setFactory(new TextFactory());
         TextData data = new TextData(TEXT_VALUE);
 
         Text loadedText = assetType.loadAsset(URN, data);
@@ -133,7 +80,6 @@ public class AssetTypeTest {
 
     @Test
     public void loadingAssetWithSameUrnReloadsExistingAsset() {
-        assetType.setFactory(new TextFactory());
         TextData initialData = new TextData(TEXT_VALUE);
         Text initialText = assetType.loadAsset(URN, initialData);
         TextData newData = new TextData(TEXT_VALUE_2);
@@ -145,7 +91,6 @@ public class AssetTypeTest {
 
     @Test
     public void changingFactoryDisposesAllAssets() {
-        assetType.setFactory(new TextFactory());
         TextData data = new TextData(TEXT_VALUE);
         Text asset = assetType.loadAsset(URN, data);
 
@@ -156,7 +101,6 @@ public class AssetTypeTest {
 
     @Test
     public void disposingAsset() {
-        assetType.setFactory(new TextFactory());
         TextData data = new TextData(TEXT_VALUE);
         Text asset = assetType.loadAsset(URN, data);
 
@@ -166,192 +110,87 @@ public class AssetTypeTest {
     }
 
     @Test
-    public void resolveAssetWithUrn() throws Exception {
-        AssetFactory<Text, TextData> factory = mock(AssetFactory.class);
-        TextData data = new TextData(TEXT_VALUE);
-        assetType.setFactory(factory);
-        Text text = new Text(URN, data);
-        when(factory.build(URN, data)).thenReturn(text);
-
-        AssetFormat<TextData> format = mock(AssetFormat.class);
-        when(format.getAssetName(ASSET_FILE_NAME)).thenReturn(URN.getResourceName());
-        when(format.getFileMatcher()).thenReturn(new FileExtensionPathMatcher(TXT_EXTENSION));
-        when(format.load(eq(URN), any(List.class))).thenReturn(data);
-        assetType.addFormat(format);
-
-        assetType.setEnvironment(createEnvironment());
-        assetType.scan();
-
-        assertEquals(text, assetType.getAsset(URN));
+    public void addProducer() {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        assertEquals(1, assetType.getProducers().size());
+        assertTrue(assetType.getProducers().contains(producer));
     }
 
     @Test
-    public void stringResolveFullUrn() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.setEnvironment(createEnvironment());
-        assetType.scan();
+    public void removeProducer() {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        assetType.removeProducer(producer);
+        assertTrue(assetType.getProducers().isEmpty());
+    }
 
-        Text asset = assetType.getAsset(URN.toString());
+    @Test
+    public void clearProducers() {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        assetType.clearProducers();
+        assertTrue(assetType.getProducers().isEmpty());
+    }
+
+    @Test
+    public void resolveFullUrnReturnsUrn() {
+        Set<ResourceUrn> results = assetType.resolve(URN.toString());
+        assertEquals(1, results.size());
+        assertTrue(results.contains(URN));
+    }
+
+    @Test
+    public void resolvePartialReturnsNothingWithNoPossibilities() {
+        Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString());
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    public void resolvePartialReturnsPossibilitiesFromProducers() {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.resolve(URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(URN));
+        Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString());
+        assertEquals(1, results.size());
+        assertTrue(results.contains(URN));
+    }
+
+    @Test
+    public void resolvePartialWithContextPassesContextToProducers() {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.resolve(URN.getResourceName().toString(), URN.getModuleName())).thenReturn(ImmutableSet.of(URN));
+        Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString(), URN.getModuleName());
+        assertEquals(1, results.size());
+        assertTrue(results.contains(URN));
+    }
+
+    @Test
+    public void getUnknownAsset() {
+        assertNull(assetType.getAsset(URN));
+    }
+
+    @Test
+    public void getAssetLoadsFromProducers() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE));
+
+        Text asset = assetType.getAsset(URN);
         assertNotNull(asset);
         assertEquals(URN, asset.getUrn());
+        assertEquals(TEXT_VALUE, asset.getValue());
     }
 
     @Test
-    public void resolvePartialUrnWithSingleMatch() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.setEnvironment(createEnvironment());
-        assetType.scan();
+    public void getAssetWhenProducerFails() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.getAssetData(URN)).thenThrow(new IOException());
 
-        Text asset = assetType.getAsset(URN.getResourceName().toString());
-        assertNotNull(asset);
-        assertEquals(URN, asset.getUrn());
+        assertNull(assetType.getAsset(URN));
     }
 
-    @Test
-    public void resolvePartialUrnWithMultipleMatchesFails() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
-        assetType.scan();
-
-        Text asset = assetType.getAsset("example");
-        assertNull(asset);
-    }
-
-    @Test
-    public void resolvePartialUrnInContext() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
-        assetType.scan();
-
-        Text asset = assetType.getAsset("example", new Name("moduleA"));
-        assertNotNull(asset);
-        assertEquals(new ResourceUrn("moduleA:example"), asset.getUrn());
-    }
-
-    @Test
-    public void resolvePartialUrnInContextDependency() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("moduleA")),
-                moduleRegistry.getLatestModuleVersion(new Name("moduleB"))));
-        assetType.scan();
-
-        Text asset = assetType.getAsset("example", new Name("moduleB"));
-        assertNotNull(asset);
-        assertEquals(URN, asset.getUrn());
-    }
-
-    @Test
-    public void applyOverride() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("overrideA"))));
-        assetType.scan();
-
-        Text asset = assetType.getAsset(URN);
-        assertNotNull(asset);
-        assertEquals("Override text", asset.getValue());
-
-    }
-
-    @Test
-     public void applyOverrideInDependencyChain() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideB"))));
-        assetType.scan();
-
-        Text asset = assetType.getAsset(URN);
-        assertNotNull(asset);
-        assertEquals("Different text", asset.getValue());
-
-    }
-
-    @Test
-    public void applyOverrideInUnrelatedModulesUsesAlphabeticallyLast() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideC"))));
-        assetType.scan();
-
-        Text asset = assetType.getAsset(URN);
-        assertNotNull(asset);
-        assertEquals("Final text", asset.getValue());
-    }
-
-    @Test
-    public void applyDelta() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.addDeltaFormat(new TextDeltaFormat());
-        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("deltaA"))));
-        assetType.scan();
-
-        Text asset = assetType.getAsset(URN);
-        assertNotNull(asset);
-        assertEquals("Example frumple", asset.getValue());
-    }
-
-    @Test
-    public void deltaDroppedBeforeOverride() throws Exception {
-        assetType.setFactory(new TextFactory());
-        assetType.addFormat(new TextFormat());
-        assetType.addDeltaFormat(new TextDeltaFormat());
-        assetType.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("deltaA")),
-                moduleRegistry.getLatestModuleVersion(new Name("overrideD"))));
-        assetType.scan();
-
-        Text asset = assetType.getAsset(URN);
-        assertNotNull(asset);
-        assertEquals("Overridden text without delta", asset.getValue());
-    }
-
-    private ModuleEnvironment createEnvironment(Module... modules) throws URISyntaxException {
-        return new ModuleEnvironment(Lists.newArrayList(modules), new PermissionProviderFactory() {
-            @Override
-            public PermissionProvider createPermissionProviderFor(Module module) {
-                return new PermissionProvider() {
-                    @Override
-                    public boolean isPermitted(Class aClass) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean isPermitted(Permission permission, Class<?> aClass) {
-                        return false;
-                    }
-                };
-            }
-        }, Collections.<BytecodeInjector>emptyList());
-    }
-
-    private ModuleEnvironment createEnvironment() throws URISyntaxException {
-        return new ModuleEnvironment(Lists.<Module>newArrayList(moduleRegistry.getLatestModuleVersion(new Name("test"))), new PermissionProviderFactory() {
-            @Override
-            public PermissionProvider createPermissionProviderFor(Module module) {
-                return new PermissionProvider() {
-                    @Override
-                    public boolean isPermitted(Class aClass) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean isPermitted(Permission permission, Class<?> aClass) {
-                        return false;
-                    }
-                };
-            }
-        }, Collections.<BytecodeInjector>emptyList());
-    }
 
 }

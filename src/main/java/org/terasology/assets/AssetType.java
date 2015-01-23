@@ -16,31 +16,17 @@
 
 package org.terasology.assets;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ListMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.assets.exceptions.InvalidAssetFilenameException;
-import org.terasology.module.Module;
-import org.terasology.module.ModuleEnvironment;
-import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
-import org.terasology.util.io.FileScanning;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -48,37 +34,23 @@ import java.util.Set;
 
 public class AssetType<T extends Asset<U>, U extends AssetData> {
 
-    public static final String ASSET_FOLDER = "assets";
-    public static final String OVERRIDE_FOLDER = "overrides";
-    public static final String DELTA_FOLDER = "deltas";
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
     private final Name id;
-    private final String folderName;
     private final Class<T> assetClass;
-
-    private ModuleEnvironment moduleEnvironment;
+    private List<AssetProducer<U>> producers = Lists.newArrayList();
     private AssetFactory<T, U> factory;
-    private List<AssetFormat<U>> formats = Lists.newArrayList();
-    private List<AssetDeltaFormat<U>> deltaFormats = Lists.newArrayList();
-
     private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
 
-    private Table<Name, Name, UnloadedAsset<U>> unloadedAssetLookup = HashBasedTable.create();
-    private ListMultimap<ResourceUrn, AssetDelta<U>> assetDeltaLookup = ArrayListMultimap.create();
-
-
-    public AssetType(String id, String folderName, Class<T> assetClass) {
-        this(new Name(id), folderName, assetClass);
+    public AssetType(String id, Class<T> assetClass) {
+        this(new Name(id), assetClass);
     }
 
-    public AssetType(Name id, String folderName, Class<T> assetClass) {
+    public AssetType(Name id, Class<T> assetClass) {
         Preconditions.checkNotNull(id);
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(folderName), "folderName must not be null or empty");
         Preconditions.checkNotNull(assetClass);
 
         this.id = id;
-        this.folderName = folderName;
         this.assetClass = assetClass;
     }
 
@@ -88,24 +60,6 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
 
     public Class<T> getAssetClass() {
         return assetClass;
-    }
-
-    public ModuleEnvironment getEnvironment() {
-        return moduleEnvironment;
-    }
-
-    public void setEnvironment(ModuleEnvironment environment) {
-        this.moduleEnvironment = environment;
-
-    }
-
-    public void scan() {
-        Preconditions.checkState(getEnvironment() != null, "Environment not set");
-        unloadedAssetLookup.clear();
-        assetDeltaLookup.clear();
-        scanForAssets();
-        Map<ResourceUrn, Name> overriddenByModule = scanForOverrides();
-        scanForDeltas(overriddenByModule);
     }
 
     public AssetFactory<T, U> getFactory() {
@@ -120,185 +74,49 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         loadedAssets.clear();
     }
 
-    public List<AssetFormat<U>> getFormats() {
-        return Collections.unmodifiableList(formats);
+    public void addProducer(AssetProducer<U> producer) {
+        producers.add(producer);
     }
 
-    public void addFormat(AssetFormat<U> format) {
-        formats.add(format);
+    public List<AssetProducer<U>> getProducers() {
+        return Collections.unmodifiableList(producers);
     }
 
-    public List<AssetDeltaFormat<U>> getDeltaFormats() {
-        return Collections.unmodifiableList(deltaFormats);
+    public void removeProducer(AssetProducer<U> producer) {
+        producers.remove(producer);
     }
 
-    public void addDeltaFormat(AssetDeltaFormat<U> format) {
-        deltaFormats.add(format);
-    }
-
-    private void scanForAssets() {
-        for (AssetFormat<U> format : formats) {
-            for (Module module : moduleEnvironment) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
-                if (Files.exists(rootPath)) {
-                    Map<Name, UnloadedAsset<U>> moduleSources = Maps.newLinkedHashMap();
-                    try {
-                        for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), format.getFileMatcher())) {
-                            try {
-                                Name assetName = format.getAssetName(file.getFileName().toString());
-                                UnloadedAsset<U> source = unloadedAssetLookup.get(assetName, module.getId());
-                                if (source == null) {
-                                    source = new UnloadedAsset<>(new ResourceUrn(module.getId(), assetName), format);
-                                    moduleSources.put(assetName, source);
-                                }
-                                source.addInput(file);
-                            } catch (InvalidAssetFilenameException e) {
-                                logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), id, e);
-                            }
-                        }
-                    } catch (IOException e) {
-                        logger.error("Failed to scan module '{}' for assets", module.getId(), e);
-                    }
-                    unloadedAssetLookup.column(module.getId()).putAll(moduleSources);
-                }
-            }
-        }
-    }
-
-    private Map<ResourceUrn, Name> scanForOverrides() {
-        Map<ResourceUrn, Name> overriddenByModule = Maps.newHashMap();
-        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
-            if (Files.exists(rootPath)) {
-                Map<ResourceUrn, UnloadedAsset<U>> moduleOverrides = Maps.newLinkedHashMap();
-                for (AssetFormat<U> format : formats) {
-                    moduleOverrides.putAll(scanForOverridesOfFormat(module, rootPath, format));
-                }
-                Set<Name> moduleDependencies = moduleEnvironment.getDependencyNamesOf(module.getId());
-                for (Map.Entry<ResourceUrn, UnloadedAsset<U>> entry : moduleOverrides.entrySet()) {
-                    Name oldModule = overriddenByModule.put(entry.getKey(), module.getId());
-                    if (oldModule != null && !moduleDependencies.contains(oldModule)) {
-                        logger.warn("Conflicting overrides of '{}', applying from '{}' over '{}'", entry.getKey(), module.getId(), oldModule);
-                    }
-                    unloadedAssetLookup.put(entry.getKey().getResourceName(), entry.getKey().getModuleName(), entry.getValue());
-                }
-            }
-        }
-        return overriddenByModule;
-    }
-
-    private void scanForDeltas(Map<ResourceUrn, Name> overriddenByModule) {
-        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, DELTA_FOLDER);
-            if (Files.exists(rootPath)) {
-                for (AssetDeltaFormat<U> format : deltaFormats) {
-                    for (Map.Entry<ResourceUrn, AssetDelta<U>> delta : scanForDeltasOfFormat(module, rootPath, format).entrySet()) {
-                        Name overrideModule = overriddenByModule.get(delta.getKey());
-                        if (overrideModule != null && moduleEnvironment.getDependencyNamesOf(overrideModule).contains(delta.getKey().getModuleName())) {
-                            continue;
-                        }
-
-                        UnloadedAsset<U> asset = unloadedAssetLookup.get(delta.getKey().getResourceName(), delta.getKey().getModuleName());
-                        if (asset != null) {
-                            asset.addDelta(delta.getValue());
-                        } else {
-                            logger.warn("Discovered delta for unknown asset '{}'", delta.getKey());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private Map<ResourceUrn, AssetDelta<U>> scanForDeltasOfFormat(Module origin, Path rootPath, AssetDeltaFormat<U> format) {
-        Map<ResourceUrn, AssetDelta<U>> discoveredDeltas = Maps.newLinkedHashMap();
-        try {
-            for (Path file : origin.findFiles(rootPath, FileScanning.acceptAll(), new FormatMatcher(folderName, format.getFileMatcher()))) {
-                try {
-                    Name assetName = format.getAssetName(file.getFileName().toString());
-                    Name moduleName = new Name(file.getName(1).toString());
-                    if (!moduleEnvironment.getDependencyNamesOf(origin.getId()).contains(moduleName)) {
-                        logger.warn("Module '{}' contains delta for non-dependency '{}', skipping", origin, moduleName);
-                        continue;
-                    }
-                    ResourceUrn urn = new ResourceUrn(moduleName, assetName);
-                    AssetDelta<U> source = discoveredDeltas.get(urn);
-                    if (source == null) {
-                        source = new AssetDelta<>(format);
-                        discoveredDeltas.put(urn, source);
-                    }
-                    source.addInput(file);
-                } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset delta for type '{}", file.getFileName(), id, e);
-                }
-            }
-        } catch (IOException e) {
-            logger.error("Failed to scan for deltas of '" + id + "'", e);
-        }
-        return discoveredDeltas;
-    }
-
-    private Map<ResourceUrn, UnloadedAsset<U>> scanForOverridesOfFormat(Module origin, Path rootPath, AssetFormat<U> format) {
-        Map<ResourceUrn, UnloadedAsset<U>> newOverrides = Maps.newLinkedHashMap();
-        try {
-            for (Path file : origin.findFiles(rootPath, FileScanning.acceptAll(), new FormatMatcher(folderName, format.getFileMatcher()))) {
-                try {
-                    Name assetName = format.getAssetName(file.getFileName().toString());
-                    Name moduleName = new Name(file.getName(1).toString());
-                    if (!moduleEnvironment.getDependencyNamesOf(origin.getId()).contains(moduleName)) {
-                        logger.warn("Module '{}' contains overrides for non-dependency '{}', skipping", origin, moduleName);
-                        continue;
-                    }
-                    ResourceUrn urn = new ResourceUrn(moduleName, assetName);
-                    UnloadedAsset<U> source = newOverrides.get(urn);
-                    if (source == null) {
-                        source = new UnloadedAsset<>(urn, format);
-                        newOverrides.put(urn, source);
-                    }
-                    source.addInput(file);
-                } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), id, e);
-                }
-            }
-        } catch (IOException e) {
-            logger.error("Failed to scan for overrides of '" + id + "'", e);
-        }
-        return newOverrides;
-    }
-
-    public void removeFormat(AssetFormat<U> format) {
-        formats.remove(format);
-    }
-
-    public void removeAllFormats() {
-        formats.clear();
+    public void clearProducers() {
+        producers.clear();
     }
 
     public T getAsset(ResourceUrn urn) {
         Preconditions.checkNotNull(urn);
+
         T asset = loadedAssets.get(urn);
-        if (asset == null && moduleEnvironment != null && urn.getFragmentName().isEmpty()) {
-            UnloadedAsset<U> source = unloadedAssetLookup.get(urn.getResourceName(), urn.getModuleName());
-            if (source != null) {
-                try {
-                    U assetData = source.load();
-                    return loadAsset(urn, assetData);
-                } catch (IOException e) {
-                    logger.error("Failed to load asset '" + urn + "'", e);
+        if (asset == null) {
+            try {
+                for (AssetProducer<U> resolver : producers) {
+                    U data = resolver.getAssetData(urn);
+                    if (data != null) {
+                        asset = loadAsset(urn, data);
+                    }
                 }
+            } catch (IOException e) {
+                logger.error("Failed to load asset '" + urn + "'", e);
             }
         }
         return asset;
     }
 
     public T getAsset(String urn) {
-        return getAsset(urn, null);
+        return getAsset(urn, Name.EMPTY);
     }
 
     public T getAsset(String urn, Name moduleContext) {
-        List<ResourceUrn> resolvedUrns = resolve(urn, moduleContext);
+        Set<ResourceUrn> resolvedUrns = resolve(urn, moduleContext);
         if (resolvedUrns.size() == 1) {
-            return getAsset(resolvedUrns.get(0));
+            return getAsset(resolvedUrns.iterator().next());
         } else if (resolvedUrns.size() > 1) {
             logger.warn("Failed to resolve asset '{}' - multiple possibilities discovered", urn);
         } else {
@@ -307,40 +125,20 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         return null;
     }
 
-    public List<ResourceUrn> resolve(String urn) {
-        return resolve(urn, null);
+    public Set<ResourceUrn> resolve(String urn) {
+        return resolve(urn, Name.EMPTY);
     }
 
-    public List<ResourceUrn> resolve(String urn, Name moduleContext) {
+    public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
         if (ResourceUrn.isValid(urn)) {
-            return Lists.newArrayList(new ResourceUrn(urn));
+            return ImmutableSet.of(new ResourceUrn(urn));
         }
-        final Name resourceName = new Name(urn);
-        if (moduleContext != null) {
-            if (unloadedAssetLookup.contains(resourceName, moduleContext)) {
-                return Lists.newArrayList(new ResourceUrn(moduleContext, resourceName));
-            }
-            List<ResourceUrn> resources = Lists.newArrayList();
-            for (Name dependency : moduleEnvironment.getDependencyNamesOf(moduleContext)) {
-                if (unloadedAssetLookup.contains(resourceName, dependency)) {
-                    resources.add(new ResourceUrn(dependency, resourceName));
-                }
-            }
-            if (!resources.isEmpty()) {
-                return resources;
-            }
+
+        Set<ResourceUrn> results = Sets.newLinkedHashSet();
+        for (AssetProducer<U> resolver : producers) {
+            results.addAll(resolver.resolve(urn, moduleContext));
         }
-        //if (urn.contains(ResourceUrn.FRAGMENT_SEPARATOR)) {
-        //    resourceName = urn.split(ResourceUrn.FRAGMENT_SEPARATOR, 2)[0];
-        //}
-        Map<Name, UnloadedAsset<U>> availableResources = unloadedAssetLookup.row(resourceName);
-        return Lists.newArrayList(Collections2.transform(availableResources.keySet(), new Function<Name, ResourceUrn>() {
-            @Nullable
-            @Override
-            public ResourceUrn apply(Name moduleName) {
-                return new ResourceUrn(moduleName, resourceName);
-            }
-        }));
+        return results;
     }
 
     public void dispose(ResourceUrn urn) {
@@ -362,13 +160,6 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         }
 
         return asset;
-    }
-
-    /**
-     * @return The name of the sub-folder within modules that contains this asset type
-     */
-    public String getFolderName() {
-        return folderName;
     }
 
     @Override
@@ -393,19 +184,4 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         return id.toString();
     }
 
-    private static class FormatMatcher implements PathMatcher {
-
-        private final String folderName;
-        private final PathMatcher formatMatcher;
-
-        public FormatMatcher(String folderName, PathMatcher formatMatcher) {
-            this.folderName = folderName;
-            this.formatMatcher = formatMatcher;
-        }
-
-        @Override
-        public boolean matches(Path path) {
-            return path.getNameCount() > 2 && path.getName(2).toString().equalsIgnoreCase(folderName) && formatMatcher.matches(path);
-        }
-    }
 }

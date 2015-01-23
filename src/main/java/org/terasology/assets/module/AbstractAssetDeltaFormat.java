@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.terasology.assets;
+package org.terasology.assets.module;
 
+import org.terasology.assets.AssetData;
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.naming.Name;
 import org.terasology.util.io.FileExtensionPathMatcher;
