@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.stubs.text;
+package org.terasology.assets;
 
-import org.terasology.assets.AssetFactory;
+import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+
+import java.io.IOException;
+import java.util.Set;
 
 /**
  * @author Immortius
  */
-public class TextFactory implements AssetFactory<Text, TextData> {
-    @Override
-    public Text build(ResourceUrn urn, TextData data) {
-        return new Text(urn, data);
-    }
+public interface AssetProducer<T extends AssetData> {
+
+    Set<ResourceUrn> resolve(String urn, Name moduleContext);
+
+    T getAssetData(ResourceUrn urn) throws IOException;
+
 }

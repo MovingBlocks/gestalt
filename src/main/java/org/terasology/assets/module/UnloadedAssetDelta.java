@@ -14,29 +14,32 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.stubs.text;
+package org.terasology.assets.module;
 
+import com.google.common.collect.Lists;
 import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetInput;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 
 /**
  * @author Immortius
  */
-public class TextData implements AssetData {
-    private String value = "";
+class UnloadedAssetDelta<T extends AssetData> {
+    private final List<AssetInput> inputs = Lists.newArrayList();
+    private final AssetDeltaFormat<T> format;
 
-    public TextData() {
+    public UnloadedAssetDelta(AssetDeltaFormat<T> format) {
+        this.format = format;
     }
 
-    public TextData(String value) {
-        this.value = value;
+    public void addInput(Path path) {
+        inputs.add(new AssetInput(path));
     }
 
-    public String getValue() {
-        return value;
+    public void applyTo(T data) throws IOException {
+        format.applyDelta(inputs, data);
     }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
 }

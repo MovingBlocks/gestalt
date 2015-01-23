@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package org.terasology.assets;
+package org.terasology.assets.module;
+
+import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetInput;
 
 import java.io.IOException;
 import java.util.List;

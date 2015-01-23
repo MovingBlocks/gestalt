@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package org.terasology.assets;
+package org.terasology.assets.module;
 
+import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetInput;
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.naming.Name;
+import org.terasology.naming.ResourceUrn;
 
 import java.io.IOException;
 import java.nio.file.PathMatcher;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Immortius
  */
-public interface AssetDeltaFormat<T extends AssetData> {
+public interface AssetFormat<T extends AssetData> {
 
     /**
      * @return A path matcher that will filter for files relevant for this format.
@@ -35,18 +37,19 @@ public interface AssetDeltaFormat<T extends AssetData> {
     PathMatcher getFileMatcher();
 
     /**
-     * @param filename The filename of an asset delta file
+     * @param filename The filename of an asset, including extension
      * @return The asset name corresponding to the given filename
      * @throws InvalidAssetFilenameException if the filename is not valid for this format.
      */
     Name getAssetName(String filename) throws InvalidAssetFilenameException;
 
     /**
-     * Applies a delta to the given assetData
+     * Loads an asset.
      *
-     * @param inputs    The inputs corresponding to this asset
-     * @param assetData An assetData to update
-     * @throws java.io.IOException If there are any errors loading the delta
+     * @param urn    The urn identifying the asset being loaded.
+     * @param inputs The inputs corresponding to this asset
+     * @return The loaded asset
+     * @throws IOException If there are any errors loading the asset
      */
-    void applyDelta(List<AssetInput> inputs, T assetData) throws IOException;
+    T load(ResourceUrn urn, List<AssetInput> inputs) throws IOException;
 }

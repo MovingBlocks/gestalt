@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.stubs.text;
+package org.terasology.assets.test.stubs.text;
 
+import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
-import org.terasology.assets.AbstractAssetDeltaFormat;
+import org.terasology.assets.module.AbstractAssetFormat;
 import org.terasology.assets.AssetInput;
+import org.terasology.naming.ResourceUrn;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,23 +29,21 @@ import java.util.List;
 /**
  * @author Immortius
  */
-public class TextDeltaFormat extends AbstractAssetDeltaFormat<TextData> {
+public class TextFormat extends AbstractAssetFormat<TextData> {
+    private static final String TXT_EXTENSION = "txt";
 
-    public TextDeltaFormat() {
-        super("delta");
+    public TextFormat() {
+        super(TXT_EXTENSION);
     }
 
     @Override
-    public void applyDelta(List<AssetInput> inputs, TextData assetData) throws IOException {
+    public TextData load(ResourceUrn urn, List<AssetInput> inputs) throws IOException {
+        TextData data = new TextData();
         if (!inputs.isEmpty()) {
             try (InputStreamReader reader = new InputStreamReader(inputs.get(0).openStream())) {
-                for (String line : CharStreams.readLines(reader)) {
-                    String[] parts = line.split("->", 2);
-                    if (parts.length == 2) {
-                        assetData.setValue(assetData.getValue().replace(parts[0], parts[1]));
-                    }
-                }
+                data.setValue(Joiner.on('\n').join(CharStreams.readLines(reader)));
             }
         }
+        return data;
     }
 }

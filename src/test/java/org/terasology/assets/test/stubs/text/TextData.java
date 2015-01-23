@@ -14,17 +14,29 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.stubs.books;
+package org.terasology.assets.test.stubs.text;
 
-import org.terasology.assets.AssetFactory;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.AssetData;
 
 /**
  * @author Immortius
  */
-public class BookFactory implements AssetFactory<Book, BookData> {
-    @Override
-    public Book build(ResourceUrn urn, BookData data) {
-        return new Book(urn, data);
+public class TextData implements AssetData {
+    private String value = "";
+
+    public TextData() {
     }
+
+    public TextData(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
 }

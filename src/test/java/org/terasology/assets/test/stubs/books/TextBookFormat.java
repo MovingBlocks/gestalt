@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.stubs.books;
+package org.terasology.assets.test.stubs.books;
 
 import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
-import org.terasology.assets.AbstractAssetFormat;
+import org.terasology.assets.module.AbstractAssetFormat;
 import org.terasology.assets.AssetInput;
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.naming.Name;

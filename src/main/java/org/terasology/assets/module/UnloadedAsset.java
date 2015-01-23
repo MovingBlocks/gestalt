@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package org.terasology.assets;
+package org.terasology.assets.module;
 
 import com.google.common.collect.Lists;
+import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetInput;
 import org.terasology.naming.ResourceUrn;
 
 import java.io.IOException;
@@ -31,7 +33,7 @@ class UnloadedAsset<T extends AssetData> {
     private final List<AssetInput> inputs = Lists.newArrayList();
     private final AssetFormat<T> format;
     private final ResourceUrn urn;
-    private final List<AssetDelta<T>> deltas = Lists.newArrayList();
+    private final List<UnloadedAssetDelta<T>> deltas = Lists.newArrayList();
 
     public UnloadedAsset(ResourceUrn urn, AssetFormat<T> format) {
         this.urn = urn;
@@ -46,13 +48,13 @@ class UnloadedAsset<T extends AssetData> {
         inputs.add(new AssetInput(path));
     }
 
-    public void addDelta(AssetDelta<T> delta) {
+    public void addDelta(UnloadedAssetDelta<T> delta) {
         deltas.add(delta);
     }
 
     public T load() throws IOException {
         T result = format.load(urn, inputs);
-        for (AssetDelta<T> delta : deltas) {
+        for (UnloadedAssetDelta<T> delta : deltas) {
             delta.applyTo(result);
         }
         return result;
