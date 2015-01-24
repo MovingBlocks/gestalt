@@ -175,6 +175,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
     public void getAssetLoadsFromProducers() throws Exception {
         AssetProducer producer = mock(AssetProducer.class);
         assetType.addProducer(producer);
+        when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE));
 
         Text asset = assetType.getAsset(URN);
@@ -191,6 +192,21 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
 
         assertNull(assetType.getAsset(URN));
     }
+
+    @Test
+    public void followRedirectsGettingAssets() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        ResourceUrn realUrn = new ResourceUrn("engine:real");
+        when(producer.redirect(URN)).thenReturn(realUrn);
+        when(producer.getAssetData(realUrn)).thenReturn(new TextData(TEXT_VALUE));
+        assetType.addProducer(producer);
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals(realUrn, asset.getUrn());
+        assertEquals(TEXT_VALUE, asset.getValue());
+    }
+
 
 
 }

@@ -16,18 +16,20 @@
 
 package org.terasology.assets.module;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
+import com.google.common.io.CharStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetData;
@@ -38,9 +40,11 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+import org.terasology.util.io.FileExtensionPathMatcher;
 import org.terasology.util.io.FileScanning;
 
 import javax.annotation.Nullable;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,6 +62,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
     public static final String ASSET_FOLDER = "assets";
     public static final String OVERRIDE_FOLDER = "overrides";
     public static final String DELTA_FOLDER = "deltas";
+    public static final String REDIRECT_EXTENSION = "redirect";
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAssetProducer.class);
 
@@ -68,8 +73,10 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
 
     private List<AssetFormat<U>> formats = Lists.newArrayList();
     private List<AssetDeltaFormat<U>> deltaFormats = Lists.newArrayList();
-    private Table<Name, Name, UnloadedAsset<U>> unloadedAssetLookup = HashBasedTable.create();
+    private Map<ResourceUrn, UnloadedAsset<U>> unloadedAssetLookup = Maps.newHashMap();
     private ListMultimap<ResourceUrn, UnloadedAssetDelta<U>> assetDeltaLookup = ArrayListMultimap.create();
+    private Map<ResourceUrn, ResourceUrn> redirectMap = Maps.newHashMap();
+    private SetMultimap<Name, Name> resolutionMap = HashMultimap.create();
 
     public ModuleAssetProducer(String assetId, String folderName) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(assetId), "assetId must not be null or empty");
@@ -83,22 +90,27 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
         this.moduleEnvironment = environment;
 
         unloadedAssetLookup.clear();
+        resolutionMap.clear();
         assetDeltaLookup.clear();
+        redirectMap.clear();
         scanForAssets();
         Map<ResourceUrn, Name> overriddenByModule = scanForOverrides();
         scanForDeltas(overriddenByModule);
+        scanForRedirects();
+
     }
 
     @Override
     public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
         final Name resourceName = new Name(urn);
+        Set<Name> supplyingModules = resolutionMap.get(resourceName);
         if (moduleContext != null && !moduleContext.isEmpty()) {
-            if (unloadedAssetLookup.contains(resourceName, moduleContext)) {
+            if (supplyingModules.contains(moduleContext)) {
                 return ImmutableSet.of(new ResourceUrn(moduleContext, resourceName));
             }
             Set<ResourceUrn> resources = Sets.newLinkedHashSet();
             for (Name dependency : moduleEnvironment.getDependencyNamesOf(moduleContext)) {
-                if (unloadedAssetLookup.contains(resourceName, dependency)) {
+                if (supplyingModules.contains(dependency)) {
                     resources.add(new ResourceUrn(dependency, resourceName));
                 }
             }
@@ -107,8 +119,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
             }
         }
 
-        Map<Name, UnloadedAsset<U>> availableResources = unloadedAssetLookup.row(resourceName);
-        return Sets.newLinkedHashSet(Collections2.transform(availableResources.keySet(), new Function<Name, ResourceUrn>() {
+        return Sets.newLinkedHashSet(Collections2.transform(supplyingModules, new Function<Name, ResourceUrn>() {
             @Nullable
             @Override
             public ResourceUrn apply(Name moduleName) {
@@ -118,9 +129,18 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
     }
 
     @Override
+    public ResourceUrn redirect(ResourceUrn urn) {
+        ResourceUrn redirectUrn = redirectMap.get(urn);
+        if (redirectUrn != null) {
+            return redirectUrn;
+        }
+        return urn;
+    }
+
+    @Override
     public U getAssetData(ResourceUrn urn) throws IOException {
         if (urn.getFragmentName().isEmpty()) {
-            UnloadedAsset<U> source = unloadedAssetLookup.get(urn.getResourceName(), urn.getModuleName());
+            UnloadedAsset<U> source = unloadedAssetLookup.get(urn);
             if (source != null) {
                 return source.load();
             }
@@ -144,20 +164,61 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
         deltaFormats.add(format);
     }
 
+    private void scanForRedirects() {
+        Map<ResourceUrn, ResourceUrn> rawRedirects = Maps.newLinkedHashMap();
+        for (Module module : moduleEnvironment) {
+            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+            if (Files.exists(rootPath)) {
+                try {
+                    for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
+                        Name assetName = new Name(com.google.common.io.Files.getNameWithoutExtension(file.getFileName().toString()));
+                        try (BufferedReader reader = Files.newBufferedReader(file, Charsets.UTF_8)) {
+                            List<String> contents = CharStreams.readLines(reader);
+                            if (contents.isEmpty()) {
+                                logger.error("Failed to read redirect '{}:{}' - empty", module.getId(), assetName);
+                            } else if (!ResourceUrn.isValid(contents.get(0))) {
+                                logger.error("Failed to read redirect '{}:{}' - '{}' is not a valid urn", module.getId(), assetName, contents.get(0));
+                            } else {
+                                rawRedirects.put(new ResourceUrn(module.getId(), assetName), new ResourceUrn(contents.get(0)));
+                                resolutionMap.put(assetName, module.getId());
+                            }
+                        } catch (IOException e) {
+                            logger.error("Failed to read redirect '{}:{}'", module.getId(), assetName, e);
+                        }
+                    }
+                } catch (IOException e) {
+                    logger.error("Failed to scan module '{}' for assets", module.getId(), e);
+                }
+            }
+        }
+
+        for (Map.Entry<ResourceUrn, ResourceUrn> entry : rawRedirects.entrySet()) {
+            ResourceUrn currentTarget = entry.getKey();
+            ResourceUrn redirect = entry.getValue();
+            while (redirect != null) {
+                currentTarget = redirect;
+                redirect = rawRedirects.get(currentTarget);
+            }
+            redirectMap.put(entry.getKey(), currentTarget);
+        }
+    }
+
     private void scanForAssets() {
         for (AssetFormat<U> format : formats) {
             for (Module module : moduleEnvironment) {
                 Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
                 if (Files.exists(rootPath)) {
-                    Map<Name, UnloadedAsset<U>> moduleSources = Maps.newLinkedHashMap();
+                    Map<ResourceUrn, UnloadedAsset<U>> moduleSources = Maps.newLinkedHashMap();
                     try {
                         for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), format.getFileMatcher())) {
                             try {
                                 Name assetName = format.getAssetName(file.getFileName().toString());
-                                UnloadedAsset<U> source = unloadedAssetLookup.get(assetName, module.getId());
+                                ResourceUrn urn = new ResourceUrn(module.getId(), assetName);
+                                UnloadedAsset<U> source = moduleSources.get(urn);
                                 if (source == null) {
-                                    source = new UnloadedAsset<>(new ResourceUrn(module.getId(), assetName), format);
-                                    moduleSources.put(assetName, source);
+                                    source = new UnloadedAsset<>(urn, format);
+                                    moduleSources.put(urn, source);
+                                    resolutionMap.put(assetName, module.getId());
                                 }
                                 source.addInput(file);
                             } catch (InvalidAssetFilenameException e) {
@@ -167,7 +228,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
                     } catch (IOException e) {
                         logger.error("Failed to scan module '{}' for assets", module.getId(), e);
                     }
-                    unloadedAssetLookup.column(module.getId()).putAll(moduleSources);
+                    unloadedAssetLookup.putAll(moduleSources);
                 }
             }
         }
@@ -188,7 +249,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
                     if (oldModule != null && !moduleDependencies.contains(oldModule)) {
                         logger.warn("Conflicting overrides of '{}', applying from '{}' over '{}'", entry.getKey(), module.getId(), oldModule);
                     }
-                    unloadedAssetLookup.put(entry.getKey().getResourceName(), entry.getKey().getModuleName(), entry.getValue());
+                    unloadedAssetLookup.put(entry.getKey(), entry.getValue());
                 }
             }
         }
@@ -206,7 +267,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
                             continue;
                         }
 
-                        UnloadedAsset<U> asset = unloadedAssetLookup.get(delta.getKey().getResourceName(), delta.getKey().getModuleName());
+                        UnloadedAsset<U> asset = unloadedAssetLookup.get(delta.getKey());
                         if (asset != null) {
                             asset.addDelta(delta.getValue());
                         } else {

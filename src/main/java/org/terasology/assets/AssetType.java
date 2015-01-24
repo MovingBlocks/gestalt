@@ -93,20 +93,33 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
     public T getAsset(ResourceUrn urn) {
         Preconditions.checkNotNull(urn);
 
-        T asset = loadedAssets.get(urn);
+        ResourceUrn redirectUrn = redirect(urn);
+        T asset = loadedAssets.get(redirectUrn);
         if (asset == null) {
             try {
-                for (AssetProducer<U> resolver : producers) {
-                    U data = resolver.getAssetData(urn);
+                for (AssetProducer<U> producer : producers) {
+                    U data = producer.getAssetData(redirectUrn);
                     if (data != null) {
-                        asset = loadAsset(urn, data);
+                        asset = loadAsset(redirectUrn, data);
                     }
                 }
             } catch (IOException e) {
-                logger.error("Failed to load asset '" + urn + "'", e);
+                if (redirectUrn.equals(urn)) {
+                    logger.error("Failed to load asset '" + redirectUrn + "'", e);
+                } else {
+                    logger.error("Failed to load asset '" + redirectUrn + "' redirected from '" + urn + "'", e);
+                }
             }
         }
         return asset;
+    }
+
+    private ResourceUrn redirect(ResourceUrn urn) {
+        ResourceUrn result = urn;
+        for (AssetProducer<U> producer : producers) {
+            result = producer.redirect(urn);
+        }
+        return result;
     }
 
     public T getAsset(String urn) {
@@ -135,8 +148,8 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         }
 
         Set<ResourceUrn> results = Sets.newLinkedHashSet();
-        for (AssetProducer<U> resolver : producers) {
-            results.addAll(resolver.resolve(urn, moduleContext));
+        for (AssetProducer<U> producer : producers) {
+            results.addAll(producer.resolve(urn, moduleContext));
         }
         return results;
     }

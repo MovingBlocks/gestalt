@@ -160,4 +160,25 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         assertNotNull(assetData);
         assertEquals("Overridden text without delta", assetData.getValue());
     }
+
+    @Test
+    public void redirects() throws Exception {
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+        assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:example")));
+    }
+
+    @Test
+    public void chainedRedirects() throws Exception {
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+        assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:double")));
+    }
+
+    @Test
+    public void handleRedirectResolution() throws Exception {
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+
+        Set<ResourceUrn> results = moduleProducer.resolve("example", Name.EMPTY);
+        assertEquals(1, results.size());
+        assertTrue(results.contains(new ResourceUrn("redirectA:example")));
+    }
 }

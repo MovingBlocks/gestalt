@@ -1,0 +1,8 @@
+{
+    "id": "redirectA",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "description" : "Contains a redirect from one asset to another"
+}

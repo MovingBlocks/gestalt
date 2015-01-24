@@ -29,6 +29,8 @@ public interface AssetProducer<T extends AssetData> {
 
     Set<ResourceUrn> resolve(String urn, Name moduleContext);
 
+    ResourceUrn redirect(ResourceUrn urn);
+
     T getAssetData(ResourceUrn urn) throws IOException;
 
 }
