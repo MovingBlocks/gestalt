@@ -23,6 +23,7 @@ import org.terasology.assets.AssetData;
  */
 public class TextData implements AssetData {
     private String value = "";
+    private String metadata = "";
 
     public TextData() {
     }
@@ -39,4 +40,11 @@ public class TextData implements AssetData {
         this.value = value;
     }
 
+    public String getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(String metadata) {
+        this.metadata = metadata;
+    }
 }

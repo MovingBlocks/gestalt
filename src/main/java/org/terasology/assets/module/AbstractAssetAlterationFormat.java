@@ -26,11 +26,11 @@ import java.nio.file.PathMatcher;
 /**
  * @author Immortius
  */
-public abstract class AbstractAssetDeltaFormat<T extends AssetData> implements AssetDeltaFormat<T> {
+public abstract class AbstractAssetAlterationFormat<T extends AssetData> implements AssetAlterationFormat<T> {
 
     private FileExtensionPathMatcher fileMatcher;
 
-    public AbstractAssetDeltaFormat(String... fileExtensions) {
+    public AbstractAssetAlterationFormat(String... fileExtensions) {
         this.fileMatcher = new FileExtensionPathMatcher(fileExtensions);
     }
 

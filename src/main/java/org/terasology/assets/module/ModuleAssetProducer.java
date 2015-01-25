@@ -72,9 +72,11 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
     private ModuleEnvironment moduleEnvironment;
 
     private List<AssetFormat<U>> formats = Lists.newArrayList();
-    private List<AssetDeltaFormat<U>> deltaFormats = Lists.newArrayList();
+    private List<AssetAlterationFormat<U>> deltaFormats = Lists.newArrayList();
+    private List<AssetAlterationFormat<U>> supplementFormats = Lists.newArrayList();
+
     private Map<ResourceUrn, UnloadedAsset<U>> unloadedAssetLookup = Maps.newHashMap();
-    private ListMultimap<ResourceUrn, UnloadedAssetDelta<U>> assetDeltaLookup = ArrayListMultimap.create();
+    private ListMultimap<ResourceUrn, UnloadedAssetAlteration<U>> assetDeltaLookup = ArrayListMultimap.create();
     private Map<ResourceUrn, ResourceUrn> redirectMap = Maps.newHashMap();
     private SetMultimap<Name, Name> resolutionMap = HashMultimap.create();
 
@@ -85,7 +87,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
         this.folderName = folderName;
     }
 
-    public void setEnvironment(ModuleEnvironment environment) {
+    public void scan(ModuleEnvironment environment) {
         Preconditions.checkNotNull(environment);
         this.moduleEnvironment = environment;
 
@@ -97,7 +99,6 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
         Map<ResourceUrn, Name> overriddenByModule = scanForOverrides();
         scanForDeltas(overriddenByModule);
         scanForRedirects();
-
     }
 
     @Override
@@ -156,12 +157,202 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
         formats.add(format);
     }
 
-    public List<AssetDeltaFormat<U>> getDeltaFormats() {
+    public void removeFormat(AssetFormat<U> format) {
+        formats.remove(format);
+    }
+
+    public void removeAllFormats() {
+        formats.clear();
+    }
+
+    public List<AssetAlterationFormat<U>> getDeltaFormats() {
         return Collections.unmodifiableList(deltaFormats);
     }
 
-    public void addDeltaFormat(AssetDeltaFormat<U> format) {
+    public void addDeltaFormat(AssetAlterationFormat<U> format) {
         deltaFormats.add(format);
+    }
+
+    public void removeDeltaFormat(AssetAlterationFormat<U> format) {
+        deltaFormats.remove(format);
+    }
+
+    public void removeAllDeltaFormats() {
+        deltaFormats.clear();
+    }
+
+    public void addSupplementFormat(AssetAlterationFormat<U> format) {
+        supplementFormats.add(format);
+    }
+
+    public List<AssetAlterationFormat<U>> getSupplementFormats() {
+        return Collections.unmodifiableList(supplementFormats);
+    }
+
+    public void removeSupplementFormat(AssetAlterationFormat<U> format) {
+        supplementFormats.remove(format);
+    }
+
+    public void removeAllSupplementFormats() {
+        supplementFormats.clear();
+    }
+
+    private void scanForAssets() {
+        for (Module module : moduleEnvironment) {
+            ModuleNameProvider moduleNameProvider = new FixedModuleNameProvider(module.getId());
+            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+            if (Files.exists(rootPath)) {
+                Map<ResourceUrn, UnloadedAsset<U>> moduleSources = Maps.newLinkedHashMap();
+                for (AssetFormat<U> format : formats) {
+                    moduleSources.putAll(scanForAssets(format, module, rootPath, moduleNameProvider, format.getFileMatcher()));
+                }
+                for (AssetAlterationFormat<U> format : supplementFormats) {
+                    scanForAssetSupplements(format, module, rootPath, moduleNameProvider, format.getFileMatcher(), moduleSources);
+                }
+                for (ResourceUrn urn : moduleSources.keySet()) {
+                    resolutionMap.put(urn.getResourceName(), urn.getModuleName());
+                }
+                unloadedAssetLookup.putAll(moduleSources);
+            }
+        }
+    }
+
+    private Map<ResourceUrn, Name> scanForOverrides() {
+        Map<ResourceUrn, Name> overriddenByModule = Maps.newHashMap();
+        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
+            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
+            if (Files.exists(rootPath)) {
+                Map<ResourceUrn, UnloadedAsset<U>> moduleOverrides = Maps.newLinkedHashMap();
+                for (AssetFormat<U> format : formats) {
+                    moduleOverrides.putAll(scanForAssets(format, module, rootPath, new PathModuleNameProvider(1), new FormatMatcher(folderName, format.getFileMatcher())));
+                }
+                for (AssetAlterationFormat<U> format : supplementFormats) {
+                    scanForAssetSupplements(format, module, rootPath, new PathModuleNameProvider(1), new FormatMatcher(folderName, format.getFileMatcher()), moduleOverrides);
+                }
+
+                Set<Name> moduleDependencies = moduleEnvironment.getDependencyNamesOf(module.getId());
+                for (Map.Entry<ResourceUrn, UnloadedAsset<U>> entry : moduleOverrides.entrySet()) {
+                    if (!moduleDependencies.contains(entry.getKey().getModuleName())) {
+                        logger.warn("Module '{}' contains overrides for non-dependency '{}', skipping", module.getId(), entry.getKey().getModuleName());
+                        continue;
+                    }
+                    Name oldModule = overriddenByModule.put(entry.getKey(), module.getId());
+                    if (oldModule != null && !moduleDependencies.contains(oldModule)) {
+                        logger.warn("Conflicting overrides of '{}', applying from '{}' over '{}'", entry.getKey(), module.getId(), oldModule);
+                    }
+                    unloadedAssetLookup.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        return overriddenByModule;
+    }
+
+    private Map<ResourceUrn, UnloadedAsset<U>> scanForAssets(AssetFormat<U> format, Module origin, Path rootPath,
+                                                             ModuleNameProvider moduleNameProvider, PathMatcher pathMatcher) {
+        Map<ResourceUrn, UnloadedAsset<U>> results = Maps.newLinkedHashMap();
+        try {
+            for (Path file : origin.findFiles(rootPath, FileScanning.acceptAll(), pathMatcher)) {
+                try {
+                    Name assetName = format.getAssetName(file.getFileName().toString());
+                    Name moduleName = moduleNameProvider.getModuleName(file);
+                    ResourceUrn urn = new ResourceUrn(moduleName, assetName);
+                    UnloadedAsset<U> source = results.get(urn);
+                    if (source == null) {
+                        source = new UnloadedAsset<>(urn, format);
+                        results.put(urn, source);
+                    }
+                    source.addInput(file);
+                } catch (InvalidAssetFilenameException e) {
+                    logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), assetId, e);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to scan for assets of '{}' in 'module://{}:{}", assetId, origin.getId(), rootPath, e);
+        }
+        return results;
+    }
+
+    private void scanForAssetSupplements(AssetAlterationFormat<U> format, Module module, Path rootPath, ModuleNameProvider moduleNameProvider,
+                                         PathMatcher pathMatcher, Map<ResourceUrn, UnloadedAsset<U>> primarySources) {
+        Map<ResourceUrn, UnloadedAssetAlteration<U>> supplementSources = Maps.newLinkedHashMap();
+        try {
+            for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), pathMatcher)) {
+                try {
+                    Name assetName = format.getAssetName(file.getFileName().toString());
+                    ResourceUrn urn = new ResourceUrn(moduleNameProvider.getModuleName(file), assetName);
+                    UnloadedAssetAlteration<U> source = supplementSources.get(urn);
+                    if (source == null) {
+                        source = new UnloadedAssetAlteration<>(format);
+                        supplementSources.put(urn, source);
+                    }
+                    source.addInput(file);
+                } catch (InvalidAssetFilenameException e) {
+                    logger.error("Invalid file name '{}' for asset supplement '{}'", file.getFileName(), assetId, e);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to scan 'module://{}:{}' for asset supplements", module.getId(), rootPath, e);
+        }
+
+        for (Map.Entry<ResourceUrn, UnloadedAssetAlteration<U>> supplementEntry : supplementSources.entrySet()) {
+            UnloadedAsset<U> unloadedAsset = primarySources.get(supplementEntry.getKey());
+            if (unloadedAsset != null) {
+                unloadedAsset.addAlteration(supplementEntry.getValue());
+            } else {
+                logger.error("Found supplement for unknown asset '{}'", supplementEntry.getKey());
+            }
+        }
+    }
+
+    private void scanForDeltas(Map<ResourceUrn, Name> overriddenByModule) {
+        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
+            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, DELTA_FOLDER);
+            if (Files.exists(rootPath)) {
+                for (AssetAlterationFormat<U> format : deltaFormats) {
+                    for (Map.Entry<ResourceUrn, UnloadedAssetAlteration<U>> delta : scanForDeltasOfFormat(module, rootPath, format).entrySet()) {
+                        Name overrideModule = overriddenByModule.get(delta.getKey());
+                        if (overrideModule != null && moduleEnvironment.getDependencyNamesOf(overrideModule).contains(delta.getKey().getModuleName())) {
+                            continue;
+                        }
+
+                        UnloadedAsset<U> asset = unloadedAssetLookup.get(delta.getKey());
+                        if (asset != null) {
+                            asset.addAlteration(delta.getValue());
+                        } else {
+                            logger.warn("Discovered delta for unknown asset '{}'", delta.getKey());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<ResourceUrn, UnloadedAssetAlteration<U>> scanForDeltasOfFormat(Module origin, Path rootPath, AssetAlterationFormat<U> format) {
+        Map<ResourceUrn, UnloadedAssetAlteration<U>> discoveredDeltas = Maps.newLinkedHashMap();
+        try {
+            for (Path file : origin.findFiles(rootPath, FileScanning.acceptAll(), new FormatMatcher(folderName, format.getFileMatcher()))) {
+                try {
+                    Name assetName = format.getAssetName(file.getFileName().toString());
+                    Name moduleName = new Name(file.getName(1).toString());
+                    if (!moduleEnvironment.getDependencyNamesOf(origin.getId()).contains(moduleName)) {
+                        logger.warn("Module '{}' contains delta for non-dependency '{}', skipping", origin, moduleName);
+                        continue;
+                    }
+                    ResourceUrn urn = new ResourceUrn(moduleName, assetName);
+                    UnloadedAssetAlteration<U> source = discoveredDeltas.get(urn);
+                    if (source == null) {
+                        source = new UnloadedAssetAlteration<>(format);
+                        discoveredDeltas.put(urn, source);
+                    }
+                    source.addInput(file);
+                } catch (InvalidAssetFilenameException e) {
+                    logger.error("Invalid file name '{}' for asset delta for type '{}", file.getFileName(), assetId, e);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to scan for deltas of '" + assetId + "'", e);
+        }
+        return discoveredDeltas;
     }
 
     private void scanForRedirects() {
@@ -203,146 +394,6 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
         }
     }
 
-    private void scanForAssets() {
-        for (AssetFormat<U> format : formats) {
-            for (Module module : moduleEnvironment) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
-                if (Files.exists(rootPath)) {
-                    Map<ResourceUrn, UnloadedAsset<U>> moduleSources = Maps.newLinkedHashMap();
-                    try {
-                        for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), format.getFileMatcher())) {
-                            try {
-                                Name assetName = format.getAssetName(file.getFileName().toString());
-                                ResourceUrn urn = new ResourceUrn(module.getId(), assetName);
-                                UnloadedAsset<U> source = moduleSources.get(urn);
-                                if (source == null) {
-                                    source = new UnloadedAsset<>(urn, format);
-                                    moduleSources.put(urn, source);
-                                    resolutionMap.put(assetName, module.getId());
-                                }
-                                source.addInput(file);
-                            } catch (InvalidAssetFilenameException e) {
-                                logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), assetId, e);
-                            }
-                        }
-                    } catch (IOException e) {
-                        logger.error("Failed to scan module '{}' for assets", module.getId(), e);
-                    }
-                    unloadedAssetLookup.putAll(moduleSources);
-                }
-            }
-        }
-    }
-
-    private Map<ResourceUrn, Name> scanForOverrides() {
-        Map<ResourceUrn, Name> overriddenByModule = Maps.newHashMap();
-        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
-            if (Files.exists(rootPath)) {
-                Map<ResourceUrn, UnloadedAsset<U>> moduleOverrides = Maps.newLinkedHashMap();
-                for (AssetFormat<U> format : formats) {
-                    moduleOverrides.putAll(scanForOverridesOfFormat(module, rootPath, format));
-                }
-                Set<Name> moduleDependencies = moduleEnvironment.getDependencyNamesOf(module.getId());
-                for (Map.Entry<ResourceUrn, UnloadedAsset<U>> entry : moduleOverrides.entrySet()) {
-                    Name oldModule = overriddenByModule.put(entry.getKey(), module.getId());
-                    if (oldModule != null && !moduleDependencies.contains(oldModule)) {
-                        logger.warn("Conflicting overrides of '{}', applying from '{}' over '{}'", entry.getKey(), module.getId(), oldModule);
-                    }
-                    unloadedAssetLookup.put(entry.getKey(), entry.getValue());
-                }
-            }
-        }
-        return overriddenByModule;
-    }
-
-    private void scanForDeltas(Map<ResourceUrn, Name> overriddenByModule) {
-        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, DELTA_FOLDER);
-            if (Files.exists(rootPath)) {
-                for (AssetDeltaFormat<U> format : deltaFormats) {
-                    for (Map.Entry<ResourceUrn, UnloadedAssetDelta<U>> delta : scanForDeltasOfFormat(module, rootPath, format).entrySet()) {
-                        Name overrideModule = overriddenByModule.get(delta.getKey());
-                        if (overrideModule != null && moduleEnvironment.getDependencyNamesOf(overrideModule).contains(delta.getKey().getModuleName())) {
-                            continue;
-                        }
-
-                        UnloadedAsset<U> asset = unloadedAssetLookup.get(delta.getKey());
-                        if (asset != null) {
-                            asset.addDelta(delta.getValue());
-                        } else {
-                            logger.warn("Discovered delta for unknown asset '{}'", delta.getKey());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private Map<ResourceUrn, UnloadedAssetDelta<U>> scanForDeltasOfFormat(Module origin, Path rootPath, AssetDeltaFormat<U> format) {
-        Map<ResourceUrn, UnloadedAssetDelta<U>> discoveredDeltas = Maps.newLinkedHashMap();
-        try {
-            for (Path file : origin.findFiles(rootPath, FileScanning.acceptAll(), new FormatMatcher(folderName, format.getFileMatcher()))) {
-                try {
-                    Name assetName = format.getAssetName(file.getFileName().toString());
-                    Name moduleName = new Name(file.getName(1).toString());
-                    if (!moduleEnvironment.getDependencyNamesOf(origin.getId()).contains(moduleName)) {
-                        logger.warn("Module '{}' contains delta for non-dependency '{}', skipping", origin, moduleName);
-                        continue;
-                    }
-                    ResourceUrn urn = new ResourceUrn(moduleName, assetName);
-                    UnloadedAssetDelta<U> source = discoveredDeltas.get(urn);
-                    if (source == null) {
-                        source = new UnloadedAssetDelta<>(format);
-                        discoveredDeltas.put(urn, source);
-                    }
-                    source.addInput(file);
-                } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset delta for type '{}", file.getFileName(), assetId, e);
-                }
-            }
-        } catch (IOException e) {
-            logger.error("Failed to scan for deltas of '" + assetId + "'", e);
-        }
-        return discoveredDeltas;
-    }
-
-    private Map<ResourceUrn, UnloadedAsset<U>> scanForOverridesOfFormat(Module origin, Path rootPath, AssetFormat<U> format) {
-        Map<ResourceUrn, UnloadedAsset<U>> newOverrides = Maps.newLinkedHashMap();
-        try {
-            for (Path file : origin.findFiles(rootPath, FileScanning.acceptAll(), new FormatMatcher(folderName, format.getFileMatcher()))) {
-                try {
-                    Name assetName = format.getAssetName(file.getFileName().toString());
-                    Name moduleName = new Name(file.getName(1).toString());
-                    if (!moduleEnvironment.getDependencyNamesOf(origin.getId()).contains(moduleName)) {
-                        logger.warn("Module '{}' contains overrides for non-dependency '{}', skipping", origin, moduleName);
-                        continue;
-                    }
-                    ResourceUrn urn = new ResourceUrn(moduleName, assetName);
-                    UnloadedAsset<U> source = newOverrides.get(urn);
-                    if (source == null) {
-                        source = new UnloadedAsset<>(urn, format);
-                        newOverrides.put(urn, source);
-                    }
-                    source.addInput(file);
-                } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), assetId, e);
-                }
-            }
-        } catch (IOException e) {
-            logger.error("Failed to scan for overrides of '" + assetId + "'", e);
-        }
-        return newOverrides;
-    }
-
-    public void removeFormat(AssetFormat<U> format) {
-        formats.remove(format);
-    }
-
-    public void removeAllFormats() {
-        formats.clear();
-    }
-
     private static class FormatMatcher implements PathMatcher {
 
         private final String folderName;
@@ -356,6 +407,36 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
         @Override
         public boolean matches(Path path) {
             return path.getNameCount() > 2 && path.getName(2).toString().equalsIgnoreCase(folderName) && formatMatcher.matches(path);
+        }
+    }
+
+    private interface ModuleNameProvider {
+        Name getModuleName(Path file);
+    }
+
+    private static class FixedModuleNameProvider implements ModuleNameProvider {
+        private Name moduleName;
+
+        public FixedModuleNameProvider(Name name) {
+            this.moduleName = name;
+        }
+
+        @Override
+        public Name getModuleName(Path file) {
+            return moduleName;
+        }
+    }
+
+    private static class PathModuleNameProvider implements ModuleNameProvider {
+        private int nameIndex;
+
+        public PathModuleNameProvider(int index) {
+            this.nameIndex = index;
+        }
+
+        @Override
+        public Name getModuleName(Path file) {
+            return new Name(file.getName(nameIndex).toString());
         }
     }
 }

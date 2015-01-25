@@ -1,0 +1,8 @@
+{
+    "id": "supplementA",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "description" : "Provides a supplement to apply on on an asset"
+}

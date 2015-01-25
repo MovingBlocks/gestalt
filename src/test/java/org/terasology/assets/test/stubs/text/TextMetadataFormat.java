@@ -16,9 +16,10 @@
 
 package org.terasology.assets.test.stubs.text;
 
+import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
-import org.terasology.assets.module.AbstractAssetAlterationFormat;
 import org.terasology.assets.AssetInput;
+import org.terasology.assets.module.AbstractAssetAlterationFormat;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,22 +28,18 @@ import java.util.List;
 /**
  * @author Immortius
  */
-public class TextDeltaFormat extends AbstractAssetAlterationFormat<TextData> {
+public class TextMetadataFormat extends AbstractAssetAlterationFormat<TextData> {
 
-    public TextDeltaFormat() {
-        super("delta");
+    public TextMetadataFormat() {
+        super("info");
     }
 
     @Override
     public void apply(List<AssetInput> inputs, TextData assetData) throws IOException {
         if (!inputs.isEmpty()) {
             try (InputStreamReader reader = new InputStreamReader(inputs.get(0).openStream())) {
-                for (String line : CharStreams.readLines(reader)) {
-                    String[] parts = line.split("->", 2);
-                    if (parts.length == 2) {
-                        assetData.setValue(assetData.getValue().replace(parts[0], parts[1]));
-                    }
-                }
+                String metadata = Joiner.on("/n").join(CharStreams.readLines(reader));
+                assetData.setMetadata(metadata);
             }
         }
     }

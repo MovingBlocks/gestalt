@@ -16,35 +16,30 @@
 
 package org.terasology.assets.module;
 
+import com.google.common.collect.Lists;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetInput;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Immortius
  */
-public interface AssetSupplementalFormat<T extends AssetData> {
+class UnloadedAssetAlteration<T extends AssetData> {
+    private final List<AssetInput> inputs = Lists.newArrayList();
+    private final AssetAlterationFormat<T> format;
 
-    /**
-     * @return The file extension this asset supplemental format handles
-     */
-    Set<String> getFileExtensions();
+    public UnloadedAssetAlteration(AssetAlterationFormat<T> format) {
+        this.format = format;
+    }
 
-    /**
-     * @param filename The filename of an asset supplement file
-     * @return The asset name corresponding to the given filename
-     */
-    String getAssetName(String filename);
+    public void addInput(Path path) {
+        inputs.add(new AssetInput(path));
+    }
 
-    /**
-     * Adds the supplemental data to the given assetData
-     *
-     * @param inputs    The inputs corresponding to this asset
-     * @param assetData An assetData to update
-     * @throws java.io.IOException If there are any errors loading the asset
-     */
-    void applySupplement(List<AssetInput> inputs, T assetData) throws IOException;
+    public void applyTo(T data) throws IOException {
+        format.apply(inputs, data);
+    }
 }
