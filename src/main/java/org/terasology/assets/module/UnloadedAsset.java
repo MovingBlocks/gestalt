@@ -33,7 +33,7 @@ class UnloadedAsset<T extends AssetData> {
     private final List<AssetInput> inputs = Lists.newArrayList();
     private final AssetFormat<T> format;
     private final ResourceUrn urn;
-    private final List<UnloadedAssetDelta<T>> deltas = Lists.newArrayList();
+    private final List<UnloadedAssetAlteration<T>> alterations = Lists.newArrayList();
 
     public UnloadedAsset(ResourceUrn urn, AssetFormat<T> format) {
         this.urn = urn;
@@ -48,13 +48,13 @@ class UnloadedAsset<T extends AssetData> {
         inputs.add(new AssetInput(path));
     }
 
-    public void addDelta(UnloadedAssetDelta<T> delta) {
-        deltas.add(delta);
+    public void addAlteration(UnloadedAssetAlteration<T> alteration) {
+        alterations.add(alteration);
     }
 
     public T load() throws IOException {
         T result = format.load(urn, inputs);
-        for (UnloadedAssetDelta<T> delta : deltas) {
+        for (UnloadedAssetAlteration<T> delta : alterations) {
             delta.applyTo(result);
         }
         return result;

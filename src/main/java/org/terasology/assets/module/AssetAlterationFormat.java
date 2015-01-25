@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Immortius
  */
-public interface AssetDeltaFormat<T extends AssetData> {
+public interface AssetAlterationFormat<T extends AssetData> {
 
     /**
      * @return A path matcher that will filter for files relevant for this format.
@@ -43,11 +43,11 @@ public interface AssetDeltaFormat<T extends AssetData> {
     Name getAssetName(String filename) throws InvalidAssetFilenameException;
 
     /**
-     * Applies a delta to the given assetData
+     * Applies an alteration to the given assetData
      *
      * @param inputs    The inputs corresponding to this asset
      * @param assetData An assetData to update
      * @throws java.io.IOException If there are any errors loading the delta
      */
-    void applyDelta(List<AssetInput> inputs, T assetData) throws IOException;
+    void apply(List<AssetInput> inputs, T assetData) throws IOException;
 }
