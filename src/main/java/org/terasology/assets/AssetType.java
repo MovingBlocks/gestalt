@@ -28,6 +28,7 @@ import org.terasology.naming.ResourceUrn;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -148,6 +149,41 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> {
         if (asset != null) {
             asset.dispose();
         }
+    }
+
+    public void refresh() {
+        Iterator<Map.Entry<ResourceUrn, T>> iterator = loadedAssets.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<ResourceUrn, T> entry = iterator.next();
+            if (!redirect(entry.getKey()).equals(entry.getKey()) || !reloadFromProducers(entry.getKey(), entry.getValue())) {
+                entry.getValue().dispose();
+                iterator.remove();
+            }
+        }
+    }
+
+    private boolean reloadFromProducers(ResourceUrn urn, Asset<U> asset) {
+        try {
+            for (AssetProducer<U> producer : producers) {
+                U data = producer.getAssetData(urn);
+
+                if (data != null) {
+                    asset.reload(data);
+                    return true;
+                }
+            }
+
+        } catch (IOException e) {
+            logger.error("Failed to reload asset '{}', disposing");
+        }
+        return false;
+    }
+
+    public void disposeAll() {
+        for (T asset : loadedAssets.values()) {
+            asset.dispose();
+        }
+        loadedAssets.clear();
     }
 
     public T loadAsset(ResourceUrn urn, U data) {

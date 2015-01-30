@@ -30,18 +30,18 @@ public final class AssetManager {
         this.assetTypeManager = assetTypeManager;
     }
 
-    public <T extends Asset<?>> T getAsset(String urn, Class<T> type) {
-        AssetType<T, ? extends AssetData> assetType = assetTypeManager.getAssetType(type);
+    public <T extends Asset<U>, U extends AssetData> T getAsset(String urn, Class<T> type) {
+        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
         return assetType.getAsset(urn, ContextManager.getCurrentContext());
     }
 
-    public <T extends Asset<?>> T getAsset(String urn, Class<T> type, Name moduleContext) {
-        AssetType<T, ? extends AssetData> assetType = assetTypeManager.getAssetType(type);
+    public <T extends Asset<U>, U extends AssetData> T getAsset(String urn, Class<T> type, Name moduleContext) {
+        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
         return assetType.getAsset(urn, moduleContext);
     }
 
-    public <T extends Asset<?>> T getAsset(ResourceUrn urn, Class<T> type) {
-        AssetType<T, ? extends AssetData> assetType = assetTypeManager.getAssetType(type);
+    public <T extends Asset<U>, U extends AssetData> T getAsset(ResourceUrn urn, Class<T> type) {
+        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
         return assetType.getAsset(urn);
     }
 

@@ -41,7 +41,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
     public static final String FOLDER_NAME = "text";
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
-    private ModuleAssetProducer<TextData> moduleProducer = new ModuleAssetProducer<>(ASSET_TYPE_ID, FOLDER_NAME);
+    private ModuleAssetProducer<TextData> moduleProducer = new ModuleAssetProducer<>(TextData.class, FOLDER_NAME);
 
     public ModuleAssetProducerTest() throws Exception {
         moduleProducer.addFormat(new TextFormat());
