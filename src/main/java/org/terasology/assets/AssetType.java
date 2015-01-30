@@ -32,30 +32,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class AssetType<T extends Asset<U>, U extends AssetData> {
+public final class AssetType<T extends Asset<U>, U extends AssetData> {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
-    private final Name id;
     private final Class<T> assetClass;
     private List<AssetProducer<U>> producers = Lists.newArrayList();
     private AssetFactory<T, U> factory;
     private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
 
-    public AssetType(String id, Class<T> assetClass) {
-        this(new Name(id), assetClass);
-    }
-
-    public AssetType(Name id, Class<T> assetClass) {
-        Preconditions.checkNotNull(id);
+    public AssetType(Class<T> assetClass) {
         Preconditions.checkNotNull(assetClass);
 
-        this.id = id;
         this.assetClass = assetClass;
-    }
-
-    public Name getId() {
-        return id;
     }
 
     public Class<T> getAssetClass() {
@@ -162,7 +151,7 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
     }
 
     public T loadAsset(ResourceUrn urn, U data) {
-        Preconditions.checkState(factory != null, "Factory not yet allocated for asset type '" + id + "'");
+        Preconditions.checkState(factory != null, "Factory not yet allocated for asset type '" + assetClass.getSimpleName() + "'");
 
         T asset = loadedAssets.get(urn);
         if (asset != null) {
@@ -182,19 +171,19 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         }
         if (obj instanceof AssetType) {
             AssetType other = (AssetType) obj;
-            return id.equals(other.id);
+            return assetClass.equals(other.assetClass);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return assetClass.hashCode();
     }
 
     @Override
     public String toString() {
-        return id.toString();
+        return assetClass.getSimpleName();
     }
 
 }

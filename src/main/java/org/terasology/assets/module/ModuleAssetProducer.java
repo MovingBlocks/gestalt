@@ -32,6 +32,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetProducer;
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
@@ -66,7 +67,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAssetProducer.class);
 
-    private final String assetId;
+    private final Class<U> assetDataClass;
     private final String folderName;
 
     private ModuleEnvironment moduleEnvironment;
@@ -80,10 +81,10 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
     private Map<ResourceUrn, ResourceUrn> redirectMap = Maps.newHashMap();
     private SetMultimap<Name, Name> resolutionMap = HashMultimap.create();
 
-    public ModuleAssetProducer(String assetId, String folderName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(assetId), "assetId must not be null or empty");
+    public ModuleAssetProducer(Class<U> assetDataClass, String folderName) {
+        Preconditions.checkNotNull(assetDataClass, "assetDataClass must not be null");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(folderName), "folderName must not be null or empty");
-        this.assetId = assetId;
+        this.assetDataClass = assetDataClass;
         this.folderName = folderName;
     }
 
@@ -263,11 +264,11 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
                     }
                     source.addInput(file);
                 } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset type '{}", file.getFileName(), assetId, e);
+                    logger.error("Invalid file name '{}' for asset data type '{}", file.getFileName(), assetDataClass.getSimpleName(), e);
                 }
             }
         } catch (IOException e) {
-            logger.error("Failed to scan for assets of '{}' in 'module://{}:{}", assetId, origin.getId(), rootPath, e);
+            logger.error("Failed to scan for assets of '{}' in 'module://{}:{}", assetDataClass, origin.getId(), rootPath, e);
         }
         return results;
     }
@@ -287,7 +288,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
                     }
                     source.addInput(file);
                 } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset supplement '{}'", file.getFileName(), assetId, e);
+                    logger.error("Invalid file name '{}' for asset supplement for '{}'", file.getFileName(), assetDataClass, e);
                 }
             }
         } catch (IOException e) {
@@ -346,11 +347,11 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
                     }
                     source.addInput(file);
                 } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset delta for type '{}", file.getFileName(), assetId, e);
+                    logger.error("Invalid file name '{}' for asset delta for asset data type '{}", file.getFileName(), assetDataClass, e);
                 }
             }
         } catch (IOException e) {
-            logger.error("Failed to scan for deltas of '" + assetId + "'", e);
+            logger.error("Failed to scan for deltas of '{}'", assetDataClass, e);
         }
         return discoveredDeltas;
     }

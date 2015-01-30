@@ -47,7 +47,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
 
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
-    private AssetType<Text, TextData> assetType = new AssetType<>(ASSET_TYPE_ID, Text.class);
+    private AssetType<Text, TextData> assetType = new AssetType<>(Text.class);
 
     public AssetTypeTest() throws Exception {
         assetType.setFactory(new TextFactory());

@@ -16,60 +16,42 @@
 
 package org.terasology.assets;
 
-import com.google.common.collect.Maps;
-import org.terasology.module.ModuleEnvironment;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import org.terasology.naming.Name;
+import org.terasology.naming.ResourceUrn;
 
 /**
  * @author Immortius
  */
-public class AssetManager {
+public final class AssetManager {
 
-    private Map<String, AssetType<?, ?>> assetTypeLookup = Maps.newHashMap();
-    private Map<Class<? extends Asset<?>>, AssetType> assetClassToTypeLookup = Maps.newHashMap();
-    private ModuleEnvironment environment;
+    private AssetTypeManager assetTypeManager;
 
-    public AssetType getAssetType(String id) {
-        return assetTypeLookup.get(id);
+    public AssetManager(AssetTypeManager assetTypeManager) {
+        this.assetTypeManager = assetTypeManager;
     }
 
-    public <T extends Asset<U>, U extends AssetData> AssetType<T, U> getAssetType(Class<? extends T> assetClass) {
-        return assetClassToTypeLookup.get(assetClass);
+    public <T extends Asset<?>> T getAsset(String urn, Class<T> type) {
+        AssetType<T, ? extends AssetData> assetType = assetTypeManager.getAssetType(type);
+        return assetType.getAsset(urn, ContextManager.getCurrentContext());
     }
 
-    /**
-     * @return An unmodifiable collection of registered asset types
-     */
-    public Collection<AssetType<?, ?>> getAssetTypes() {
-        return Collections.unmodifiableCollection(assetTypeLookup.values());
+    public <T extends Asset<?>> T getAsset(String urn, Class<T> type, Name moduleContext) {
+        AssetType<T, ? extends AssetData> assetType = assetTypeManager.getAssetType(type);
+        return assetType.getAsset(urn, moduleContext);
     }
 
-    /**
-     * Sets the module environment supplying assets.
-     * <p>
-     * When the module environment changes:
-     * <ul>
-     *     <li>All assets from modules that are not part of the new environment are disposed</li>
-     *     <li>All assets from modules that are part of the new environment are reloaded or disposed, depending on whether they can be found in the new environment</li>
-     *     <li>All future asset resolution and loading uses the new environment</li>
-     * </ul>
-     * @param environment
-     */
-    public void setEnvironment(ModuleEnvironment environment) {
-        this.environment = environment;
+    public <T extends Asset<?>> T getAsset(ResourceUrn urn, Class<T> type) {
+        AssetType<T, ? extends AssetData> assetType = assetTypeManager.getAssetType(type);
+        return assetType.getAsset(urn);
     }
 
-    // TODO:
-    // * Asset Formats and Factories
-    // * Set environment, unloading and reloading assets
-    // * Discover assets
-    // * Load assets
-    // * Create assets
-    // * Resolve partial urns
-    // * Thread-bound asset loading
-    // *
+    public <T extends Asset<U>, U extends AssetData> T loadAsset(ResourceUrn urn, U data, Class<T> type) {
+        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
+        return assetType.loadAsset(urn, data);
+    }
 
+    public <T extends Asset<U>, U extends AssetData> void dispose(T asset) {
+        AssetType<? extends Asset, AssetData> assetType = assetTypeManager.getAssetType(asset.getClass());
+        assetType.dispose(asset.getUrn());
+    }
 }
