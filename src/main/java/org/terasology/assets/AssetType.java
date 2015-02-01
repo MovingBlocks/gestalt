@@ -16,6 +16,7 @@
 
 package org.terasology.assets;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -25,41 +26,45 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+import org.terasology.util.reflection.GenericsUtil;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class AssetType<T extends Asset<U>, U extends AssetData> {
+public final class AssetType<T extends Asset<U>, U extends AssetData> {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
-    private final Name id;
     private final Class<T> assetClass;
+    private final Class<U> assetDataClass;
     private List<AssetProducer<U>> producers = Lists.newArrayList();
     private AssetFactory<T, U> factory;
     private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
 
-    public AssetType(String id, Class<T> assetClass) {
-        this(new Name(id), assetClass);
-    }
-
-    public AssetType(Name id, Class<T> assetClass) {
-        Preconditions.checkNotNull(id);
+    @SuppressWarnings("unchecked")
+    public AssetType(Class<T> assetClass) {
         Preconditions.checkNotNull(assetClass);
 
-        this.id = id;
         this.assetClass = assetClass;
-    }
-
-    public Name getId() {
-        return id;
+        Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(assetClass, Asset.class, 0);
+        if (assetDataType.isPresent()) {
+            assetDataClass = (Class<U>) GenericsUtil.getClassOfType(assetDataType.get());
+        } else {
+            throw new IllegalArgumentException("Asset class must have bound AssetData parameter - " + assetClass);
+        }
     }
 
     public Class<T> getAssetClass() {
         return assetClass;
+    }
+
+    public Class<U> getAssetDataClass() {
+        return assetDataClass;
     }
 
     public AssetFactory<T, U> getFactory() {
@@ -115,11 +120,15 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
     }
 
     private ResourceUrn redirect(ResourceUrn urn) {
-        ResourceUrn result = urn;
-        for (AssetProducer<U> producer : producers) {
-            result = producer.redirect(urn);
-        }
-        return result;
+        ResourceUrn lastUrn;
+        ResourceUrn finalUrn = urn;
+        do {
+            lastUrn = finalUrn;
+            for (AssetProducer<U> producer : producers) {
+                finalUrn = producer.redirect(finalUrn);
+            }
+        } while (!lastUrn.equals(finalUrn));
+        return finalUrn;
     }
 
     public T getAsset(String urn) {
@@ -161,8 +170,43 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         }
     }
 
+    public void refresh() {
+        Iterator<Map.Entry<ResourceUrn, T>> iterator = loadedAssets.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<ResourceUrn, T> entry = iterator.next();
+            if (!redirect(entry.getKey()).equals(entry.getKey()) || !reloadFromProducers(entry.getKey(), entry.getValue())) {
+                entry.getValue().dispose();
+                iterator.remove();
+            }
+        }
+    }
+
+    private boolean reloadFromProducers(ResourceUrn urn, Asset<U> asset) {
+        try {
+            for (AssetProducer<U> producer : producers) {
+                U data = producer.getAssetData(urn);
+
+                if (data != null) {
+                    asset.reload(data);
+                    return true;
+                }
+            }
+
+        } catch (IOException e) {
+            logger.error("Failed to reload asset '{}', disposing");
+        }
+        return false;
+    }
+
+    public void disposeAll() {
+        for (T asset : loadedAssets.values()) {
+            asset.dispose();
+        }
+        loadedAssets.clear();
+    }
+
     public T loadAsset(ResourceUrn urn, U data) {
-        Preconditions.checkState(factory != null, "Factory not yet allocated for asset type '" + id + "'");
+        Preconditions.checkState(factory != null, "Factory not yet allocated for asset type '" + assetClass.getSimpleName() + "'");
 
         T asset = loadedAssets.get(urn);
         if (asset != null) {
@@ -182,19 +226,19 @@ public class AssetType<T extends Asset<U>, U extends AssetData> {
         }
         if (obj instanceof AssetType) {
             AssetType other = (AssetType) obj;
-            return id.equals(other.id);
+            return assetClass.equals(other.assetClass);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return assetClass.hashCode();
     }
 
     @Override
     public String toString() {
-        return id.toString();
+        return assetClass.getSimpleName();
     }
 
 }

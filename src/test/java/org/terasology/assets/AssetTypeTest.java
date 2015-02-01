@@ -18,6 +18,7 @@ package org.terasology.assets;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
+import org.terasology.assets.test.Return;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
@@ -29,10 +30,12 @@ import java.io.IOException;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -41,13 +44,12 @@ import static org.mockito.Mockito.when;
  */
 public class AssetTypeTest extends VirtualModuleEnvironment {
 
-    public static final String ASSET_TYPE_ID = "text";
     public static final String TEXT_VALUE = "Value";
-    public static final String TEXT_VALUE_2 = "Value";
+    public static final String TEXT_VALUE_2 = "Value_2";
 
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
-    private AssetType<Text, TextData> assetType = new AssetType<>(ASSET_TYPE_ID, Text.class);
+    private AssetType<Text, TextData> assetType = new AssetType<>(Text.class);
 
     public AssetTypeTest() throws Exception {
         assetType.setFactory(new TextFactory());
@@ -55,7 +57,6 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
 
     @Test
     public void construction() {
-        assertEquals(new Name(ASSET_TYPE_ID), assetType.getId());
         assertEquals(Text.class, assetType.getAssetClass());
         assertTrue(assetType.getProducers().isEmpty());
     }
@@ -188,6 +189,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
     public void getAssetWhenProducerFails() throws Exception {
         AssetProducer producer = mock(AssetProducer.class);
         assetType.addProducer(producer);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer.getAssetData(URN)).thenThrow(new IOException());
 
         assertNull(assetType.getAsset(URN));
@@ -197,16 +199,118 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
     public void followRedirectsGettingAssets() throws Exception {
         AssetProducer producer = mock(AssetProducer.class);
         ResourceUrn realUrn = new ResourceUrn("engine:real");
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer.redirect(URN)).thenReturn(realUrn);
-        when(producer.getAssetData(realUrn)).thenReturn(new TextData(TEXT_VALUE));
+        when(producer.getAssetData(realUrn)).thenReturn(new TextData(TEXT_VALUE_2));
         assetType.addProducer(producer);
 
         Text asset = assetType.getAsset(URN);
         assertNotNull(asset);
         assertEquals(realUrn, asset.getUrn());
-        assertEquals(TEXT_VALUE, asset.getValue());
+        assertEquals(TEXT_VALUE_2, asset.getValue());
     }
 
+    @Test
+    public void redirectsChainForMultipleProducers() throws Exception {
+        ResourceUrn realUrn = new ResourceUrn("engine:real");
+        ResourceUrn realUrn2 = new ResourceUrn("engine:real2");
 
+        AssetProducer producer = mock(AssetProducer.class);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer.redirect(URN)).thenReturn(realUrn);
+
+        AssetProducer producer2 = mock(AssetProducer.class);
+        when(producer2.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer2.redirect(realUrn)).thenReturn(realUrn2);
+        when(producer2.getAssetData(realUrn2)).thenReturn(new TextData(TEXT_VALUE_2));
+
+        assetType.addProducer(producer);
+        assetType.addProducer(producer2);
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals(realUrn2, asset.getUrn());
+        assertEquals(TEXT_VALUE_2, asset.getValue());
+    }
+
+    @Test
+    public void redirectsChainForMultipleProducersAnyOrder() throws Exception {
+        ResourceUrn realUrn = new ResourceUrn("engine:real");
+        ResourceUrn realUrn2 = new ResourceUrn("engine:real2");
+
+        AssetProducer producer = mock(AssetProducer.class);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer.redirect(URN)).thenReturn(realUrn);
+
+        AssetProducer producer2 = mock(AssetProducer.class);
+        when(producer2.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer2.redirect(realUrn)).thenReturn(realUrn2);
+        when(producer2.getAssetData(realUrn2)).thenReturn(new TextData(TEXT_VALUE_2));
+
+        assetType.addProducer(producer2);
+        assetType.addProducer(producer);
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals(realUrn2, asset.getUrn());
+        assertEquals(TEXT_VALUE_2, asset.getValue());
+    }
+
+    @Test
+    public void disposeAssetsOnDisposeAll() throws Exception {
+        TextData data = new TextData(TEXT_VALUE);
+        Text createdText = assetType.loadAsset(URN, data);
+
+        assetType.disposeAll();
+        assertTrue(createdText.isDisposed());
+        assertNull(assetType.getAsset(URN));
+    }
+
+    @Test
+     public void disposeUnavailableAssetsOnRefresh() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(URN)).thenReturn(URN);
+        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE));
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertFalse(asset.isDisposed());
+
+        when(producer.getAssetData(URN)).thenReturn(null);
+        assetType.refresh();
+        assertTrue(asset.isDisposed());
+    }
+
+    @Test
+    public void reloadAvailableAssetsOnRefresh() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(URN)).thenReturn(URN);
+        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE));
+
+        Text asset = assetType.getAsset(URN);
+        assertNotNull(asset);
+        assertEquals(TEXT_VALUE, asset.getValue());
+
+        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE_2));
+        assetType.refresh();
+        assertEquals(TEXT_VALUE_2, asset.getValue());
+        assertFalse(asset.isDisposed());
+    }
+
+    @Test
+    public void disposeAssetOnRefreshIfRedirectExists() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer.redirect(URN)).thenReturn(URN);
+        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE));
+        Text asset = assetType.getAsset(URN);
+        when(producer.redirect(URN)).thenReturn(new ResourceUrn(URN.getModuleName(), new Name("redirect")));
+
+        assetType.refresh();
+        assertTrue(asset.isDisposed());
+    }
 
 }

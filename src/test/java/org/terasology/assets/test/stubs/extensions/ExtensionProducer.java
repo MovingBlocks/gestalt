@@ -14,39 +14,36 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.test.stubs.books;
+package org.terasology.assets.test.stubs.extensions;
 
-import org.terasology.assets.Asset;
+import org.terasology.assets.AssetProducer;
+import org.terasology.assets.module.annotations.RegisterAssetProducer;
+import org.terasology.assets.test.stubs.text.TextData;
+import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Immortius
  */
-public class Book extends Asset<BookData> {
+@RegisterAssetProducer
+public class ExtensionProducer implements AssetProducer<TextData> {
 
-    private String title;
-    private String body;
-
-    public Book(ResourceUrn urn, BookData data) {
-        super(urn);
-        reload(data);
+    @Override
+    public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
+        return Collections.emptySet();
     }
 
     @Override
-    protected void doReload(BookData data) {
-        title = data.getHeading();
-        body = data.getBody();
+    public ResourceUrn redirect(ResourceUrn urn) {
+        return urn;
     }
 
     @Override
-    protected void doDispose() {
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getBody() {
-        return body;
+    public TextData getAssetData(ResourceUrn urn) throws IOException {
+        return null;
     }
 }

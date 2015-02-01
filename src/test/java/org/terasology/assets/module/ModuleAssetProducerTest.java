@@ -41,7 +41,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
     public static final String FOLDER_NAME = "text";
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
-    private ModuleAssetProducer<TextData> moduleProducer = new ModuleAssetProducer<>(ASSET_TYPE_ID, FOLDER_NAME);
+    private ModuleAssetProducer<TextData> moduleProducer = new ModuleAssetProducer<>(FOLDER_NAME);
 
     public ModuleAssetProducerTest() throws Exception {
         moduleProducer.addFormat(new TextFormat());
@@ -49,7 +49,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void resolveNoMatch() throws Exception {
-        moduleProducer.scan(createEnvironment());
+        moduleProducer.setEnvironment(createEnvironment());
 
         Set<ResourceUrn> results = moduleProducer.resolve("madeUpThing", Name.EMPTY);
         assertTrue(results.isEmpty());
@@ -57,7 +57,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void resolveWithSingleMatch() throws Exception {
-        moduleProducer.scan(createEnvironment());
+        moduleProducer.setEnvironment(createEnvironment());
 
         Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString(), Name.EMPTY);
         assertEquals(1, results.size());
@@ -66,7 +66,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void resolveWithMultipleMatchesFails() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
 
         Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString(), Name.EMPTY);
         assertEquals(2, results.size());
@@ -76,7 +76,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void resolveInContext() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
 
         Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString(), new Name("moduleA"));
         assertFalse(results.isEmpty());
@@ -86,7 +86,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void resolveInContextDependency() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("moduleA")),
                 moduleRegistry.getLatestModuleVersion(new Name("moduleB"))));
 
@@ -103,7 +103,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void loadAssetFromFile() throws Exception {
-        moduleProducer.scan(createEnvironment());
+        moduleProducer.setEnvironment(createEnvironment());
         TextData assetData = moduleProducer.getAssetData(URN);
         assertNotNull(assetData);
         assertEquals("Example text", assetData.getValue());
@@ -111,7 +111,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void loadWithOverride() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA"))));
 
         TextData assetData = moduleProducer.getAssetData(URN);
@@ -121,7 +121,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void loadWithOverrideInDependencyChain() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideB"))));
 
         TextData assetData = moduleProducer.getAssetData(URN);
@@ -131,7 +131,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void loadWithOverrideInUnrelatedModulesUsesAlphabeticallyLast() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideC"))));
 
         TextData assetData = moduleProducer.getAssetData(URN);
@@ -142,7 +142,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
     @Test
     public void loadWithDelta() throws Exception {
         moduleProducer.addDeltaFormat(new TextDeltaFormat());
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("deltaA"))));
 
         TextData assetData = moduleProducer.getAssetData(URN);
@@ -153,7 +153,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
     @Test
     public void deltaDroppedBeforeOverride() throws Exception {
         moduleProducer.addDeltaFormat(new TextDeltaFormat());
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("deltaA")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideD"))));
 
@@ -164,19 +164,19 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void redirects() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
         assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:example")));
     }
 
     @Test
     public void chainedRedirects() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
         assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:double")));
     }
 
     @Test
     public void handleRedirectResolution() throws Exception {
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
 
         Set<ResourceUrn> results = moduleProducer.resolve("example", Name.EMPTY);
         assertEquals(1, results.size());
@@ -186,7 +186,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
     @Test
     public void applySupplements() throws Exception {
         moduleProducer.addSupplementFormat(new TextMetadataFormat());
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA"))));
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA"))));
 
         TextData data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
         assertEquals("bold", data.getMetadata());
@@ -195,7 +195,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
     @Test
     public void overrideWithSupplement() throws Exception {
         moduleProducer.addSupplementFormat(new TextMetadataFormat());
-        moduleProducer.scan(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA")),
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideSupplement"))));
 
         TextData data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));

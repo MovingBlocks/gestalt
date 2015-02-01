@@ -14,38 +14,33 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.test.stubs.books;
+package org.terasology.assets.test.stubs.extensions;
 
-import org.terasology.assets.AssetData;
+import org.terasology.assets.Asset;
+import org.terasology.naming.ResourceUrn;
 
 /**
  * @author Immortius
  */
-public class BookData implements AssetData {
-    private String heading = "";
-    private String body = "";
+public class ExtensionAsset extends Asset<ExtensionData> {
+    private String value;
 
-    public BookData() {
+    public ExtensionAsset(ResourceUrn urn, ExtensionData data) {
+        super(urn);
+        doReload(data);
     }
 
-    public BookData(String heading, String body) {
-        this.heading = heading;
-        this.body = body;
+    @Override
+    protected void doReload(ExtensionData data) {
+        this.value = data.getValue();
     }
 
-    public String getBody() {
-        return body;
+    @Override
+    protected void doDispose() {
+
     }
 
-    public String getHeading() {
-        return heading;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    public void setHeading(String heading) {
-        this.heading = heading;
+    public String getValue() {
+        return value;
     }
 }
