@@ -91,6 +91,25 @@ public class VirtualModuleEnvironment {
         }, Collections.<BytecodeInjector>emptyList());
     }
 
+    public ModuleEnvironment createEmptyEnvironment() {
+        return new ModuleEnvironment(Lists.<Module>newArrayList(), new PermissionProviderFactory() {
+            @Override
+            public PermissionProvider createPermissionProviderFor(Module module) {
+                return new PermissionProvider() {
+                    @Override
+                    public boolean isPermitted(Class aClass) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isPermitted(Permission permission, Class<?> aClass) {
+                        return false;
+                    }
+                };
+            }
+        }, Collections.<BytecodeInjector>emptyList());
+    }
+
     public ModuleEnvironment createEnvironment() throws URISyntaxException {
         return new ModuleEnvironment(Lists.newArrayList(moduleRegistry.getLatestModuleVersion(new Name("test"))), new PermissionProviderFactory() {
             @Override

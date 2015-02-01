@@ -43,6 +43,7 @@ public final class MapAssetTypeManager implements AssetTypeManager {
     }
 
     public <T extends Asset<U>, U extends AssetData> void removeAssetType(Class<T> type) {
-        assetTypes.remove(type);
+        AssetType<?, ?> assetType = assetTypes.remove(type);
+        assetType.disposeAll();
     }
 }

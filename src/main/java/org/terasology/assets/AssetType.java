@@ -16,6 +16,7 @@
 
 package org.terasology.assets;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -25,8 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+import org.terasology.util.reflection.GenericsUtil;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -38,18 +41,30 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> {
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
     private final Class<T> assetClass;
+    private final Class<U> assetDataClass;
     private List<AssetProducer<U>> producers = Lists.newArrayList();
     private AssetFactory<T, U> factory;
     private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
 
+    @SuppressWarnings("unchecked")
     public AssetType(Class<T> assetClass) {
         Preconditions.checkNotNull(assetClass);
 
         this.assetClass = assetClass;
+        Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(assetClass, Asset.class, 0);
+        if (assetDataType.isPresent()) {
+            assetDataClass = (Class<U>) GenericsUtil.getClassOfType(assetDataType.get());
+        } else {
+            throw new IllegalArgumentException("Asset class must have bound AssetData parameter - " + assetClass);
+        }
     }
 
     public Class<T> getAssetClass() {
         return assetClass;
+    }
+
+    public Class<U> getAssetDataClass() {
+        return assetDataClass;
     }
 
     public AssetFactory<T, U> getFactory() {
@@ -105,11 +120,15 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> {
     }
 
     private ResourceUrn redirect(ResourceUrn urn) {
-        ResourceUrn result = urn;
-        for (AssetProducer<U> producer : producers) {
-            result = producer.redirect(urn);
-        }
-        return result;
+        ResourceUrn lastUrn;
+        ResourceUrn finalUrn = urn;
+        do {
+            lastUrn = finalUrn;
+            for (AssetProducer<U> producer : producers) {
+                finalUrn = producer.redirect(finalUrn);
+            }
+        } while (!lastUrn.equals(finalUrn));
+        return finalUrn;
     }
 
     public T getAsset(String urn) {

@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.test.stubs.books;
+package org.terasology.assets.module.annotations;
 
-import org.terasology.assets.AssetFactory;
-import org.terasology.naming.ResourceUrn;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * @author Immortius
  */
-public class BookFactory implements AssetFactory<Book, BookData> {
-    @Override
-    public Book build(ResourceUrn urn, BookData data) {
-        return new Book(urn, data);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface RegisterAssetFormat {
 }

@@ -52,7 +52,8 @@ repositories {
 
 // Primary dependencies definition
 dependencies {
-    compile group: 'org.terasology', name: 'gestalt-module', version: '2.2.3-SNAPSHOT'
+    compile group: 'org.terasology', name: 'gestalt-module', version: '2.2.4-SNAPSHOT'
+    compile group: 'com.googlecode.gentyref', name: 'gentyref', version: '1.2.0'
 
     // These dependencies are only needed for running tests
     testCompile group: 'junit', name: 'junit', version: '4.11'

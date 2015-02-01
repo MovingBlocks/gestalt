@@ -19,6 +19,7 @@ package org.terasology.assets.module;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.naming.Name;
+import org.terasology.util.Varargs;
 import org.terasology.util.io.FileExtensionPathMatcher;
 
 import java.nio.file.PathMatcher;
@@ -30,8 +31,8 @@ public abstract class AbstractAssetFormat<T extends AssetData> implements AssetF
 
     private FileExtensionPathMatcher fileMatcher;
 
-    public AbstractAssetFormat(String... fileExtensions) {
-        this.fileMatcher = new FileExtensionPathMatcher(fileExtensions);
+    public AbstractAssetFormat(String fileExtension, String... fileExtensions) {
+        this.fileMatcher = new FileExtensionPathMatcher(Varargs.combineToSet(fileExtension, fileExtensions));
     }
 
     @Override
