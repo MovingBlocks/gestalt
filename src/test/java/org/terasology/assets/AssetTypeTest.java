@@ -32,6 +32,7 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -105,7 +106,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         TextData data = new TextData(TEXT_VALUE);
         Text asset = assetType.loadAsset(URN, data);
 
-        assetType.dispose(URN);
+        asset.dispose();
         assertTrue(asset.isDisposed());
         assertNull(assetType.getAsset(URN));
     }
@@ -267,7 +268,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
     }
 
     @Test
-     public void disposeUnavailableAssetsOnRefresh() throws Exception {
+    public void disposeUnavailableAssetsOnRefresh() throws Exception {
         AssetProducer producer = mock(AssetProducer.class);
         assetType.addProducer(producer);
         when(producer.redirect(URN)).thenReturn(URN);
@@ -311,6 +312,54 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
 
         assetType.refresh();
         assertTrue(asset.isDisposed());
+    }
+
+    @Test
+    public void loadAssetInstance() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        TextData data = new TextData(TEXT_VALUE);
+        when(producer.getAssetData(URN)).thenReturn(data);
+        AssetFactory factory = mock(AssetFactory.class);
+        assetType.setFactory(factory);
+        Text textAsset = new Text(URN, data);
+        when(factory.build(URN, data)).thenReturn(textAsset);
+
+        Text result = assetType.getAsset(URN.getInstanceUrn());
+        assertNotSame(textAsset, result);
+        assertTrue(result.getUrn().isInstance());
+        assertEquals(URN, result.getUrn().getParentUrn());
+    }
+
+    @Test
+    public void disposingParentDisposesChildAsset() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        TextData data = new TextData(TEXT_VALUE);
+        when(producer.getAssetData(URN)).thenReturn(data);
+        AssetFactory factory = mock(AssetFactory.class);
+        assetType.setFactory(factory);
+        Text textAsset = new Text(URN, data);
+        when(factory.build(URN, data)).thenReturn(textAsset);
+
+        Text parent = assetType.getAsset(URN);
+        Text result = assetType.createInstance(parent);
+
+        assertNotSame(textAsset, result);
+        assertTrue(result.getUrn().isInstance());
+        assertEquals(URN, result.getUrn().getParentUrn());
+    }
+
+    @Test
+    public void resolvePartialInstanceUrn() throws Exception {
+        AssetProducer producer = mock(AssetProducer.class);
+        assetType.addProducer(producer);
+        when(producer.resolve(URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(URN));
+        Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString() + ResourceUrn.INSTANCE_INDICATOR);
+        assertEquals(1, results.size());
+        assertTrue(results.contains(URN.getInstanceUrn()));
     }
 
 }

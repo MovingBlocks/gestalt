@@ -50,8 +50,8 @@ public final class AssetManager {
         return assetType.loadAsset(urn, data);
     }
 
-    public <T extends Asset<U>, U extends AssetData> void dispose(T asset) {
-        AssetType<? extends Asset, AssetData> assetType = assetTypeManager.getAssetType(asset.getClass());
-        assetType.dispose(asset.getUrn());
+    public <T extends Asset<U>, U extends AssetData> T createInstance(T asset, Class<T> type) {
+        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
+        return assetType.createInstance(asset);
     }
 }
