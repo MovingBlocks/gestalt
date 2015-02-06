@@ -32,6 +32,11 @@ public class Text extends Asset<TextData> {
     }
 
     @Override
+    protected Asset<TextData> doCreateInstance(ResourceUrn instanceUrn) {
+        return new Text(instanceUrn, new TextData(value));
+    }
+
+    @Override
     protected void doReload(TextData data) {
         value = data.getValue();
     }

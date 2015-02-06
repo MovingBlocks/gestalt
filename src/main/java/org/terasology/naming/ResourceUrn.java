@@ -39,12 +39,13 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
 
     public static final String RESOURCE_SEPARATOR = ":";
     public static final String FRAGMENT_SEPARATOR = "#";
-    private static final Pattern URN_PATTERN = Pattern.compile("([^:#]+):([^#]+)(?:#([^#]+))?");
+    public static final String INSTANCE_INDICATOR = "!instance";
+    private static final Pattern URN_PATTERN = Pattern.compile("([^:#]+):([^#!]+)(?:#([^#!]+))?(!instance)?");
 
-    private Name moduleName = Name.EMPTY;
-    private Name resourceName = Name.EMPTY;
-    private Name fragmentName = Name.EMPTY;
-
+    private final Name moduleName;
+    private final Name resourceName;
+    private final Name fragmentName;
+    private final boolean instance;
 
     /**
      * Creates a ModuleUri for the given module:resource combo
@@ -53,7 +54,18 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
      * @param resourceName
      */
     public ResourceUrn(String moduleName, String resourceName) {
-        this(new Name(moduleName), new Name(resourceName));
+        this(new Name(moduleName), new Name(resourceName), false);
+    }
+
+    /**
+     * Creates a ModuleUri for an instance of a given module:resource(!instance) combo
+     *
+     * @param moduleName
+     * @param resourceName
+     * @param instance
+     */
+    public ResourceUrn(String moduleName, String resourceName, boolean instance) {
+        this(new Name(moduleName), new Name(resourceName), Name.EMPTY, instance);
     }
 
     /**
@@ -63,10 +75,18 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
      * @param resourceName
      */
     public ResourceUrn(Name moduleName, Name resourceName) {
-        Preconditions.checkArgument(moduleName != null && !moduleName.isEmpty(), "moduleName must not be null or empty");
-        Preconditions.checkArgument(resourceName != null && !resourceName.isEmpty(), "resourceName must not be null or empty");
-        this.moduleName = moduleName;
-        this.resourceName = resourceName;
+        this(moduleName, resourceName, Name.EMPTY, false);
+    }
+
+    /**
+     * Creates a ModuleUri for the given module:resource(!instance) combo
+     *
+     * @param moduleName
+     * @param resourceName
+     * @param instance
+     */
+    public ResourceUrn(Name moduleName, Name resourceName, boolean instance) {
+        this(moduleName, resourceName, Name.EMPTY, instance);
     }
 
     /**
@@ -77,7 +97,19 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
      * @param fragmentName
      */
     public ResourceUrn(String moduleName, String resourceName, String fragmentName) {
-        this(new Name(moduleName), new Name(resourceName), new Name(fragmentName));
+        this(new Name(moduleName), new Name(resourceName), new Name(fragmentName), false);
+    }
+
+    /**
+     * Creates a ModuleUri for the given module:resource#fragment(!instance) combo
+     *
+     * @param moduleName
+     * @param resourceName
+     * @param fragmentName
+     * @param instance
+     */
+    public ResourceUrn(String moduleName, String resourceName, String fragmentName, boolean instance) {
+        this(new Name(moduleName), new Name(resourceName), new Name(fragmentName), instance);
     }
 
     /**
@@ -88,12 +120,24 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
      * @param fragmentName
      */
     public ResourceUrn(Name moduleName, Name resourceName, Name fragmentName) {
+        this(moduleName, resourceName, fragmentName, false);
+    }
+
+    /**
+     * Creates a ModuleUri for the given module:resource#fragment(!instance) combo
+     *
+     * @param moduleName
+     * @param resourceName
+     * @param fragmentName
+     * @param instance
+     */
+    public ResourceUrn(Name moduleName, Name resourceName, Name fragmentName, boolean instance) {
         Preconditions.checkArgument(moduleName != null && !moduleName.isEmpty(), "moduleName must not be null or empty");
         Preconditions.checkArgument(resourceName != null && !resourceName.isEmpty(), "resourceName must not be null or empty");
-        Preconditions.checkArgument(fragmentName != null && !fragmentName.isEmpty(), "fragmentName must not be null or empty");
         this.moduleName = moduleName;
         this.resourceName = resourceName;
         this.fragmentName = fragmentName;
+        this.instance = instance;
     }
 
     /**
@@ -109,7 +153,10 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
             resourceName = new Name(match.group(2));
             if (!Strings.isNullOrEmpty(match.group(3))) {
                 fragmentName = new Name(match.group(3));
+            } else {
+                fragmentName = Name.EMPTY;
             }
+            instance = !Strings.isNullOrEmpty(match.group(4));
         } else {
             throw new InvalidUrnException("Invalid Urn: '" + urn + "'");
         }
@@ -141,6 +188,13 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
     }
 
     /**
+     * @return The instance number part of the urn, if the urn identifies an instance.
+     */
+    public boolean isInstance() {
+        return instance;
+    }
+
+    /**
      * @return The root of the ResourceUrn, without the fragment name.
      */
     public ResourceUrn getRootUrn() {
@@ -150,13 +204,42 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
         return new ResourceUrn(moduleName, resourceName);
     }
 
+    /**
+     * @return If this urn is an instance, returns the urn of the parent. Otherwise this urn.
+     */
+    public ResourceUrn getParentUrn() {
+        if (isInstance()) {
+            return new ResourceUrn(moduleName, resourceName, fragmentName);
+        } else {
+            return this;
+        }
+    }
+
+    /**
+     * @return This instance urn version of this urn. If this urn is already an instance, this urn is returned.
+     */
+    public ResourceUrn getInstanceUrn() {
+        if (!isInstance()) {
+            return new ResourceUrn(moduleName, resourceName, fragmentName, true);
+        } else {
+            return this;
+        }
+    }
+
     @Override
     public String toString() {
-        if (fragmentName.isEmpty()) {
-            return moduleName + RESOURCE_SEPARATOR + resourceName;
-        } else {
-            return moduleName + RESOURCE_SEPARATOR + resourceName + FRAGMENT_SEPARATOR + fragmentName;
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(moduleName);
+        stringBuilder.append(RESOURCE_SEPARATOR);
+        stringBuilder.append(resourceName);
+        if (!fragmentName.isEmpty()) {
+            stringBuilder.append(FRAGMENT_SEPARATOR);
+            stringBuilder.append(fragmentName);
         }
+        if (instance) {
+            stringBuilder.append(INSTANCE_INDICATOR);
+        }
+        return stringBuilder.toString();
     }
 
     @Override
@@ -166,7 +249,8 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
         }
         if (obj instanceof ResourceUrn) {
             ResourceUrn other = (ResourceUrn) obj;
-            return Objects.equal(moduleName, other.moduleName) && Objects.equal(resourceName, other.resourceName) && Objects.equal(fragmentName, other.fragmentName);
+            return Objects.equal(moduleName, other.moduleName) && Objects.equal(resourceName, other.resourceName)
+                    && Objects.equal(fragmentName, other.fragmentName) && instance == other.instance;
         }
         return false;
     }
@@ -185,6 +269,15 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
         if (result == 0) {
             result = fragmentName.compareTo(o.getFragmentName());
         }
+        if (result == 0) {
+            if (instance && !o.instance) {
+                result = 1;
+            } else if (!instance && o.instance) {
+                result = -1;
+            }
+        }
         return result;
     }
+
+
 }

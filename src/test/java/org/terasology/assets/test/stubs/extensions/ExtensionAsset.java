@@ -17,6 +17,7 @@
 package org.terasology.assets.test.stubs.extensions;
 
 import org.terasology.assets.Asset;
+import org.terasology.assets.AssetType;
 import org.terasology.naming.ResourceUrn;
 
 /**
@@ -28,6 +29,11 @@ public class ExtensionAsset extends Asset<ExtensionData> {
     public ExtensionAsset(ResourceUrn urn, ExtensionData data) {
         super(urn);
         doReload(data);
+    }
+
+    @Override
+    protected Asset<ExtensionData> doCreateInstance(ResourceUrn urn) {
+        return new ExtensionAsset(urn, new ExtensionData(value));
     }
 
     @Override

@@ -16,8 +16,13 @@
 
 package org.terasology.assets;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.terasology.naming.ResourceUrn;
+
+import java.util.List;
 
 /**
  * Abstract base class common to all assets.
@@ -33,14 +38,28 @@ import org.terasology.naming.ResourceUrn;
  *
  * @author Immortius
  */
-public abstract class Asset<T extends AssetData> {
+public abstract class Asset<T extends AssetData> extends AssetOwner<T> {
 
     private final ResourceUrn urn;
+    private final List<Asset<T>> children = Lists.newArrayList();
+    private Optional<AssetOwner<T>> owner = Optional.absent();
     private boolean disposed;
 
     public Asset(ResourceUrn urn) {
         Preconditions.checkNotNull(urn);
         this.urn = urn;
+    }
+
+    Optional<AssetOwner<T>> getOwner() {
+        return owner;
+    }
+
+    void setOwner(AssetOwner<T> owner) {
+        this.owner = Optional.of(owner);
+    }
+
+    void addChild(Asset<T> other) {
+        children.add(other);
     }
 
     /**
@@ -60,17 +79,31 @@ public abstract class Asset<T extends AssetData> {
         doReload(data);
     }
 
+    protected abstract Asset<T> doCreateInstance(ResourceUrn instanceUrn);
+
     protected abstract void doReload(T data);
 
     /**
      * Disposes this asset, freeing resources and making it unusable
      */
-    final void dispose() {
-        doDispose();
-        disposed = true;
+    public final void dispose() {
+        if (!disposed) {
+            disposed = true;
+            for (Asset<T> child : ImmutableList.copyOf(children)) {
+                child.dispose();
+            }
+            doDispose();
+            if (owner.isPresent()) {
+                owner.get().removeDisposedAsset(this);
+            }
+        }
     }
 
     protected abstract void doDispose();
+
+    final void removeDisposedAsset(Asset<T> child) {
+        children.remove(child);
+    }
 
     /**
      * @return Whether this asset has been disposed
@@ -86,7 +119,7 @@ public abstract class Asset<T extends AssetData> {
         }
         if (obj instanceof Asset) {
             Asset other = (Asset) obj;
-            return other.urn.equals(urn);
+            return !urn.isInstance() && !other.urn.isInstance() && other.urn.equals(urn);
         }
         return false;
     }
@@ -100,4 +133,6 @@ public abstract class Asset<T extends AssetData> {
     public String toString() {
         return urn.toString();
     }
+
+
 }
