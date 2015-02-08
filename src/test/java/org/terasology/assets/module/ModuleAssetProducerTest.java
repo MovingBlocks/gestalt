@@ -201,4 +201,14 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         TextData data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
         assertEquals("sweet", data.getMetadata());
     }
+
+    @Test
+    public void resolvePartialInstanceUrns() throws Exception  {
+        moduleProducer.setEnvironment(createEnvironment());
+
+        Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString() + ResourceUrn.INSTANCE_INDICATOR, Name.EMPTY);
+        assertEquals(1, results.size());
+        assertTrue(results.contains(URN.getInstanceUrn()));
+    }
+
 }

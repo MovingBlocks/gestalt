@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetFactory;
+import org.terasology.assets.AssetManager;
 import org.terasology.assets.AssetProducer;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.AssetTypeManager;
@@ -41,6 +42,8 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.util.reflection.GenericsUtil;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -52,6 +55,8 @@ import java.util.Map;
 public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAwareAssetTypeManager.class);
+
+    private final AssetManager assetManager;
 
     private Map<Class<? extends Asset>, AssetType<?, ?>> assetTypes = Maps.newLinkedHashMap();
     private Map<Class<? extends Asset>, ModuleAssetProducer<?>> moduleProducers = Maps.newLinkedHashMap();
@@ -67,6 +72,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     public ModuleAwareAssetTypeManager(ModuleEnvironment environment) {
         Preconditions.checkNotNull(environment);
         this.environment = environment;
+        this.assetManager = new AssetManager(this);
     }
 
     @Override
@@ -104,6 +110,10 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     @SuppressWarnings("unchecked")
     public <T extends Asset<U>, U extends AssetData> Optional<ModuleAssetProducer<U>> getModuleProducerFor(Class<T> type) {
         return Optional.fromNullable((ModuleAssetProducer<U>) moduleProducers.get(type));
+    }
+
+    public AssetManager getAssetManager() {
+        return assetManager;
     }
 
     public ModuleEnvironment getEnvironment() {
@@ -335,16 +345,31 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
                 return baseType.isAssignableFrom(input) && !Modifier.isAbstract(input.getModifiers());
             }
         })) {
+            T instance = null;
             try {
-                discoveredType.getConstructor();
+                Constructor<?> assetManagerConstructor = discoveredType.getConstructor(AssetManager.class);
+                instance = baseType.cast(assetManagerConstructor.newInstance(assetManager));
             } catch (NoSuchMethodException e) {
-                logger.error("Type '" + discoveredType + "' missing required default constructor");
-                continue;
+                logger.debug("No asset manager constructor for {}, falling back on default constructor", discoveredType);
+            } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                logger.error("Failed to instantiate class: {}", discoveredType, e);
             }
-            try {
-                result.add(baseType.cast(discoveredType.newInstance()));
-            } catch (InstantiationException | IllegalAccessException e) {
-                logger.error("Failed to instantiate class: " + discoveredType, e);
+
+            if (instance == null) {
+                try {
+                    discoveredType.getConstructor();
+                } catch (NoSuchMethodException e) {
+                    logger.error("Type '" + discoveredType + "' missing usable constructor");
+                    continue;
+                }
+                try {
+                    instance = baseType.cast(discoveredType.newInstance());
+                } catch (InstantiationException | IllegalAccessException e) {
+                    logger.error("Failed to instantiate class: {}", discoveredType, e);
+                }
+            }
+            if (instance != null) {
+                result.add(instance);
             }
         }
         return result;

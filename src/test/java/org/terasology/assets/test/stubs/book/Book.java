@@ -14,38 +14,40 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.test.stubs.extensions;
+package org.terasology.assets.test.stubs.book;
 
+import com.google.common.collect.ImmutableList;
 import org.terasology.assets.Asset;
 import org.terasology.naming.ResourceUrn;
 
 /**
  * @author Immortius
  */
-public class ExtensionAsset extends Asset<ExtensionData> {
-    private String value;
+public class Book extends Asset<BookData> {
 
-    public ExtensionAsset(ResourceUrn urn, ExtensionData data) {
+    private ImmutableList<String> lines = ImmutableList.of();
+
+    public Book(ResourceUrn urn, BookData data) {
         super(urn);
-        doReload(data);
+        reload(data);
     }
 
     @Override
-    protected Asset<ExtensionData> doCreateInstance(ResourceUrn urn) {
-        return new ExtensionAsset(urn, new ExtensionData(value));
+    protected Asset<BookData> doCreateInstance(ResourceUrn instanceUrn) {
+        return new Book(instanceUrn, new BookData(lines));
     }
 
     @Override
-    protected void doReload(ExtensionData data) {
-        this.value = data.getValue();
+    protected void doReload(BookData data) {
+        lines = ImmutableList.copyOf(data.getLines());
     }
 
     @Override
     protected void doDispose() {
-
+        lines = ImmutableList.of();
     }
 
-    public String getValue() {
-        return value;
+    public ImmutableList<String> getLines() {
+        return lines;
     }
 }
