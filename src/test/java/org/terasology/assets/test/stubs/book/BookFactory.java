@@ -14,38 +14,18 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.test.stubs.extensions;
+package org.terasology.assets.test.stubs.book;
 
-import org.terasology.assets.Asset;
+import org.terasology.assets.AssetFactory;
 import org.terasology.naming.ResourceUrn;
 
 /**
  * @author Immortius
  */
-public class ExtensionAsset extends Asset<ExtensionData> {
-    private String value;
-
-    public ExtensionAsset(ResourceUrn urn, ExtensionData data) {
-        super(urn);
-        doReload(data);
-    }
+public class BookFactory implements AssetFactory<Book, BookData> {
 
     @Override
-    protected Asset<ExtensionData> doCreateInstance(ResourceUrn urn) {
-        return new ExtensionAsset(urn, new ExtensionData(value));
-    }
-
-    @Override
-    protected void doReload(ExtensionData data) {
-        this.value = data.getValue();
-    }
-
-    @Override
-    protected void doDispose() {
-
-    }
-
-    public String getValue() {
-        return value;
+    public Book build(ResourceUrn urn, BookData data) {
+        return new Book(urn, data);
     }
 }

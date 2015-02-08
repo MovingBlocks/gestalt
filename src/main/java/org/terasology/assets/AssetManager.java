@@ -19,6 +19,8 @@ package org.terasology.assets;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
 
+import java.util.Set;
+
 /**
  * @author Immortius
  */
@@ -30,9 +32,17 @@ public final class AssetManager {
         this.assetTypeManager = assetTypeManager;
     }
 
-    public <T extends Asset<U>, U extends AssetData> T getAsset(String urn, Class<T> type) {
+    public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> resolve(String urn, Class<T> type) {
+        return resolve(urn, type, ContextManager.getCurrentContext());
+    }
+
+    public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> resolve(String urn, Class<T> type, Name moduleContext) {
         AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
-        return assetType.getAsset(urn, ContextManager.getCurrentContext());
+        return assetType.resolve(urn, moduleContext);
+    }
+
+    public <T extends Asset<U>, U extends AssetData> T getAsset(String urn, Class<T> type) {
+        return getAsset(urn, type, ContextManager.getCurrentContext());
     }
 
     public <T extends Asset<U>, U extends AssetData> T getAsset(String urn, Class<T> type, Name moduleContext) {

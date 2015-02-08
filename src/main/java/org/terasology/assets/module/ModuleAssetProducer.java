@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -106,7 +107,13 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
     public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
         Preconditions.checkState(moduleEnvironment != null, "Module environment not set");
 
-        final Name resourceName = new Name(urn);
+        String urnToResolve = urn;
+        final boolean isInstanceUrn = urn.toLowerCase(Locale.ENGLISH).endsWith(ResourceUrn.INSTANCE_INDICATOR);
+        if (isInstanceUrn) {
+            urnToResolve = urn.substring(0, urn.length() - ResourceUrn.INSTANCE_INDICATOR.length());
+        }
+
+        final Name resourceName = new Name(urnToResolve);
         Set<Name> supplyingModules = resolutionMap.get(resourceName);
         if (moduleContext != null && !moduleContext.isEmpty()) {
             if (supplyingModules.contains(moduleContext)) {
@@ -127,7 +134,7 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
             @Nullable
             @Override
             public ResourceUrn apply(Name moduleName) {
-                return new ResourceUrn(moduleName, resourceName);
+                return new ResourceUrn(moduleName, resourceName, isInstanceUrn);
             }
         }));
     }

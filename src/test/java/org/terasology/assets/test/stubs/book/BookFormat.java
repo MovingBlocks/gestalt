@@ -14,38 +14,31 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.test.stubs.extensions;
+package org.terasology.assets.test.stubs.book;
 
-import org.terasology.assets.Asset;
+import com.google.common.io.CharStreams;
+import org.terasology.assets.AssetInput;
+import org.terasology.assets.module.AbstractAssetFormat;
 import org.terasology.naming.ResourceUrn;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.List;
 
 /**
  * @author Immortius
  */
-public class ExtensionAsset extends Asset<ExtensionData> {
-    private String value;
+public class BookFormat extends AbstractAssetFormat<BookData> {
 
-    public ExtensionAsset(ResourceUrn urn, ExtensionData data) {
-        super(urn);
-        doReload(data);
+    public BookFormat() {
+        super("book");
     }
 
     @Override
-    protected Asset<ExtensionData> doCreateInstance(ResourceUrn urn) {
-        return new ExtensionAsset(urn, new ExtensionData(value));
-    }
-
-    @Override
-    protected void doReload(ExtensionData data) {
-        this.value = data.getValue();
-    }
-
-    @Override
-    protected void doDispose() {
-
-    }
-
-    public String getValue() {
-        return value;
+    public BookData load(ResourceUrn urn, List<AssetInput> inputs) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputs.get(0).openStream()))) {
+            return new BookData(CharStreams.readLines(reader));
+        }
     }
 }

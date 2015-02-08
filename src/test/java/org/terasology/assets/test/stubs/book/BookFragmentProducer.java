@@ -14,40 +14,32 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.test.stubs.extensions;
+package org.terasology.assets.test.stubs.book;
 
+import org.terasology.assets.AbstractFragmentProducer;
 import org.terasology.assets.AssetManager;
-import org.terasology.assets.AssetProducer;
-import org.terasology.assets.module.annotations.RegisterAssetProducer;
 import org.terasology.assets.test.stubs.text.TextData;
-import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author Immortius
  */
-@RegisterAssetProducer
-public class ExtensionProducer implements AssetProducer<TextData> {
+public class BookFragmentProducer extends AbstractFragmentProducer<TextData, Book, BookData> {
 
-    public ExtensionProducer(AssetManager assetManager) {
+    public BookFragmentProducer(AssetManager assetManager) {
+        super(assetManager, Book.class);
     }
 
     @Override
-    public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
-        return Collections.emptySet();
-    }
-
-    @Override
-    public ResourceUrn redirect(ResourceUrn urn) {
-        return urn;
-    }
-
-    @Override
-    public TextData getAssetData(ResourceUrn urn) throws IOException {
-        return null;
+    protected TextData getFragmentData(ResourceUrn urn, Book book) {
+        try {
+            int i = Integer.parseInt(urn.getFragmentName().toString());
+            if (i >= 0 && i < book.getLines().size()) {
+                return new TextData(book.getLines().get(i));
+            }
+            return null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }
