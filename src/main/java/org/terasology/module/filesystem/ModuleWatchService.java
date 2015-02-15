@@ -16,9 +16,12 @@
 
 package org.terasology.module.filesystem;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -115,6 +118,7 @@ class ModuleWatchService implements WatchService {
 
         private List<WatchKey> realKeys = Lists.newArrayList();
         private ModulePath path;
+        private WrapWatchEvent wrapper = new WrapWatchEvent<>();
 
         public ModuleWatchKey(ModulePath path, WatchEvent.Kind<?>[] events, WatchEvent.Modifier[] modifiers) throws IOException {
             this.path = path;
@@ -141,11 +145,12 @@ class ModuleWatchService implements WatchService {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public List<WatchEvent<?>> pollEvents() {
             List<WatchEvent<?>> events = Lists.newArrayList();
             for (WatchKey key : realKeys) {
                 if (key.isValid()) {
-                    events.addAll(key.pollEvents());
+                    events.addAll(Collections2.transform(key.pollEvents(), wrapper));
                 }
             }
             return events;
@@ -178,5 +183,53 @@ class ModuleWatchService implements WatchService {
         public Watchable watchable() {
             return path;
         }
+
+        private class WrapWatchEvent<T> implements Function<WatchEvent<T>, WatchEvent<T>> {
+
+            @Nullable
+            @Override
+            public WatchEvent<T> apply(@Nullable WatchEvent<T> input) {
+                return new ModuleWatchEvent<>(path, input);
+            }
+        }
+
     }
+
+
+    private static class ModuleWatchEvent<T> implements WatchEvent<T> {
+
+        private ModulePath modulePath;
+        private WatchEvent<T> event;
+
+        public ModuleWatchEvent(ModulePath modulePath, WatchEvent<T> event) {
+            this.modulePath = modulePath;
+            this.event = event;
+        }
+
+        @Override
+        public Kind<T> kind() {
+            return event.kind();
+        }
+
+        @Override
+        public int count() {
+            return event.count();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public T context() {
+            T innerContext = event.context();
+            if (innerContext instanceof Path) {
+                Path result = modulePath;
+                for (Path part : ((Path) innerContext)) {
+                    result = result.resolve(part.toString());
+                }
+                return (T) result;
+            } else {
+                return innerContext;
+            }
+        }
+    }
+
 }
