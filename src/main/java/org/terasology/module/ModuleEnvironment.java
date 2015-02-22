@@ -16,13 +16,16 @@
 
 package org.terasology.module;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.SetMultimap;
 import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
 import org.reflections.util.ConfigurationBuilder;
@@ -33,8 +36,8 @@ import org.terasology.module.sandbox.ModuleClassLoader;
 import org.terasology.module.sandbox.ObtainClassloader;
 import org.terasology.module.sandbox.PermissionProviderFactory;
 import org.terasology.naming.Name;
-import org.terasology.util.collection.UniqueQueue;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
@@ -43,6 +46,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +70,10 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private final ClassLoader apiClassLoader;
     private final ClassLoader finalClassLoader;
     private final List<ModuleClassLoader> managedClassLoaders = Lists.newArrayList();
+    private final SetMultimap<Name, Name> moduleDependencies = LinkedHashMultimap.create();
     private Reflections fullReflections;
+    private ImmutableList<Module> modulesOrderByDependencies;
+    private ImmutableList<Name> moduleIdsOrderedByDependencies;
 
     /**
      * @param modules                   The modules this environment should encompass.
@@ -100,6 +108,8 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         }
         this.finalClassLoader = lastClassloader;
         buildFullReflections(reflectionsByModule);
+        cacheModuleDependencies();
+        cacheModulesOrderedByDependencies();
     }
 
     /**
@@ -155,6 +165,61 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         }
     }
 
+    private void cacheModuleDependencies() {
+        for (Module module : getModulesOrderedByDependencies()) {
+            for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
+                moduleDependencies.put(module.getId(), dependency.getId());
+                moduleDependencies.putAll(module.getId(), moduleDependencies.get(module.getId()));
+            }
+        }
+    }
+
+    private void cacheModulesOrderedByDependencies() {
+        List<Module> result = Lists.newArrayList();
+        List<Module> alphabeticallyOrderedModules = Lists.newArrayList(modules.values());
+        Collections.sort(alphabeticallyOrderedModules, new Comparator<Module>() {
+            @Override
+            public int compare(Module o1, Module o2) {
+                return o1.getId().compareTo(o2.getId());
+            }
+        });
+
+        for (Module module : alphabeticallyOrderedModules) {
+            addModuleAfterDependencies(module, result);
+        }
+        modulesOrderByDependencies = ImmutableList.copyOf(result);
+        moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(result, new Function<Module, Name>() {
+
+            @Override
+            public Name apply(Module input) {
+                return input.getId();
+            }
+        }));
+    }
+
+    private void addModuleAfterDependencies(Module module, List<Module> out) {
+        if (!out.contains(module)) {
+            List<Name> dependencies = Lists.newArrayList(Collections2.transform(module.getMetadata().getDependencies(), new Function<DependencyInfo, Name>() {
+                @Nullable
+                @Override
+                public Name apply(@Nullable DependencyInfo input) {
+                    if (input != null) {
+                        return input.getId();
+                    }
+                    return null;
+                }
+            }));
+            Collections.sort(dependencies);
+            for (Name dependency : dependencies) {
+                Module dependencyModule = modules.get(dependency);
+                if (dependencyModule != null) {
+                    addModuleAfterDependencies(dependencyModule, out);
+                }
+            }
+            out.add(module);
+        }
+    }
+
     @Override
     public void close() {
         for (ModuleClassLoader classLoader : managedClassLoaders) {
@@ -175,41 +240,20 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * The resulting list is sorted so that dependencies appear before modules that depend on them. Additionally,
+     * modules are alphabetically ordered where there are no dependencies.
+     *
      * @return A list of modules in the environment, sorted so any dependencies appear before a module
      */
     public final List<Module> getModulesOrderedByDependencies() {
-        List<Module> result = Lists.newArrayList();
-        for (Module module : modules.values()) {
-            addModuleAfterDependencies(module, result);
-        }
-        return result;
+        return modulesOrderByDependencies;
     }
 
     /**
      * @return A list of modules in the environment, sorted so any dependencies appear before a module
      */
     public final List<Name> getModuleIdsOrderedByDependencies() {
-        List<Module> orderedModules = Lists.newArrayList();
-        for (Module module : modules.values()) {
-            addModuleAfterDependencies(module, orderedModules);
-        }
-        List<Name> result = Lists.newArrayListWithCapacity(orderedModules.size());
-        for (Module module : orderedModules) {
-            result.add(module.getId());
-        }
-        return result;
-    }
-
-    private void addModuleAfterDependencies(Module module, List<Module> out) {
-        if (!out.contains(module)) {
-            for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
-                Module dependencyModule = modules.get(dependency.getId());
-                if (dependencyModule != null) {
-                    addModuleAfterDependencies(dependencyModule, out);
-                }
-            }
-            out.add(module);
-        }
+        return moduleIdsOrderedByDependencies;
     }
 
     /**
@@ -245,18 +289,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @return The ids of the dependencies of the desired module
      */
     public Set<Name> getDependencyNamesOf(Name moduleId) {
-        Set<Name> result = Sets.newLinkedHashSet();
-        UniqueQueue<Name> toProcess = new UniqueQueue<>();
-        toProcess.add(moduleId);
-        while (!toProcess.isEmpty()) {
-            Name id = toProcess.remove();
-            Module module = get(id);
-            for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
-                result.add(dependency.getId());
-                toProcess.add(dependency.getId());
-            }
-        }
-        return result;
+        return Collections.unmodifiableSet(moduleDependencies.get(moduleId));
     }
 
     /**
