@@ -170,7 +170,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         for (Module module : getModulesOrderedByDependencies()) {
             for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
                 moduleDependencies.put(module.getId(), dependency.getId());
-                moduleDependencies.putAll(module.getId(), moduleDependencies.get(module.getId()));
+                moduleDependencies.putAll(module.getId(), moduleDependencies.get(dependency.getId()));
             }
         }
     }
