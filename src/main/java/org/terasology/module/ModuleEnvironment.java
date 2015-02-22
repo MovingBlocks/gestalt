@@ -97,6 +97,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         Map<Name, Reflections> reflectionsByModule = Maps.newLinkedHashMap();
         this.modules = buildModuleMap(modules);
         this.apiClassLoader = apiClassLoader;
+        cacheModulesOrderedByDependencies();
 
         ClassLoader lastClassloader = apiClassLoader;
         List<Module> orderedModules = getModulesOrderedByDependencies();
@@ -109,7 +110,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         this.finalClassLoader = lastClassloader;
         buildFullReflections(reflectionsByModule);
         cacheModuleDependencies();
-        cacheModulesOrderedByDependencies();
+
     }
 
     /**
