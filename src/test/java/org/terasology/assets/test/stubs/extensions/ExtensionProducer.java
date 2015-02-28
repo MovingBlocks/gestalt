@@ -50,4 +50,8 @@ public class ExtensionProducer implements AssetProducer<TextData> {
     public TextData getAssetData(ResourceUrn urn) throws IOException {
         return null;
     }
+
+    @Override
+    public void close() {
+    }
 }

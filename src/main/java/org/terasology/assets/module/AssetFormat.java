@@ -18,30 +18,15 @@ package org.terasology.assets.module;
 
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetInput;
-import org.terasology.assets.exceptions.InvalidAssetFilenameException;
-import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
 
 import java.io.IOException;
-import java.nio.file.PathMatcher;
 import java.util.List;
 
 /**
  * @author Immortius
  */
-public interface AssetFormat<T extends AssetData> {
-
-    /**
-     * @return A path matcher that will filter for files relevant for this format.
-     */
-    PathMatcher getFileMatcher();
-
-    /**
-     * @param filename The filename of an asset, including extension
-     * @return The asset name corresponding to the given filename
-     * @throws InvalidAssetFilenameException if the filename is not valid for this format.
-     */
-    Name getAssetName(String filename) throws InvalidAssetFilenameException;
+public interface AssetFormat<T extends AssetData> extends Format {
 
     /**
      * Loads an asset.

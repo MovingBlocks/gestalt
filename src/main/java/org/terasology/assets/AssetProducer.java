@@ -19,18 +19,22 @@ package org.terasology.assets;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Set;
 
 /**
  * @author Immortius
  */
-public interface AssetProducer<T extends AssetData> {
+public interface AssetProducer<T extends AssetData> extends Closeable {
 
     Set<ResourceUrn> resolve(String urn, Name moduleContext);
 
     ResourceUrn redirect(ResourceUrn urn);
 
     T getAssetData(ResourceUrn urn) throws IOException;
+
+    @Override
+    void close();
 
 }

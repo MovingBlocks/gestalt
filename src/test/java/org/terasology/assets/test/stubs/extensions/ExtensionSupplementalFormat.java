@@ -22,7 +22,6 @@ import org.terasology.assets.module.annotations.RegisterAssetSupplementalFormat;
 import org.terasology.assets.test.stubs.text.TextData;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author Immortius
@@ -35,7 +34,7 @@ public class ExtensionSupplementalFormat extends AbstractAssetAlterationFormat<T
     }
 
     @Override
-    public void apply(List<AssetInput> inputs, TextData assetData) throws IOException {
+    public void apply(AssetInput input, TextData assetData) throws IOException {
 
     }
 }

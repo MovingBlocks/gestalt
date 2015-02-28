@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Objects;
 
 /**
  * @author Immortius
@@ -62,6 +63,23 @@ public class AssetInput {
 
     @Override
     public String toString() {
-        return path.getFileName().toString();
+        return path.toUri().toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj instanceof AssetInput) {
+            AssetInput other = (AssetInput) obj;
+            return Objects.equals(other.path, path);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(path);
     }
 }
