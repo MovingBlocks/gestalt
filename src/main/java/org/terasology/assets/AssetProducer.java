@@ -28,6 +28,8 @@ import java.util.Set;
  */
 public interface AssetProducer<T extends AssetData> extends Closeable {
 
+    Set<ResourceUrn> getAvailableAssetUrns();
+
     Set<ResourceUrn> resolve(String urn, Name moduleContext);
 
     ResourceUrn redirect(ResourceUrn urn);
@@ -36,5 +38,6 @@ public interface AssetProducer<T extends AssetData> extends Closeable {
 
     @Override
     void close();
+
 
 }

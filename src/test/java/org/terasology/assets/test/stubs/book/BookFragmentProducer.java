@@ -21,6 +21,9 @@ import org.terasology.assets.AssetManager;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.naming.ResourceUrn;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * @author Immortius
  */
@@ -41,5 +44,10 @@ public class BookFragmentProducer extends AbstractFragmentProducer<TextData, Boo
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    @Override
+    public Set<ResourceUrn> getAvailableAssetUrns() {
+        return Collections.emptySet();
     }
 }

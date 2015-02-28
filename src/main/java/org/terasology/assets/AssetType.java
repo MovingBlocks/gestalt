@@ -277,6 +277,18 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         return loadedAssets.containsKey(urn);
     }
 
+    public Set<ResourceUrn> getLoadedAssetUrns() {
+        return ImmutableSet.copyOf(loadedAssets.keySet());
+    }
+
+    public Set<ResourceUrn> getAvailableAssetUrns() {
+        Set<ResourceUrn> availableAssets = Sets.newLinkedHashSet(getLoadedAssetUrns());
+        for (AssetProducer<U> producer : producers) {
+            availableAssets.addAll(producer.getAvailableAssetUrns());
+        }
+        return availableAssets;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
