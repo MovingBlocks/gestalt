@@ -37,6 +37,11 @@ public class ExtensionProducer implements AssetProducer<TextData> {
     }
 
     @Override
+    public Set<ResourceUrn> getAvailableAssetUrns() {
+        return Collections.emptySet();
+    }
+
+    @Override
     public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
         return Collections.emptySet();
     }

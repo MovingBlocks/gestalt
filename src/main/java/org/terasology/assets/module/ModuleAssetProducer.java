@@ -134,6 +134,11 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
     }
 
     @Override
+    public Set<ResourceUrn> getAvailableAssetUrns() {
+        return ImmutableSet.copyOf(unloadedAssetLookup.keySet());
+    }
+
+    @Override
     public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
         Preconditions.checkState(moduleEnvironment != null, "Module environment not set");
 

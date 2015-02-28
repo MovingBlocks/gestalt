@@ -32,6 +32,14 @@ public final class AssetManager {
         this.assetTypeManager = assetTypeManager;
     }
 
+    public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> getLoadedAssets(Class<T> type) {
+        return assetTypeManager.getAssetType(type).getLoadedAssetUrns();
+    }
+
+    public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> getAvailableAssets(Class<T> type) {
+        return assetTypeManager.getAssetType(type).getAvailableAssetUrns();
+    }
+
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> resolve(String urn, Class<T> type) {
         return resolve(urn, type, ContextManager.getCurrentContext());
     }

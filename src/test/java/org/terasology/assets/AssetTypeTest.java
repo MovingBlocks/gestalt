@@ -67,8 +67,10 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         TextData data = new TextData(TEXT_VALUE);
         Text text = new Text(URN, data);
 
+        assertFalse(assetType.isLoaded(URN));
         Text createdText = assetType.loadAsset(URN, data);
         assertEquals(text, createdText);
+        assertTrue(assetType.isLoaded(URN));
     }
 
     @Test
@@ -184,6 +186,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         assertNotNull(asset);
         assertEquals(URN, asset.getUrn());
         assertEquals(TEXT_VALUE, asset.getValue());
+        assertTrue(assetType.isLoaded(URN));
     }
 
     @Test
@@ -194,6 +197,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         when(producer.getAssetData(URN)).thenThrow(new IOException());
 
         assertNull(assetType.getAsset(URN));
+        assertFalse(assetType.isLoaded(URN));
     }
 
     @Test
@@ -360,6 +364,33 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString() + ResourceUrn.INSTANCE_INDICATOR);
         assertEquals(1, results.size());
         assertTrue(results.contains(URN.getInstanceUrn()));
+    }
+
+    @Test
+    public void getLoaded() throws Exception {
+        TextData data = new TextData(TEXT_VALUE);
+
+        assertTrue(assetType.getLoadedAssetUrns().isEmpty());
+        assetType.loadAsset(URN, data);
+        assertEquals(ImmutableSet.of(URN), assetType.getLoadedAssetUrns());
+    }
+
+    @Test
+    public void getAvailableIncludesLoaded() {
+        TextData data = new TextData(TEXT_VALUE);
+
+        assertTrue(assetType.getAvailableAssetUrns().isEmpty());
+        assetType.loadAsset(URN, data);
+        assertEquals(ImmutableSet.of(URN), assetType.getAvailableAssetUrns());
+    }
+
+    @Test
+    public void getAvailableIncludesFromProducer() {
+        AssetProducer producer = mock(AssetProducer.class);
+        when(producer.getAvailableAssetUrns()).thenReturn(ImmutableSet.of(URN));
+        assetType.addProducer(producer);
+
+        assertEquals(ImmutableSet.of(URN), assetType.getAvailableAssetUrns());
     }
 
 }

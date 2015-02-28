@@ -26,7 +26,6 @@ import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Comparator;
