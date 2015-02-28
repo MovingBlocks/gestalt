@@ -449,19 +449,16 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
                 WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
                 Path target = watchedPath.resolve(pathEvent.context());
                 if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                    logger.info("Created {}", target);
                     if (Files.isDirectory(target)) {
                         onDirectoryCreated(target, changedAssets);
                     } else {
                         onFileCreated(target, changedAssets);
                     }
                 } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                    logger.info("Modified {}", target);
                     if (Files.isRegularFile(target)) {
                         onFileModified(target, changedAssets);
                     }
                 } else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-                    logger.info("Deleted {}", target);
                     WatchKey key = watchKeys.remove(target);
                     if (key != null) {
                         pathWatchers.remove(key);

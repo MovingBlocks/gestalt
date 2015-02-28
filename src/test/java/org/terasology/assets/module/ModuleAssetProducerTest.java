@@ -235,16 +235,4 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         assertEquals("", data.getMetadata());
     }
 
-    @Test
-    public void detectChanges() throws Exception {
-        moduleProducer.addSupplementFormat(new TextMetadataFormat());
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
-
-        while (true) {
-            for (ResourceUrn urn : moduleProducer.checkForChanges()) {
-                logger.info("Marked for reload: {}", urn);
-            }
-        }
-    }
-
 }
