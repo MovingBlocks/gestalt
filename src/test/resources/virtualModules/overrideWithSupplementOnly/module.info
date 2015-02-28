@@ -1,0 +1,12 @@
+{
+    "id": "overrideWithSupplementOnly",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "dependencies" : [{
+       "id": "moduleA",
+       "minVersion": "1.0.0"
+    }],
+    "description" : "Overrides but only has supplement so should be ignored"
+}

@@ -16,30 +16,24 @@
 
 package org.terasology.assets.module;
 
-import com.google.common.collect.Lists;
-import org.terasology.assets.AssetData;
-import org.terasology.assets.AssetInput;
+import org.terasology.assets.exceptions.InvalidAssetFilenameException;
+import org.terasology.naming.Name;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
+import java.nio.file.PathMatcher;
 
 /**
  * @author Immortius
  */
-class UnloadedAssetAlteration<T extends AssetData> {
-    private final List<AssetInput> inputs = Lists.newArrayList();
-    private final AssetAlterationFormat<T> format;
+public interface Format {
+    /**
+     * @return A path matcher that will filter for files relevant for this format.
+     */
+    PathMatcher getFileMatcher();
 
-    public UnloadedAssetAlteration(AssetAlterationFormat<T> format) {
-        this.format = format;
-    }
-
-    public void addInput(Path path) {
-        inputs.add(new AssetInput(path));
-    }
-
-    public void applyTo(T data) throws IOException {
-        format.apply(inputs, data);
-    }
+    /**
+     * @param filename The filename of an asset, including extension
+     * @return The asset name corresponding to the given filename
+     * @throws org.terasology.assets.exceptions.InvalidAssetFilenameException if the filename is not valid for this format.
+     */
+    Name getAssetName(String filename) throws InvalidAssetFilenameException;
 }

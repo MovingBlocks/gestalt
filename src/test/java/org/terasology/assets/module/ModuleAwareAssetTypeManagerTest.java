@@ -215,8 +215,8 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     public void setEnvironmentTriggersLoadOfExtensionFormats() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.setEnvironment(createEnvironment());
-        assertEquals(1, assetTypeManager.getModuleProducerFor(Text.class).get().getFormats().size());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getFormats().get(0) instanceof ExtensionFormat);
+        assertEquals(1, assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().size());
+        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().get(0) instanceof ExtensionFormat);
     }
 
     @Test
@@ -224,7 +224,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.setEnvironment(createEnvironment());
         assetTypeManager.setEnvironment(createEmptyEnvironment());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getFormats().isEmpty());
+        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().isEmpty());
     }
 
     @Test

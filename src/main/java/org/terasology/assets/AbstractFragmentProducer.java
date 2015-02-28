@@ -70,5 +70,9 @@ public abstract class AbstractFragmentProducer<T extends AssetData, U extends As
         return null;
     }
 
+    @Override
+    public void close() {
+    }
+
     protected abstract T getFragmentData(ResourceUrn urn, U rootAsset);
 }

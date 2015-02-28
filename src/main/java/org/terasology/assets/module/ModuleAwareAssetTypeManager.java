@@ -39,8 +39,10 @@ import org.terasology.assets.module.annotations.RegisterAssetProducer;
 import org.terasology.assets.module.annotations.RegisterAssetSupplementalFormat;
 import org.terasology.assets.module.annotations.RegisterAssetType;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.naming.ResourceUrn;
 import org.terasology.util.reflection.GenericsUtil;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -48,6 +50,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Immortius
@@ -102,7 +105,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     public <T extends Asset<U>, U extends AssetData> void removeCoreAssetType(Class<T> type) {
         AssetType<T, U> assetType = (AssetType<T, U>) assetTypes.remove(type);
         if (assetType != null) {
-            assetType.disposeAll();
+            assetType.close();
             moduleProducers.remove(type);
         }
     }
@@ -139,6 +142,29 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
         updateEnvironment();
     }
 
+    public void reloadChanged() {
+        for (Map.Entry<Class<? extends Asset>, ModuleAssetProducer<?>> entry : moduleProducers.entrySet()) {
+            reloadChanged(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private <T extends AssetData> void reloadChanged(Class<? extends Asset> type, ModuleAssetProducer<T> producer) {
+        Set<ResourceUrn> changedUrns = producer.checkForChanges();
+        if (!changedUrns.isEmpty()) {
+            AssetType<?, T> assetType = getAssetType(type);
+            for (ResourceUrn changedUrn : changedUrns) {
+                if (assetType.isLoaded(changedUrn)) {
+                    try {
+                        logger.info("Reloading changed asset '{}'", changedUrn);
+                        assetType.loadAsset(changedUrn, producer.getAssetData(changedUrn));
+                    } catch (IOException e) {
+                        logger.error("Failed to reload asset '{}'", changedUrn, e);
+                    }
+                }
+            }
+        }
+    }
+
     private void updateEnvironment() {
         for (ModuleAssetProducer<?> producer : moduleProducers.values()) {
             producer.setEnvironment(environment);
@@ -168,7 +194,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
         for (Map.Entry<AssetFormat<?>, AssetType<?, ?>> entry : extensionFormats.entries()) {
             ModuleAssetProducer<?> moduleProducer = moduleProducers.get(entry.getValue().getAssetClass());
             if (moduleProducer != null) {
-                moduleProducer.removeFormat((AssetFormat) entry.getKey());
+                moduleProducer.removeAssetFormat((AssetFormat) entry.getKey());
             }
         }
         extensionFormats.clear();
@@ -265,7 +291,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
                 for (AssetType assetType : validAssetTypes) {
                     ModuleAssetProducer moduleProducer = moduleProducers.get(assetType.getAssetClass());
                     if (moduleProducer != null) {
-                        moduleProducer.addFormat(format);
+                        moduleProducer.addAssetFormat(format);
                         if (!extensionAssetTypes.contains(assetType)) {
                             extensionFormats.put(format, assetType);
                         }

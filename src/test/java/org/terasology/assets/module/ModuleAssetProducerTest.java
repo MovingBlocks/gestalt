@@ -17,6 +17,8 @@
 package org.terasology.assets.module;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextDeltaFormat;
@@ -40,11 +42,12 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
     public static final String ASSET_TYPE_ID = "text";
     public static final String FOLDER_NAME = "text";
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
+    private static final Logger logger = LoggerFactory.getLogger(ModuleAssetProducerTest.class);
 
     private ModuleAssetProducer<TextData> moduleProducer = new ModuleAssetProducer<>(FOLDER_NAME);
 
     public ModuleAssetProducerTest() throws Exception {
-        moduleProducer.addFormat(new TextFormat());
+        moduleProducer.addAssetFormat(new TextFormat());
     }
 
     @Test
@@ -136,7 +139,7 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
         TextData assetData = moduleProducer.getAssetData(URN);
         assertNotNull(assetData);
-        assertEquals("Final text", assetData.getValue());
+        assertEquals("Override text", assetData.getValue());
     }
 
     @Test
@@ -148,6 +151,18 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         TextData assetData = moduleProducer.getAssetData(URN);
         assertNotNull(assetData);
         assertEquals("Example frumple", assetData.getValue());
+    }
+
+    @Test
+    public void loadWithDeltaUnrelatedToOverride() throws Exception {
+        moduleProducer.addDeltaFormat(new TextDeltaFormat());
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                moduleRegistry.getLatestModuleVersion(new Name("overrideA")),
+                moduleRegistry.getLatestModuleVersion(new Name("deltaA"))));
+
+        TextData assetData = moduleProducer.getAssetData(URN);
+        assertNotNull(assetData);
+        assertEquals("Override frumple", assetData.getValue());
     }
 
     @Test
@@ -209,6 +224,27 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString() + ResourceUrn.INSTANCE_INDICATOR, Name.EMPTY);
         assertEquals(1, results.size());
         assertTrue(results.contains(URN.getInstanceUrn()));
+    }
+
+    @Test
+    public void orphanOverrideSupplementIgnored() throws Exception {
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("moduleA")),
+                moduleRegistry.getLatestModuleVersion(new Name("overrideWithSupplementOnly"))));
+
+        TextData data = moduleProducer.getAssetData(new ResourceUrn("moduleA:example"));
+        assertEquals("", data.getMetadata());
+    }
+
+    @Test
+    public void detectChanges() throws Exception {
+        moduleProducer.addSupplementFormat(new TextMetadataFormat());
+        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
+
+        while (true) {
+            for (ResourceUrn urn : moduleProducer.checkForChanges()) {
+                logger.info("Marked for reload: {}", urn);
+            }
+        }
     }
 
 }

@@ -33,6 +33,7 @@ import org.terasology.naming.ResourceUrn;
 import org.terasology.util.reflection.GenericsUtil;
 
 import javax.annotation.Nullable;
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -41,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class AssetType<T extends Asset<U>, U extends AssetData> extends AssetOwner<U> {
+public final class AssetType<T extends Asset<U>, U extends AssetData> extends AssetOwner<U> implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
@@ -61,6 +62,14 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
             assetDataClass = (Class<U>) GenericsUtil.getClassOfType(assetDataType.get());
         } else {
             throw new IllegalArgumentException("Asset class must have bound AssetData parameter - " + assetClass);
+        }
+    }
+
+    @Override
+    public void close() {
+        disposeAll();
+        for (AssetProducer<U> producer : producers) {
+            producer.close();
         }
     }
 
@@ -262,6 +271,10 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         }
 
         return asset;
+    }
+
+    public boolean isLoaded(ResourceUrn urn) {
+        return loadedAssets.containsKey(urn);
     }
 
     @Override
