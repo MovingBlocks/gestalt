@@ -184,14 +184,14 @@ public class ModuleAssetProducer<U extends AssetData> implements AssetProducer<U
     }
 
     @Override
-    public U getAssetData(ResourceUrn urn) throws IOException {
+    public Optional<U> getAssetData(ResourceUrn urn) throws IOException {
         if (urn.getFragmentName().isEmpty()) {
             UnloadedAsset<U> source = unloadedAssetLookup.get(urn);
-            if (source != null) {
-                return source.load();
+            if (source != null && source.isValid()) {
+                return Optional.fromNullable(source.load());
             }
         }
-        return null;
+        return Optional.absent();
     }
 
     public List<AssetFormat<U>> getAssetFormats() {

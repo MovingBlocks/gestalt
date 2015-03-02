@@ -18,6 +18,8 @@ package org.terasology.assets.module;
 
 import com.google.common.base.Optional;
 import org.junit.Test;
+import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetProducer;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.test.Return;
@@ -27,12 +29,17 @@ import org.terasology.assets.test.stubs.extensions.ExtensionDeltaFormat;
 import org.terasology.assets.test.stubs.extensions.ExtensionFormat;
 import org.terasology.assets.test.stubs.extensions.ExtensionProducer;
 import org.terasology.assets.test.stubs.extensions.ExtensionSupplementalFormat;
+import org.terasology.assets.test.stubs.inheritance.AlternateAsset;
+import org.terasology.assets.test.stubs.inheritance.ChildAsset;
+import org.terasology.assets.test.stubs.inheritance.ParentAsset;
 import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextFactory;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -120,15 +127,17 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         AssetProducer producer = mock(AssetProducer.class);
         assetType.addProducer(producer);
         when(producer.redirect(URN)).thenReturn(URN);
-        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE));
+        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.absent());
+        when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
 
-        Text asset = assetType.getAsset(URN);
-        assertNotNull(asset);
-        assertFalse(asset.isDisposed());
 
-        when(producer.getAssetData(URN)).thenReturn(null);
+        Optional<Text> asset = assetType.getAsset(URN);
+        assertTrue(asset.isPresent());
+        assertFalse(asset.get().isDisposed());
+
+        when(producer.getAssetData(URN)).thenReturn(Optional.absent());
         assetTypeManager.setEnvironment(createEnvironment());
-        assertTrue(asset.isDisposed());
+        assertTrue(asset.get().isDisposed());
     }
 
     @Test
@@ -138,16 +147,16 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         AssetProducer producer = mock(AssetProducer.class);
         assetType.addProducer(producer);
         when(producer.redirect(URN)).thenReturn(URN);
-        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE));
+        when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
 
-        Text asset = assetType.getAsset(URN);
-        assertNotNull(asset);
-        assertEquals(TEXT_VALUE, asset.getValue());
+        Optional<Text> asset = assetType.getAsset(URN);
+        assertTrue(asset.isPresent());
+        assertEquals(TEXT_VALUE, asset.get().getValue());
 
-        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE_2));
+        when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE_2)));
         assetTypeManager.setEnvironment(createEnvironment());
-        assertEquals(TEXT_VALUE_2, asset.getValue());
-        assertFalse(asset.isDisposed());
+        assertEquals(TEXT_VALUE_2, asset.get().getValue());
+        assertFalse(asset.get().isDisposed());
     }
 
     @Test
@@ -158,12 +167,12 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assetType.addProducer(producer);
         when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer.redirect(URN)).thenReturn(URN);
-        when(producer.getAssetData(URN)).thenReturn(new TextData(TEXT_VALUE));
-        Text asset = assetType.getAsset(URN);
+        when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
+        Optional<Text> asset = assetType.getAsset(URN);
         when(producer.redirect(URN)).thenReturn(new ResourceUrn(URN.getModuleName(), new Name("redirect")));
 
         assetTypeManager.setEnvironment(createEnvironment());
-        assertTrue(asset.isDisposed());
+        assertTrue(asset.get().isDisposed());
     }
 
     @Test
@@ -257,5 +266,16 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assetTypeManager.setEnvironment(createEnvironment());
         assetTypeManager.setEnvironment(createEmptyEnvironment());
         assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getDeltaFormats().isEmpty());
+    }
+
+    @Test
+    public void handleInheritanceRelationOfAssetTypes() {
+        assetTypeManager.registerCoreAssetType(ChildAsset.class, mock(AssetFactory.class));
+        assetTypeManager.registerCoreAssetType(AlternateAsset.class, mock(AssetFactory.class));
+
+        List<AssetType<? extends ParentAsset, ? extends AssetData>> assetTypes = assetTypeManager.getAssetTypes(ParentAsset.class);
+        assertEquals(2, assetTypes.size());
+        assertEquals(AlternateAsset.class, assetTypes.get(0).getAssetClass());
+        assertEquals(ChildAsset.class, assetTypes.get(1).getAssetClass());
     }
 }

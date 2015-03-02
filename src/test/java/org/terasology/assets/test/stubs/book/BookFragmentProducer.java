@@ -16,6 +16,7 @@
 
 package org.terasology.assets.test.stubs.book;
 
+import com.google.common.base.Optional;
 import org.terasology.assets.AbstractFragmentProducer;
 import org.terasology.assets.AssetManager;
 import org.terasology.assets.test.stubs.text.TextData;
@@ -34,15 +35,15 @@ public class BookFragmentProducer extends AbstractFragmentProducer<TextData, Boo
     }
 
     @Override
-    protected TextData getFragmentData(ResourceUrn urn, Book book) {
+    protected Optional<TextData> getFragmentData(ResourceUrn urn, Book book) {
         try {
             int i = Integer.parseInt(urn.getFragmentName().toString());
             if (i >= 0 && i < book.getLines().size()) {
-                return new TextData(book.getLines().get(i));
+                return Optional.of(new TextData(book.getLines().get(i)));
             }
-            return null;
+            return Optional.absent();
         } catch (NumberFormatException e) {
-            return null;
+            return Optional.absent();
         }
     }
 

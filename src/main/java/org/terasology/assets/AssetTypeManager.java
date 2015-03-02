@@ -16,11 +16,16 @@
 
 package org.terasology.assets;
 
+import java.util.List;
+
 /**
  * @author Immortius
  */
 public interface AssetTypeManager {
 
     <T extends Asset<U>, U extends AssetData> AssetType<T, U> getAssetType(Class<T> type);
+
+    <T extends Asset<U>, U extends AssetData> List<AssetType<? extends T, ? extends U>> getAssetTypes(Class<T> type);
+
 
 }

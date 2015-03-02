@@ -17,6 +17,7 @@
 package org.terasology.assets;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
 import org.terasology.naming.Name;
@@ -62,17 +63,17 @@ public abstract class AbstractFragmentProducer<T extends AssetData, U extends As
     }
 
     @Override
-    public T getAssetData(ResourceUrn urn) throws IOException {
-        U rootAsset = assetManager.getAsset(urn.getRootUrn(), rootAssetType);
-        if (rootAsset != null) {
-            return getFragmentData(urn, rootAsset);
+    public Optional<T> getAssetData(ResourceUrn urn) throws IOException {
+        Optional<? extends U> rootAsset = assetManager.getAsset(urn.getRootUrn(), rootAssetType);
+        if (rootAsset.isPresent()) {
+            return getFragmentData(urn, rootAsset.get());
         }
-        return null;
+        return Optional.absent();
     }
 
     @Override
     public void close() {
     }
 
-    protected abstract T getFragmentData(ResourceUrn urn, U rootAsset);
+    protected abstract Optional<T> getFragmentData(ResourceUrn urn, U rootAsset);
 }

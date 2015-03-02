@@ -16,6 +16,7 @@
 
 package org.terasology.assets.test.stubs.extensions;
 
+import com.google.common.base.Optional;
 import org.terasology.assets.AssetManager;
 import org.terasology.assets.AssetProducer;
 import org.terasology.assets.module.annotations.RegisterAssetProducer;
@@ -52,8 +53,8 @@ public class ExtensionProducer implements AssetProducer<TextData> {
     }
 
     @Override
-    public TextData getAssetData(ResourceUrn urn) throws IOException {
-        return null;
+    public Optional<TextData> getAssetData(ResourceUrn urn) throws IOException {
+        return Optional.absent();
     }
 
     @Override

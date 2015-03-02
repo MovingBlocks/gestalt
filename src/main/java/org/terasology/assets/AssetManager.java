@@ -16,9 +16,13 @@
 
 package org.terasology.assets;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.Sets;
 import org.terasology.naming.Name;
 import org.terasology.naming.ResourceUrn;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -33,11 +37,35 @@ public final class AssetManager {
     }
 
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> getLoadedAssets(Class<T> type) {
-        return assetTypeManager.getAssetType(type).getLoadedAssetUrns();
+        List<AssetType<? extends T, ? extends U>> assetTypes = assetTypeManager.getAssetTypes(type);
+        switch (assetTypes.size()) {
+            case 0:
+                return Collections.emptySet();
+            case 1:
+                return assetTypes.get(0).getLoadedAssetUrns();
+            default:
+                Set<ResourceUrn> result = Sets.newLinkedHashSet();
+                for (AssetType<? extends T, ? extends U> assetType : assetTypes) {
+                    result.addAll(assetType.getLoadedAssetUrns());
+                }
+                return result;
+        }
     }
 
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> getAvailableAssets(Class<T> type) {
-        return assetTypeManager.getAssetType(type).getAvailableAssetUrns();
+        List<AssetType<? extends T, ? extends U>> assetTypes = assetTypeManager.getAssetTypes(type);
+        switch (assetTypes.size()) {
+            case 0:
+                return Collections.emptySet();
+            case 1:
+                return assetTypes.get(0).getAvailableAssetUrns();
+            default:
+                Set<ResourceUrn> result = Sets.newLinkedHashSet();
+                for (AssetType<? extends T, ? extends U> assetType : assetTypes) {
+                    result.addAll(assetType.getAvailableAssetUrns());
+                }
+                return result;
+        }
     }
 
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> resolve(String urn, Class<T> type) {
@@ -45,22 +73,49 @@ public final class AssetManager {
     }
 
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> resolve(String urn, Class<T> type, Name moduleContext) {
-        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
-        return assetType.resolve(urn, moduleContext);
+        List<AssetType<? extends T, ? extends U>> assetTypes = assetTypeManager.getAssetTypes(type);
+        switch (assetTypes.size()) {
+            case 0:
+                return Collections.emptySet();
+            case 1:
+                return assetTypes.get(0).resolve(urn, moduleContext);
+            default:
+                Set<ResourceUrn> result = Sets.newLinkedHashSet();
+                for (AssetType<? extends T, ? extends U> assetType : assetTypes) {
+                    result.addAll(assetType.resolve(urn, moduleContext));
+                }
+                return result;
+        }
     }
 
-    public <T extends Asset<U>, U extends AssetData> T getAsset(String urn, Class<T> type) {
+    public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(String urn, Class<T> type) {
         return getAsset(urn, type, ContextManager.getCurrentContext());
     }
 
-    public <T extends Asset<U>, U extends AssetData> T getAsset(String urn, Class<T> type, Name moduleContext) {
-        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
-        return assetType.getAsset(urn, moduleContext);
+    public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(String urn, Class<T> type, Name moduleContext) {
+        Set<ResourceUrn> resourceUrns = resolve(urn, type, moduleContext);
+        if (resourceUrns.size() == 1) {
+            return getAsset(resourceUrns.iterator().next(), type);
+        }
+        return Optional.absent();
     }
 
-    public <T extends Asset<U>, U extends AssetData> T getAsset(ResourceUrn urn, Class<T> type) {
-        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
-        return assetType.getAsset(urn);
+    public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(ResourceUrn urn, Class<T> type) {
+        List<AssetType<? extends T, ? extends U>> assetTypes = assetTypeManager.getAssetTypes(type);
+        switch (assetTypes.size()) {
+            case 0:
+                return Optional.absent();
+            case 1:
+                return assetTypes.get(0).getAsset(urn);
+            default:
+                for (AssetType<? extends T, ? extends U> assetType : assetTypes) {
+                    Optional<? extends T> result = assetType.getAsset(urn);
+                    if (result.isPresent()) {
+                        return result;
+                    }
+                }
+        }
+        return Optional.absent();
     }
 
     public <T extends Asset<U>, U extends AssetData> T loadAsset(ResourceUrn urn, U data, Class<T> type) {

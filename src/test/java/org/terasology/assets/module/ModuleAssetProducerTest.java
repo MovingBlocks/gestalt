@@ -16,9 +16,8 @@
 
 package org.terasology.assets.module;
 
+import com.google.common.base.Optional;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextDeltaFormat;
@@ -31,7 +30,6 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -39,10 +37,8 @@ import static org.junit.Assert.assertTrue;
  * @author Immortius
  */
 public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
-    public static final String ASSET_TYPE_ID = "text";
     public static final String FOLDER_NAME = "text";
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
-    private static final Logger logger = LoggerFactory.getLogger(ModuleAssetProducerTest.class);
 
     private ModuleAssetProducer<TextData> moduleProducer = new ModuleAssetProducer<>(FOLDER_NAME);
 
@@ -101,15 +97,15 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void getMissingAsset() throws Exception {
-        assertNull(moduleProducer.getAssetData(URN));
+        assertFalse(moduleProducer.getAssetData(URN).isPresent());
     }
 
     @Test
     public void loadAssetFromFile() throws Exception {
         moduleProducer.setEnvironment(createEnvironment());
-        TextData assetData = moduleProducer.getAssetData(URN);
-        assertNotNull(assetData);
-        assertEquals("Example text", assetData.getValue());
+        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        assertTrue(assetData.isPresent());
+        assertEquals("Example text", assetData.get().getValue());
     }
 
     @Test
@@ -117,9 +113,9 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA"))));
 
-        TextData assetData = moduleProducer.getAssetData(URN);
-        assertNotNull(assetData);
-        assertEquals("Override text", assetData.getValue());
+        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        assertTrue(assetData.isPresent());
+        assertEquals("Override text", assetData.get().getValue());
     }
 
     @Test
@@ -127,9 +123,9 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideB"))));
 
-        TextData assetData = moduleProducer.getAssetData(URN);
-        assertNotNull(assetData);
-        assertEquals("Different text", assetData.getValue());
+        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        assertTrue(assetData.isPresent());
+        assertEquals("Different text", assetData.get().getValue());
     }
 
     @Test
@@ -137,9 +133,9 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideC"))));
 
-        TextData assetData = moduleProducer.getAssetData(URN);
-        assertNotNull(assetData);
-        assertEquals("Override text", assetData.getValue());
+        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        assertTrue(assetData.isPresent());
+        assertEquals("Override text", assetData.get().getValue());
     }
 
     @Test
@@ -148,9 +144,9 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("deltaA"))));
 
-        TextData assetData = moduleProducer.getAssetData(URN);
-        assertNotNull(assetData);
-        assertEquals("Example frumple", assetData.getValue());
+        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        assertTrue(assetData.isPresent());
+        assertEquals("Example frumple", assetData.get().getValue());
     }
 
     @Test
@@ -160,9 +156,9 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA")),
                 moduleRegistry.getLatestModuleVersion(new Name("deltaA"))));
 
-        TextData assetData = moduleProducer.getAssetData(URN);
-        assertNotNull(assetData);
-        assertEquals("Override frumple", assetData.getValue());
+        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        assertTrue(assetData.isPresent());
+        assertEquals("Override frumple", assetData.get().getValue());
     }
 
     @Test
@@ -172,9 +168,9 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
                 moduleRegistry.getLatestModuleVersion(new Name("deltaA")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideD"))));
 
-        TextData assetData = moduleProducer.getAssetData(URN);
-        assertNotNull(assetData);
-        assertEquals("Overridden text without delta", assetData.getValue());
+        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        assertTrue(assetData.isPresent());
+        assertEquals("Overridden text without delta", assetData.get().getValue());
     }
 
     @Test
@@ -203,8 +199,9 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         moduleProducer.addSupplementFormat(new TextMetadataFormat());
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA"))));
 
-        TextData data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
-        assertEquals("bold", data.getMetadata());
+        Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
+        assertTrue(data.isPresent());
+        assertEquals("bold", data.get().getMetadata());
     }
 
     @Test
@@ -213,12 +210,13 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideSupplement"))));
 
-        TextData data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
-        assertEquals("sweet", data.getMetadata());
+        Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
+        assertTrue(data.isPresent());
+        assertEquals("sweet", data.get().getMetadata());
     }
 
     @Test
-    public void resolvePartialInstanceUrns() throws Exception  {
+    public void resolvePartialInstanceUrns() throws Exception {
         moduleProducer.setEnvironment(createEnvironment());
 
         Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString() + ResourceUrn.INSTANCE_INDICATOR, Name.EMPTY);
@@ -231,8 +229,9 @@ public class ModuleAssetProducerTest extends VirtualModuleEnvironment {
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("moduleA")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideWithSupplementOnly"))));
 
-        TextData data = moduleProducer.getAssetData(new ResourceUrn("moduleA:example"));
-        assertEquals("", data.getMetadata());
+        Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("moduleA:example"));
+        assertTrue(data.isPresent());
+        assertEquals("", data.get().getMetadata());
     }
 
 }

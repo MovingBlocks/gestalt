@@ -106,7 +106,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         producers.clear();
     }
 
-    public T getAsset(ResourceUrn urn) {
+    public Optional<T> getAsset(ResourceUrn urn) {
         Preconditions.checkNotNull(urn);
         if (urn.isInstance()) {
             return getInstanceAsset(urn);
@@ -117,7 +117,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
 
     public T createInstance(T existing) {
         Preconditions.checkNotNull(existing);
-        T result = (T) existing.doCreateInstance(existing.getUrn().getInstanceUrn());
+        T result = assetClass.cast(existing.doCreateInstance(existing.getUrn().getInstanceUrn()));
         if (result != null && !result.getOwner().isPresent()) {
             result.setOwner(existing);
             existing.addChild(result);
@@ -126,24 +126,24 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
     }
 
     @SuppressWarnings("unchecked")
-    private T getInstanceAsset(ResourceUrn urn) {
-        T parentAsset = getAsset(urn.getParentUrn());
-        if (parentAsset != null) {
-            return createInstance(parentAsset);
+    private Optional<T> getInstanceAsset(ResourceUrn urn) {
+        Optional<T> parentAsset = getAsset(urn.getParentUrn());
+        if (parentAsset.isPresent()) {
+            return Optional.of(createInstance(parentAsset.get()));
         } else {
-            return null;
+            return Optional.absent();
         }
     }
 
-    private T getNormalAsset(ResourceUrn urn) {
+    private Optional<T> getNormalAsset(ResourceUrn urn) {
         ResourceUrn redirectUrn = redirect(urn);
         T asset = loadedAssets.get(redirectUrn);
         if (asset == null) {
             try {
                 for (AssetProducer<U> producer : producers) {
-                    U data = producer.getAssetData(redirectUrn);
-                    if (data != null) {
-                        asset = loadAsset(redirectUrn, data);
+                    Optional<U> data = producer.getAssetData(redirectUrn);
+                    if (data.isPresent()) {
+                        asset = loadAsset(redirectUrn, data.get());
                     }
                 }
             } catch (IOException e) {
@@ -154,7 +154,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
                 }
             }
         }
-        return asset;
+        return Optional.fromNullable(asset);
     }
 
     private ResourceUrn redirect(ResourceUrn urn) {
@@ -169,11 +169,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         return finalUrn;
     }
 
-    public T getAsset(String urn) {
+    public Optional<T> getAsset(String urn) {
         return getAsset(urn, Name.EMPTY);
     }
 
-    public T getAsset(String urn, Name moduleContext) {
+    public Optional<T> getAsset(String urn, Name moduleContext) {
         Set<ResourceUrn> resolvedUrns = resolve(urn, moduleContext);
         if (resolvedUrns.size() == 1) {
             return getAsset(resolvedUrns.iterator().next());
@@ -182,7 +182,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         } else {
             logger.warn("Failed to resolve asset '{}' - no matches found", urn);
         }
-        return null;
+        return Optional.absent();
     }
 
     public Set<ResourceUrn> resolve(String urn) {
@@ -234,14 +234,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
     private boolean reloadFromProducers(ResourceUrn urn, Asset<U> asset) {
         try {
             for (AssetProducer<U> producer : producers) {
-                U data = producer.getAssetData(urn);
+                Optional<U> data = producer.getAssetData(urn);
 
-                if (data != null) {
-                    asset.reload(data);
+                if (data.isPresent()) {
+                    asset.reload(data.get());
                     return true;
                 }
             }
-
         } catch (IOException e) {
             logger.error("Failed to reload asset '{}', disposing");
         }
