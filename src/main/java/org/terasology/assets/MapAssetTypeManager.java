@@ -17,8 +17,17 @@
 package org.terasology.assets;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.reflections.ReflectionUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,7 +35,8 @@ import java.util.Map;
  */
 public final class MapAssetTypeManager implements AssetTypeManager {
 
-    private Map<Class<? extends Asset<?>>, AssetType<?, ?>> assetTypes = Maps.newHashMap();
+    private Map<Class<? extends Asset>, AssetType<?, ?>> assetTypes = Maps.newHashMap();
+    private ListMultimap<Class<? extends Asset>, Class<? extends Asset>> subtypes = ArrayListMultimap.create();
 
     @Override
     @SuppressWarnings("unchecked")
@@ -34,16 +44,55 @@ public final class MapAssetTypeManager implements AssetTypeManager {
         return (AssetType<T, U>) assetTypes.get(type);
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Asset<U>, U extends AssetData> List<AssetType<? extends T, ? extends U>> getAssetTypes(Class<T> type) {
+        List<AssetType<? extends T, ? extends U>> result = Lists.newArrayList();
+        for (Class<? extends Asset> subtype : subtypes.get(type)) {
+            result.add((AssetType<? extends T, ? extends U>) assetTypes.get(subtype));
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
     public <T extends Asset<U>, U extends AssetData> AssetType<T, U> createAssetType(Class<T> type) {
-        Preconditions.checkState(getAssetType(type) == null, "Asset type already created - " + type.getSimpleName());
+        Preconditions.checkState(assetTypes.get(type) == null, "Asset type already created - " + type.getSimpleName());
 
         AssetType<T, U> assetType = new AssetType<>(type);
         assetTypes.put(type, assetType);
+        for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, new Predicate<Class<?>>() {
+            @Override
+            public boolean apply(Class<?> input) {
+                return Asset.class.isAssignableFrom(input) && input != Asset.class;
+            }
+        })) {
+            subtypes.put((Class<? extends Asset>) parentType, type);
+            Collections.sort(subtypes.get((Class<? extends Asset>) parentType), new Comparator<Class<?>>() {
+                @Override
+                public int compare(Class<?> o1, Class<?> o2) {
+                    return o1.getSimpleName().compareTo(o2.getSimpleName());
+                }
+            });
+        }
+
         return assetType;
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends Asset<U>, U extends AssetData> void removeAssetType(Class<T> type) {
         AssetType<?, ?> assetType = assetTypes.remove(type);
-        assetType.close();
+        if (assetType != null) {
+            assetType.close();
+            for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, new Predicate<Class<?>>() {
+                @Override
+                public boolean apply(Class<?> input) {
+                    return Asset.class.isAssignableFrom(input) && input != Asset.class;
+                }
+            })) {
+                subtypes.remove(parentType, type);
+            }
+        }
     }
+
+
 }

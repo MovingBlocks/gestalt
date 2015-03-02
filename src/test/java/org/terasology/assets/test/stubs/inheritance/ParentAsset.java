@@ -14,31 +14,18 @@
  * limitations under the License.
  */
 
-package org.terasology.assets;
+package org.terasology.assets.test.stubs.inheritance;
 
-import com.google.common.base.Optional;
-import org.terasology.naming.Name;
+import org.terasology.assets.Asset;
+import org.terasology.assets.AssetData;
 import org.terasology.naming.ResourceUrn;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Set;
 
 /**
  * @author Immortius
  */
-public interface AssetProducer<T extends AssetData> extends Closeable {
+public abstract class ParentAsset<T extends AssetData> extends Asset<T> {
 
-    Set<ResourceUrn> getAvailableAssetUrns();
-
-    Set<ResourceUrn> resolve(String urn, Name moduleContext);
-
-    ResourceUrn redirect(ResourceUrn urn);
-
-    Optional<T> getAssetData(ResourceUrn urn) throws IOException;
-
-    @Override
-    void close();
-
-
+    public ParentAsset(ResourceUrn urn) {
+        super(urn);
+    }
 }

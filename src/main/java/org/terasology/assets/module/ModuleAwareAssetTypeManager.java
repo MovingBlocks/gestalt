@@ -24,6 +24,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;
@@ -48,6 +49,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +65,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     private final AssetManager assetManager;
 
     private Map<Class<? extends Asset>, AssetType<?, ?>> assetTypes = Maps.newLinkedHashMap();
+    private ListMultimap<Class<? extends Asset>, Class<? extends Asset>> subtypes = ArrayListMultimap.create();
     private Map<Class<? extends Asset>, ModuleAssetProducer<?>> moduleProducers = Maps.newLinkedHashMap();
 
     private List<AssetType<?, ?>> extensionAssetTypes = Lists.newArrayList();
@@ -84,11 +88,22 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
         return (AssetType<T, U>) assetTypes.get(type);
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Asset<U>, U extends AssetData> List<AssetType<? extends T, ? extends U>> getAssetTypes(Class<T> type) {
+        List<AssetType<? extends T, ? extends U>> result = Lists.newArrayList();
+        for (Class<? extends Asset> subtype : subtypes.get(type)) {
+            result.add((AssetType<? extends T, ? extends U>) assetTypes.get(subtype));
+        }
+        return result;
+    }
+
     public <T extends Asset<U>, U extends AssetData> AssetType<T, U> registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory) {
         Preconditions.checkState(!assetTypes.containsKey(type), "Asset type '" + type.getSimpleName() + "' already registered");
         AssetType<T, U> assetType = new AssetType<>(type);
         assetType.setFactory(factory);
         assetTypes.put(type, assetType);
+        addSubtypesFor(type);
         return assetType;
     }
 
@@ -105,8 +120,38 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     public <T extends Asset<U>, U extends AssetData> void removeCoreAssetType(Class<T> type) {
         AssetType<T, U> assetType = (AssetType<T, U>) assetTypes.remove(type);
         if (assetType != null) {
+            removeSubtypesFor(type);
             assetType.close();
             moduleProducers.remove(type);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addSubtypesFor(Class<? extends Asset> type) {
+        for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, new Predicate<Class<?>>() {
+            @Override
+            public boolean apply(Class<?> input) {
+                return Asset.class.isAssignableFrom(input) && input != Asset.class;
+            }
+        })) {
+            subtypes.put((Class<? extends Asset>) parentType, type);
+            Collections.sort(subtypes.get((Class<? extends Asset>) parentType), new Comparator<Class<?>>() {
+                @Override
+                public int compare(Class<?> o1, Class<?> o2) {
+                    return o1.getSimpleName().compareTo(o2.getSimpleName());
+                }
+            });
+        }
+    }
+
+    private void removeSubtypesFor(Class<? extends Asset> type) {
+        for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, new Predicate<Class<?>>() {
+            @Override
+            public boolean apply(Class<?> input) {
+                return Asset.class.isAssignableFrom(input) && input != Asset.class;
+            }
+        })) {
+            subtypes.remove(parentType, type);
         }
     }
 
@@ -156,7 +201,10 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
                 if (assetType.isLoaded(changedUrn)) {
                     try {
                         logger.info("Reloading changed asset '{}'", changedUrn);
-                        assetType.loadAsset(changedUrn, producer.getAssetData(changedUrn));
+                        Optional<T> assetData = producer.getAssetData(changedUrn);
+                        if (assetData.isPresent()) {
+                            assetType.loadAsset(changedUrn, assetData.get());
+                        }
                     } catch (IOException e) {
                         logger.error("Failed to reload asset '{}'", changedUrn, e);
                     }

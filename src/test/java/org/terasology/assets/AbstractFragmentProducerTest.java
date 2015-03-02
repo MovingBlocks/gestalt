@@ -16,6 +16,8 @@
 
 package org.terasology.assets;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.terasology.assets.test.VirtualModuleEnvironment;
@@ -51,6 +53,7 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
 
     public AbstractFragmentProducerTest() throws Exception {
         when(assetTypeManager.getAssetType(Book.class)).thenReturn(bookType);
+        when(assetTypeManager.getAssetTypes(Book.class)).thenReturn(ImmutableList.<AssetType<? extends Book, ? extends BookData>>of(bookType));
     }
 
     @Test
@@ -70,11 +73,13 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
         bookType.setFactory(new BookFactory());
         bookType.loadAsset(FRAGMENT_URN.getRootUrn(), new BookData(LINE_0, LINE_1));
 
-        TextData result = bookFragmentProducer.getAssetData(FRAGMENT_URN);
-        assertEquals(LINE_0, result.getValue());
+        Optional<TextData> result = bookFragmentProducer.getAssetData(FRAGMENT_URN);
+        assertTrue(result.isPresent());
+        assertEquals(LINE_0, result.get().getValue());
 
-        TextData result2 = bookFragmentProducer.getAssetData(FRAGMENT_URN_2);
-        assertEquals(LINE_1, result2.getValue());
+        Optional<TextData> result2 = bookFragmentProducer.getAssetData(FRAGMENT_URN_2);
+        assertTrue(result2.isPresent());
+        assertEquals(LINE_1, result2.get().getValue());
 
     }
 
