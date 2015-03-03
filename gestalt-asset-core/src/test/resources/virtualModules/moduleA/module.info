@@ -1,0 +1,14 @@
+{
+    "id": "moduleA",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "description" : "Introduces an asset with the same name as one in the 'test' module",
+    "dependencies" : [
+        {
+            "id": "test",
+            "minVersion": "1.0.0"
+        }
+    ]
+}

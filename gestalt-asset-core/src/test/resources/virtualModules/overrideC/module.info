@@ -1,0 +1,14 @@
+{
+    "id": "overrideC",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "description" : "Overrides an asset from the 'test' module",
+    "dependencies" : [
+        {
+            "id": "test",
+            "minVersion": "1.0.0"
+        }
+    ]
+}

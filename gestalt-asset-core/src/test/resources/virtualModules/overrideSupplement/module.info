@@ -1,0 +1,14 @@
+{
+    "id": "overrideSupplement",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "description" : "Provides an override with a supplement",
+    "dependencies" : [
+        {
+            "id": "supplementA",
+            "minVersion": "1.0.0"
+        }
+    ]
+}
