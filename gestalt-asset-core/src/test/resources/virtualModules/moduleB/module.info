@@ -1,0 +1,14 @@
+{
+    "id": "moduleB",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "description" : "Introduces no assets",
+    "dependencies" : [
+        {
+            "id": "test",
+            "minVersion": "1.0.0"
+        }
+    ]
+}
