@@ -17,9 +17,7 @@
 package org.terasology.assets;
 
 import com.google.common.collect.ImmutableSet;
-import javafx.scene.Parent;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.terasology.assets.test.OptionalAnswer;
 import org.terasology.assets.test.Return;
 import org.terasology.assets.test.stubs.inheritance.AlternateAsset;

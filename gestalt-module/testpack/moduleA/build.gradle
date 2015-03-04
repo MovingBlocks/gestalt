@@ -4,32 +4,7 @@
  * - Gradle Documentation: http://gradle.org/documentation
  * - View tasks for this project: $ gradlew tasks
  */
-apply plugin: 'java'
-apply plugin: 'project-report'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-
-// Set the expected module Java level (can use a higher Java to run, but should not use features from a higher Java)
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
-
-checkstyle {
-    ignoreFailures = true
-    configProperties.samedir = checkstyle.configFile.parentFile
-}
 
 jar {
     version = ''
-}
-
-pmd {
-    ignoreFailures = true
-    ruleSetFiles = files("config/pmd/pmd.xml")
-}
-
-findbugs {
-    toolVersion = '2.0.3'
-    ignoreFailures = true
-    effort = 'max'
-    reportLevel = 'medium'
 }
