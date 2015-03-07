@@ -29,7 +29,6 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.naming.Name;
-import org.terasology.naming.ResourceUrn;
 import org.terasology.util.reflection.GenericsUtil;
 
 import javax.annotation.Nullable;
@@ -48,7 +47,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
 
     private final Class<T> assetClass;
     private final Class<U> assetDataClass;
-    private List<AssetProducer<U>> producers = Lists.newArrayList();
+    private List<AssetDataProducer<U>> producers = Lists.newArrayList();
     private AssetFactory<T, U> factory;
     private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
 
@@ -68,7 +67,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
     @Override
     public void close() {
         disposeAll();
-        for (AssetProducer<U> producer : producers) {
+        for (AssetDataProducer<U> producer : producers) {
             producer.close();
         }
     }
@@ -90,15 +89,15 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         disposeAll();
     }
 
-    public void addProducer(AssetProducer<U> producer) {
+    public void addProducer(AssetDataProducer<U> producer) {
         producers.add(producer);
     }
 
-    public List<AssetProducer<U>> getProducers() {
+    public List<AssetDataProducer<U>> getProducers() {
         return Collections.unmodifiableList(producers);
     }
 
-    public void removeProducer(AssetProducer<U> producer) {
+    public void removeProducer(AssetDataProducer<U> producer) {
         producers.remove(producer);
     }
 
@@ -140,7 +139,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         T asset = loadedAssets.get(redirectUrn);
         if (asset == null) {
             try {
-                for (AssetProducer<U> producer : producers) {
+                for (AssetDataProducer<U> producer : producers) {
                     Optional<U> data = producer.getAssetData(redirectUrn);
                     if (data.isPresent()) {
                         asset = loadAsset(redirectUrn, data.get());
@@ -162,7 +161,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         ResourceUrn finalUrn = urn;
         do {
             lastUrn = finalUrn;
-            for (AssetProducer<U> producer : producers) {
+            for (AssetDataProducer<U> producer : producers) {
                 finalUrn = producer.redirect(finalUrn);
             }
         } while (!lastUrn.equals(finalUrn));
@@ -201,7 +200,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         }
 
         Set<ResourceUrn> results = Sets.newLinkedHashSet();
-        for (AssetProducer<U> producer : producers) {
+        for (AssetDataProducer<U> producer : producers) {
             results.addAll(producer.resolve(urnToResolve, moduleContext));
         }
         if (instance) {
@@ -233,7 +232,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
 
     private boolean reloadFromProducers(ResourceUrn urn, Asset<U> asset) {
         try {
-            for (AssetProducer<U> producer : producers) {
+            for (AssetDataProducer<U> producer : producers) {
                 Optional<U> data = producer.getAssetData(urn);
 
                 if (data.isPresent()) {
@@ -282,7 +281,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
 
     public Set<ResourceUrn> getAvailableAssetUrns() {
         Set<ResourceUrn> availableAssets = Sets.newLinkedHashSet(getLoadedAssetUrns());
-        for (AssetProducer<U> producer : producers) {
+        for (AssetDataProducer<U> producer : producers) {
             availableAssets.addAll(producer.getAvailableAssetUrns());
         }
         return availableAssets;

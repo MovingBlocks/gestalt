@@ -20,14 +20,15 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import org.junit.Test;
+import org.terasology.assets.management.AssetManager;
+import org.terasology.assets.management.AssetTypeManager;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.book.Book;
 import org.terasology.assets.test.stubs.book.BookData;
 import org.terasology.assets.test.stubs.book.BookFactory;
-import org.terasology.assets.test.stubs.book.BookFragmentProducer;
+import org.terasology.assets.test.stubs.book.BookFragmentDataProducer;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.naming.Name;
-import org.terasology.naming.ResourceUrn;
 
 import java.util.Set;
 
@@ -48,7 +49,7 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
 
     private AssetTypeManager assetTypeManager = mock(AssetTypeManager.class);
     private AssetManager assetManager = new AssetManager(assetTypeManager);
-    private BookFragmentProducer bookFragmentProducer = new BookFragmentProducer(assetManager);
+    private BookFragmentDataProducer bookFragmentProducer = new BookFragmentDataProducer(assetManager);
     private AssetType<Book, BookData> bookType = new AssetType<>(Book.class);
 
     public AbstractFragmentProducerTest() throws Exception {
@@ -58,7 +59,7 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void resolveFragmentUrn() {
-        AssetProducer<BookData> bookProducer = mock(AssetProducer.class);
+        AssetDataProducer<BookData> bookProducer = mock(AssetDataProducer.class);
         bookType.addProducer(bookProducer);
 
         when(bookProducer.resolve(FRAGMENT_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(Sets.newHashSet(FRAGMENT_URN.getRootUrn()));

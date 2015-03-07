@@ -18,7 +18,7 @@ package org.terasology.assets.test.stubs.book;
 
 import com.google.common.collect.ImmutableList;
 import org.terasology.assets.Asset;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius

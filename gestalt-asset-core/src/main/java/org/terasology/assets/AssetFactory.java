@@ -16,8 +16,6 @@
 
 package org.terasology.assets;
 
-import org.terasology.naming.ResourceUrn;
-
 /**
  * @author Immortius
  */

@@ -19,7 +19,7 @@ package org.terasology.assets;
 /**
  * @author Immortius
  */
-public abstract class AssetOwner<T extends AssetData> {
+abstract class AssetOwner<T extends AssetData> {
 
     abstract void removeDisposedAsset(Asset<T> asset);
 }

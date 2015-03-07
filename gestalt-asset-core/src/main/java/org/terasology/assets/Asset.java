@@ -20,7 +20,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import org.terasology.naming.ResourceUrn;
 
 import java.util.List;
 
@@ -50,15 +49,15 @@ public abstract class Asset<T extends AssetData> extends AssetOwner<T> {
         this.urn = urn;
     }
 
-    Optional<AssetOwner<T>> getOwner() {
+    final Optional<AssetOwner<T>> getOwner() {
         return owner;
     }
 
-    void setOwner(AssetOwner<T> owner) {
+    final void setOwner(AssetOwner<T> owner) {
         this.owner = Optional.of(owner);
     }
 
-    void addChild(Asset<T> other) {
+    final void addChild(Asset<T> other) {
         children.add(other);
     }
 

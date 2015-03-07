@@ -17,7 +17,7 @@
 package org.terasology.assets.test.stubs.text;
 
 import org.terasology.assets.AssetFactory;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius

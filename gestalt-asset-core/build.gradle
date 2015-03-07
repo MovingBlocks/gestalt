@@ -7,12 +7,8 @@
 
 // Primary dependencies definition
 dependencies {
+    compile project(":gestalt-util")
     compile project(":gestalt-module")
-    compile group: 'com.googlecode.gentyref', name: 'gentyref', version: '1.2.0'
-
-    // These dependencies are only needed for running tests
-    testCompile group: 'org.jboss.shrinkwrap', name: 'shrinkwrap-impl-base', version: '1.2.2'
-    testCompile group: 'org.jboss.shrinkwrap', name: 'shrinkwrap-impl-nio2', version: '1.2.2'
 }
 
 description = 'Provides support for assets - binary resources that can be loaded from modules or procedurally generated at runtime.'

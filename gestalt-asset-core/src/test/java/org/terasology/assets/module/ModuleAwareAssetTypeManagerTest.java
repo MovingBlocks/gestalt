@@ -20,15 +20,15 @@ import com.google.common.base.Optional;
 import org.junit.Test;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetFactory;
-import org.terasology.assets.AssetProducer;
+import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.test.Return;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.extensions.ExtensionAsset;
-import org.terasology.assets.test.stubs.extensions.ExtensionDeltaFormat;
-import org.terasology.assets.test.stubs.extensions.ExtensionFormat;
-import org.terasology.assets.test.stubs.extensions.ExtensionProducer;
-import org.terasology.assets.test.stubs.extensions.ExtensionSupplementalFormat;
+import org.terasology.assets.test.stubs.extensions.ExtensionDeltaFileFormat;
+import org.terasology.assets.test.stubs.extensions.ExtensionFileFormat;
+import org.terasology.assets.test.stubs.extensions.ExtensionDataProducer;
+import org.terasology.assets.test.stubs.extensions.ExtensionSupplementalFileFormat;
 import org.terasology.assets.test.stubs.inheritance.AlternateAsset;
 import org.terasology.assets.test.stubs.inheritance.ChildAsset;
 import org.terasology.assets.test.stubs.inheritance.ParentAsset;
@@ -37,7 +37,7 @@ import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextFactory;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.ResourceUrn;
 
 import java.util.List;
 
@@ -78,21 +78,21 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         TextFactory factory = new TextFactory();
         AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
         assertEquals(1, assetType.getProducers().size());
-        assertTrue(assetType.getProducers().get(0) instanceof ModuleAssetProducer);
+        assertTrue(assetType.getProducers().get(0) instanceof ModuleAssetDataProducer);
         assertEquals(factory, assetType.getFactory());
     }
 
     @Test
     public void getModuleAssetProducerForFileBasedAssetType() {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
-        Optional<ModuleAssetProducer<TextData>> moduleProducer = assetTypeManager.getModuleProducerFor(Text.class);
+        Optional<ModuleAssetDataProducer<TextData>> moduleProducer = assetTypeManager.getModuleProducerFor(Text.class);
         assertTrue(moduleProducer.isPresent());
     }
 
     @Test
     public void getModuleAssetProducerForFolderlessAssetType() {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
-        Optional<ModuleAssetProducer<TextData>> moduleProducer = assetTypeManager.getModuleProducerFor(Text.class);
+        Optional<ModuleAssetDataProducer<TextData>> moduleProducer = assetTypeManager.getModuleProducerFor(Text.class);
         assertFalse(moduleProducer.isPresent());
     }
 
@@ -100,7 +100,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     public void setEnvironmentPopulatesModuleProducers() throws Exception {
         TextFactory factory = new TextFactory();
         AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
-        ModuleAssetProducer<TextData> producer = (ModuleAssetProducer<TextData>) assetType.getProducers().get(0);
+        ModuleAssetDataProducer<TextData> producer = (ModuleAssetDataProducer<TextData>) assetType.getProducers().get(0);
 
         ModuleEnvironment environment = createEnvironment();
         assertFalse(environment.equals(producer.getModuleEnvironment()));
@@ -116,7 +116,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
 
         TextFactory factory = new TextFactory();
         AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
-        ModuleAssetProducer<TextData> producer = (ModuleAssetProducer<TextData>) assetType.getProducers().get(0);
+        ModuleAssetDataProducer<TextData> producer = (ModuleAssetDataProducer<TextData>) assetType.getProducers().get(0);
         assertEquals(environment, producer.getModuleEnvironment());
     }
 
@@ -124,7 +124,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     public void disposeUnavailableAssetsOnEnvironmentChange() throws Exception {
         AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
 
-        AssetProducer producer = mock(AssetProducer.class);
+        AssetDataProducer producer = mock(AssetDataProducer.class);
         assetType.addProducer(producer);
         when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.absent());
@@ -144,7 +144,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     public void reloadAvailableAssetsOnEnvironmentChange() throws Exception {
         AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
 
-        AssetProducer producer = mock(AssetProducer.class);
+        AssetDataProducer producer = mock(AssetDataProducer.class);
         assetType.addProducer(producer);
         when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
@@ -163,7 +163,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     public void disposeAssetOnEnvironmentChangeIfRedirectExists() throws Exception {
         AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
 
-        AssetProducer producer = mock(AssetProducer.class);
+        AssetDataProducer producer = mock(AssetDataProducer.class);
         assetType.addProducer(producer);
         when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer.redirect(URN)).thenReturn(URN);
@@ -209,7 +209,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
         assetTypeManager.setEnvironment(createEnvironment());
         assertEquals(1, assetTypeManager.getAssetType(Text.class).getProducers().size());
-        assertTrue(assetTypeManager.getAssetType(Text.class).getProducers().get(0) instanceof ExtensionProducer);
+        assertTrue(assetTypeManager.getAssetType(Text.class).getProducers().get(0) instanceof ExtensionDataProducer);
     }
 
     @Test
@@ -225,7 +225,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.setEnvironment(createEnvironment());
         assertEquals(1, assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().size());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().get(0) instanceof ExtensionFormat);
+        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().get(0) instanceof ExtensionFileFormat);
     }
 
     @Test
@@ -241,7 +241,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.setEnvironment(createEnvironment());
         assertEquals(1, assetTypeManager.getModuleProducerFor(Text.class).get().getSupplementFormats().size());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getSupplementFormats().get(0) instanceof ExtensionSupplementalFormat);
+        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getSupplementFormats().get(0) instanceof ExtensionSupplementalFileFormat);
     }
 
     @Test
@@ -257,7 +257,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.setEnvironment(createEnvironment());
         assertEquals(1, assetTypeManager.getModuleProducerFor(Text.class).get().getDeltaFormats().size());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getDeltaFormats().get(0) instanceof ExtensionDeltaFormat);
+        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getDeltaFormats().get(0) instanceof ExtensionDeltaFileFormat);
     }
 
     @Test

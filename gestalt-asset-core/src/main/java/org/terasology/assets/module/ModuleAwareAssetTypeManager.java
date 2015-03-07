@@ -30,17 +30,19 @@ import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetFactory;
-import org.terasology.assets.AssetManager;
-import org.terasology.assets.AssetProducer;
-import org.terasology.assets.AssetType;
-import org.terasology.assets.AssetTypeManager;
-import org.terasology.assets.module.annotations.RegisterAssetDeltaFormat;
-import org.terasology.assets.module.annotations.RegisterAssetFormat;
-import org.terasology.assets.module.annotations.RegisterAssetProducer;
-import org.terasology.assets.module.annotations.RegisterAssetSupplementalFormat;
+import org.terasology.assets.module.annotations.RegisterAssetDeltaFileFormat;
+import org.terasology.assets.module.annotations.RegisterAssetFileFormat;
+import org.terasology.assets.module.annotations.RegisterAssetDataProducer;
+import org.terasology.assets.module.annotations.RegisterAssetSupplementalFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetType;
+import org.terasology.assets.management.AssetManager;
+import org.terasology.assets.AssetDataProducer;
+import org.terasology.assets.AssetType;
+import org.terasology.assets.management.AssetTypeManager;
+import org.terasology.assets.format.AssetAlterationFileFormat;
+import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.module.ModuleEnvironment;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.ResourceUrn;
 import org.terasology.util.reflection.GenericsUtil;
 
 import java.io.IOException;
@@ -66,13 +68,13 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     private Map<Class<? extends Asset>, AssetType<?, ?>> assetTypes = Maps.newLinkedHashMap();
     private ListMultimap<Class<? extends Asset>, Class<? extends Asset>> subtypes = ArrayListMultimap.create();
-    private Map<Class<? extends Asset>, ModuleAssetProducer<?>> moduleProducers = Maps.newLinkedHashMap();
+    private Map<Class<? extends Asset>, ModuleAssetDataProducer<?>> moduleProducers = Maps.newLinkedHashMap();
 
     private List<AssetType<?, ?>> extensionAssetTypes = Lists.newArrayList();
-    private ListMultimap<AssetProducer<?>, AssetType<?, ?>> extensionProducers = ArrayListMultimap.create();
-    private ListMultimap<AssetFormat<?>, AssetType<?, ?>> extensionFormats = ArrayListMultimap.create();
-    private ListMultimap<AssetAlterationFormat<?>, AssetType<?, ?>> extensionSupplementalFormats = ArrayListMultimap.create();
-    private ListMultimap<AssetAlterationFormat<?>, AssetType<?, ?>> extensionDeltaFormats = ArrayListMultimap.create();
+    private ListMultimap<AssetDataProducer<?>, AssetType<?, ?>> extensionProducers = ArrayListMultimap.create();
+    private ListMultimap<AssetFileFormat<?>, AssetType<?, ?>> extensionFormats = ArrayListMultimap.create();
+    private ListMultimap<AssetAlterationFileFormat<?>, AssetType<?, ?>> extensionSupplementalFormats = ArrayListMultimap.create();
+    private ListMultimap<AssetAlterationFileFormat<?>, AssetType<?, ?>> extensionDeltaFormats = ArrayListMultimap.create();
 
     private ModuleEnvironment environment;
 
@@ -109,7 +111,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     public <T extends Asset<U>, U extends AssetData> AssetType<T, U> registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory, String folderName) {
         AssetType<T, U> assetType = registerCoreAssetType(type, factory);
-        ModuleAssetProducer<U> moduleProducer = new ModuleAssetProducer<>(folderName);
+        ModuleAssetDataProducer<U> moduleProducer = new ModuleAssetDataProducer<>(folderName);
         moduleProducer.setEnvironment(environment);
         assetType.addProducer(moduleProducer);
         moduleProducers.put(type, moduleProducer);
@@ -156,8 +158,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Asset<U>, U extends AssetData> Optional<ModuleAssetProducer<U>> getModuleProducerFor(Class<T> type) {
-        return Optional.fromNullable((ModuleAssetProducer<U>) moduleProducers.get(type));
+    public <T extends Asset<U>, U extends AssetData> Optional<ModuleAssetDataProducer<U>> getModuleProducerFor(Class<T> type) {
+        return Optional.fromNullable((ModuleAssetDataProducer<U>) moduleProducers.get(type));
     }
 
     public AssetManager getAssetManager() {
@@ -188,12 +190,12 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     }
 
     public void reloadChanged() {
-        for (Map.Entry<Class<? extends Asset>, ModuleAssetProducer<?>> entry : moduleProducers.entrySet()) {
+        for (Map.Entry<Class<? extends Asset>, ModuleAssetDataProducer<?>> entry : moduleProducers.entrySet()) {
             reloadChanged(entry.getKey(), entry.getValue());
         }
     }
 
-    private <T extends AssetData> void reloadChanged(Class<? extends Asset> type, ModuleAssetProducer<T> producer) {
+    private <T extends AssetData> void reloadChanged(Class<? extends Asset> type, ModuleAssetDataProducer<T> producer) {
         Set<ResourceUrn> changedUrns = producer.checkForChanges();
         if (!changedUrns.isEmpty()) {
             AssetType<?, T> assetType = getAssetType(type);
@@ -214,7 +216,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     }
 
     private void updateEnvironment() {
-        for (ModuleAssetProducer<?> producer : moduleProducers.values()) {
+        for (ModuleAssetDataProducer<?> producer : moduleProducers.values()) {
             producer.setEnvironment(environment);
         }
         for (AssetType<?, ?> assetType : assetTypes.values()) {
@@ -231,18 +233,18 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @SuppressWarnings("unchecked")
     private void removeExtensionProducers() {
-        for (Map.Entry<AssetProducer<?>, AssetType<?, ?>> entry : extensionProducers.entries()) {
-            entry.getValue().removeProducer((AssetProducer) entry.getKey());
+        for (Map.Entry<AssetDataProducer<?>, AssetType<?, ?>> entry : extensionProducers.entries()) {
+            entry.getValue().removeProducer((AssetDataProducer) entry.getKey());
         }
         extensionProducers.clear();
     }
 
     @SuppressWarnings("unchecked")
     private void removeExtensionFormats() {
-        for (Map.Entry<AssetFormat<?>, AssetType<?, ?>> entry : extensionFormats.entries()) {
-            ModuleAssetProducer<?> moduleProducer = moduleProducers.get(entry.getValue().getAssetClass());
+        for (Map.Entry<AssetFileFormat<?>, AssetType<?, ?>> entry : extensionFormats.entries()) {
+            ModuleAssetDataProducer<?> moduleProducer = moduleProducers.get(entry.getValue().getAssetClass());
             if (moduleProducer != null) {
-                moduleProducer.removeAssetFormat((AssetFormat) entry.getKey());
+                moduleProducer.removeAssetFormat((AssetFileFormat) entry.getKey());
             }
         }
         extensionFormats.clear();
@@ -250,10 +252,10 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @SuppressWarnings("unchecked")
     private void removeExtensionDeltaFormats() {
-        for (Map.Entry<AssetAlterationFormat<?>, AssetType<?, ?>> entry : extensionSupplementalFormats.entries()) {
-            ModuleAssetProducer<?> moduleProducer = moduleProducers.get(entry.getValue().getAssetClass());
+        for (Map.Entry<AssetAlterationFileFormat<?>, AssetType<?, ?>> entry : extensionSupplementalFormats.entries()) {
+            ModuleAssetDataProducer<?> moduleProducer = moduleProducers.get(entry.getValue().getAssetClass());
             if (moduleProducer != null) {
-                moduleProducer.removeSupplementFormat((AssetAlterationFormat) entry.getKey());
+                moduleProducer.removeSupplementFormat((AssetAlterationFileFormat) entry.getKey());
             }
         }
         extensionSupplementalFormats.clear();
@@ -261,10 +263,10 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @SuppressWarnings("unchecked")
     private void removeExtensionSupplementalFormats() {
-        for (Map.Entry<AssetAlterationFormat<?>, AssetType<?, ?>> entry : extensionDeltaFormats.entries()) {
-            ModuleAssetProducer<?> moduleProducer = moduleProducers.get(entry.getValue().getAssetClass());
+        for (Map.Entry<AssetAlterationFileFormat<?>, AssetType<?, ?>> entry : extensionDeltaFormats.entries()) {
+            ModuleAssetDataProducer<?> moduleProducer = moduleProducers.get(entry.getValue().getAssetClass());
             if (moduleProducer != null) {
-                moduleProducer.removeDeltaFormat((AssetAlterationFormat) entry.getKey());
+                moduleProducer.removeDeltaFormat((AssetAlterationFileFormat) entry.getKey());
             }
         }
         extensionDeltaFormats.clear();
@@ -292,8 +294,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @SuppressWarnings("unchecked")
     private void scanForExtensionProducers() {
-        for (AssetProducer producer : findAndCreateClasses(AssetProducer.class, RegisterAssetProducer.class)) {
-            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(producer.getClass(), AssetProducer.class, 0);
+        for (AssetDataProducer producer : findAndCreateClasses(AssetDataProducer.class, RegisterAssetDataProducer.class)) {
+            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(producer.getClass(), AssetDataProducer.class, 0);
             if (!assetDataType.isPresent()) {
                 logger.error("Could not register AssetProducer '{}' - asset data type must be bound in inheritance tree", producer.getClass());
                 continue;
@@ -320,8 +322,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @SuppressWarnings("unchecked")
     private void scanForExtensionFormats() {
-        for (AssetFormat format : findAndCreateClasses(AssetFormat.class, RegisterAssetFormat.class)) {
-            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetFormat.class, 0);
+        for (AssetFileFormat format : findAndCreateClasses(AssetFileFormat.class, RegisterAssetFileFormat.class)) {
+            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetFileFormat.class, 0);
             if (!assetDataType.isPresent()) {
                 logger.error("Could not register AssetFormat '{}' - asset data type must be bound in inheritance tree", format.getClass());
                 continue;
@@ -337,7 +339,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
                 logger.error("No asset type available for asset format {}", format.getClass());
             } else {
                 for (AssetType assetType : validAssetTypes) {
-                    ModuleAssetProducer moduleProducer = moduleProducers.get(assetType.getAssetClass());
+                    ModuleAssetDataProducer moduleProducer = moduleProducers.get(assetType.getAssetClass());
                     if (moduleProducer != null) {
                         moduleProducer.addAssetFormat(format);
                         if (!extensionAssetTypes.contains(assetType)) {
@@ -351,8 +353,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @SuppressWarnings("unchecked")
     private void scanForExtensionSupplementalFormats() {
-        for (AssetAlterationFormat format : findAndCreateClasses(AssetAlterationFormat.class, RegisterAssetSupplementalFormat.class)) {
-            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetAlterationFormat.class, 0);
+        for (AssetAlterationFileFormat format : findAndCreateClasses(AssetAlterationFileFormat.class, RegisterAssetSupplementalFileFormat.class)) {
+            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetAlterationFileFormat.class, 0);
             if (!assetDataType.isPresent()) {
                 logger.error("Could not register Asset Supplemental Format '{}' - asset data type must be bound in inheritance tree", format.getClass());
                 continue;
@@ -368,7 +370,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
                 logger.error("No asset type available for asset supplemental format {}", format.getClass());
             } else {
                 for (AssetType assetType : validAssetTypes) {
-                    ModuleAssetProducer moduleProducer = moduleProducers.get(assetType.getAssetClass());
+                    ModuleAssetDataProducer moduleProducer = moduleProducers.get(assetType.getAssetClass());
                     if (moduleProducer != null) {
                         moduleProducer.addSupplementFormat(format);
                         if (!extensionAssetTypes.contains(assetType)) {
@@ -382,8 +384,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @SuppressWarnings("unchecked")
     private void scanForExtensionDeltaFormats() {
-        for (AssetAlterationFormat format : findAndCreateClasses(AssetAlterationFormat.class, RegisterAssetDeltaFormat.class)) {
-            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetAlterationFormat.class, 0);
+        for (AssetAlterationFileFormat format : findAndCreateClasses(AssetAlterationFileFormat.class, RegisterAssetDeltaFileFormat.class)) {
+            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetAlterationFileFormat.class, 0);
             if (!assetDataType.isPresent()) {
                 logger.error("Could not register Asset Delta Format '{}' - asset data type must be bound in inheritance tree", format.getClass());
                 continue;
@@ -399,7 +401,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
                 logger.error("No asset type available for asset delta format {}", format.getClass());
             } else {
                 for (AssetType assetType : validAssetTypes) {
-                    ModuleAssetProducer moduleProducer = moduleProducers.get(assetType.getAssetClass());
+                    ModuleAssetDataProducer moduleProducer = moduleProducers.get(assetType.getAssetClass());
                     if (moduleProducer != null) {
                         moduleProducer.addDeltaFormat(format);
                         if (!extensionAssetTypes.contains(assetType)) {

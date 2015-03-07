@@ -21,9 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetInput;
+import org.terasology.assets.format.AssetAlterationFileFormat;
+import org.terasology.assets.format.AssetFileFormat;
+import org.terasology.assets.format.FileFormat;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.ResourceUrn;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,9 +43,9 @@ class UnloadedAsset<T extends AssetData> {
 
     private final ResourceUrn urn;
     private final ModuleEnvironment environment;
-    private final List<Source<AssetFormat<T>>> sources = Lists.newArrayList();
-    private final List<Source<AssetAlterationFormat<T>>> supplementSources = Lists.newArrayList();
-    private final List<Source<AssetAlterationFormat<T>>> deltaSources = Lists.newArrayList();
+    private final List<Source<AssetFileFormat<T>>> sources = Lists.newArrayList();
+    private final List<Source<AssetAlterationFileFormat<T>>> supplementSources = Lists.newArrayList();
+    private final List<Source<AssetAlterationFileFormat<T>>> deltaSources = Lists.newArrayList();
 
     public UnloadedAsset(ResourceUrn urn, ModuleEnvironment environment) {
         this.urn = urn;
@@ -57,7 +60,7 @@ class UnloadedAsset<T extends AssetData> {
         return !sources.isEmpty();
     }
 
-    public boolean addSource(Name providingModule, AssetFormat<T> format, Path input) {
+    public boolean addSource(Name providingModule, AssetFileFormat<T> format, Path input) {
         if (!providingModule.equals(urn.getModuleName()) && !environment.getDependencyNamesOf(providingModule).contains(urn.getModuleName())) {
             logger.warn("Module '{}' provides override for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -67,11 +70,11 @@ class UnloadedAsset<T extends AssetData> {
         }
     }
 
-    public boolean removeSource(Name providingModule, AssetFormat<T> format, Path input) {
+    public boolean removeSource(Name providingModule, AssetFileFormat<T> format, Path input) {
         return sources.remove(new Source<>(providingModule, format, new AssetInput(input)));
     }
 
-    public boolean addDeltaSource(Name providingModule, AssetAlterationFormat<T> format, Path input) {
+    public boolean addDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
         if (!providingModule.equals(urn.getModuleName()) && !environment.getDependencyNamesOf(providingModule).contains(urn.getModuleName())) {
             logger.warn("Module '{}' provides delta for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -81,11 +84,11 @@ class UnloadedAsset<T extends AssetData> {
         }
     }
 
-    public boolean removeDeltaSource(Name providingModule, AssetAlterationFormat<T> format, Path input) {
+    public boolean removeDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
         return deltaSources.remove(new Source<>(providingModule, format, new AssetInput(input)));
     }
 
-    public boolean addSupplementSource(Name providingModule, AssetAlterationFormat<T> format, Path input) {
+    public boolean addSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
         if (!providingModule.equals(urn.getModuleName()) && !environment.getDependencyNamesOf(providingModule).contains(urn.getModuleName())) {
             logger.warn("Module '{}' provides supplement for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -95,7 +98,7 @@ class UnloadedAsset<T extends AssetData> {
         }
     }
 
-    public boolean removeSupplementSource(Name providingModule, AssetAlterationFormat<T> format, Path input) {
+    public boolean removeSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
         return supplementSources.remove(new Source<>(providingModule, format, new AssetInput(input)));
     }
 
@@ -105,13 +108,13 @@ class UnloadedAsset<T extends AssetData> {
         T result = assetDataLoader.load();
         if (result != null) {
             Name baseModule = assetDataLoader.getProvidingModule();
-            for (Source<AssetAlterationFormat<T>> source : supplementSources) {
+            for (Source<AssetAlterationFileFormat<T>> source : supplementSources) {
                 if (source.providingModule.equals(baseModule)) {
                     source.format.apply(source.input, result);
                 }
             }
-            Collections.sort(deltaSources, new SourceComparator<AssetAlterationFormat<T>>(environment.getModuleIdsOrderedByDependencies()));
-            for (Source<AssetAlterationFormat<T>> source : deltaSources) {
+            Collections.sort(deltaSources, new SourceComparator<AssetAlterationFileFormat<T>>(environment.getModuleIdsOrderedByDependencies()));
+            for (Source<AssetAlterationFileFormat<T>> source : deltaSources) {
                 if (source.providingModule.equals(baseModule) || !environment.getDependencyNamesOf(baseModule).contains(source.providingModule)) {
                     source.format.apply(source.input, result);
                 }
@@ -125,7 +128,7 @@ class UnloadedAsset<T extends AssetData> {
         return urn.toString();
     }
 
-    private static class Source<U extends Format> {
+    private static class Source<U extends FileFormat> {
         private Name providingModule;
         private U format;
         private AssetInput input;
@@ -162,13 +165,13 @@ class UnloadedAsset<T extends AssetData> {
 
     private class AssetSourceResolver {
         private Name providingModule;
-        private AssetFormat<T> format;
+        private AssetFileFormat<T> format;
         private List<AssetInput> inputs = Lists.newArrayList();
 
         public AssetSourceResolver() {
             final List<Name> moduleOrdering = environment.getModuleIdsOrderedByDependencies();
-            Collections.sort(sources, new SourceComparator<AssetFormat<T>>(moduleOrdering));
-            for (Source<AssetFormat<T>> source : sources) {
+            Collections.sort(sources, new SourceComparator<AssetFileFormat<T>>(moduleOrdering));
+            for (Source<AssetFileFormat<T>> source : sources) {
                 if (providingModule == null) {
                     providingModule = source.providingModule;
                     format = source.format;
@@ -201,7 +204,7 @@ class UnloadedAsset<T extends AssetData> {
         }
     }
 
-    private static class SourceComparator<T extends Format> implements Comparator<Source<T>> {
+    private static class SourceComparator<T extends FileFormat> implements Comparator<Source<T>> {
 
         private List<Name> moduleOrdering;
 

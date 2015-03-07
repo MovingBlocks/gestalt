@@ -18,7 +18,7 @@ package org.terasology.assets.test.stubs.inheritance;
 
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius

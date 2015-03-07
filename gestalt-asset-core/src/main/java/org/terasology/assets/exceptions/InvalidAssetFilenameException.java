@@ -17,6 +17,7 @@
 package org.terasology.assets.exceptions;
 
 /**
+ * Thrown to indicate the name of an asset file doesn't meet the necessary structure to derive the corresponding asset name.
  * @author Immortius
  */
 public class InvalidAssetFilenameException extends Exception {

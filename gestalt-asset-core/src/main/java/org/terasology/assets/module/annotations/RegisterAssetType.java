@@ -22,13 +22,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Marks an {@link org.terasology.assets.AssetFactory AssetFactory} to be automatically registered as an asset type by
+ * {@link org.terasology.assets.module.ModuleAwareAssetTypeManager ModuleAwareAssetTypeManager} on environment change.
+ *
+ * <p>Note that asset types loaded in this way will be unloaded when switching environments, and all assets disposed. If an asset type should persist across environment
+ * changes and assets reloaded instead they should be manually registered as a core asset type. This will be typically only be the case for assets types from the
+ * classpath module(s)</p>
  * @author Immortius
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface RegisterAssetType {
     /**
-     * @return The folder name where assets of this type will be discovered. Can be omitted for asset types that are not loaded from files.
+     * @return The subdirectory where assets of this type will be discovered. Can be omitted for asset types that are not loaded from files.
      */
     String value() default "";
 }
