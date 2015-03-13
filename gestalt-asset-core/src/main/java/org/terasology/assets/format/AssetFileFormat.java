@@ -17,7 +17,6 @@
 package org.terasology.assets.format;
 
 import org.terasology.assets.AssetData;
-import org.terasology.assets.AssetInput;
 import org.terasology.assets.ResourceUrn;
 
 import java.io.IOException;
@@ -37,5 +36,5 @@ public interface AssetFileFormat<T extends AssetData> extends FileFormat {
      * @return The loaded asset
      * @throws IOException If there are any errors loading the asset
      */
-    T load(ResourceUrn urn, List<AssetInput> inputs) throws IOException;
+    T load(ResourceUrn urn, List<AssetDataFile> inputs) throws IOException;
 }

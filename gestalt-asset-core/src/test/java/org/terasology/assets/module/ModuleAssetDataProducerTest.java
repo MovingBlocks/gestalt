@@ -18,19 +18,18 @@ package org.terasology.assets.module;
 
 import com.google.common.base.Optional;
 import org.junit.Test;
+import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextDeltaFileFormat;
 import org.terasology.assets.test.stubs.text.TextFileFormat;
 import org.terasology.assets.test.stubs.text.TextMetadataFileFormat;
 import org.terasology.naming.Name;
-import org.terasology.assets.ResourceUrn;
 
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -47,52 +46,30 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
     }
 
     @Test
-    public void resolveNoMatch() throws Exception {
+    public void getModulesProvidingWithNoMatch() throws Exception {
         moduleProducer.setEnvironment(createEnvironment());
 
-        Set<ResourceUrn> results = moduleProducer.resolve("madeUpThing", Name.EMPTY);
+        Set<Name> results = moduleProducer.getModulesProviding(new Name("madeUpThing"));
         assertTrue(results.isEmpty());
     }
 
     @Test
-    public void resolveWithSingleMatch() throws Exception {
+    public void getModulesProvidingWithSingleMatch() throws Exception {
         moduleProducer.setEnvironment(createEnvironment());
 
-        Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString(), Name.EMPTY);
+        Set<Name> results = moduleProducer.getModulesProviding(URN.getResourceName());
         assertEquals(1, results.size());
-        assertTrue(results.contains(URN));
+        assertTrue(results.contains(URN.getModuleName()));
     }
 
     @Test
-    public void resolveWithMultipleMatchesFails() throws Exception {
+    public void resolveWithMultipleMatches() throws Exception {
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
 
-        Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString(), Name.EMPTY);
+        Set<Name> results = moduleProducer.getModulesProviding(URN.getResourceName());
         assertEquals(2, results.size());
-        assertTrue(results.contains(URN));
-        assertTrue(results.contains(new ResourceUrn("moduleA", "example")));
-    }
-
-    @Test
-    public void resolveInContext() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
-
-        Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString(), new Name("moduleA"));
-        assertFalse(results.isEmpty());
-        assertEquals(1, results.size());
-        assertTrue(results.contains(new ResourceUrn("moduleA", "example")));
-    }
-
-    @Test
-    public void resolveInContextDependency() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("moduleA")),
-                moduleRegistry.getLatestModuleVersion(new Name("moduleB"))));
-
-        Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString(), new Name("moduleA"));
-        assertFalse(results.isEmpty());
-        assertEquals(1, results.size());
-        assertTrue(results.contains(new ResourceUrn("moduleA", "example")));
+        assertTrue(results.contains(URN.getModuleName()));
+        assertTrue(results.contains(new Name("moduleA")));
     }
 
     @Test
@@ -189,9 +166,9 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
     public void handleRedirectResolution() throws Exception {
         moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
 
-        Set<ResourceUrn> results = moduleProducer.resolve("example", Name.EMPTY);
+        Set<Name> results = moduleProducer.getModulesProviding(new Name("example"));
         assertEquals(1, results.size());
-        assertTrue(results.contains(new ResourceUrn("redirectA:example")));
+        assertTrue(results.contains(new Name("redirectA")));
     }
 
     @Test
@@ -213,15 +190,6 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
         assertTrue(data.isPresent());
         assertEquals("sweet", data.get().getMetadata());
-    }
-
-    @Test
-    public void resolvePartialInstanceUrns() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment());
-
-        Set<ResourceUrn> results = moduleProducer.resolve(URN.getResourceName().toString() + ResourceUrn.INSTANCE_INDICATOR, Name.EMPTY);
-        assertEquals(1, results.size());
-        assertTrue(results.contains(URN.getInstanceUrn()));
     }
 
     @Test

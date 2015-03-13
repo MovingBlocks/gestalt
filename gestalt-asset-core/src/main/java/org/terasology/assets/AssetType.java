@@ -36,11 +36,11 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// TODO
 public final class AssetType<T extends Asset<U>, U extends AssetData> extends AssetOwner<U> implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
@@ -50,6 +50,16 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
     private List<AssetDataProducer<U>> producers = Lists.newArrayList();
     private AssetFactory<T, U> factory;
     private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
+    private ResolutionStrategy resolutionStrategy = new ResolutionStrategy() {
+        @Override
+        public Set<Name> resolve(Set<Name> modules, Name context) {
+            if (modules.contains(context)) {
+                return ImmutableSet.of(context);
+            } else {
+                return modules;
+            }
+        }
+    };
 
     @SuppressWarnings("unchecked")
     public AssetType(Class<T> assetClass) {
@@ -87,6 +97,10 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
     public void setFactory(AssetFactory<T, U> factory) {
         this.factory = factory;
         disposeAll();
+    }
+
+    public void setResolutionStrategy(ResolutionStrategy strategy) {
+        this.resolutionStrategy = strategy;
     }
 
     public void addProducer(AssetDataProducer<U> producer) {
@@ -194,36 +208,44 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         }
 
         String urnToResolve = urn;
-        boolean instance = urn.endsWith(ResourceUrn.INSTANCE_INDICATOR);
+        final boolean instance = urn.endsWith(ResourceUrn.INSTANCE_INDICATOR);
         if (instance) {
             urnToResolve = urn.substring(0, urn.length() - ResourceUrn.INSTANCE_INDICATOR.length());
         }
+        int fragmentSeparatorIndex = urnToResolve.indexOf('#');
+        final Name fragmentName;
+        final Name resourceName;
+        if (fragmentSeparatorIndex != -1) {
+            resourceName = new Name(urnToResolve.substring(0, fragmentSeparatorIndex));
+            fragmentName = new Name(urnToResolve.substring(fragmentSeparatorIndex + 1));
+        } else {
+            resourceName = new Name(urnToResolve);
+            fragmentName = Name.EMPTY;
+        }
 
-        Set<ResourceUrn> results = Sets.newLinkedHashSet();
+        Set<Name> possibleModules = Sets.newLinkedHashSet();
         for (AssetDataProducer<U> producer : producers) {
-            results.addAll(producer.resolve(urnToResolve, moduleContext));
+            possibleModules.addAll(producer.getModulesProviding(resourceName));
         }
-        if (instance) {
-            return Sets.newLinkedHashSet(Collections2.transform(results, new Function<ResourceUrn, ResourceUrn>() {
-                @Nullable
-                @Override
-                public ResourceUrn apply(ResourceUrn input) {
-                    return input.getInstanceUrn();
-                }
-            }));
+        if (!moduleContext.isEmpty()) {
+            possibleModules = resolutionStrategy.resolve(possibleModules, moduleContext);
         }
-        return results;
+        return Sets.newLinkedHashSet(Collections2.transform(possibleModules, new Function<Name, ResourceUrn>() {
+            @Nullable
+            @Override
+            public ResourceUrn apply(Name input) {
+                return new ResourceUrn(input, resourceName, fragmentName, instance);
+            }
+        }));
     }
 
     @Override
-    void removeDisposedAsset(Asset<U> asset) {
+    void onOwnedAssetDisposed(Asset<U> asset) {
         loadedAssets.remove(asset.getUrn());
     }
 
     public void refresh() {
-        Iterator<Map.Entry<ResourceUrn, T>> iterator = ImmutableMap.copyOf(loadedAssets).entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<ResourceUrn, T> entry = iterator.next();
+        for (Map.Entry<ResourceUrn, T> entry : ImmutableMap.copyOf(loadedAssets).entrySet()) {
             if (!redirect(entry.getKey()).equals(entry.getKey()) || !reloadFromProducers(entry.getKey(), entry.getValue())) {
                 entry.getValue().dispose();
             }

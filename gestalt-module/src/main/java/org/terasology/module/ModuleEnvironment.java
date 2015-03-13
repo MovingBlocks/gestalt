@@ -56,9 +56,10 @@ import java.util.Set;
 /**
  * An environment composed of a set of modules. A chain of class loaders is created for each module that isn't on the classpath, such that dependencies appear before
  * dependants. Classes of interest can then be discovered by the types they inherit or annotations they have.
- * <p/>
+ * <p>
  * When the environment is no longer in use it should be closed - this closes all the class loaders. Memory used by the ClassLoaders will then be available for garbage
  * collection once the last instance of a class loaded from it is freed.
+ * </p>
  *
  * @author Immortius
  */

@@ -17,11 +17,9 @@
 package org.terasology.assets.module;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -33,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetDataProducer;
+import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetFileFormat;
@@ -41,11 +40,9 @@ import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.naming.Name;
-import org.terasology.assets.ResourceUrn;
 import org.terasology.util.io.FileExtensionPathMatcher;
 import org.terasology.util.io.FileScanning;
 
-import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -61,7 +58,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,7 +81,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private List<AssetAlterationFileFormat<U>> deltaFormats = Lists.newArrayList();
     private List<AssetAlterationFileFormat<U>> supplementFormats = Lists.newArrayList();
 
-    private Map<ResourceUrn, UnloadedAsset<U>> unloadedAssetLookup = Maps.newHashMap();
+    private Map<ResourceUrn, UnloadedAssetData<U>> unloadedAssetLookup = Maps.newHashMap();
     private Map<ResourceUrn, ResourceUrn> redirectMap = Maps.newHashMap();
     private SetMultimap<Name, Name> resolutionMap = HashMultimap.create();
 
@@ -142,39 +138,8 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     }
 
     @Override
-    public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
-        Preconditions.checkState(moduleEnvironment != null, "Module environment not set");
-
-        String urnToResolve = urn;
-        final boolean isInstanceUrn = urn.toLowerCase(Locale.ENGLISH).endsWith(ResourceUrn.INSTANCE_INDICATOR);
-        if (isInstanceUrn) {
-            urnToResolve = urn.substring(0, urn.length() - ResourceUrn.INSTANCE_INDICATOR.length());
-        }
-
-        final Name resourceName = new Name(urnToResolve);
-        Set<Name> supplyingModules = resolutionMap.get(resourceName);
-        if (moduleContext != null && !moduleContext.isEmpty()) {
-            if (supplyingModules.contains(moduleContext)) {
-                return ImmutableSet.of(new ResourceUrn(moduleContext, resourceName));
-            }
-            Set<ResourceUrn> resources = Sets.newLinkedHashSet();
-            for (Name dependency : moduleEnvironment.getDependencyNamesOf(moduleContext)) {
-                if (supplyingModules.contains(dependency)) {
-                    resources.add(new ResourceUrn(dependency, resourceName));
-                }
-            }
-            if (!resources.isEmpty()) {
-                return resources;
-            }
-        }
-
-        return Sets.newLinkedHashSet(Collections2.transform(supplyingModules, new Function<Name, ResourceUrn>() {
-            @Nullable
-            @Override
-            public ResourceUrn apply(Name moduleName) {
-                return new ResourceUrn(moduleName, resourceName, isInstanceUrn);
-            }
-        }));
+    public Set<Name> getModulesProviding(Name resourceName) {
+        return Collections.unmodifiableSet(resolutionMap.get(resourceName));
     }
 
     @Override
@@ -189,9 +154,9 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     @Override
     public Optional<U> getAssetData(ResourceUrn urn) throws IOException {
         if (urn.getFragmentName().isEmpty()) {
-            UnloadedAsset<U> source = unloadedAssetLookup.get(urn);
+            UnloadedAssetData<U> source = unloadedAssetLookup.get(urn);
             if (source != null && source.isValid()) {
-                return Optional.fromNullable(source.load());
+                return source.load();
             }
         }
         return Optional.absent();
@@ -343,19 +308,19 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     }
 
     private <V extends FileFormat> Optional<ResourceUrn> registerSource(Name module, Path target, Name providingModule,
-                                                                    Collection<V> formats, RegisterSourceHandler<U, V> sourceHandler) {
+                                                                        Collection<V> formats, RegisterSourceHandler<U, V> sourceHandler) {
         for (V format : formats) {
             if (format.getFileMatcher().matches(target)) {
                 try {
                     Name assetName = format.getAssetName(target.getFileName().toString());
                     ResourceUrn urn = new ResourceUrn(module, assetName);
-                    UnloadedAsset<U> existing = unloadedAssetLookup.get(urn);
+                    UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                     if (existing != null) {
                         if (sourceHandler.registerSource(existing, providingModule, format, target)) {
                             return Optional.of(urn);
                         }
                     } else {
-                        UnloadedAsset<U> source = new UnloadedAsset<>(urn, moduleEnvironment);
+                        UnloadedAssetData<U> source = new UnloadedAssetData<>(urn, moduleEnvironment);
                         if (sourceHandler.registerSource(source, providingModule, format, target)) {
                             unloadedAssetLookup.put(urn, source);
                             resolutionMap.put(urn.getResourceName(), urn.getModuleName());
@@ -377,12 +342,12 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                 try {
                     Name assetName = format.getAssetName(target.getFileName().toString());
                     ResourceUrn urn = new ResourceUrn(module, assetName);
-                    UnloadedAsset<U> unloadedAsset = unloadedAssetLookup.get(urn);
-                    if (unloadedAsset == null) {
+                    UnloadedAssetData<U> unloadedAssetData = unloadedAssetLookup.get(urn);
+                    if (unloadedAssetData == null) {
                         logger.warn("Discovered delta for unknown asset '{}'", urn);
                         return Optional.absent();
                     }
-                    if (unloadedAsset.addDeltaSource(providingModule, format, target)) {
+                    if (unloadedAssetData.addDeltaSource(providingModule, format, target)) {
                         return Optional.of(urn);
                     }
                 } catch (InvalidAssetFilenameException e) {
@@ -671,7 +636,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                     try {
                         Name assetName = format.getAssetName(target.getFileName().toString());
                         ResourceUrn urn = new ResourceUrn(module, assetName);
-                        UnloadedAsset<U> existing = unloadedAssetLookup.get(urn);
+                        UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                         if (existing != null) {
                             existing.removeDeltaSource(providingModule, format, target);
                             if (existing.isValid()) {
@@ -746,7 +711,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                     try {
                         Name assetName = format.getAssetName(target.getFileName().toString());
                         ResourceUrn urn = new ResourceUrn(module, assetName);
-                        UnloadedAsset<U> existing = unloadedAssetLookup.get(urn);
+                        UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                         if (existing != null) {
                             existing.removeSource(providingModule, format, target);
                             if (existing.isValid()) {
@@ -764,7 +729,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                     try {
                         Name assetName = format.getAssetName(target.getFileName().toString());
                         ResourceUrn urn = new ResourceUrn(module, assetName);
-                        UnloadedAsset<U> existing = unloadedAssetLookup.get(urn);
+                        UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                         if (existing != null) {
                             existing.removeSupplementSource(providingModule, format, target);
                             if (existing.isValid()) {
@@ -781,13 +746,13 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     }
 
     private interface RegisterSourceHandler<T extends AssetData, U extends FileFormat> {
-        boolean registerSource(UnloadedAsset<T> source, Name providingModule, U format, Path input);
+        boolean registerSource(UnloadedAssetData<T> source, Name providingModule, U format, Path input);
     }
 
     public class RegisterAssetSourceHandler implements RegisterSourceHandler<U, AssetFileFormat<U>> {
 
         @Override
-        public boolean registerSource(UnloadedAsset<U> source, Name providingModule, AssetFileFormat<U> format, Path input) {
+        public boolean registerSource(UnloadedAssetData<U> source, Name providingModule, AssetFileFormat<U> format, Path input) {
             return source.addSource(providingModule, format, input);
         }
     }
@@ -795,7 +760,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     public class RegisterAssetSupplementSourceHandler implements RegisterSourceHandler<U, AssetAlterationFileFormat<U>> {
 
         @Override
-        public boolean registerSource(UnloadedAsset<U> source, Name providingModule, AssetAlterationFileFormat<U> format, Path input) {
+        public boolean registerSource(UnloadedAssetData<U> source, Name providingModule, AssetAlterationFileFormat<U> format, Path input) {
             return source.addSupplementSource(providingModule, format, input);
         }
     }

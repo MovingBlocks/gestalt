@@ -38,6 +38,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -154,20 +155,25 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
     public void resolvePartialReturnsPossibilitiesFromProducers() {
         AssetDataProducer producer = mock(AssetDataProducer.class);
         assetType.addProducer(producer);
-        when(producer.resolve(URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(URN));
+        when(producer.getModulesProviding(URN.getResourceName())).thenReturn(ImmutableSet.of(URN.getModuleName()));
         Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString());
         assertEquals(1, results.size());
         assertTrue(results.contains(URN));
     }
 
     @Test
-    public void resolvePartialWithContextPassesContextToProducers() {
+    public void resolvePartialWithContextCallsResolutionStrategy() {
         AssetDataProducer producer = mock(AssetDataProducer.class);
         assetType.addProducer(producer);
-        when(producer.resolve(URN.getResourceName().toString(), URN.getModuleName())).thenReturn(ImmutableSet.of(URN));
+        ResolutionStrategy strategy = mock(ResolutionStrategy.class);
+        when(strategy.resolve(ImmutableSet.of(URN.getModuleName()), URN.getModuleName())).thenReturn(ImmutableSet.of(URN.getModuleName()));
+        assetType.setResolutionStrategy(strategy);
+
+        when(producer.getModulesProviding(URN.getResourceName())).thenReturn(ImmutableSet.of(URN.getModuleName()));
         Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString(), URN.getModuleName());
         assertEquals(1, results.size());
         assertTrue(results.contains(URN));
+        verify(strategy).resolve(ImmutableSet.of(URN.getModuleName()), URN.getModuleName());
     }
 
     @Test
@@ -365,10 +371,20 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
     public void resolvePartialInstanceUrn() throws Exception {
         AssetDataProducer producer = mock(AssetDataProducer.class);
         assetType.addProducer(producer);
-        when(producer.resolve(URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(URN));
+        when(producer.getModulesProviding(URN.getResourceName())).thenReturn(ImmutableSet.of(URN.getModuleName()));
         Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString() + ResourceUrn.INSTANCE_INDICATOR);
         assertEquals(1, results.size());
         assertTrue(results.contains(URN.getInstanceUrn()));
+    }
+
+    @Test
+    public void resolvePartialFragmentUrn() throws Exception {
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetType.addProducer(producer);
+        when(producer.getModulesProviding(URN.getResourceName())).thenReturn(ImmutableSet.of(URN.getModuleName()));
+        Set<ResourceUrn> results = assetType.resolve(URN.getResourceName().toString() + ResourceUrn.FRAGMENT_SEPARATOR + "something");
+        assertEquals(1, results.size());
+        assertTrue(results.contains(new ResourceUrn(URN.getModuleName(), URN.getResourceName(), new Name("something"))));
     }
 
     @Test

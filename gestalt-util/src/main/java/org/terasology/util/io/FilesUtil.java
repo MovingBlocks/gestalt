@@ -23,8 +23,9 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+
 /**
- * @author Immortius <immortius@gmail.com>
+ * General file utility
  */
 public final class FilesUtil {
 
@@ -43,12 +44,13 @@ public final class FilesUtil {
 
     /**
      * Recusively deletes a path and all sub-paths and contained files.
-     * <p/>
+     * <p>
      * Note: There are certain circumstances in which this can be unsafe due to a lack of atomicity.
      * Keep an eye out for recursive delete being added to the core Java API in the future.
+     * </p>
      *
      * @param path The file or folder to delete (recursively)
-     * @throws java.io.IOException
+     * @throws java.io.IOException If there is an issue walking the file tree
      */
     public static void recursiveDelete(Path path) throws IOException {
         if (Files.isDirectory(path)) {

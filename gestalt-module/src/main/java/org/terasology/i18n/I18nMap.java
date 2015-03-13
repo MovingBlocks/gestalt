@@ -24,11 +24,13 @@ import java.util.Map;
 
 /**
  * I18nMap is a map of Strings by Locale, to support lookup fields that can have different values for different languages (internationalized fields).
- * <p/>
+ * <p>
  * This is not intended to be used as a replacement of Java's existing internationalisation support for strings, but instead used for
  * internationalised strings read from external sources.
- * <p/>
+ * </p>
+ * <p>
  * If a String is not available for a particular locale, then it will fallback though the following steps to find one:
+ * </p>
  * <ol>
  * <li>Drop Locale variant</li>
  * <li>Drop Locale country</li>

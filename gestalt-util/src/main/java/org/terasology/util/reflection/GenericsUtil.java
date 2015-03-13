@@ -33,7 +33,7 @@ public final class GenericsUtil {
     }
 
     /**
-     * Used to obtain the bound value for a generic parameter of a type. Example, for a field of type List&ltString>, the 0th generic parameter is String.class.
+     * Used to obtain the bound value for a generic parameter of a type. Example, for a field of type List&lt;String&gt;, the 0th generic parameter is String.class.
      * A List with no parameter will return Optional.absent()
      *
      * @param target The type to obtain the generic parameter of.

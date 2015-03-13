@@ -40,8 +40,9 @@ import java.util.List;
  * <li>Restricting the classes visible to modules to those belonging those the module module has access to - as determined by the PermissionProvider.
  * Accessing any other class outside of the modules results in a ClassNotFoundException</li>
  * </ul>
- * <p/>
+ * <p>
  * Additionally, the ModuleClassLoader provides hooks for any injection that needs to be done to module classes as they are loaded, via javassist.
+ * </p>
  *
  * @author Immortius
  */

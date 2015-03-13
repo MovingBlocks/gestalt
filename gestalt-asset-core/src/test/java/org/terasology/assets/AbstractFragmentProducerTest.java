@@ -58,18 +58,6 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
     }
 
     @Test
-    public void resolveFragmentUrn() {
-        AssetDataProducer<BookData> bookProducer = mock(AssetDataProducer.class);
-        bookType.addProducer(bookProducer);
-
-        when(bookProducer.resolve(FRAGMENT_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(Sets.newHashSet(FRAGMENT_URN.getRootUrn()));
-
-        Set<ResourceUrn> result = bookFragmentProducer.resolve("test#0", Name.EMPTY);
-        assertEquals(1, result.size());
-        assertTrue(result.contains(FRAGMENT_URN));
-    }
-
-    @Test
     public void getAssetData() throws Exception {
         bookType.setFactory(new BookFactory());
         bookType.loadAsset(FRAGMENT_URN.getRootUrn(), new BookData(LINE_0, LINE_1));

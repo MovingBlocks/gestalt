@@ -17,7 +17,6 @@
 package org.terasology.assets.format;
 
 import org.terasology.assets.AssetData;
-import org.terasology.assets.AssetInput;
 
 import java.io.IOException;
 
@@ -35,5 +34,5 @@ public interface AssetAlterationFileFormat<T extends AssetData> extends FileForm
      * @param assetData An assetData to update
      * @throws java.io.IOException If there are any errors loading the alteration
      */
-    void apply(AssetInput input, T assetData) throws IOException;
+    void apply(AssetDataFile input, T assetData) throws IOException;
 }

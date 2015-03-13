@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.terasology.assets;
+package org.terasology.assets.format;
 
+import javax.annotation.concurrent.Immutable;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,28 +27,53 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Objects;
 
 /**
+ * An asset data file. Provides details on the file's name, extension and allows the file to be opened as a stream.
+ * <p>
+ * FileFormats are not given direct access to the Path or File, as asset types provided by modules may not have IO permissions.
+ * </p>
+ * <p>
+ * Immutable.
+ * </p>
+ *
  * @author Immortius
  */
-public class AssetInput {
+@Immutable
+public class AssetDataFile {
 
     private final Path path;
 
-    public AssetInput(Path path) {
+    /**
+     * @param path The path of the AssetDataFile
+     */
+    public AssetDataFile(Path path) {
         this.path = path;
     }
 
+    /**
+     * @return The name of the file (including extension)
+     */
     public String getFilename() {
         return path.getFileName().toString();
     }
 
+    /**
+     * @return The file extension.
+     */
     public String getFileExtension() {
         String filename = getFilename();
         if (filename.contains(".")) {
             return filename.substring(filename.lastIndexOf(".") + 1);
         }
         return "";
+
     }
 
+    /**
+     * Opens a stream to read the file. It is up to the stream's user to close it after use.
+     *
+     * @return A new buffered input stream.
+     * @throws IOException If there was an error opening the file
+     */
     public BufferedInputStream openStream() throws IOException {
         try {
             return AccessController.doPrivileged(new PrivilegedExceptionAction<BufferedInputStream>() {
@@ -71,8 +97,8 @@ public class AssetInput {
         if (obj == this) {
             return true;
         }
-        if (obj instanceof AssetInput) {
-            AssetInput other = (AssetInput) obj;
+        if (obj instanceof AssetDataFile) {
+            AssetDataFile other = (AssetDataFile) obj;
             return Objects.equals(other.path, path);
         }
         return false;

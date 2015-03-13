@@ -19,8 +19,9 @@ import java.util.Objects;
 
 /**
  * A combined name and version, for uniquely identifying something by Name and Version.
- * <p/>
+ * <p>
  * Immutable.
+ * </p>
  *
  * @author Immortius
  */

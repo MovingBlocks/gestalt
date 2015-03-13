@@ -42,8 +42,9 @@ import java.util.Set;
  * Dependency Resolver determines a working set of modules for a given set of desired modules. Where multiple versions are compatible, they are resolved in favour of the
  * latest available. In particular, the latest version of the desired modules is prioritised, and in the order requested (so if using the latest version of the first
  * desired module prevents the use of latest version of the second desired module, then that is what will happen).
- * <p/>
+ * <p>
  * The algorithm used is based on Arc Consistency Algorithm #3.
+ * </p>
  *
  * @author Immortius
  */
@@ -182,9 +183,10 @@ public class DependencyResolver {
     /**
      * Applies a constraint on dependencies based on the available versions of the dependant. A dependency version is removed if there is
      * no dependant that it is compatible with.
-     * <p/>
+     * <p>
      * Example: if core-1.0.0 depends on child [1.0.0-2.0.0), then child-3.0.0 will be removed unless there is either another version of core that it is compatible with,
      * or a version of core with no dependency on it at all.
+     * </p>
      *
      * @param constraint The constraint to process
      * @return Whether a change was applied the "to" domain of the constraint.
@@ -242,10 +244,11 @@ public class DependencyResolver {
 
     /**
      * Taking the already constrained moduleVersionPool, works through the remaining possibilities restricting down to the latest possible versions.
-     * <p/>
+     * <p>
      * Root modules are restricted first and in order, to keep their versions as recent as possible.
      * Dependencies are then followed, restricted them to latest as needed.
      * As dependencies are followed, any modules that aren't required by the finally selected versions will not be present in the final result.
+     * </p>
      *
      * @return The final set of compatible modules.
      */

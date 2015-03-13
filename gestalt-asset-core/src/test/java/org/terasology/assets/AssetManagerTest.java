@@ -34,7 +34,6 @@ import org.terasology.assets.test.stubs.inheritance.ParentAsset;
 import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextFactory;
-import org.terasology.naming.Name;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -106,11 +105,11 @@ public class AssetManagerTest {
     @Test
     public void resolveWithoutContext() {
         AssetDataProducer<ChildAssetData> childProducer = mock(AssetDataProducer.class);
-        when(childProducer.resolve(ENGINE_TEST_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(ENGINE_TEST_URN));
+        when(childProducer.getModulesProviding(ENGINE_TEST_URN.getResourceName())).thenReturn(ImmutableSet.of(ENGINE_TEST_URN.getModuleName()));
         childAssetType.addProducer(childProducer);
 
         AssetDataProducer<AlternateAssetData> alternateProducer = mock(AssetDataProducer.class);
-        when(alternateProducer.resolve(ENGINE_TEST2_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(ENGINE_TEST2_URN));
+        when(alternateProducer.getModulesProviding(ENGINE_TEST2_URN.getResourceName())).thenReturn(ImmutableSet.of(ENGINE_TEST2_URN.getModuleName()));
         alternateAssetType.addProducer(alternateProducer);
 
         assertEquals(ImmutableSet.of(ENGINE_TEST_URN), assetManager.resolve(ENGINE_TEST_URN.getResourceName().toString(), ParentAsset.class));
@@ -120,11 +119,11 @@ public class AssetManagerTest {
     @Test
     public void resolveWithExplicitContext() {
         AssetDataProducer<ChildAssetData> childProducer = mock(AssetDataProducer.class);
-        when(childProducer.resolve(ENGINE_TEST_URN.getResourceName().toString(), ENGINE_TEST_URN.getModuleName())).thenReturn(ImmutableSet.of(ENGINE_TEST_URN));
+        when(childProducer.getModulesProviding(ENGINE_TEST_URN.getResourceName())).thenReturn(ImmutableSet.of(ENGINE_TEST_URN.getModuleName()));
         childAssetType.addProducer(childProducer);
 
         AssetDataProducer<AlternateAssetData> alternateProducer = mock(AssetDataProducer.class);
-        when(alternateProducer.resolve(ENGINE_TEST2_URN.getResourceName().toString(), ENGINE_TEST2_URN.getModuleName())).thenReturn(ImmutableSet.of(ENGINE_TEST2_URN));
+        when(alternateProducer.getModulesProviding(ENGINE_TEST2_URN.getResourceName())).thenReturn(ImmutableSet.of(ENGINE_TEST2_URN.getModuleName()));
         alternateAssetType.addProducer(alternateProducer);
 
         assertEquals(ImmutableSet.of(ENGINE_TEST_URN), assetManager.resolve(ENGINE_TEST_URN.getResourceName().toString(), ParentAsset.class, ENGINE_TEST_URN.getModuleName()));
@@ -134,11 +133,11 @@ public class AssetManagerTest {
     @Test
     public void resolveWithContextFromContextManager() {
         AssetDataProducer<ChildAssetData> childProducer = mock(AssetDataProducer.class);
-        when(childProducer.resolve(ENGINE_TEST_URN.getResourceName().toString(), ENGINE_TEST_URN.getModuleName())).thenReturn(ImmutableSet.of(ENGINE_TEST_URN));
+        when(childProducer.getModulesProviding(ENGINE_TEST_URN.getResourceName())).thenReturn(ImmutableSet.of(ENGINE_TEST_URN.getModuleName()));
         childAssetType.addProducer(childProducer);
 
         AssetDataProducer<AlternateAssetData> alternateProducer = mock(AssetDataProducer.class);
-        when(alternateProducer.resolve(ENGINE_TEST2_URN.getResourceName().toString(), ENGINE_TEST2_URN.getModuleName())).thenReturn(ImmutableSet.of(ENGINE_TEST2_URN));
+        when(alternateProducer.getModulesProviding(ENGINE_TEST2_URN.getResourceName())).thenReturn(ImmutableSet.of(ENGINE_TEST2_URN.getModuleName()));
         alternateAssetType.addProducer(alternateProducer);
 
         try (Context ignored = ContextManager.beginContext(ENGINE_TEST_URN.getModuleName())) {
@@ -150,11 +149,11 @@ public class AssetManagerTest {
     @Test
     public void resolveCombinesAcrossInherited() {
         AssetDataProducer<ChildAssetData> childProducer = mock(AssetDataProducer.class);
-        when(childProducer.resolve(ENGINE_TEST_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(ENGINE_TEST_URN));
+        when(childProducer.getModulesProviding(ENGINE_TEST_URN.getResourceName())).thenReturn(ImmutableSet.of(ENGINE_TEST_URN.getModuleName()));
         childAssetType.addProducer(childProducer);
 
         AssetDataProducer<AlternateAssetData> alternateProducer = mock(AssetDataProducer.class);
-        when(alternateProducer.resolve(MORE_TEST_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(MORE_TEST_URN));
+        when(alternateProducer.getModulesProviding(MORE_TEST_URN.getResourceName())).thenReturn(ImmutableSet.of(MORE_TEST_URN.getModuleName()));
         alternateAssetType.addProducer(alternateProducer);
 
         assertEquals(ImmutableSet.of(ENGINE_TEST_URN, MORE_TEST_URN), assetManager.resolve(ENGINE_TEST_URN.getResourceName().toString(), ParentAsset.class));
@@ -179,21 +178,17 @@ public class AssetManagerTest {
 
         AssetDataProducer<ChildAssetData> childProducer = mock(AssetDataProducer.class, new OptionalAnswer());
         when(childProducer.redirect(any(ResourceUrn.class))).then(Return.firstArgument());
-        when(childProducer.resolve(ENGINE_TEST_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(ENGINE_TEST_URN));
+        when(childProducer.getModulesProviding(ENGINE_TEST_URN.getResourceName())).thenReturn(ImmutableSet.of(ENGINE_TEST_URN.getModuleName()));
         childAssetType.addProducer(childProducer);
 
         AssetDataProducer<AlternateAssetData> alternateProducer = mock(AssetDataProducer.class, new OptionalAnswer());
         when(alternateProducer.redirect(any(ResourceUrn.class))).then(Return.firstArgument());
-        when(alternateProducer.resolve(MORE_TEST_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(ImmutableSet.of(MORE_TEST_URN));
+        when(alternateProducer.getModulesProviding(MORE_TEST_URN.getResourceName())).thenReturn(ImmutableSet.of(MORE_TEST_URN.getModuleName()));
         alternateAssetType.addProducer(alternateProducer);
 
-        ChildAsset child = childAssetType.loadAsset(ENGINE_TEST_URN, new ChildAssetData());
-        AlternateAsset alternate = alternateAssetType.loadAsset(MORE_TEST_URN, new AlternateAssetData());
+        childAssetType.loadAsset(ENGINE_TEST_URN, new ChildAssetData());
+        alternateAssetType.loadAsset(MORE_TEST_URN, new AlternateAssetData());
         assertFalse(assetManager.getAsset(ENGINE_TEST_URN.getResourceName().toString(), ParentAsset.class).isPresent());
     }
-
-//    public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(String urn, Class<T> type) {
-//    public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(String urn, Class<T> type, Name moduleContext) {
-//    public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(ResourceUrn urn, Class<T> type) {
 
 }

@@ -16,15 +16,22 @@
 
 package org.terasology.assets;
 
+import org.terasology.naming.Name;
+
+import java.util.Set;
+
 /**
- * Base interface for classes that can own assets and need to be informed when they are disposed.
+ * ResolutionStrategy is used when resolving possible ResourceUrns from just a resource name. First all modules providing an asset with the resource name are gathered
+ * from the AssetDataProducers, then the ResolutionStrategy filters them based on the current module context.
+ *
  * @author Immortius
  */
-abstract class AssetOwner<T extends AssetData> {
+public interface ResolutionStrategy {
 
     /**
-     * Called when an owned asset is disposed
-     * @param asset The asset that has been disposed
+     * @param modules The set of possible modules to resolve
+     * @param context The module context of the resolution.
+     * @return A Set of modules that are relevant given the context
      */
-    abstract void onOwnedAssetDisposed(Asset<T> asset);
+    Set<Name> resolve(Set<Name> modules, Name context);
 }

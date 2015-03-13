@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetFactory;
+import org.terasology.assets.ResolutionStrategy;
 import org.terasology.assets.module.annotations.RegisterAssetDeltaFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetDataProducer;
@@ -77,10 +78,12 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     private ListMultimap<AssetAlterationFileFormat<?>, AssetType<?, ?>> extensionDeltaFormats = ArrayListMultimap.create();
 
     private ModuleEnvironment environment;
+    private ModuleDependencyResolutionStrategy resolutionStrategy;
 
     public ModuleAwareAssetTypeManager(ModuleEnvironment environment) {
         Preconditions.checkNotNull(environment);
         this.environment = environment;
+        this.resolutionStrategy = new ModuleDependencyResolutionStrategy(environment);
         this.assetManager = new AssetManager(this);
     }
 
@@ -103,6 +106,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     public <T extends Asset<U>, U extends AssetData> AssetType<T, U> registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory) {
         Preconditions.checkState(!assetTypes.containsKey(type), "Asset type '" + type.getSimpleName() + "' already registered");
         AssetType<T, U> assetType = new AssetType<>(type);
+        assetType.setResolutionStrategy(resolutionStrategy);
         assetType.setFactory(factory);
         assetTypes.put(type, assetType);
         addSubtypesFor(type);
@@ -173,6 +177,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     public void setEnvironment(ModuleEnvironment environment) {
         Preconditions.checkNotNull(environment);
         this.environment = environment;
+        resolutionStrategy.setEnvironment(environment);
 
         removeExtensionTypes();
         removeExtensionProducers();

@@ -18,17 +18,20 @@ package org.terasology.naming;
 
 import com.google.common.base.Preconditions;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.Locale;
 
 /**
  * A name is a normalised string used as an identifier. Primarily this means it is case insensitive.
- * <p/>
+ * <p>
  * The original case-sensitive name is retained and available for display purposes, since it may use camel casing for readability.
- * <p/>
+ * </p><p>
  * This class is immutable.
+ * </p>
  *
  * @author Immortius
  */
+@Immutable
 public final class Name implements Comparable<Name> {
     /**
      * The Name equivalent of an empty String

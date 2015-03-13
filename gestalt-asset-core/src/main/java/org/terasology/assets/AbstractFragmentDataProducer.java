@@ -41,19 +41,9 @@ public abstract class AbstractFragmentDataProducer<T extends AssetData, U extend
         this.rootAssetType = rootAssetType;
     }
 
+    // Fragment data producer doesn't handle main resources
     @Override
-    public Set<ResourceUrn> resolve(final String urn, Name moduleContext) {
-        final int fragmentStart = urn.indexOf(ResourceUrn.FRAGMENT_SEPARATOR);
-        if (fragmentStart >= 0) {
-            String nonFragmentUrn = urn.substring(0, fragmentStart);
-            return Sets.newLinkedHashSet(Collections2.transform(assetManager.resolve(nonFragmentUrn, rootAssetType, moduleContext), new Function<ResourceUrn, ResourceUrn>() {
-                @Nullable
-                @Override
-                public ResourceUrn apply(ResourceUrn input) {
-                    return new ResourceUrn(input.toString() + urn.substring(fragmentStart));
-                }
-            }));
-        }
+    public Set<Name> getModulesProviding(Name resourceName) {
         return Collections.emptySet();
     }
 

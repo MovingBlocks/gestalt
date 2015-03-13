@@ -19,7 +19,7 @@ package org.terasology.assets.test.stubs.text;
 import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
 import org.terasology.assets.format.AbstractAssetFileFormat;
-import org.terasology.assets.AssetInput;
+import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.ResourceUrn;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class TextFileFormat extends AbstractAssetFileFormat<TextData> {
     }
 
     @Override
-    public TextData load(ResourceUrn urn, List<AssetInput> inputs) throws IOException {
+    public TextData load(ResourceUrn urn, List<AssetDataFile> inputs) throws IOException {
         TextData data = new TextData();
         if (!inputs.isEmpty()) {
             try (InputStreamReader reader = new InputStreamReader(inputs.get(0).openStream())) {

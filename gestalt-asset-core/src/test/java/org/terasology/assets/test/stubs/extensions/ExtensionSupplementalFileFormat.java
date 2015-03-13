@@ -16,7 +16,7 @@
 
 package org.terasology.assets.test.stubs.extensions;
 
-import org.terasology.assets.AssetInput;
+import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.format.AbstractAssetAlterationFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetSupplementalFileFormat;
 import org.terasology.assets.test.stubs.text.TextData;
@@ -34,7 +34,7 @@ public class ExtensionSupplementalFileFormat extends AbstractAssetAlterationFile
     }
 
     @Override
-    public void apply(AssetInput input, TextData assetData) throws IOException {
+    public void apply(AssetDataFile input, TextData assetData) throws IOException {
 
     }
 }

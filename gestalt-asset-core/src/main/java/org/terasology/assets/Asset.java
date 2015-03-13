@@ -93,14 +93,14 @@ public abstract class Asset<T extends AssetData> extends AssetOwner<T> {
             }
             doDispose();
             if (owner.isPresent()) {
-                owner.get().removeDisposedAsset(this);
+                owner.get().onOwnedAssetDisposed(this);
             }
         }
     }
 
     protected abstract void doDispose();
 
-    final void removeDisposedAsset(Asset<T> child) {
+    final void onOwnedAssetDisposed(Asset<T> child) {
         children.remove(child);
     }
 

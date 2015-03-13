@@ -18,7 +18,7 @@ package org.terasology.assets.test.stubs.text;
 
 import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
-import org.terasology.assets.AssetInput;
+import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.format.AbstractAssetAlterationFileFormat;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class TextMetadataFileFormat extends AbstractAssetAlterationFileFormat<Te
     }
 
     @Override
-    public void apply(AssetInput input, TextData assetData) throws IOException {
+    public void apply(AssetDataFile input, TextData assetData) throws IOException {
         try (InputStreamReader reader = new InputStreamReader(input.openStream())) {
             String metadata = Joiner.on("/n").join(CharStreams.readLines(reader));
             assetData.setMetadata(metadata);

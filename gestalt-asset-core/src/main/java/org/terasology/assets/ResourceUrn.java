@@ -19,23 +19,27 @@ package org.terasology.assets;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.terasology.naming.Name;
 import org.terasology.assets.exceptions.InvalidUrnException;
+import org.terasology.module.sandbox.API;
+import org.terasology.naming.Name;
 
+import javax.annotation.Nonnull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A ResourceUrn is a urn of the structure "{moduleName}:{resourceName}[#{fragmentName}]".
+ * A ResourceUrn is a urn of the structure "{moduleName}:{resourceName}[#{fragmentName}][!instance]".
  * <ul>
  * <li>moduleName is the name of the module containing or owning the resource</li>
  * <li>resourceName is the name of the resource</li>
  * <li>fragmentName is an optional identifier for a sub-part of the resource</li>
+ * <li>an instance urn indicates a resource that is am independant copy of a resource identified by the rest of the urn</li>
  * </ul>
  * ResourceUrn is immutable and comparable.
  *
  * @author Immortius
  */
+@API
 public final class ResourceUrn implements Comparable<ResourceUrn> {
 
     public static final String RESOURCE_SEPARATOR = ":";
@@ -49,88 +53,88 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
     private final boolean instance;
 
     /**
-     * Creates a ModuleUri for the given module:resource combo
+     * Creates a ModuleUri with the given module:resource combo
      *
-     * @param moduleName
-     * @param resourceName
+     * @param moduleName   The name of the module the resource belongs to
+     * @param resourceName The name of the resource itself
      */
     public ResourceUrn(String moduleName, String resourceName) {
         this(new Name(moduleName), new Name(resourceName), false);
     }
 
     /**
-     * Creates a ModuleUri for an instance of a given module:resource(!instance) combo
+     * Creates a ModuleUri for an instance with a given module:resource(!instance) combo
      *
-     * @param moduleName
-     * @param resourceName
-     * @param instance
+     * @param moduleName   The name of the module the resource belongs to
+     * @param resourceName The name of the resource itself
+     * @param instance     Whether this urn identifies an instance
      */
     public ResourceUrn(String moduleName, String resourceName, boolean instance) {
         this(new Name(moduleName), new Name(resourceName), Name.EMPTY, instance);
     }
 
     /**
-     * Creates a ModuleUri for the given module:resource combo
+     * Creates a ModuleUri with the given module:resource combo
      *
-     * @param moduleName
-     * @param resourceName
+     * @param moduleName   The name of the module the resource belongs to
+     * @param resourceName The name of the resource itself
      */
     public ResourceUrn(Name moduleName, Name resourceName) {
         this(moduleName, resourceName, Name.EMPTY, false);
     }
 
     /**
-     * Creates a ModuleUri for the given module:resource(!instance) combo
+     * Creates a ModuleUri with the given module:resource(!instance) combo
      *
-     * @param moduleName
-     * @param resourceName
-     * @param instance
+     * @param moduleName   The name of the module the resource belongs to
+     * @param resourceName The name of the resource itself
+     * @param instance     Whether this urn identifies an instance
      */
     public ResourceUrn(Name moduleName, Name resourceName, boolean instance) {
         this(moduleName, resourceName, Name.EMPTY, instance);
     }
 
     /**
-     * Creates a ModuleUri for the given module:resource#fragment combo
+     * Creates a ModuleUri with the given module:resource#fragment combo
      *
-     * @param moduleName
-     * @param resourceName
-     * @param fragmentName
+     * @param moduleName   The name of the module the resource belongs to
+     * @param resourceName The name of the resource itself
+     * @param fragmentName The name of the fragment of the resource
      */
     public ResourceUrn(String moduleName, String resourceName, String fragmentName) {
         this(new Name(moduleName), new Name(resourceName), new Name(fragmentName), false);
     }
 
     /**
-     * Creates a ModuleUri for the given module:resource#fragment(!instance) combo
+     * Creates a ModuleUri with the given module:resource#fragment(!instance) combo
      *
-     * @param moduleName
-     * @param resourceName
-     * @param fragmentName
-     * @param instance
+     * @param moduleName   The name of the module the resource belongs to
+     * @param resourceName The name of the resource itself
+     * @param fragmentName The name of the fragment of the resource
+     * @param instance     Whether this urn identifies an instance
      */
     public ResourceUrn(String moduleName, String resourceName, String fragmentName, boolean instance) {
         this(new Name(moduleName), new Name(resourceName), new Name(fragmentName), instance);
     }
 
     /**
-     * Creates a ModuleUri for the given module:resource#fragment combo
+     * Creates a ModuleUri with the given module:resource#fragment combo
      *
-     * @param moduleName
-     * @param resourceName
-     * @param fragmentName
+     * @param moduleName   The name of the module the resource belongs to
+     * @param resourceName The name of the resource itself
+     * @param fragmentName The name of the fragment of the resource
      */
     public ResourceUrn(Name moduleName, Name resourceName, Name fragmentName) {
         this(moduleName, resourceName, fragmentName, false);
     }
 
     /**
-     * Creates a ModuleUri for the given module:resource#fragment(!instance) combo
+     * Creates a ModuleUri with the given module:resource#fragment(!instance) combo
      *
-     * @param moduleName
-     * @param resourceName
-     * @param fragmentName
-     * @param instance
+     * @param moduleName   The name of the module the resource belongs to
+     * @param resourceName The name of the resource itself
+     * @param fragmentName The name of the fragment of the resource
+     * @param instance     Whether this urn identifies an instance
      */
     public ResourceUrn(Name moduleName, Name resourceName, Name fragmentName, boolean instance) {
         Preconditions.checkArgument(moduleName != null && !moduleName.isEmpty(), "moduleName must not be null or empty");
@@ -142,10 +146,10 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
     }
 
     /**
-     * Creates a ModuleUrn from a string in the format "module:object(#fragment)". If the string does not match this format, an invalid urn is returned.
+     * Creates a ModuleUrn from a string in the format "module:object(#fragment)(!instance)".
      *
-     * @param urn
-     * @throws org.terasology.assets.exceptions.InvalidUrnException
+     * @param urn The urn to parse
+     * @throws org.terasology.assets.exceptions.InvalidUrnException if the string is not a valid resource urn
      */
     public ResourceUrn(String urn) {
         Matcher match = URN_PATTERN.matcher(urn);
@@ -163,6 +167,10 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
         }
     }
 
+    /**
+     * @param urn The string to check for validity
+     * @return Whether urn is a valid ResourceUrn
+     */
     public static boolean isValid(String urn) {
         return URN_PATTERN.matcher(urn).matches();
     }
@@ -175,7 +183,7 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
     }
 
     /**
-     * @return The resource name part of the urn. This identifies the module itself.
+     * @return The resource name part of the urn. This identifies the resource itself.
      */
     public Name getResourceName() {
         return resourceName;
@@ -189,24 +197,24 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
     }
 
     /**
-     * @return The instance number part of the urn, if the urn identifies an instance.
+     * @return Whether this urn identifies an independent copy of the resource
      */
     public boolean isInstance() {
         return instance;
     }
 
     /**
-     * @return The root of the ResourceUrn, without the fragment name.
+     * @return The root of the ResourceUrn, without the fragment name or instance marker.
      */
     public ResourceUrn getRootUrn() {
-        if (fragmentName.isEmpty()) {
+        if (fragmentName.isEmpty() && !isInstance()) {
             return this;
         }
         return new ResourceUrn(moduleName, resourceName);
     }
 
     /**
-     * @return If this urn is an instance, returns the urn of the parent. Otherwise this urn.
+     * @return If this urn is an instance, returns the urn without the instance marker. Otherwise this urn.
      */
     public ResourceUrn getParentUrn() {
         if (isInstance()) {
@@ -262,7 +270,7 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
     }
 
     @Override
-    public int compareTo(ResourceUrn o) {
+    public int compareTo(@Nonnull ResourceUrn o) {
         int result = moduleName.compareTo(o.getModuleName());
         if (result == 0) {
             result = resourceName.compareTo(o.getResourceName());

@@ -56,13 +56,14 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A provider for ModuleFileSystems - the factory for ModuleFileSystem. This can be registered to allow module content to be accessed by uri.
- * <p/>
+ * <p>
  * The FileSystemProvider in addition to producing FileSystems, also provides the low level methods that drive many file operations.  ModuleFileSystemProvider does this
  * by delegating down to the underlying file systems, translating ModulePaths to real paths and back again as necessary. In situations where a file occurs in multiple
  * locations in a module the first one found is used.
- * <p/>
+ * </p><p>
  * The ModuleFileSystem does support WatchServices/WatchKeys, but only for locations on the default file system. If no such location exists then WatchKeys produced will be
  * return false from isValid on creation.
+ * </p>
  *
  * @author Immortius
  */
@@ -114,10 +115,9 @@ public class ModuleFileSystemProvider extends FileSystemProvider {
      *
      * @param module The module to create a file system for
      * @return A new filesystem for the module
-     * @throws IOException
      * @throws java.nio.file.FileSystemAlreadyExistsException If a filesystem already exists for the given module
      */
-    public ModuleFileSystem newFileSystem(Module module) throws IOException {
+    public ModuleFileSystem newFileSystem(Module module) {
         URI uri;
         try {
             uri = moduleToUri(module);
@@ -161,12 +161,8 @@ public class ModuleFileSystemProvider extends FileSystemProvider {
         if (module == null) {
             throw new IllegalArgumentException("Failed to resolve uri '" + uri + "', module not found");
         }
-        try {
-            ModuleFileSystem fileSystem = newFileSystem(module);
-            return fileSystem.getPath(uri.getPath());
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Failed to resolve uri '" + uri + "'", e);
-        }
+        ModuleFileSystem fileSystem = newFileSystem(module);
+        return fileSystem.getPath(uri.getPath());
     }
 
     @Override

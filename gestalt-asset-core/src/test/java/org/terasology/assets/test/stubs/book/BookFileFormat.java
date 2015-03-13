@@ -17,7 +17,7 @@
 package org.terasology.assets.test.stubs.book;
 
 import com.google.common.io.CharStreams;
-import org.terasology.assets.AssetInput;
+import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.format.AbstractAssetFileFormat;
 import org.terasology.assets.ResourceUrn;
 
@@ -36,7 +36,7 @@ public class BookFileFormat extends AbstractAssetFileFormat<BookData> {
     }
 
     @Override
-    public BookData load(ResourceUrn urn, List<AssetInput> inputs) throws IOException {
+    public BookData load(ResourceUrn urn, List<AssetDataFile> inputs) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputs.get(0).openStream()))) {
             return new BookData(CharStreams.readLines(reader));
         }

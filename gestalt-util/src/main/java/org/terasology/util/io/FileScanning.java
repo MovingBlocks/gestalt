@@ -51,7 +51,7 @@ public final class FileScanning {
      * @param scanFilter A PathMatcher indicating which subpaths to scan
      * @param fileFilter A PathMatcher indicating which files to return
      * @return A list of matching files within the path tree
-     * @throws IOException
+     * @throws IOException If there is a problem walking the file tree
      */
     public static List<Path> findFilesInPath(Path rootPath, PathMatcher scanFilter, PathMatcher fileFilter) throws IOException {
         final ImmutableList.Builder<Path> resultBuilder = ImmutableList.builder();
