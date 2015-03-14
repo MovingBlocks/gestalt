@@ -18,6 +18,7 @@ package org.terasology.assets.test.stubs.inheritance;
 
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**
@@ -25,7 +26,7 @@ import org.terasology.assets.ResourceUrn;
  */
 public abstract class ParentAsset<T extends AssetData> extends Asset<T> {
 
-    public ParentAsset(ResourceUrn urn) {
-        super(urn);
+    public ParentAsset(ResourceUrn urn, AssetType<?, T> type) {
+        super(urn, type);
     }
 }

@@ -22,8 +22,7 @@ import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.assets.management.AssetTypeManager;
-import org.terasology.assets.management.ContextManager;
+import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 
 import java.util.Collections;
@@ -33,6 +32,7 @@ import java.util.Set;
 /**
  * @author Immortius
  */
+@API
 public final class AssetManager {
 
     private AssetTypeManager assetTypeManager;
@@ -128,8 +128,4 @@ public final class AssetManager {
         return assetType.loadAsset(urn, data);
     }
 
-    public <T extends Asset<U>, U extends AssetData> T createInstance(T asset, Class<T> type) {
-        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
-        return assetType.createInstance(asset);
-    }
 }

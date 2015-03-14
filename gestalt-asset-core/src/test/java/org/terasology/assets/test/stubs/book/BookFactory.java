@@ -17,6 +17,7 @@
 package org.terasology.assets.test.stubs.book;
 
 import org.terasology.assets.AssetFactory;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**
@@ -25,7 +26,7 @@ import org.terasology.assets.ResourceUrn;
 public class BookFactory implements AssetFactory<Book, BookData> {
 
     @Override
-    public Book build(ResourceUrn urn, BookData data) {
-        return new Book(urn, data);
+    public Book build(ResourceUrn urn, BookData data, AssetType<Book, BookData> type) {
+        return new Book(urn, data, type);
     }
 }

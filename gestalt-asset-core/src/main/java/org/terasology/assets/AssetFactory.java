@@ -16,6 +16,8 @@
 
 package org.terasology.assets;
 
+import org.terasology.module.sandbox.API;
+
 /**
  * AssetFactorys are used to load AssetData into new assets.
  * <p>For many assets, the assets just have one asset implementation so the factory would simply call the constructor for the implementation and pass the urn and data
@@ -24,12 +26,14 @@ package org.terasology.assets;
  *
  * @author Immortius
  */
+@API
 public interface AssetFactory<T extends Asset<U>, U extends AssetData> {
 
     /**
      * @param urn  The urn of the asset to construct
      * @param data The data for the asset
+     * @param assetType The assetType the asset belongs to
      * @return The built asset
      */
-    T build(ResourceUrn urn, U data);
+    T build(ResourceUrn urn, U data, AssetType<T, U> assetType);
 }

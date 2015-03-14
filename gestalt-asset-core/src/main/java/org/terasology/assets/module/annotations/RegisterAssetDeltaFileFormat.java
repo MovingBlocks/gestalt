@@ -16,6 +16,8 @@
 
 package org.terasology.assets.module.annotations;
 
+import org.terasology.module.sandbox.API;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,8 +30,13 @@ import java.lang.annotation.Target;
  * this allows for multiple modules providing modifications to an asset without necessarily wiping the changes from other modules.
  * <p>
  * This is an alternative to using overrides, which completely replace an asset provided by another module.
+ * </p>
+ * <p>
+ * The AssetAlterationFileFormat must have an empty constructor, or one taking an AssetManager
+ * </p>
  * @author Immortius
  */
+@API
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface RegisterAssetDeltaFileFormat {

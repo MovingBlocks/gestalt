@@ -17,6 +17,7 @@
 package org.terasology.assets.test.stubs.inheritance;
 
 import org.terasology.assets.AssetFactory;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**
@@ -24,7 +25,7 @@ import org.terasology.assets.ResourceUrn;
  */
 public class ChildAssetFactory implements AssetFactory<ChildAsset, ChildAssetData> {
     @Override
-    public ChildAsset build(ResourceUrn urn, ChildAssetData data) {
-        return new ChildAsset(urn, data);
+    public ChildAsset build(ResourceUrn urn, ChildAssetData data, AssetType<ChildAsset, ChildAssetData> type) {
+        return new ChildAsset(urn, data, type);
     }
 }

@@ -17,6 +17,7 @@
 package org.terasology.assets.test.stubs.text;
 
 import org.terasology.assets.AssetFactory;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**
@@ -24,7 +25,7 @@ import org.terasology.assets.ResourceUrn;
  */
 public class TextFactory implements AssetFactory<Text, TextData> {
     @Override
-    public Text build(ResourceUrn urn, TextData data) {
-        return new Text(urn, data);
+    public Text build(ResourceUrn urn, TextData data, AssetType<Text, TextData> type) {
+        return new Text(urn, data, type);
     }
 }

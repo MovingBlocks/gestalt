@@ -18,6 +18,7 @@ package org.terasology.assets.test.stubs.book;
 
 import com.google.common.collect.ImmutableList;
 import org.terasology.assets.Asset;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**
@@ -27,14 +28,14 @@ public class Book extends Asset<BookData> {
 
     private ImmutableList<String> lines = ImmutableList.of();
 
-    public Book(ResourceUrn urn, BookData data) {
-        super(urn);
+    public Book(ResourceUrn urn, BookData data, AssetType<?, BookData> type) {
+        super(urn, type);
         reload(data);
     }
 
     @Override
-    protected Asset<BookData> doCreateInstance(ResourceUrn instanceUrn) {
-        return new Book(instanceUrn, new BookData(lines));
+    protected Asset<BookData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, BookData> parentAssetType) {
+        return new Book(instanceUrn, new BookData(lines), parentAssetType);
     }
 
     @Override

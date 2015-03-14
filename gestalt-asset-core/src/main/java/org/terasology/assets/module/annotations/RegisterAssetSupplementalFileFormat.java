@@ -16,6 +16,8 @@
 
 package org.terasology.assets.module.annotations;
 
+import org.terasology.module.sandbox.API;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -30,8 +32,12 @@ import java.lang.annotation.Target;
  * <p>
  * Supplemental file formats are used both for loading standard asset and overrides.
  * </p>
+ * <p>
+ * The AssetAlterationFormat must have an empty constructor, or one taking an AssetManager
+ * </p>
  * @author Immortius
  */
+@API
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface RegisterAssetSupplementalFileFormat {

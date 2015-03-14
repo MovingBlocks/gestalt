@@ -19,15 +19,18 @@ package org.terasology.assets;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 import org.terasology.util.reflection.GenericsUtil;
 
@@ -41,7 +44,8 @@ import java.util.Map;
 import java.util.Set;
 
 // TODO
-public final class AssetType<T extends Asset<U>, U extends AssetData> extends AssetOwner<U> implements Closeable {
+@API
+public final class AssetType<T extends Asset<U>, U extends AssetData> implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
@@ -50,6 +54,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
     private List<AssetDataProducer<U>> producers = Lists.newArrayList();
     private AssetFactory<T, U> factory;
     private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
+    private Multimap<ResourceUrn, T> instanceAssets = ArrayListMultimap.create();
     private ResolutionStrategy resolutionStrategy = new ResolutionStrategy() {
         @Override
         public Set<Name> resolve(Set<Name> modules, Name context) {
@@ -128,21 +133,15 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         }
     }
 
-    public T createInstance(T existing) {
-        Preconditions.checkNotNull(existing);
-        T result = assetClass.cast(existing.doCreateInstance(existing.getUrn().getInstanceUrn()));
-        if (result != null && !result.getOwner().isPresent()) {
-            result.setOwner(existing);
-            existing.addChild(result);
-        }
-        return result;
+    void registerInstance(Asset<U> instanceAsset) {
+        instanceAssets.put(instanceAsset.getUrn(), assetClass.cast(instanceAsset));
     }
 
     @SuppressWarnings("unchecked")
     private Optional<T> getInstanceAsset(ResourceUrn urn) {
         Optional<T> parentAsset = getAsset(urn.getParentUrn());
         if (parentAsset.isPresent()) {
-            return Optional.of(createInstance(parentAsset.get()));
+            return Optional.fromNullable(assetClass.cast(parentAsset.get().createInstance()));
         } else {
             return Optional.absent();
         }
@@ -239,15 +238,21 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         }));
     }
 
-    @Override
-    void onOwnedAssetDisposed(Asset<U> asset) {
-        loadedAssets.remove(asset.getUrn());
+    void containedAssetDisposed(Asset<U> asset) {
+        if (asset.getUrn().isInstance()) {
+            instanceAssets.get(asset.getUrn()).remove(assetClass.cast(asset));
+        } else {
+            loadedAssets.remove(asset.getUrn());
+        }
     }
 
     public void refresh() {
         for (Map.Entry<ResourceUrn, T> entry : ImmutableMap.copyOf(loadedAssets).entrySet()) {
             if (!redirect(entry.getKey()).equals(entry.getKey()) || !reloadFromProducers(entry.getKey(), entry.getValue())) {
                 entry.getValue().dispose();
+                for (T instance : ImmutableList.copyOf(instanceAssets.get(entry.getKey().getInstanceUrn()))) {
+                    instance.dispose();
+                }
             }
         }
     }
@@ -259,6 +264,9 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
 
                 if (data.isPresent()) {
                     asset.reload(data.get());
+                    for (T assetInstance : instanceAssets.get(urn.getInstanceUrn())) {
+                        assetInstance.reload(data.get());
+                    }
                     return true;
                 }
             }
@@ -272,9 +280,16 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         for (T asset : ImmutableList.copyOf(loadedAssets.values())) {
             asset.dispose();
         }
+        for (T asset : ImmutableList.copyOf(instanceAssets.values())) {
+            asset.dispose();
+        }
         if (!loadedAssets.isEmpty()) {
             logger.error("Assets remained loaded after disposal - " + loadedAssets.keySet());
             loadedAssets.clear();
+        }
+        if (!instanceAssets.isEmpty()) {
+            logger.error("Asset instances remained loaded after disposal - " + instanceAssets.keySet());
+            instanceAssets.clear();
         }
     }
 
@@ -285,8 +300,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> extends As
         if (asset != null) {
             asset.reload(data);
         } else {
-            asset = factory.build(urn, data);
-            asset.setOwner(this);
+            asset = factory.build(urn, data, this);
             loadedAssets.put(urn, asset);
         }
 

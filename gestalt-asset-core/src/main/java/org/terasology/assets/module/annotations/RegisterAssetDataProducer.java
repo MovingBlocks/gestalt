@@ -16,6 +16,8 @@
 
 package org.terasology.assets.module.annotations;
 
+import org.terasology.module.sandbox.API;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -27,8 +29,13 @@ import java.lang.annotation.Target;
  * This can be used to procedurally generate assets based on a ResourceUrn.
  * <p>
  * For example, an AssetDataProducer may handle resource urns like "engine:color#FF00FF" to provide a texture with that color.
+ * </p>
+ * <p>
+ * The AssetDataProducer must have an empty constructor, or one taking an AssetManager
+ * </p>
  * @author Immortius
  */
+@API
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface RegisterAssetDataProducer {

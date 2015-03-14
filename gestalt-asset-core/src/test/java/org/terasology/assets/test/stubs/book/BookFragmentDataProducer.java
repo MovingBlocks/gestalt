@@ -31,7 +31,7 @@ import java.util.Set;
 public class BookFragmentDataProducer extends AbstractFragmentDataProducer<TextData, Book, BookData> {
 
     public BookFragmentDataProducer(AssetManager assetManager) {
-        super(assetManager, Book.class);
+        super(assetManager, Book.class, true);
     }
 
     @Override

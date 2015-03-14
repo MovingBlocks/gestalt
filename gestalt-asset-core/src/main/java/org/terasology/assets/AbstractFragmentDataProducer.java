@@ -19,8 +19,9 @@ package org.terasology.assets;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 import org.terasology.assets.management.AssetManager;
+import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 
 import javax.annotation.Nullable;
@@ -29,22 +30,52 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
+ * An abstract implementation of AssetDataProducer aimed to ease the creation of producers that provide fragments from other assets.
+ * <p>
+ * A fragment is a piece of a parent asset that can be referenced individually. An example would be a single tile from an atlas texture - if the atlas is "engine:atlas",
+ * a single tile might be identified as "engine:atlas#tile".
+ * </p>
+ * <p>
+ * A Fragment AssetDataProducer thus resolves a parent asset, and then produces an AssetData from that. This abstract class handles the resolution of the of the parent
+ * asset.
+ * </p>
+ *
  * @author Immortius
  */
+@API
 public abstract class AbstractFragmentDataProducer<T extends AssetData, U extends Asset<V>, V extends AssetData> implements AssetDataProducer<T> {
 
     private final AssetManager assetManager;
     private final Class<U> rootAssetType;
+    private final boolean resolveModuleFromRoot;
 
-    public AbstractFragmentDataProducer(AssetManager assetManager, Class<U> rootAssetType) {
+    /**
+     * It is expected that implementing classes will provide the class for the rootAssetType in their constructor.
+     *
+     * @param assetManager          The asset manager to use when resolving the root asset.
+     * @param rootAssetType         The type of the root asset the fragments are produced from.
+     * @param resolveModuleFromRoot Whether to resolve providing modules from the rootAssetType.
+     *                              Should be disabled if the rootAssetType is the same as the fragment's asset type - otherwise resolution will infinitely loop.
+     */
+    protected AbstractFragmentDataProducer(AssetManager assetManager, Class<U> rootAssetType, boolean resolveModuleFromRoot) {
         this.assetManager = assetManager;
         this.rootAssetType = rootAssetType;
+        this.resolveModuleFromRoot = resolveModuleFromRoot;
     }
 
-    // Fragment data producer doesn't handle main resources
     @Override
     public Set<Name> getModulesProviding(Name resourceName) {
-        return Collections.emptySet();
+        if (resolveModuleFromRoot) {
+            return ImmutableSet.copyOf(Collections2.transform(assetManager.resolve(resourceName.toString(), rootAssetType), new Function<ResourceUrn, Name>() {
+                @Nullable
+                @Override
+                public Name apply(ResourceUrn input) {
+                    return input.getModuleName();
+                }
+            }));
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     @Override
@@ -65,5 +96,12 @@ public abstract class AbstractFragmentDataProducer<T extends AssetData, U extend
     public void close() {
     }
 
+    /**
+     * Implementing classes will implement this to produce fragments.
+     *
+     * @param urn       The urn of the requested fragment asset.
+     * @param rootAsset The root asset to build the fragment from.
+     * @return An optional that will contain the fragment's asset data, if available.
+     */
     protected abstract Optional<T> getFragmentData(ResourceUrn urn, U rootAsset);
 }

@@ -17,6 +17,7 @@
 package org.terasology.assets.test.stubs.inheritance;
 
 import org.terasology.assets.AssetFactory;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**
@@ -24,7 +25,7 @@ import org.terasology.assets.ResourceUrn;
  */
 public class AlternateAssetFactory implements AssetFactory<AlternateAsset, AlternateAssetData> {
     @Override
-    public AlternateAsset build(ResourceUrn urn, AlternateAssetData data) {
-        return new AlternateAsset(urn, data);
+    public AlternateAsset build(ResourceUrn urn, AlternateAssetData data, AssetType<AlternateAsset, AlternateAssetData> type) {
+        return new AlternateAsset(urn, data, type);
     }
 }

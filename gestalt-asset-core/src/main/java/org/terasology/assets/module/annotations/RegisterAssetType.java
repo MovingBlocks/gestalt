@@ -16,6 +16,8 @@
 
 package org.terasology.assets.module.annotations;
 
+import org.terasology.module.sandbox.API;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,8 +30,12 @@ import java.lang.annotation.Target;
  * <p>Note that asset types loaded in this way will be unloaded when switching environments, and all assets disposed. If an asset type should persist across environment
  * changes and assets reloaded instead they should be manually registered as a core asset type. This will be typically only be the case for assets types from the
  * classpath module(s)</p>
+ * <p>
+ * The AssetFactory must have an empty constructor, or one taking an AssetManager
+ * </p>
  * @author Immortius
  */
+@API
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface RegisterAssetType {

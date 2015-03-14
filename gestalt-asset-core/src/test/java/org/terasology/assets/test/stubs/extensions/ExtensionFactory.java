@@ -17,6 +17,7 @@
 package org.terasology.assets.test.stubs.extensions;
 
 import org.terasology.assets.AssetFactory;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.module.annotations.RegisterAssetType;
 import org.terasology.assets.ResourceUrn;
 
@@ -27,7 +28,7 @@ import org.terasology.assets.ResourceUrn;
 public class ExtensionFactory implements AssetFactory<ExtensionAsset, ExtensionData> {
 
     @Override
-    public ExtensionAsset build(ResourceUrn urn, ExtensionData data) {
-        return new ExtensionAsset(urn, data);
+    public ExtensionAsset build(ResourceUrn urn, ExtensionData data, AssetType<ExtensionAsset, ExtensionData> type) {
+        return new ExtensionAsset(urn, data, type);
     }
 }

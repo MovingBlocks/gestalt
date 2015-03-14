@@ -17,6 +17,7 @@
 package org.terasology.assets.test.stubs.text;
 
 import org.terasology.assets.Asset;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**
@@ -26,14 +27,14 @@ public class Text extends Asset<TextData> {
 
     private String value;
 
-    public Text(ResourceUrn urn, TextData data) {
-        super(urn);
+    public Text(ResourceUrn urn, TextData data, AssetType<?, TextData> type) {
+        super(urn, type);
         reload(data);
     }
 
     @Override
-    protected Asset<TextData> doCreateInstance(ResourceUrn instanceUrn) {
-        return new Text(instanceUrn, new TextData(value));
+    protected Asset<TextData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, TextData> parentAssetType) {
+        return new Text(instanceUrn, new TextData(value), parentAssetType);
     }
 
     @Override

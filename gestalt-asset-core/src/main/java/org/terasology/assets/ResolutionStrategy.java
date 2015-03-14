@@ -21,8 +21,7 @@ import org.terasology.naming.Name;
 import java.util.Set;
 
 /**
- * ResolutionStrategy is used when resolving possible ResourceUrns from just a resource name. First all modules providing an asset with the resource name are gathered
- * from the AssetDataProducers, then the ResolutionStrategy filters them based on the current module context.
+ * ResolutionStrategy is a filter used when determining what modules providing a resource with a given name to use in a particular module context.
  *
  * @author Immortius
  */

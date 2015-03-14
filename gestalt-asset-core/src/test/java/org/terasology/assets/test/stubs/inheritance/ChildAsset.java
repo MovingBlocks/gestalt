@@ -17,20 +17,22 @@
 package org.terasology.assets.test.stubs.inheritance;
 
 import org.terasology.assets.Asset;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius
  */
 public class ChildAsset extends ParentAsset<ChildAssetData> {
-    public ChildAsset(ResourceUrn urn, ChildAssetData data) {
-        super(urn);
+
+    public ChildAsset(ResourceUrn urn, ChildAssetData data, AssetType<?, ChildAssetData> type) {
+        super(urn, type);
         doReload(data);
     }
 
     @Override
-    protected Asset<ChildAssetData> doCreateInstance(ResourceUrn instanceUrn) {
-        return this;
+    protected Asset<ChildAssetData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, ChildAssetData> parentAssetType) {
+        return new ChildAsset(instanceUrn, new ChildAssetData(), parentAssetType);
     }
 
     @Override

@@ -18,6 +18,7 @@ package org.terasology.assets;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.terasology.assets.management.AssetManager;
@@ -27,7 +28,9 @@ import org.terasology.assets.test.stubs.book.Book;
 import org.terasology.assets.test.stubs.book.BookData;
 import org.terasology.assets.test.stubs.book.BookFactory;
 import org.terasology.assets.test.stubs.book.BookFragmentDataProducer;
+import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
+import org.terasology.assets.test.stubs.text.TextFactory;
 import org.terasology.naming.Name;
 
 import java.util.Set;
@@ -70,6 +73,23 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
         assertTrue(result2.isPresent());
         assertEquals(LINE_1, result2.get().getValue());
 
+    }
+
+    @Test
+    public void resolvePartialFragmentUrn() throws Exception {
+        bookType.setFactory(new BookFactory());
+        bookType.loadAsset(FRAGMENT_URN.getRootUrn(), new BookData(LINE_0, LINE_1));
+        AssetDataProducer<BookData> bookProducer = mock(AssetDataProducer.class);
+        when(bookProducer.getModulesProviding(FRAGMENT_URN.getResourceName())).thenReturn(ImmutableSet.of(FRAGMENT_URN.getModuleName()));
+        bookType.addProducer(bookProducer);
+
+        AssetType<Text, TextData> textType = new AssetType<>(Text.class);
+        textType.setFactory(new TextFactory());
+        textType.addProducer(bookFragmentProducer);
+        when(assetTypeManager.getAssetType(Text.class)).thenReturn(textType);
+        when(assetTypeManager.getAssetTypes(Text.class)).thenReturn(ImmutableList.<AssetType<? extends Text, ? extends TextData>>of(textType));
+
+        assertEquals(ImmutableSet.of(FRAGMENT_URN), textType.resolve(FRAGMENT_URN.getResourceName() + "#" + FRAGMENT_URN.getFragmentName()));
     }
 
 
