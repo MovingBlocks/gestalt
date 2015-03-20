@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class ModuleDependencyResolutionStrategy implements ResolutionStrategy {
 
-    private ModuleEnvironment environment;
+    private final ModuleEnvironment environment;
 
     public ModuleDependencyResolutionStrategy(ModuleEnvironment environment) {
         this.environment = environment;
@@ -38,10 +38,6 @@ public class ModuleDependencyResolutionStrategy implements ResolutionStrategy {
 
     public ModuleEnvironment getEnvironment() {
         return environment;
-    }
-
-    public void setEnvironment(ModuleEnvironment environment) {
-        this.environment = environment;
     }
 
     @Override

@@ -51,10 +51,9 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
 
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
-    private AssetType<Text, TextData> assetType = new AssetType<>(Text.class);
+    private AssetType<Text, TextData> assetType = new AssetType<>(Text.class, new TextFactory());
 
     public AssetTypeTest() throws Exception {
-        assetType.setFactory(new TextFactory());
     }
 
     @Test
@@ -92,16 +91,6 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         Text newText = assetType.loadAsset(URN, newData);
         assertSame(initialText, newText);
         assertEquals(newData.getValue(), initialText.getValue());
-    }
-
-    @Test
-    public void changingFactoryDisposesAllAssets() {
-        TextData data = new TextData(TEXT_VALUE);
-        Text asset = assetType.loadAsset(URN, data);
-
-        assetType.setFactory(mock(AssetFactory.class));
-        assertTrue(asset.isDisposed());
-        assertFalse(assetType.getAsset(URN).isPresent());
     }
 
     @Test
@@ -335,14 +324,11 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         TextData data = new TextData(TEXT_VALUE);
         when(producer.getAssetData(URN)).thenReturn(Optional.of(data));
-        AssetFactory factory = mock(AssetFactory.class);
-        assetType.setFactory(factory);
-        Text textAsset = new Text(URN, data, assetType);
-        when(factory.build(URN, data, assetType)).thenReturn(textAsset);
+        Text text = assetType.getAsset(URN).get();
 
         Optional<Text> result = assetType.getAsset(URN.getInstanceUrn());
         assertTrue(result.isPresent());
-        assertNotSame(textAsset, result.get());
+        assertNotSame(text, result.get());
         assertTrue(result.get().getUrn().isInstance());
         assertEquals(URN, result.get().getUrn().getParentUrn());
     }
@@ -401,6 +387,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         Text loadedText = assetType.loadAsset(URN, data);
         Text newText = loadedText.createInstance();
         assetType.close();
+        assertTrue(assetType.isClosed());
         assertTrue(newText.isDisposed());
     }
 

@@ -70,7 +70,6 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         TextFactory factory = new TextFactory();
         AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory);
         assertTrue(assetType.getProducers().isEmpty());
-        assertEquals(factory, assetType.getFactory());
     }
 
     @Test
@@ -79,7 +78,6 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
         assertEquals(1, assetType.getProducers().size());
         assertTrue(assetType.getProducers().get(0) instanceof ModuleAssetDataProducer);
-        assertEquals(factory, assetType.getFactory());
     }
 
     @Test

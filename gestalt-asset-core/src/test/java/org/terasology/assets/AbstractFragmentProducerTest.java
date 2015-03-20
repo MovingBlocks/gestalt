@@ -53,7 +53,7 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
     private AssetTypeManager assetTypeManager = mock(AssetTypeManager.class);
     private AssetManager assetManager = new AssetManager(assetTypeManager);
     private BookFragmentDataProducer bookFragmentProducer = new BookFragmentDataProducer(assetManager);
-    private AssetType<Book, BookData> bookType = new AssetType<>(Book.class);
+    private AssetType<Book, BookData> bookType = new AssetType<>(Book.class, new BookFactory());
 
     public AbstractFragmentProducerTest() throws Exception {
         when(assetTypeManager.getAssetType(Book.class)).thenReturn(bookType);
@@ -62,7 +62,6 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void getAssetData() throws Exception {
-        bookType.setFactory(new BookFactory());
         bookType.loadAsset(FRAGMENT_URN.getRootUrn(), new BookData(LINE_0, LINE_1));
 
         Optional<TextData> result = bookFragmentProducer.getAssetData(FRAGMENT_URN);
@@ -77,14 +76,12 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void resolvePartialFragmentUrn() throws Exception {
-        bookType.setFactory(new BookFactory());
         bookType.loadAsset(FRAGMENT_URN.getRootUrn(), new BookData(LINE_0, LINE_1));
         AssetDataProducer<BookData> bookProducer = mock(AssetDataProducer.class);
         when(bookProducer.getModulesProviding(FRAGMENT_URN.getResourceName())).thenReturn(ImmutableSet.of(FRAGMENT_URN.getModuleName()));
         bookType.addProducer(bookProducer);
 
-        AssetType<Text, TextData> textType = new AssetType<>(Text.class);
-        textType.setFactory(new TextFactory());
+        AssetType<Text, TextData> textType = new AssetType<>(Text.class, new TextFactory());
         textType.addProducer(bookFragmentProducer);
         when(assetTypeManager.getAssetType(Text.class)).thenReturn(textType);
         when(assetTypeManager.getAssetTypes(Text.class)).thenReturn(ImmutableList.<AssetType<? extends Text, ? extends TextData>>of(textType));

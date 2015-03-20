@@ -105,9 +105,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     public <T extends Asset<U>, U extends AssetData> AssetType<T, U> registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory) {
         Preconditions.checkState(!assetTypes.containsKey(type), "Asset type '" + type.getSimpleName() + "' already registered");
-        AssetType<T, U> assetType = new AssetType<>(type);
+        AssetType<T, U> assetType = new AssetType<>(type, factory);
         assetType.setResolutionStrategy(resolutionStrategy);
-        assetType.setFactory(factory);
         assetTypes.put(type, assetType);
         addSubtypesFor(type);
         return assetType;
@@ -177,7 +176,10 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     public void setEnvironment(ModuleEnvironment environment) {
         Preconditions.checkNotNull(environment);
         this.environment = environment;
-        resolutionStrategy.setEnvironment(environment);
+        resolutionStrategy = new ModuleDependencyResolutionStrategy(environment);
+        for (AssetType<?, ?> assetType : assetTypes.values()) {
+            assetType.setResolutionStrategy(resolutionStrategy);
+        }
 
         removeExtensionTypes();
         removeExtensionProducers();

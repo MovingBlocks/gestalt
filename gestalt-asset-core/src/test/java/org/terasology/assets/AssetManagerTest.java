@@ -53,16 +53,9 @@ public class AssetManagerTest {
 
     private MapAssetTypeManager assetTypeManager = new MapAssetTypeManager();
     private AssetManager assetManager = new AssetManager(assetTypeManager);
-    private AssetType<Text, TextData> textAssetType = assetTypeManager.createAssetType(Text.class);
-    private AssetType<ChildAsset, ChildAssetData> childAssetType = assetTypeManager.createAssetType(ChildAsset.class);
-    private AssetType<AlternateAsset, AlternateAssetData> alternateAssetType = assetTypeManager.createAssetType(AlternateAsset.class);
-
-
-    public AssetManagerTest() {
-        textAssetType.setFactory(new TextFactory());
-        childAssetType.setFactory(new ChildAssetFactory());
-        alternateAssetType.setFactory(new AlternateAssetFactory());
-    }
+    private AssetType<Text, TextData> textAssetType = assetTypeManager.createAssetType(Text.class, new TextFactory());
+    private AssetType<ChildAsset, ChildAssetData> childAssetType = assetTypeManager.createAssetType(ChildAsset.class, new ChildAssetFactory());
+    private AssetType<AlternateAsset, AlternateAssetData> alternateAssetType = assetTypeManager.createAssetType(AlternateAsset.class, new AlternateAssetFactory());
 
     @Test
     public void getAvailableAssets() {

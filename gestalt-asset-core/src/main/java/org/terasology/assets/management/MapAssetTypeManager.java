@@ -25,6 +25,7 @@ import com.google.common.collect.Maps;
 import org.reflections.ReflectionUtils;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
 
 import java.util.Collections;
@@ -57,10 +58,12 @@ public final class MapAssetTypeManager implements AssetTypeManager {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Asset<U>, U extends AssetData> AssetType<T, U> createAssetType(Class<T> type) {
+    public <T extends Asset<U>, U extends AssetData> AssetType<T, U> createAssetType(Class<T> type, AssetFactory<T, U> factory) {
         Preconditions.checkState(assetTypes.get(type) == null, "Asset type already created - " + type.getSimpleName());
+        Preconditions.checkNotNull(factory);
+        Preconditions.checkNotNull(type);
 
-        AssetType<T, U> assetType = new AssetType<>(type);
+        AssetType<T, U> assetType = new AssetType<>(type, factory);
         assetTypes.put(type, assetType);
         for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, new Predicate<Class<?>>() {
             @Override

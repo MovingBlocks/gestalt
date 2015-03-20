@@ -19,6 +19,8 @@ package org.terasology.assets;
 import com.google.common.base.Preconditions;
 import org.terasology.module.sandbox.API;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 /**
  * Abstract base class common to all assets.
  * <p>
@@ -43,6 +45,7 @@ import org.terasology.module.sandbox.API;
  * @author Immortius
  */
 @API
+@ThreadSafe
 public abstract class Asset<T extends AssetData> {
 
     private final ResourceUrn urn;
@@ -75,8 +78,9 @@ public abstract class Asset<T extends AssetData> {
      * @param data The data to reload the asset with.
      */
     public final synchronized void reload(T data) {
-        Preconditions.checkState(!disposed);
-        doReload(data);
+        if (!disposed) {
+            doReload(data);
+        }
     }
 
     /**
@@ -90,6 +94,7 @@ public abstract class Asset<T extends AssetData> {
      */
     @SuppressWarnings("unchecked")
     public final synchronized <U extends Asset<T>> U createInstance() {
+        Preconditions.checkState(!disposed);
         U instance = (U) doCreateInstance(urn.getInstanceUrn(), assetType);
         assetType.registerInstance(instance);
         return instance;

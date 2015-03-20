@@ -24,9 +24,10 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import org.terasology.naming.Name;
 import org.terasology.util.reflection.GenericsUtil;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -43,19 +45,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// TODO
+/**
+ * AssetType manages all assets of a particular type/class.  It provides the ability to resolve and load assets by Urn, and caches assets so that there is only
+ * a single instance of a given asset shared by all users.
+ * <p>
+ * AssetType is thread safe.
+ * </p>
+ *
+ * @param <T> The type of asset this AssetType manages
+ * @param <U> The type of asset data required by the assets this AssetType manages
+ */
 @API
+@ThreadSafe
 public final class AssetType<T extends Asset<U>, U extends AssetData> implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
 
     private final Class<T> assetClass;
     private final Class<U> assetDataClass;
-    private List<AssetDataProducer<U>> producers = Lists.newArrayList();
-    private AssetFactory<T, U> factory;
-    private Map<ResourceUrn, T> loadedAssets = Maps.newHashMap();
-    private Multimap<ResourceUrn, T> instanceAssets = ArrayListMultimap.create();
-    private ResolutionStrategy resolutionStrategy = new ResolutionStrategy() {
+    private final AssetFactory<T, U> factory;
+    private final List<AssetDataProducer<U>> producers = Lists.newCopyOnWriteArrayList();
+    private final Map<ResourceUrn, T> loadedAssets = Collections.synchronizedMap(Maps.<ResourceUrn, T>newHashMap());
+    private final ListMultimap<ResourceUrn, T> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, T>create());
+    private boolean closed;
+    private volatile ResolutionStrategy resolutionStrategy = new ResolutionStrategy() {
         @Override
         public Set<Name> resolve(Set<Name> modules, Name context) {
             if (modules.contains(context)) {
@@ -66,64 +79,155 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         }
     };
 
+    /**
+     * Constructs an AssetType for managing assets of the provided Asset class. The Asset class must have its AssetData generic parameter bound via inheritance
+     * (e.g. MyType extends Asset&lt;MyDataType&gt;)
+     *
+     * @param assetClass The class of asset this AssetType will manage.
+     */
     @SuppressWarnings("unchecked")
-    public AssetType(Class<T> assetClass) {
+    public AssetType(Class<T> assetClass, AssetFactory<T, U> factory) {
         Preconditions.checkNotNull(assetClass);
+        Preconditions.checkNotNull(factory);
 
+        this.factory = factory;
         this.assetClass = assetClass;
         Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(assetClass, Asset.class, 0);
         if (assetDataType.isPresent()) {
             assetDataClass = (Class<U>) GenericsUtil.getClassOfType(assetDataType.get());
         } else {
-            throw new IllegalArgumentException("Asset class must have bound AssetData parameter - " + assetClass);
+            throw new IllegalArgumentException("Asset class must have a bound AssetData parameter - " + assetClass);
         }
     }
 
+    /**
+     * Closes the AssetType, disposing all assets, closing the producers and preventing further asset creation.
+     */
     @Override
-    public void close() {
-        disposeAll();
-        for (AssetDataProducer<U> producer : producers) {
-            producer.close();
+    public synchronized void close() {
+        if (!closed) {
+            closed = true;
+            disposeAll();
+            clearProducers();
         }
     }
 
+    /**
+     * @return Whether the AssetType is closed.
+     */
+    public synchronized boolean isClosed() {
+        return closed;
+    }
+
+    /**
+     * Disposes all assets of this type.
+     */
+    public synchronized void disposeAll() {
+        for (T asset : ImmutableList.copyOf(loadedAssets.values())) {
+            asset.dispose();
+        }
+        for (T asset : ImmutableList.copyOf(instanceAssets.values())) {
+            asset.dispose();
+        }
+        if (!loadedAssets.isEmpty()) {
+            logger.error("Assets remained loaded after disposal - " + loadedAssets.keySet());
+            loadedAssets.clear();
+        }
+        if (!instanceAssets.isEmpty()) {
+            logger.error("Asset instances remained loaded after disposal - " + instanceAssets.keySet());
+            instanceAssets.clear();
+        }
+    }
+
+    /**
+     * Refreshes the AssetType. All loaded assets that are provided by the producers are reloaded, all other assets are disposed. Asset instances are reloaded with
+     * the data of their parents or disposed along with them.
+     * <p>
+     * This method is useful when switching contexts (such as changing module environment)
+     * </p>
+     */
+    public synchronized void refresh() {
+        if (!closed) {
+            for (T asset : ImmutableMap.copyOf(loadedAssets).values()) {
+                if (!followRedirects(asset.getUrn()).equals(asset.getUrn()) || !reloadFromProducers(asset)) {
+                    asset.dispose();
+                    for (T instance : ImmutableList.copyOf(instanceAssets.get(asset.getUrn().getInstanceUrn()))) {
+                        instance.dispose();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @return The class of Asset managed by this AssetType.
+     */
     public Class<T> getAssetClass() {
         return assetClass;
     }
 
+    /**
+     * @return The class of AssetData used to generate the Assets managed by this AssetType.
+     */
     public Class<U> getAssetDataClass() {
         return assetDataClass;
     }
 
-    public AssetFactory<T, U> getFactory() {
-        return factory;
-    }
-
-    public void setFactory(AssetFactory<T, U> factory) {
-        this.factory = factory;
-        disposeAll();
-    }
-
+    /**
+     * By default a simple strategy is used returns the context module if it is one of the options, and all the options otherwise.
+     *
+     * @param strategy The strategy used to filter modules during partial urn resolution.
+     */
     public void setResolutionStrategy(ResolutionStrategy strategy) {
         this.resolutionStrategy = strategy;
     }
 
-    public void addProducer(AssetDataProducer<U> producer) {
-        producers.add(producer);
+    /**
+     * Adds an AssetDataProducer for generating assets of for this AssetType
+     *
+     * @param producer The producer to add
+     */
+    public synchronized void addProducer(AssetDataProducer<U> producer) {
+        if (!closed) {
+            producers.add(producer);
+        }
     }
 
+    /**
+     * @return An unmodifiable list of all the AssetDataProducers
+     */
     public List<AssetDataProducer<U>> getProducers() {
         return Collections.unmodifiableList(producers);
     }
 
-    public void removeProducer(AssetDataProducer<U> producer) {
-        producers.remove(producer);
+    /**
+     * @param producer The producer to remove;
+     * @return Whether the producer was removed
+     */
+    public synchronized boolean removeProducer(AssetDataProducer<U> producer) {
+        if (producers.remove(producer)) {
+            producer.close();
+            return true;
+        }
+        return false;
     }
 
-    public void clearProducers() {
+    /**
+     * Removes all the AssetDataProducers
+     */
+    public synchronized void clearProducers() {
+        for (AssetDataProducer<U> producer : producers) {
+            producer.close();
+        }
         producers.clear();
     }
 
+    /**
+     * Obtains an asset by urn, loading it if necessary. If the urn is a instance urn, then a new asset will be created from the parent asset.
+     *
+     * @param urn The urn of the resource to get
+     * @return The asset if available
+     */
     public Optional<T> getAsset(ResourceUrn urn) {
         Preconditions.checkNotNull(urn);
         if (urn.isInstance()) {
@@ -133,6 +237,24 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         }
     }
 
+    /**
+     * Notifies the asset type when an asset is disposed
+     *
+     * @param asset The asset that was disposed.
+     */
+    void containedAssetDisposed(Asset<U> asset) {
+        if (asset.getUrn().isInstance()) {
+            instanceAssets.get(asset.getUrn()).remove(assetClass.cast(asset));
+        } else {
+            loadedAssets.remove(asset.getUrn());
+        }
+    }
+
+    /**
+     * Notifies the asset type when an instance asset is created
+     *
+     * @param instanceAsset The asset that was created
+     */
     void registerInstance(Asset<U> instanceAsset) {
         instanceAssets.put(instanceAsset.getUrn(), assetClass.cast(instanceAsset));
     }
@@ -147,8 +269,14 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         }
     }
 
+    /**
+     * Obtains a non-instance asset
+     *
+     * @param urn The urn of the asset
+     * @return The asset if available
+     */
     private Optional<T> getNormalAsset(ResourceUrn urn) {
-        ResourceUrn redirectUrn = redirect(urn);
+        ResourceUrn redirectUrn = followRedirects(urn);
         T asset = loadedAssets.get(redirectUrn);
         if (asset == null) {
             try {
@@ -169,7 +297,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         return Optional.fromNullable(asset);
     }
 
-    private ResourceUrn redirect(ResourceUrn urn) {
+    /**
+     * Follows any redirects to determine the actual resource urn to use for a given urn
+     *
+     * @param urn The urn to resolve redirects for
+     * @return The final urn to use
+     */
+    private ResourceUrn followRedirects(ResourceUrn urn) {
         ResourceUrn lastUrn;
         ResourceUrn finalUrn = urn;
         do {
@@ -181,10 +315,23 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         return finalUrn;
     }
 
+    /**
+     * Obtains an asset from a string that may be a full or partial urn
+     *
+     * @param urn The full or partial urn of the asset
+     * @return The requested asset if the urn was successfully resolved
+     */
     public Optional<T> getAsset(String urn) {
         return getAsset(urn, Name.EMPTY);
     }
 
+    /**
+     * Obtains an asset from a string that may be a full or partial urn
+     *
+     * @param urn           The full or partial urn of the asset
+     * @param moduleContext The context to resolve the urn in
+     * @return The requested asset if the urn was successfully resolved
+     */
     public Optional<T> getAsset(String urn, Name moduleContext) {
         Set<ResourceUrn> resolvedUrns = resolve(urn, moduleContext);
         if (resolvedUrns.size() == 1) {
@@ -197,10 +344,23 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         return Optional.absent();
     }
 
+    /**
+     * Resolves a string urn that may be a full or partial urn, providing the available urns that match
+     *
+     * @param urn The string to resolve
+     * @return A set of possible matching urns
+     */
     public Set<ResourceUrn> resolve(String urn) {
         return resolve(urn, Name.EMPTY);
     }
 
+    /**
+     * Resolves a string urn that may be a full or partial urn, providing the available urns that match
+     *
+     * @param urn           The string to resolve
+     * @param moduleContext The context to resolve within
+     * @return A set of possible matching urns
+     */
     public Set<ResourceUrn> resolve(String urn, Name moduleContext) {
         if (ResourceUrn.isValid(urn)) {
             return ImmutableSet.of(new ResourceUrn(urn));
@@ -238,33 +398,20 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         }));
     }
 
-    void containedAssetDisposed(Asset<U> asset) {
-        if (asset.getUrn().isInstance()) {
-            instanceAssets.get(asset.getUrn()).remove(assetClass.cast(asset));
-        } else {
-            loadedAssets.remove(asset.getUrn());
-        }
-    }
-
-    public void refresh() {
-        for (Map.Entry<ResourceUrn, T> entry : ImmutableMap.copyOf(loadedAssets).entrySet()) {
-            if (!redirect(entry.getKey()).equals(entry.getKey()) || !reloadFromProducers(entry.getKey(), entry.getValue())) {
-                entry.getValue().dispose();
-                for (T instance : ImmutableList.copyOf(instanceAssets.get(entry.getKey().getInstanceUrn()))) {
-                    instance.dispose();
-                }
-            }
-        }
-    }
-
-    private boolean reloadFromProducers(ResourceUrn urn, Asset<U> asset) {
+    /**
+     * Reloads an asset from the current producers, if one of them can produce it
+     *
+     * @param asset The asset to reload
+     * @return Whether the asset was reloaded
+     */
+    private boolean reloadFromProducers(Asset<U> asset) {
         try {
             for (AssetDataProducer<U> producer : producers) {
-                Optional<U> data = producer.getAssetData(urn);
+                Optional<U> data = producer.getAssetData(asset.getUrn());
 
                 if (data.isPresent()) {
                     asset.reload(data.get());
-                    for (T assetInstance : instanceAssets.get(urn.getInstanceUrn())) {
+                    for (T assetInstance : instanceAssets.get(asset.getUrn().getInstanceUrn())) {
                         assetInstance.reload(data.get());
                     }
                     return true;
@@ -276,45 +423,57 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         return false;
     }
 
-    public void disposeAll() {
-        for (T asset : ImmutableList.copyOf(loadedAssets.values())) {
-            asset.dispose();
-        }
-        for (T asset : ImmutableList.copyOf(instanceAssets.values())) {
-            asset.dispose();
-        }
-        if (!loadedAssets.isEmpty()) {
-            logger.error("Assets remained loaded after disposal - " + loadedAssets.keySet());
-            loadedAssets.clear();
-        }
-        if (!instanceAssets.isEmpty()) {
-            logger.error("Asset instances remained loaded after disposal - " + instanceAssets.keySet());
-            instanceAssets.clear();
-        }
-    }
-
+    /**
+     * Loads an asset with the given urn and data. If the asset already exists, it is reloaded with the data instead
+     *
+     * @param urn  The urn of the asset
+     * @param data The data to load the asset with
+     * @return The loaded (or reloaded) asset
+     */
     public T loadAsset(ResourceUrn urn, U data) {
-        Preconditions.checkState(factory != null, "Factory not yet allocated for asset type '" + assetClass.getSimpleName() + "'");
-
-        T asset = loadedAssets.get(urn);
-        if (asset != null) {
-            asset.reload(data);
+        if (urn.isInstance()) {
+            return factory.build(urn, data, this);
         } else {
-            asset = factory.build(urn, data, this);
-            loadedAssets.put(urn, asset);
-        }
+            T asset = loadedAssets.get(urn);
+            if (asset != null) {
+                asset.reload(data);
+            } else {
+                synchronized (this) {
+                    if (!closed) {
+                        asset = loadedAssets.get(urn);
+                        if (asset == null) {
+                            asset = factory.build(urn, data, this);
+                            loadedAssets.put(urn, asset);
+                        } else {
+                            asset.reload(data);
+                        }
+                    }
+                }
+            }
 
-        return asset;
+            return asset;
+        }
     }
 
+    /**
+     * @param urn The urn of the asset to check. Must not be an instance urn
+     * @return Whether an asset is loaded with the given urn
+     */
     public boolean isLoaded(ResourceUrn urn) {
+        Preconditions.checkArgument(!urn.isInstance(), "Urn must not be an instance urn");
         return loadedAssets.containsKey(urn);
     }
 
+    /**
+     * @return A set of the urns of all the loaded assets.
+     */
     public Set<ResourceUrn> getLoadedAssetUrns() {
         return ImmutableSet.copyOf(loadedAssets.keySet());
     }
 
+    /**
+     * @return A set of the urns of all the loaded assets and all the assets available from producers
+     */
     public Set<ResourceUrn> getAvailableAssetUrns() {
         Set<ResourceUrn> availableAssets = Sets.newLinkedHashSet(getLoadedAssetUrns());
         for (AssetDataProducer<U> producer : producers) {
