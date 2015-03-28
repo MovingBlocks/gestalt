@@ -60,6 +60,9 @@ public class DependencyInfo {
      */
     public Version getMaxVersion() {
         if (maxVersion == null) {
+            if (minVersion.getMajor() == 0) {
+                return minVersion.getNextMinorVersion();
+            }
             return minVersion.getNextMajorVersion();
         }
         return maxVersion;
