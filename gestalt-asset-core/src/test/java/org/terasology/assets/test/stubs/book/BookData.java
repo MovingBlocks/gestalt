@@ -19,13 +19,14 @@ package org.terasology.assets.test.stubs.book;
 import com.google.common.collect.Lists;
 import org.terasology.assets.AssetData;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Immortius
  */
 public class BookData implements AssetData {
-    private List<String> lines;
+    private final List<String> lines = Lists.newArrayList();
 
     public BookData() {
     }
@@ -35,8 +36,8 @@ public class BookData implements AssetData {
         this.lines.addAll(lines);
     }
 
-    public BookData(String ... lines) {
-        this.lines = Lists.newArrayList(lines);
+    public BookData(String... lines) {
+        this.lines.addAll(Arrays.asList(lines));
     }
 
     public List<String> getLines() {
@@ -44,6 +45,7 @@ public class BookData implements AssetData {
     }
 
     public void setLines(List<String> lines) {
-        this.lines = lines;
+        this.lines.clear();
+        this.lines.addAll(lines);
     }
 }

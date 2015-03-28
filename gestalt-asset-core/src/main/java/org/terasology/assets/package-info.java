@@ -17,8 +17,9 @@
 /**
  * This package provides an Asset System - a way of creating, loading and managing assets. An asset is a shared resource that can be resolved by a uri or partial uri. For a
  * game, some potential assets are sounds, textures, and object definitions.
- * <p/>
+ * <p>
  * The main classes of the asset system are:
+ * </p>
  * <ul>
  *     <li>AssetType, a manager for a type of Asset</li>
  *     <li>Asset, a fully loaded asset. This should be subclassed for each type of asset</li>

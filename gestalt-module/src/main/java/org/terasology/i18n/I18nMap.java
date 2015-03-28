@@ -18,6 +18,7 @@ package org.terasology.i18n;
 
 import com.google.common.collect.ImmutableMap;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
@@ -41,6 +42,7 @@ import java.util.Map;
  *
  * @author Immortius
  */
+@Immutable
 public class I18nMap implements Iterable<Map.Entry<Locale, String>> {
     private final Map<Locale, String> values;
 

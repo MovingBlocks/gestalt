@@ -20,7 +20,6 @@ import com.google.common.base.Optional;
 import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Set;
 
@@ -36,7 +35,7 @@ import java.util.Set;
  * @author Immortius
  */
 @API
-public interface AssetDataProducer<T extends AssetData> extends Closeable {
+public interface AssetDataProducer<T extends AssetData> {
 
     /**
      * Optionally can provide a set of ResourceUrns this AssetDataProducer can provide data for.  It is not required by the asset system, and is intended only for
@@ -74,9 +73,5 @@ public interface AssetDataProducer<T extends AssetData> extends Closeable {
      * @throws IOException If there is an error producing the AssetData.
      */
     Optional<T> getAssetData(ResourceUrn urn) throws IOException;
-
-    @Override
-    void close();
-
 
 }

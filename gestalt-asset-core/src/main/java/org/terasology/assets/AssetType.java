@@ -22,11 +22,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -65,7 +64,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private final Class<U> assetDataClass;
     private final AssetFactory<T, U> factory;
     private final List<AssetDataProducer<U>> producers = Lists.newCopyOnWriteArrayList();
-    private final Map<ResourceUrn, T> loadedAssets = Collections.synchronizedMap(Maps.<ResourceUrn, T>newHashMap());
+    private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).makeMap();
     private final ListMultimap<ResourceUrn, T> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, T>create());
     private boolean closed;
     private volatile ResolutionStrategy resolutionStrategy = new ResolutionStrategy() {
@@ -84,6 +83,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * (e.g. MyType extends Asset&lt;MyDataType&gt;)
      *
      * @param assetClass The class of asset this AssetType will manage.
+     * @param factory The factory used to convert AssetData to Assets for this type
      */
     @SuppressWarnings("unchecked")
     public AssetType(Class<T> assetClass, AssetFactory<T, U> factory) {
@@ -123,7 +123,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * Disposes all assets of this type.
      */
     public synchronized void disposeAll() {
-        for (T asset : ImmutableList.copyOf(loadedAssets.values())) {
+        for (T asset : loadedAssets.values()) {
             asset.dispose();
         }
         for (T asset : ImmutableList.copyOf(instanceAssets.values())) {
@@ -148,7 +148,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     public synchronized void refresh() {
         if (!closed) {
-            for (T asset : ImmutableMap.copyOf(loadedAssets).values()) {
+            for (T asset : loadedAssets.values()) {
                 if (!followRedirects(asset.getUrn()).equals(asset.getUrn()) || !reloadFromProducers(asset)) {
                     asset.dispose();
                     for (T instance : ImmutableList.copyOf(instanceAssets.get(asset.getUrn().getInstanceUrn()))) {
@@ -205,20 +205,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @return Whether the producer was removed
      */
     public synchronized boolean removeProducer(AssetDataProducer<U> producer) {
-        if (producers.remove(producer)) {
-            producer.close();
-            return true;
-        }
-        return false;
+        return producers.remove(producer);
     }
 
     /**
      * Removes all the AssetDataProducers
      */
     public synchronized void clearProducers() {
-        for (AssetDataProducer<U> producer : producers) {
-            producer.close();
-        }
         producers.clear();
     }
 

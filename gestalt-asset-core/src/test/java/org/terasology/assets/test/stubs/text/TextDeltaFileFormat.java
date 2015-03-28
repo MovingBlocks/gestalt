@@ -16,6 +16,7 @@
 
 package org.terasology.assets.test.stubs.text;
 
+import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.format.AbstractAssetAlterationFileFormat;
@@ -34,7 +35,7 @@ public class TextDeltaFileFormat extends AbstractAssetAlterationFileFormat<TextD
 
     @Override
     public void apply(AssetDataFile input, TextData assetData) throws IOException {
-        try (InputStreamReader reader = new InputStreamReader(input.openStream())) {
+        try (InputStreamReader reader = new InputStreamReader(input.openStream(), Charsets.UTF_8)) {
             for (String line : CharStreams.readLines(reader)) {
                 String[] parts = line.split("->", 2);
                 if (parts.length == 2) {

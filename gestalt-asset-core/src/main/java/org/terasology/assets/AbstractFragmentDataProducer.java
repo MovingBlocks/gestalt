@@ -92,10 +92,6 @@ public abstract class AbstractFragmentDataProducer<T extends AssetData, U extend
         return Optional.absent();
     }
 
-    @Override
-    public void close() {
-    }
-
     /**
      * Implementing classes will implement this to produce fragments.
      *

@@ -17,6 +17,8 @@
 package org.terasology.assets;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.module.sandbox.API;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -47,6 +49,8 @@ import javax.annotation.concurrent.ThreadSafe;
 @API
 @ThreadSafe
 public abstract class Asset<T extends AssetData> {
+
+    private static final Logger logger = LoggerFactory.getLogger(Asset.class);
 
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
@@ -128,6 +132,7 @@ public abstract class Asset<T extends AssetData> {
      * </p>
      *
      * @param instanceUrn The urn for the new instance
+     * @param parentAssetType The type of the parent asset
      * @return The created instance.
      */
     protected abstract Asset<T> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, T> parentAssetType);
@@ -167,5 +172,12 @@ public abstract class Asset<T extends AssetData> {
         return urn.toString();
     }
 
-
+    @Override
+    protected final void finalize() throws Throwable {
+        super.finalize();
+        if (!disposed) {
+            logger.warn("Asset '{}' not correctly disposed but garbage collected");
+            dispose();
+        }
+    }
 }

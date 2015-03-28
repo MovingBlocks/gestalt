@@ -16,6 +16,8 @@
 
 package org.terasology.assets.format;
 
+import com.google.common.base.Preconditions;
+
 import javax.annotation.concurrent.Immutable;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -46,6 +48,8 @@ public class AssetDataFile {
      * @param path The path of the AssetDataFile
      */
     public AssetDataFile(Path path) {
+        Preconditions.checkNotNull(path);
+        Preconditions.checkArgument(Files.isRegularFile(path));
         this.path = path;
     }
 
@@ -53,7 +57,12 @@ public class AssetDataFile {
      * @return The name of the file (including extension)
      */
     public String getFilename() {
-        return path.getFileName().toString();
+        Path filename = path.getFileName();
+        if (filename != null) {
+            return filename.toString();
+        } else {
+            throw new IllegalStateException("AssetDataFile has empty path");
+        }
     }
 
     /**

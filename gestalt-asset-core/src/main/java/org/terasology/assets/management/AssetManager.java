@@ -25,22 +25,38 @@ import org.terasology.assets.ResourceUrn;
 import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
+ * AssetManager provides an simplified interface for working with assets across multiple asset types.
+ * <p>
+ * To do this it uses an AssetManager to obtain the AssetTypes relating to an Asset class of interest, and delegates down to them for actions such
+ * as obtaining and reloading assets.
+ * </p>
+ *
  * @author Immortius
  */
 @API
+@ThreadSafe
 public final class AssetManager {
 
-    private AssetTypeManager assetTypeManager;
+    private final AssetTypeManager assetTypeManager;
 
     public AssetManager(AssetTypeManager assetTypeManager) {
         this.assetTypeManager = assetTypeManager;
     }
 
+    /**
+     * Retrieves a set of the ResourceUrns for all loaded assets of the given Asset class (including subtypes)
+     *
+     * @param type The Asset class of interest
+     * @param <T>  The Asset class
+     * @param <U>  The AssetData class
+     * @return A set of the ResourceUrns of all loaded assets
+     */
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> getLoadedAssets(Class<T> type) {
         List<AssetType<? extends T, ? extends U>> assetTypes = assetTypeManager.getAssetTypes(type);
         switch (assetTypes.size()) {
@@ -57,6 +73,15 @@ public final class AssetManager {
         }
     }
 
+    /**
+     * Retrieves a set of the ResourceUrns for all available assets of the given Asset class (including subtypes). An available asset is either a loaded asset, or one
+     * which can be requested. The set is not necessarily complete as assets procedurally generated from their resource urn may not be included.
+     *
+     * @param type The Asset class of interest
+     * @param <T>  The Asset class
+     * @param <U>  The AssetData class
+     * @return A set of the ResourceUrns of all available assets
+     */
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> getAvailableAssets(Class<T> type) {
         List<AssetType<? extends T, ? extends U>> assetTypes = assetTypeManager.getAssetTypes(type);
         switch (assetTypes.size()) {
@@ -73,10 +98,30 @@ public final class AssetManager {
         }
     }
 
+    /**
+     * Given a string that may be a partial or full urn, resolves all possible ResourceUrns to load it as. This takes into account the current module context from
+     * {@link org.terasology.assets.management.ContextManager}.
+     *
+     * @param urn  The full or partial urn to resolve.
+     * @param type The type of Asset to resolve this the urn for
+     * @param <T>  The class of Asset
+     * @param <U>  The class of AssetData
+     * @return A set of possible ResourceUrns that match these conditions
+     */
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> resolve(String urn, Class<T> type) {
         return resolve(urn, type, ContextManager.getCurrentContext());
     }
 
+    /**
+     * Given a string that may be a partial or full urn, resolves all possible ResourceUrns to load it as. This uses the module context given.
+     *
+     * @param urn           The full or partial urn to resolve.
+     * @param type          The type of Asset to resolve this the urn for
+     * @param moduleContext The module context to resolve the urn within
+     * @param <T>           The class of Asset
+     * @param <U>           The class of AssetData
+     * @return A set of possible ResourceUrns that match these conditions
+     */
     public <T extends Asset<U>, U extends AssetData> Set<ResourceUrn> resolve(String urn, Class<T> type, Name moduleContext) {
         List<AssetType<? extends T, ? extends U>> assetTypes = assetTypeManager.getAssetTypes(type);
         switch (assetTypes.size()) {
@@ -93,10 +138,29 @@ public final class AssetManager {
         }
     }
 
+    /**
+     * Retrieves an asset from a full or partial urn, of the given Asset type. The urn is resolved as per {@link #resolve(String, Class)}
+     *
+     * @param urn  The full or partial urn of the asset to retrieve
+     * @param type The type of Asset to retrieve
+     * @param <T>  The class of Asset
+     * @param <U>  The class of AssetData
+     * @return An optional containing the requested asset if successfully obtained.
+     */
     public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(String urn, Class<T> type) {
         return getAsset(urn, type, ContextManager.getCurrentContext());
     }
 
+    /**
+     * Retrieves an asset from a full or partial urn, of the given Asset type
+     *
+     * @param urn           The full or partial urn of the asset to retrieve
+     * @param type          The type of Asset to retrieve
+     * @param moduleContext The context in which to resolve the urn
+     * @param <T>           The class of Asset
+     * @param <U>           The class of AssetData
+     * @return An Optional containing the requested asset if successfully obtained
+     */
     public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(String urn, Class<T> type, Name moduleContext) {
         Set<ResourceUrn> resourceUrns = resolve(urn, type, moduleContext);
         if (resourceUrns.size() == 1) {
@@ -105,6 +169,15 @@ public final class AssetManager {
         return Optional.absent();
     }
 
+    /**
+     * Retrieves an asset with the given urn and type
+     *
+     * @param urn  The urn of the asset to retrieve
+     * @param type The type of asset to retrieve
+     * @param <T>  The class of Asset
+     * @param <U>  The class of AssetData
+     * @return An Optional containing the requested asset if successfully obtained
+     */
     public <T extends Asset<U>, U extends AssetData> Optional<? extends T> getAsset(ResourceUrn urn, Class<T> type) {
         List<AssetType<? extends T, ? extends U>> assetTypes = assetTypeManager.getAssetTypes(type);
         switch (assetTypes.size()) {
@@ -123,9 +196,24 @@ public final class AssetManager {
         return Optional.absent();
     }
 
+    /**
+     * Creates or reloads an asset with the given urn, data and type. The type must be the actual type of the asset, not a super type.
+     *
+     * @param urn  The urn of the asset
+     * @param data The data to load the asset with
+     * @param type The type of the asset
+     * @param <T>  The class of Asset
+     * @param <U>  The class of AssetData
+     * @return The loaded asset
+     * @throws java.lang.IllegalStateException if the asset type is not managed by this AssetManager.
+     */
     public <T extends Asset<U>, U extends AssetData> T loadAsset(ResourceUrn urn, U data, Class<T> type) {
-        AssetType<T, U> assetType = assetTypeManager.getAssetType(type);
-        return assetType.loadAsset(urn, data);
+        Optional<AssetType<T, U>> assetType = assetTypeManager.getAssetType(type);
+        if (assetType.isPresent()) {
+            return assetType.get().loadAsset(urn, data);
+        } else {
+            throw new IllegalStateException(type + " is not a support type of asset");
+        }
     }
 
 }

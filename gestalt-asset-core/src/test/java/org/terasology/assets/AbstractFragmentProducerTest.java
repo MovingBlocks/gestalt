@@ -19,7 +19,6 @@ package org.terasology.assets;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.AssetTypeManager;
@@ -31,9 +30,6 @@ import org.terasology.assets.test.stubs.book.BookFragmentDataProducer;
 import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextFactory;
-import org.terasology.naming.Name;
-
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -56,7 +52,7 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
     private AssetType<Book, BookData> bookType = new AssetType<>(Book.class, new BookFactory());
 
     public AbstractFragmentProducerTest() throws Exception {
-        when(assetTypeManager.getAssetType(Book.class)).thenReturn(bookType);
+        when(assetTypeManager.getAssetType(Book.class)).thenReturn(Optional.of(bookType));
         when(assetTypeManager.getAssetTypes(Book.class)).thenReturn(ImmutableList.<AssetType<? extends Book, ? extends BookData>>of(bookType));
     }
 
@@ -83,7 +79,7 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
 
         AssetType<Text, TextData> textType = new AssetType<>(Text.class, new TextFactory());
         textType.addProducer(bookFragmentProducer);
-        when(assetTypeManager.getAssetType(Text.class)).thenReturn(textType);
+        when(assetTypeManager.getAssetType(Text.class)).thenReturn(Optional.of(textType));
         when(assetTypeManager.getAssetTypes(Text.class)).thenReturn(ImmutableList.<AssetType<? extends Text, ? extends TextData>>of(textType));
 
         assertEquals(ImmutableSet.of(FRAGMENT_URN), textType.resolve(FRAGMENT_URN.getResourceName() + "#" + FRAGMENT_URN.getFragmentName()));

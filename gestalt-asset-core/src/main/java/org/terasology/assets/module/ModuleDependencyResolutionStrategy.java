@@ -23,21 +23,26 @@ import org.terasology.assets.ResolutionStrategy;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.Set;
 
 /**
+ * ModuleDependencyResolutionStrategy is a resolution strategy that takes into account the dependencies of the module that is the context of resolution.
+ * Firstly, if the context is one of the possible modules, just the context is returned. Otherwise, only list of possible modules
+ * are filtered down to just those that are a dependency of the module context
+ *
  * @author Immortius
  */
+@ThreadSafe
 public class ModuleDependencyResolutionStrategy implements ResolutionStrategy {
 
     private final ModuleEnvironment environment;
 
+    /**
+     * @param environment The module environment providing the module dependencies.
+     */
     public ModuleDependencyResolutionStrategy(ModuleEnvironment environment) {
         this.environment = environment;
-    }
-
-    public ModuleEnvironment getEnvironment() {
-        return environment;
     }
 
     @Override

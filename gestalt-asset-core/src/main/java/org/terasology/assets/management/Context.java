@@ -19,10 +19,15 @@ package org.terasology.assets.management;
 import org.terasology.naming.Name;
 
 /**
+ * An AutoClosable token for the current module context. Should be closed when the context ends. Compatible with try-with-resource blocks.
+ *
  * @author Immortius
  */
 public interface Context extends AutoCloseable {
 
+    /**
+     * @return The name of the module of the context
+     */
     Name getContext();
 
     @Override

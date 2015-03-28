@@ -17,12 +17,13 @@
 package org.terasology.module;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
@@ -67,14 +68,14 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleEnvironment.class);
 
-    private final Map<Name, Module> modules;
+    private final ImmutableMap<Name, Module> modules;
     private final ClassLoader apiClassLoader;
     private final ClassLoader finalClassLoader;
-    private final List<ModuleClassLoader> managedClassLoaders = Lists.newArrayList();
-    private final SetMultimap<Name, Name> moduleDependencies = LinkedHashMultimap.create();
-    private Reflections fullReflections;
-    private ImmutableList<Module> modulesOrderByDependencies;
-    private ImmutableList<Name> moduleIdsOrderedByDependencies;
+    private final ImmutableList<ModuleClassLoader> managedClassLoaders;
+    private final ImmutableSetMultimap<Name, Name> moduleDependencies;
+    private final Reflections fullReflections;
+    private final ImmutableList<Module> modulesOrderByDependencies;
+    private final ImmutableList<Name> moduleIdsOrderedByDependencies;
 
     /**
      * @param modules                   The modules this environment should encompass.
@@ -98,19 +99,32 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         Map<Name, Reflections> reflectionsByModule = Maps.newLinkedHashMap();
         this.modules = buildModuleMap(modules);
         this.apiClassLoader = apiClassLoader;
-        cacheModulesOrderedByDependencies();
+        this.modulesOrderByDependencies = calculateModulesOrderedByDependencies();
+        this.moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(modulesOrderByDependencies, new Function<Module, Name>() {
 
-        ClassLoader lastClassloader = apiClassLoader;
+            @Override
+            public Name apply(Module input) {
+                return input.getId();
+            }
+        }));
+
+        ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
+        ClassLoader lastClassLoader = apiClassLoader;
         List<Module> orderedModules = getModulesOrderedByDependencies();
         for (final Module module : orderedModules) {
             if (module.isCodeModule()) {
-                lastClassloader = determineClassloaderFor(module, lastClassloader, permissionProviderFactory, injectors);
+                Optional<ModuleClassLoader> classLoader = determineClassloaderFor(module, lastClassLoader, permissionProviderFactory, injectors);
+                if (classLoader.isPresent()) {
+                    managedClassLoaderListBuilder.add(classLoader.get());
+                    lastClassLoader = classLoader.get();
+                }
                 reflectionsByModule.put(module.getId(), module.getReflectionsFragment());
             }
         }
-        this.finalClassLoader = lastClassloader;
-        buildFullReflections(reflectionsByModule);
-        cacheModuleDependencies();
+        this.finalClassLoader = lastClassLoader;
+        this.fullReflections = buildFullReflections(reflectionsByModule);
+        this.managedClassLoaders = managedClassLoaderListBuilder.build();
+        this.moduleDependencies = buildModuleDependencies();
 
     }
 
@@ -133,10 +147,10 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @param parent                    The classloader to parent any new classloader off of
      * @param permissionProviderFactory The provider of api information
      * @param injectors                 Any Bytecode Injectors that should be run over any loaded module class.
-     * @return The classloader to use for module - may be a newly created classloader.
+     * @return The new module classloader to use for this module, or absent if the parent classloader should be used.
      */
-    private ClassLoader determineClassloaderFor(final Module module, final ClassLoader parent,
-                                                final PermissionProviderFactory permissionProviderFactory, final Iterable<BytecodeInjector> injectors) {
+    private Optional<ModuleClassLoader> determineClassloaderFor(final Module module, final ClassLoader parent,
+                                                                final PermissionProviderFactory permissionProviderFactory, final Iterable<BytecodeInjector> injectors) {
         if (!module.isOnClasspath()) {
             ModuleClassLoader moduleClassloader = AccessController.doPrivileged(new PrivilegedAction<ModuleClassLoader>() {
                 @Override
@@ -145,10 +159,9 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
                             parent, permissionProviderFactory.createPermissionProviderFor(module), injectors);
                 }
             });
-            managedClassLoaders.add(moduleClassloader);
-            return moduleClassloader;
+            return Optional.of(moduleClassloader);
         } else {
-            return parent;
+            return Optional.absent();
         }
     }
 
@@ -157,26 +170,29 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      *
      * @param reflectionsByModule A map of reflection information for each module
      */
-    private void buildFullReflections(Map<Name, Reflections> reflectionsByModule) {
+    private Reflections buildFullReflections(Map<Name, Reflections> reflectionsByModule) {
         ConfigurationBuilder fullBuilder = new ConfigurationBuilder()
                 .addClassLoader(apiClassLoader)
                 .addClassLoader(finalClassLoader);
-        fullReflections = new Reflections(fullBuilder);
+        Reflections reflections = new Reflections(fullBuilder);
         for (Reflections moduleReflection : reflectionsByModule.values()) {
-            fullReflections.merge(moduleReflection);
+            reflections.merge(moduleReflection);
         }
+        return reflections;
     }
 
-    private void cacheModuleDependencies() {
+    private ImmutableSetMultimap<Name, Name> buildModuleDependencies() {
+        SetMultimap<Name, Name> moduleDependenciesBuilder = HashMultimap.create();
         for (Module module : getModulesOrderedByDependencies()) {
             for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
-                moduleDependencies.put(module.getId(), dependency.getId());
-                moduleDependencies.putAll(module.getId(), moduleDependencies.get(dependency.getId()));
+                moduleDependenciesBuilder.put(module.getId(), dependency.getId());
+                moduleDependenciesBuilder.putAll(module.getId(), moduleDependenciesBuilder.get(dependency.getId()));
             }
         }
+        return ImmutableSetMultimap.copyOf(moduleDependenciesBuilder);
     }
 
-    private void cacheModulesOrderedByDependencies() {
+    private ImmutableList<Module> calculateModulesOrderedByDependencies() {
         List<Module> result = Lists.newArrayList();
         List<Module> alphabeticallyOrderedModules = Lists.newArrayList(modules.values());
         Collections.sort(alphabeticallyOrderedModules, new Comparator<Module>() {
@@ -189,14 +205,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         for (Module module : alphabeticallyOrderedModules) {
             addModuleAfterDependencies(module, result);
         }
-        modulesOrderByDependencies = ImmutableList.copyOf(result);
-        moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(result, new Function<Module, Name>() {
-
-            @Override
-            public Name apply(Module input) {
-                return input.getId();
-            }
-        }));
+        return ImmutableList.copyOf(result);
     }
 
     private void addModuleAfterDependencies(Module module, List<Module> out) {
@@ -291,7 +300,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @return The ids of the dependencies of the desired module
      */
     public Set<Name> getDependencyNamesOf(Name moduleId) {
-        return Collections.unmodifiableSet(moduleDependencies.get(moduleId));
+        return moduleDependencies.get(moduleId);
     }
 
     /**
@@ -338,6 +347,6 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
 
     @Override
     public Iterator<Module> iterator() {
-        return Iterators.unmodifiableIterator(modules.values().iterator());
+        return modules.values().iterator();
     }
 }

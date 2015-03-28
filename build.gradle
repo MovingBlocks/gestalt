@@ -128,7 +128,7 @@ configure (subprojects.findAll {!it.name.contains(":testpack:")}) {
         ignoreFailures = true
         effort = 'max'
         reportLevel = 'medium'
-        excludeFilter = new File(projectDir, "config/findbugs/findbugs-exclude.xml")
+        excludeFilter = new File(rootDir, "config/findbugs/findbugs-exclude.xml")
     }
 }
 

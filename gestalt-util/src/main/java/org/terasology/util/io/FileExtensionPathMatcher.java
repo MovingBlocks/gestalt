@@ -54,6 +54,10 @@ public class FileExtensionPathMatcher implements PathMatcher {
 
     @Override
     public boolean matches(Path path) {
-        return extensions.contains(Files.getFileExtension(path.getFileName().toString()));
+        Path fileName = path.getFileName();
+        if (fileName != null) {
+            return extensions.contains(Files.getFileExtension(fileName.toString()));
+        }
+        return false;
     }
 }

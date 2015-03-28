@@ -56,8 +56,4 @@ public class ExtensionDataProducer implements AssetDataProducer<TextData> {
     public Optional<TextData> getAssetData(ResourceUrn urn) throws IOException {
         return Optional.absent();
     }
-
-    @Override
-    public void close() {
-    }
 }

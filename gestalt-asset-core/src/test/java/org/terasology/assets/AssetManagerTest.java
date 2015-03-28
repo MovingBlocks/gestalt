@@ -120,7 +120,8 @@ public class AssetManagerTest {
         alternateAssetType.addProducer(alternateProducer);
 
         assertEquals(ImmutableSet.of(ENGINE_TEST_URN), assetManager.resolve(ENGINE_TEST_URN.getResourceName().toString(), ParentAsset.class, ENGINE_TEST_URN.getModuleName()));
-        assertEquals(ImmutableSet.of(ENGINE_TEST2_URN), assetManager.resolve(ENGINE_TEST2_URN.getResourceName().toString(), ParentAsset.class, ENGINE_TEST2_URN.getModuleName()));
+        assertEquals(ImmutableSet.of(ENGINE_TEST2_URN), assetManager.resolve(ENGINE_TEST2_URN.getResourceName().toString(),
+                ParentAsset.class, ENGINE_TEST2_URN.getModuleName()));
     }
 
     @Test

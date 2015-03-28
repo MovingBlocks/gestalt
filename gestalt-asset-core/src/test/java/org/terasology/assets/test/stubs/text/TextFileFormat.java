@@ -16,6 +16,7 @@
 
 package org.terasology.assets.test.stubs.text;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
 import org.terasology.assets.format.AbstractAssetFileFormat;
@@ -40,7 +41,7 @@ public class TextFileFormat extends AbstractAssetFileFormat<TextData> {
     public TextData load(ResourceUrn urn, List<AssetDataFile> inputs) throws IOException {
         TextData data = new TextData();
         if (!inputs.isEmpty()) {
-            try (InputStreamReader reader = new InputStreamReader(inputs.get(0).openStream())) {
+            try (InputStreamReader reader = new InputStreamReader(inputs.get(0).openStream(), Charsets.UTF_8)) {
                 data.setValue(Joiner.on('\n').join(CharStreams.readLines(reader)));
             }
         }

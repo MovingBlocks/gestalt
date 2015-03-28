@@ -17,15 +17,20 @@
 package org.terasology.assets.module;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.format.AssetAlterationFileFormat;
+import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextDeltaFileFormat;
 import org.terasology.assets.test.stubs.text.TextFileFormat;
 import org.terasology.assets.test.stubs.text.TextMetadataFileFormat;
+import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -39,34 +44,37 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
     public static final String FOLDER_NAME = "text";
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
-    private ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(FOLDER_NAME);
-
     public ModuleAssetDataProducerTest() throws Exception {
-        moduleProducer.addAssetFormat(new TextFileFormat());
+    }
+
+
+    private ModuleAssetDataProducer<TextData> createProducer(ModuleEnvironment environment) {
+        return new ModuleAssetDataProducer<>(FOLDER_NAME, environment,
+                Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList());
     }
 
     @Test
     public void getModulesProvidingWithNoMatch() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment());
-
-        Set<Name> results = moduleProducer.getModulesProviding(new Name("madeUpThing"));
+        Set<Name> results = createProducer(createEnvironment()).getModulesProviding(new Name("madeUpThing"));
         assertTrue(results.isEmpty());
     }
 
     @Test
     public void getModulesProvidingWithSingleMatch() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment());
-
-        Set<Name> results = moduleProducer.getModulesProviding(URN.getResourceName());
+        Set<Name> results = createProducer(createEnvironment()).getModulesProviding(URN.getResourceName());
         assertEquals(1, results.size());
         assertTrue(results.contains(URN.getModuleName()));
     }
 
     @Test
     public void resolveWithMultipleMatches() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
+        ModuleAssetDataProducer<TextData> producer = createProducer(createEnvironment(
+                moduleRegistry.getLatestModuleVersion(new Name("test")),
+                moduleRegistry.getLatestModuleVersion(new Name("moduleA"))));
 
-        Set<Name> results = moduleProducer.getModulesProviding(URN.getResourceName());
+        Set<Name> results = producer.getModulesProviding(URN.getResourceName());
         assertEquals(2, results.size());
         assertTrue(results.contains(URN.getModuleName()));
         assertTrue(results.contains(new Name("moduleA")));
@@ -74,20 +82,19 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void getMissingAsset() throws Exception {
-        assertFalse(moduleProducer.getAssetData(URN).isPresent());
+        assertFalse(createProducer(createEmptyEnvironment()).getAssetData(URN).isPresent());
     }
 
     @Test
     public void loadAssetFromFile() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment());
-        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        Optional<TextData> assetData = createProducer(createEnvironment()).getAssetData(URN);
         assertTrue(assetData.isPresent());
         assertEquals("Example text", assetData.get().getValue());
     }
 
     @Test
     public void loadWithOverride() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA"))));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
@@ -97,7 +104,7 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void loadWithOverrideInDependencyChain() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideB"))));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
@@ -107,7 +114,7 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void loadWithOverrideInUnrelatedModulesUsesAlphabeticallyLast() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+        ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideC"))));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
@@ -117,9 +124,12 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void loadWithDelta() throws Exception {
-        moduleProducer.addDeltaFormat(new TextDeltaFileFormat());
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("deltaA"))));
+        ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
+                FOLDER_NAME,
+                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("deltaA"))),
+                Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(),
+                Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -128,10 +138,14 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void loadWithDeltaUnrelatedToOverride() throws Exception {
-        moduleProducer.addDeltaFormat(new TextDeltaFileFormat());
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("overrideA")),
-                moduleRegistry.getLatestModuleVersion(new Name("deltaA"))));
+        ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
+                FOLDER_NAME,
+                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                        moduleRegistry.getLatestModuleVersion(new Name("overrideA")),
+                        moduleRegistry.getLatestModuleVersion(new Name("deltaA"))),
+                Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(),
+                Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -140,10 +154,15 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void deltaDroppedBeforeOverride() throws Exception {
-        moduleProducer.addDeltaFormat(new TextDeltaFileFormat());
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
-                moduleRegistry.getLatestModuleVersion(new Name("deltaA")),
-                moduleRegistry.getLatestModuleVersion(new Name("overrideD"))));
+        ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
+                FOLDER_NAME,
+                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                        moduleRegistry.getLatestModuleVersion(new Name("deltaA")),
+                        moduleRegistry.getLatestModuleVersion(new Name("overrideD"))),
+                Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(),
+                Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()));
+
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -152,19 +171,19 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void redirects() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+        ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
         assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:example")));
     }
 
     @Test
     public void chainedRedirects() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+        ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
         assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:double")));
     }
 
     @Test
     public void handleRedirectResolution() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
+        ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("redirectA"))));
 
         Set<Name> results = moduleProducer.getModulesProviding(new Name("example"));
         assertEquals(1, results.size());
@@ -173,8 +192,12 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void applySupplements() throws Exception {
-        moduleProducer.addSupplementFormat(new TextMetadataFileFormat());
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA"))));
+        ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
+                FOLDER_NAME,
+                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA"))),
+                Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextMetadataFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList());
 
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
         assertTrue(data.isPresent());
@@ -183,9 +206,12 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void overrideWithSupplement() throws Exception {
-        moduleProducer.addSupplementFormat(new TextMetadataFileFormat());
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA")),
-                moduleRegistry.getLatestModuleVersion(new Name("overrideSupplement"))));
+        ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
+                FOLDER_NAME,
+                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA")), moduleRegistry.getLatestModuleVersion(new Name("overrideSupplement"))),
+                Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextMetadataFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList());
 
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
         assertTrue(data.isPresent());
@@ -194,7 +220,7 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
     @Test
     public void orphanOverrideSupplementIgnored() throws Exception {
-        moduleProducer.setEnvironment(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("moduleA")),
+        ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("moduleA")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideWithSupplementOnly"))));
 
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("moduleA:example"));

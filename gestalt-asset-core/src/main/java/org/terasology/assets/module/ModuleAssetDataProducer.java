@@ -21,9 +21,12 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
@@ -43,7 +46,9 @@ import org.terasology.naming.Name;
 import org.terasology.util.io.FileExtensionPathMatcher;
 import org.terasology.util.io.FileScanning;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -56,80 +61,169 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
+ * ModuleAssetDataProducer produces asset data from files within modules. In addition to files defining assets, it supports
+ * files that override or alter assets defined in other modules, files redirecting a urn to another urn, and the ability
+ * to make modifications to asset files in the file system that can be detected and used to reload assets.
+ * <p>
+ * ModuleAsstDataProducer supports five types of files:
+ * </p>
+ * <ul>
+ * <li>Asset files. These correspond to an AssetFileFormat, and provide the core data for an asset. They are
+ * expected to be found under the /assets/<b>folderName</b> directory of modules.</li>
+ * <li>Asset Supplementary files. These correspond to an AssetAlterationFileFormat, and provide additional data for an
+ * asset. They are expected to be found under the /assets/<b>folderName</b> directory of modules. Supplementary formats
+ * can be used by assets of any format - for instance a texture may support both png and jpg formats, and for either a
+ * .info file could be provided with additional metadata.</li>
+ * <li>Asset redirects. These are used to indicate a urn should be resolved to another urn. These are intended to support
+ * assets being renamed or deleted. They are simple text containing the urn to redirect to, with a name corresponding to
+ * a urn and a .redirect extension that contain the urn to use instead.
+ * Like asset files, they are expected to be found under the /assets/<b>folderName</b> directory of modules.</li>
+ * <li>Asset deltas. These are found under /deltas/<b>moduleName</b>/<b>folderName</b>, and provide changes to assets from
+ * other modules. An AssetAlterationFileFormat is used to load them.</li>
+ * <li>Asset overrides. These are found under /overrides/<b>moduleName</b>/<b>folderName</b>, and replace completely
+ * the data of an asset from another module. All the asset formats and asset supplementary formats are used to load these.</li>
+ * </ul>
+ * <p>
+ * When the data for an asset is requested, ModuleAssetDataProducer will return the data using all of the relevant files across
+ * all modules.
+ * </p>
+ * <p>
+ * ModuleAssetDataProducer also sets up watchers for any modules that are folders on the file system. This allows the file
+ * system to be checked for any changed assets, and these assets reloaded as desired.
+ * </p>
+ *
  * @author Immortius
  */
-public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataProducer<U> {
+@ThreadSafe
+public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataProducer<U>, Closeable {
 
+    /**
+     * The name of the module directory that contains asset files.
+     */
     public static final String ASSET_FOLDER = "assets";
+
+    /**
+     * The name of the module directory that contains overrides.
+     */
     public static final String OVERRIDE_FOLDER = "overrides";
+
+    /**
+     * The name of the module directory that contains detlas.
+     */
     public static final String DELTA_FOLDER = "deltas";
+
+    /**
+     * The extension for redirects.
+     */
     public static final String REDIRECT_EXTENSION = "redirect";
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAssetDataProducer.class);
 
     private final String folderName;
 
-    private ModuleEnvironment moduleEnvironment;
+    private final ModuleEnvironment moduleEnvironment;
 
-    private List<AssetFileFormat<U>> assetFormats = Lists.newArrayList();
-    private List<AssetAlterationFileFormat<U>> deltaFormats = Lists.newArrayList();
-    private List<AssetAlterationFileFormat<U>> supplementFormats = Lists.newArrayList();
+    private final ImmutableList<AssetFileFormat<U>> assetFormats;
+    private final ImmutableList<AssetAlterationFileFormat<U>> deltaFormats;
+    private final ImmutableList<AssetAlterationFileFormat<U>> supplementFormats;
 
-    private Map<ResourceUrn, UnloadedAssetData<U>> unloadedAssetLookup = Maps.newHashMap();
-    private Map<ResourceUrn, ResourceUrn> redirectMap = Maps.newHashMap();
-    private SetMultimap<Name, Name> resolutionMap = HashMultimap.create();
+    private final Map<ResourceUrn, UnloadedAssetData<U>> unloadedAssetLookup = new MapMaker().concurrencyLevel(1).makeMap();
+    private final ImmutableMap<ResourceUrn, ResourceUrn> redirectMap;
+    private final SetMultimap<Name, Name> resolutionMap = Multimaps.synchronizedSetMultimap(HashMultimap.<Name, Name>create());
 
-    private Map<Name, WatchService> moduleWatchServices = Maps.newLinkedHashMap();
-    private Map<WatchKey, PathWatcher> pathWatchers = Maps.newHashMap();
-    private Map<Path, WatchKey> watchKeys = Maps.newHashMap();
+    private final ImmutableList<WatchService> moduleWatchServices;
+    private final Map<WatchKey, PathWatcher> pathWatchers = new MapMaker().concurrencyLevel(1).makeMap();
+    private final Map<Path, WatchKey> watchKeys = new MapMaker().concurrencyLevel(1).makeMap();
 
-    public ModuleAssetDataProducer(String folderName) {
+    /**
+     * Creates a ModuleAssetDataProducer
+     *
+     * @param folderName          The subfolder that contains files relevant to the asset data this producer loads
+     * @param moduleEnvironment   The module environment to load asset data from
+     * @param assetFormats        The file formats supported for loading asset files
+     * @param supplementalFormats The supplementary file formats supported when loading asset files
+     * @param deltaFormats        The delta file formats supported when loading asset files
+     */
+    public ModuleAssetDataProducer(String folderName,
+                                   ModuleEnvironment moduleEnvironment,
+                                   Collection<AssetFileFormat<U>> assetFormats,
+                                   Collection<AssetAlterationFileFormat<U>> supplementalFormats,
+                                   Collection<AssetAlterationFileFormat<U>> deltaFormats) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(folderName), "folderName must not be null or empty");
         this.folderName = folderName;
+        this.moduleEnvironment = moduleEnvironment;
+        this.assetFormats = ImmutableList.copyOf(assetFormats);
+        this.supplementFormats = ImmutableList.copyOf(supplementalFormats);
+        this.deltaFormats = ImmutableList.copyOf(deltaFormats);
+
+        scanForAssets();
+        scanForOverrides();
+        scanForDeltas();
+        redirectMap = buildRedirectMap(scanModulesForRedirects());
+
+        moduleWatchServices = startWatchService();
     }
 
-    public void close() {
+    /**
+     * @return A list of the asset file formats supported
+     */
+    public ImmutableList<AssetFileFormat<U>> getAssetFormats() {
+        return assetFormats;
+    }
+
+    /**
+     * @return A list of the supplement file formats supported
+     */
+    public ImmutableList<AssetAlterationFileFormat<U>> getSupplementFormats() {
+        return supplementFormats;
+    }
+
+    /**
+     * @return A list of the delta file formats supported
+     */
+    public ImmutableList<AssetAlterationFileFormat<U>> getDeltaFormats() {
+        return deltaFormats;
+    }
+
+    /**
+     * Closes the producer, shutting down the watch service that observes the file system for changes
+     */
+    @Override
+    public synchronized void close() {
         shutdownWatchService();
+        unloadedAssetLookup.clear();
+        resolutionMap.clear();
     }
 
+    /**
+     * @return The module environment that asset data is read from
+     */
     public ModuleEnvironment getModuleEnvironment() {
         return moduleEnvironment;
     }
 
-    public void setEnvironment(ModuleEnvironment environment) {
-        Preconditions.checkNotNull(environment);
-        this.moduleEnvironment = environment;
-
-        shutdownWatchService();
-        unloadedAssetLookup.clear();
-        resolutionMap.clear();
-        redirectMap.clear();
-        scanForAssets();
-        scanForOverrides();
-        scanForDeltas();
-        scanForRedirects();
-
-        startWatchService();
-    }
-
-    public Set<ResourceUrn> checkForChanges() {
-        Set<ResourceUrn> toReload = Sets.newLinkedHashSet();
-        for (Map.Entry<Name, WatchService> entry : moduleWatchServices.entrySet()) {
-            WatchKey key = entry.getValue().poll();
+    /**
+     * Checks the file system for any changes that affects assets.
+     *
+     * @return A set of ResourceUrns of changed assets.
+     */
+    public synchronized Set<ResourceUrn> checkForChanges() {
+        Set<ResourceUrn> changed = Sets.newLinkedHashSet();
+        for (WatchService service : moduleWatchServices) {
+            WatchKey key = service.poll();
             while (key != null) {
                 PathWatcher pathWatcher = pathWatchers.get(key);
-                toReload.addAll(pathWatcher.update(key.pollEvents()));
+                changed.addAll(pathWatcher.update(key.pollEvents()));
                 key.reset();
-                key = entry.getValue().poll();
+                key = service.poll();
             }
         }
-        return toReload;
+        return changed;
     }
 
     @Override
@@ -139,7 +233,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
     @Override
     public Set<Name> getModulesProviding(Name resourceName) {
-        return Collections.unmodifiableSet(resolutionMap.get(resourceName));
+        return ImmutableSet.copyOf(resolutionMap.get(resourceName));
     }
 
     @Override
@@ -162,60 +256,12 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         return Optional.absent();
     }
 
-    public List<AssetFileFormat<U>> getAssetFormats() {
-        return Collections.unmodifiableList(assetFormats);
-    }
-
-    public void addAssetFormat(AssetFileFormat<U> format) {
-        assetFormats.add(format);
-    }
-
-    public void removeAssetFormat(AssetFileFormat<U> format) {
-        assetFormats.remove(format);
-    }
-
-    public void clearAssetFormats() {
-        assetFormats.clear();
-    }
-
-    public List<AssetAlterationFileFormat<U>> getDeltaFormats() {
-        return Collections.unmodifiableList(deltaFormats);
-    }
-
-    public void addDeltaFormat(AssetAlterationFileFormat<U> format) {
-        deltaFormats.add(format);
-    }
-
-    public void removeDeltaFormat(AssetAlterationFileFormat<U> format) {
-        deltaFormats.remove(format);
-    }
-
-    public void clearDeltaFormats() {
-        deltaFormats.clear();
-    }
-
-    public void addSupplementFormat(AssetAlterationFileFormat<U> format) {
-        supplementFormats.add(format);
-    }
-
-    public List<AssetAlterationFileFormat<U>> getSupplementFormats() {
-        return Collections.unmodifiableList(supplementFormats);
-    }
-
-    public void removeSupplementFormat(AssetAlterationFileFormat<U> format) {
-        supplementFormats.remove(format);
-    }
-
-    public void clearSupplementFormats() {
-        supplementFormats.clear();
-    }
-
     private void scanForAssets() {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             ModuleNameProvider moduleNameProvider = new FixedModuleNameProvider(module.getId());
             Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
             if (Files.exists(rootPath)) {
-                scanModuleForAssets(module, rootPath, moduleNameProvider);
+                scanLocationForAssets(module, rootPath, moduleNameProvider);
             }
         }
     }
@@ -225,12 +271,12 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
             if (Files.exists(rootPath)) {
-                scanModuleForAssets(module, rootPath, moduleNameProvider);
+                scanLocationForAssets(module, rootPath, moduleNameProvider);
             }
         }
     }
 
-    private void scanModuleForAssets(final Module origin, Path rootPath, final ModuleNameProvider moduleNameProvider) {
+    private void scanLocationForAssets(final Module origin, Path rootPath, final ModuleNameProvider moduleNameProvider) {
         try {
             Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
                 @Override
@@ -268,34 +314,26 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
     }
 
-    private void scanForRedirects() {
+
+    private Map<ResourceUrn, ResourceUrn> scanModulesForRedirects() {
         Map<ResourceUrn, ResourceUrn> rawRedirects = Maps.newLinkedHashMap();
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
             if (Files.exists(rootPath)) {
                 try {
                     for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
-                        Name assetName = new Name(com.google.common.io.Files.getNameWithoutExtension(file.getFileName().toString()));
-                        try (BufferedReader reader = Files.newBufferedReader(file, Charsets.UTF_8)) {
-                            List<String> contents = CharStreams.readLines(reader);
-                            if (contents.isEmpty()) {
-                                logger.error("Failed to read redirect '{}:{}' - empty", module.getId(), assetName);
-                            } else if (!ResourceUrn.isValid(contents.get(0))) {
-                                logger.error("Failed to read redirect '{}:{}' - '{}' is not a valid urn", module.getId(), assetName, contents.get(0));
-                            } else {
-                                rawRedirects.put(new ResourceUrn(module.getId(), assetName), new ResourceUrn(contents.get(0)));
-                                resolutionMap.put(assetName, module.getId());
-                            }
-                        } catch (IOException e) {
-                            logger.error("Failed to read redirect '{}:{}'", module.getId(), assetName, e);
-                        }
+                        processRedirectFile(file, module.getId(), rawRedirects);
                     }
                 } catch (IOException e) {
                     logger.error("Failed to scan module '{}' for assets", module.getId(), e);
                 }
             }
         }
+        return rawRedirects;
+    }
 
+    private ImmutableMap<ResourceUrn, ResourceUrn> buildRedirectMap(Map<ResourceUrn, ResourceUrn> rawRedirects) {
+        ImmutableMap.Builder<ResourceUrn, ResourceUrn> builder = ImmutableMap.builder();
         for (Map.Entry<ResourceUrn, ResourceUrn> entry : rawRedirects.entrySet()) {
             ResourceUrn currentTarget = entry.getKey();
             ResourceUrn redirect = entry.getValue();
@@ -303,16 +341,44 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                 currentTarget = redirect;
                 redirect = rawRedirects.get(currentTarget);
             }
-            redirectMap.put(entry.getKey(), currentTarget);
+            builder.put(entry.getKey(), currentTarget);
+        }
+        return builder.build();
+    }
+
+    private void processRedirectFile(Path file, Name moduleId, Map<ResourceUrn, ResourceUrn> rawRedirects) {
+        Path filename = file.getFileName();
+        if (filename != null) {
+            Name assetName = new Name(com.google.common.io.Files.getNameWithoutExtension(filename.toString()));
+            try (BufferedReader reader = Files.newBufferedReader(file, Charsets.UTF_8)) {
+                List<String> contents = CharStreams.readLines(reader);
+                if (contents.isEmpty()) {
+                    logger.error("Failed to read redirect '{}:{}' - empty", moduleId, assetName);
+                } else if (!ResourceUrn.isValid(contents.get(0))) {
+                    logger.error("Failed to read redirect '{}:{}' - '{}' is not a valid urn", moduleId, assetName, contents.get(0));
+                } else {
+                    rawRedirects.put(new ResourceUrn(moduleId, assetName), new ResourceUrn(contents.get(0)));
+                    resolutionMap.put(assetName, moduleId);
+                }
+            } catch (IOException e) {
+                logger.error("Failed to read redirect '{}:{}'", moduleId, assetName, e);
+            }
+        } else {
+            logger.error("Missing file name for redirect");
         }
     }
 
     private <V extends FileFormat> Optional<ResourceUrn> registerSource(Name module, Path target, Name providingModule,
                                                                         Collection<V> formats, RegisterSourceHandler<U, V> sourceHandler) {
+        Path filename = target.getFileName();
+        if (filename == null) {
+            logger.error("Missing filename for asset file");
+            return Optional.absent();
+        }
         for (V format : formats) {
             if (format.getFileMatcher().matches(target)) {
                 try {
-                    Name assetName = format.getAssetName(target.getFileName().toString());
+                    Name assetName = format.getAssetName(filename.toString());
                     ResourceUrn urn = new ResourceUrn(module, assetName);
                     UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                     if (existing != null) {
@@ -329,7 +395,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                     }
                     return Optional.absent();
                 } catch (InvalidAssetFilenameException e) {
-                    logger.warn("Invalid name for asset - {}", target.getFileName());
+                    logger.warn("Invalid name for asset - {}", filename);
                 }
             }
         }
@@ -337,10 +403,15 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     }
 
     private Optional<ResourceUrn> registerAssetDelta(Name module, Path target, Name providingModule) {
+        Path filename = target.getFileName();
+        if (filename == null) {
+            logger.error("Missing file name for asset delta for '{}'", folderName);
+            return Optional.absent();
+        }
         for (AssetAlterationFileFormat<U> format : deltaFormats) {
             if (format.getFileMatcher().matches(target)) {
                 try {
-                    Name assetName = format.getAssetName(target.getFileName().toString());
+                    Name assetName = format.getAssetName(filename.toString());
                     ResourceUrn urn = new ResourceUrn(module, assetName);
                     UnloadedAssetData<U> unloadedAssetData = unloadedAssetLookup.get(urn);
                     if (unloadedAssetData == null) {
@@ -358,11 +429,12 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         return Optional.absent();
     }
 
-    private void startWatchService() {
+    private ImmutableList<WatchService> startWatchService() {
+        ImmutableList.Builder<WatchService> watchServiceBuilder = ImmutableList.builder();
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             try {
                 final WatchService moduleWatchService = module.getFileSystem().newWatchService();
-                moduleWatchServices.put(module.getId(), moduleWatchService);
+                watchServiceBuilder.add(moduleWatchService);
 
                 for (Path rootPath : module.getFileSystem().getRootDirectories()) {
                     PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), moduleWatchService);
@@ -372,21 +444,24 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                 logger.warn("Failed to establish change watch service for module '{}'", module, e);
             }
         }
+        return watchServiceBuilder.build();
     }
 
     private void shutdownWatchService() {
-        for (Map.Entry<Name, WatchService> entry : moduleWatchServices.entrySet()) {
+        for (WatchService watchService : moduleWatchServices) {
             try {
-                entry.getValue().close();
+                watchService.close();
             } catch (IOException e) {
-                logger.error("Failed to shutdown watch service for module '{}'", entry.getKey(), e);
+                logger.error("Failed to shutdown watch service", e);
             }
         }
-        moduleWatchServices.clear();
         pathWatchers.clear();
         watchKeys.clear();
     }
 
+    /**
+     * A PathWatcher watches a path for changes, and reacts to those changes.
+     */
     private abstract class PathWatcher {
         private Path watchedPath;
         private WatchService watchService;
@@ -454,6 +529,9 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             }
         }
 
+        /**
+         * Called when the path watcher is registered for an existing path
+         */
         public final void onRegistered() {
             try (DirectoryStream<Path> contents = Files.newDirectoryStream(getWatchedPath())) {
                 for (Path path : contents) {
@@ -469,6 +547,11 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             }
         }
 
+        /**
+         * Called when the path watcher is for a newly created path
+         *
+         * @param outChanged The ResourceUrns of any assets affected by the creation of this path
+         */
         public final void onCreated(Set<ResourceUrn> outChanged) {
             try (DirectoryStream<Path> contents = Files.newDirectoryStream(getWatchedPath())) {
                 for (Path path : contents) {
@@ -483,14 +566,39 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             }
         }
 
+        /**
+         * Processes a path within this path watcher
+         *
+         * @param target The path to process
+         * @return A new path watcher for the path
+         * @throws IOException If there was any issue processing the path
+         */
         protected abstract Optional<? extends PathWatcher> processPath(Path target) throws IOException;
 
+        /**
+         * Called when a file is created
+         *
+         * @param target     The created file
+         * @param outChanged The ResourceUrns of any assets affected
+         */
         protected void onFileCreated(Path target, final Set<ResourceUrn> outChanged) {
         }
 
+        /**
+         * Called when a file is modified
+         *
+         * @param target     The modified file
+         * @param outChanged The ResourceUrns of any assets affected
+         */
         protected void onFileModified(Path target, final Set<ResourceUrn> outChanged) {
         }
 
+        /**
+         * Called when a file is deleted
+         *
+         * @param target     The deleted file
+         * @param outChanged The ResourceUrns of any assets affected
+         */
         protected void onFileDeleted(Path target, final Set<ResourceUrn> outChanged) {
         }
     }
@@ -598,13 +706,19 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
 
         private ResourceUrn getResourceUrn(Path target) {
+            Path filename = target.getFileName();
+            if (filename == null) {
+                logger.error("Missing filename for resource target");
+                return null;
+            }
+
             for (FileFormat fileFormat : deltaFormats) {
                 if (fileFormat.getFileMatcher().matches(target)) {
                     try {
-                        Name assetName = fileFormat.getAssetName(target.getFileName().toString());
+                        Name assetName = fileFormat.getAssetName(filename.toString());
                         return new ResourceUrn(module, assetName);
                     } catch (InvalidAssetFilenameException e) {
-                        logger.debug("Modified file does not have a valid asset name - '{}'", target.getFileName());
+                        logger.debug("Modified file does not have a valid asset name - '{}'", filename);
                     }
                 }
             }
@@ -631,10 +745,15 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected void onFileDeleted(Path target, Set<ResourceUrn> outChanged) {
+            Path filename = target.getFileName();
+            if (filename == null) {
+                logger.error("Missing filename for deleted file");
+                return;
+            }
             for (AssetAlterationFileFormat<U> format : deltaFormats) {
                 if (format.getFileMatcher().matches(target)) {
                     try {
-                        Name assetName = format.getAssetName(target.getFileName().toString());
+                        Name assetName = format.getAssetName(filename.toString());
                         ResourceUrn urn = new ResourceUrn(module, assetName);
                         UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                         if (existing != null) {
@@ -669,13 +788,16 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
 
         private ResourceUrn getResourceUrn(Path target, Collection<? extends FileFormat> formats) {
-            for (FileFormat fileFormat : formats) {
-                if (fileFormat.getFileMatcher().matches(target)) {
-                    try {
-                        Name assetName = fileFormat.getAssetName(target.getFileName().toString());
-                        return new ResourceUrn(module, assetName);
-                    } catch (InvalidAssetFilenameException e) {
-                        logger.debug("Modified file does not have a valid asset name - '{}'", target.getFileName());
+            Path filename = target.getFileName();
+            if (filename != null) {
+                for (FileFormat fileFormat : formats) {
+                    if (fileFormat.getFileMatcher().matches(target)) {
+                        try {
+                            Name assetName = fileFormat.getAssetName(filename.toString());
+                            return new ResourceUrn(module, assetName);
+                        } catch (InvalidAssetFilenameException e) {
+                            logger.debug("Modified file does not have a valid asset name - '{}'", filename);
+                        }
                     }
                 }
             }
@@ -706,50 +828,59 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected void onFileDeleted(Path target, Set<ResourceUrn> outChanged) {
-            for (AssetFileFormat<U> format : assetFormats) {
-                if (format.getFileMatcher().matches(target)) {
-                    try {
-                        Name assetName = format.getAssetName(target.getFileName().toString());
-                        ResourceUrn urn = new ResourceUrn(module, assetName);
-                        UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
-                        if (existing != null) {
-                            existing.removeSource(providingModule, format, target);
-                            if (existing.isValid()) {
-                                outChanged.add(urn);
+            Path filename = target.getFileName();
+            if (filename != null) {
+                for (AssetFileFormat<U> format : assetFormats) {
+                    if (format.getFileMatcher().matches(target)) {
+                        try {
+                            Name assetName = format.getAssetName(filename.toString());
+                            ResourceUrn urn = new ResourceUrn(module, assetName);
+                            UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
+                            if (existing != null) {
+                                existing.removeSource(providingModule, format, target);
+                                if (existing.isValid()) {
+                                    outChanged.add(urn);
+                                }
                             }
+                            return;
+                        } catch (InvalidAssetFilenameException e) {
+                            logger.debug("Deleted file does not have a valid file name - {}", target);
                         }
-                        return;
-                    } catch (InvalidAssetFilenameException e) {
-                        logger.debug("Deleted file does not have a valid file name - {}", target);
                     }
                 }
-            }
-            for (AssetAlterationFileFormat<U> format : supplementFormats) {
-                if (format.getFileMatcher().matches(target)) {
-                    try {
-                        Name assetName = format.getAssetName(target.getFileName().toString());
-                        ResourceUrn urn = new ResourceUrn(module, assetName);
-                        UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
-                        if (existing != null) {
-                            existing.removeSupplementSource(providingModule, format, target);
-                            if (existing.isValid()) {
-                                outChanged.add(urn);
+                for (AssetAlterationFileFormat<U> format : supplementFormats) {
+                    if (format.getFileMatcher().matches(target)) {
+                        try {
+                            Name assetName = format.getAssetName(filename.toString());
+                            ResourceUrn urn = new ResourceUrn(module, assetName);
+                            UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
+                            if (existing != null) {
+                                existing.removeSupplementSource(providingModule, format, target);
+                                if (existing.isValid()) {
+                                    outChanged.add(urn);
+                                }
                             }
+                            return;
+                        } catch (InvalidAssetFilenameException e) {
+                            logger.debug("Deleted file does not have a valid file name - {}", target);
                         }
-                        return;
-                    } catch (InvalidAssetFilenameException e) {
-                        logger.debug("Deleted file does not have a valid file name - {}", target);
                     }
                 }
             }
         }
     }
 
+    /**
+     * Interface for registering a source. Allows the same outer logic to be used for registering different types of asset sources.
+     *
+     * @param <T>
+     * @param <U>
+     */
     private interface RegisterSourceHandler<T extends AssetData, U extends FileFormat> {
         boolean registerSource(UnloadedAssetData<T> source, Name providingModule, U format, Path input);
     }
 
-    public class RegisterAssetSourceHandler implements RegisterSourceHandler<U, AssetFileFormat<U>> {
+    private class RegisterAssetSourceHandler implements RegisterSourceHandler<U, AssetFileFormat<U>> {
 
         @Override
         public boolean registerSource(UnloadedAssetData<U> source, Name providingModule, AssetFileFormat<U> format, Path input) {
@@ -757,7 +888,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
     }
 
-    public class RegisterAssetSupplementSourceHandler implements RegisterSourceHandler<U, AssetAlterationFileFormat<U>> {
+    private class RegisterAssetSupplementSourceHandler implements RegisterSourceHandler<U, AssetAlterationFileFormat<U>> {
 
         @Override
         public boolean registerSource(UnloadedAssetData<U> source, Name providingModule, AssetAlterationFileFormat<U> format, Path input) {
@@ -765,6 +896,9 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
     }
 
+    /**
+     * Interface providing a module name for a given path
+     */
     private interface ModuleNameProvider {
         Name getModuleName(Path file);
     }
@@ -794,6 +928,5 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             return new Name(file.getName(nameIndex).toString());
         }
     }
-
 
 }

@@ -29,6 +29,7 @@ import org.terasology.assets.format.FileFormat;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -42,14 +43,15 @@ import java.util.Objects;
  *
  * @author Immortius
  */
+@ThreadSafe
 class UnloadedAssetData<T extends AssetData> {
     private static final Logger logger = LoggerFactory.getLogger(UnloadedAssetData.class);
 
     private final ResourceUrn urn;
     private final ModuleEnvironment environment;
-    private final List<Source<AssetFileFormat<T>>> sources = Lists.newArrayList();
-    private final List<Source<AssetAlterationFileFormat<T>>> supplementSources = Lists.newArrayList();
-    private final List<Source<AssetAlterationFileFormat<T>>> deltaSources = Lists.newArrayList();
+    private final List<Source<AssetFileFormat<T>>> sources = Collections.synchronizedList(Lists.<Source<AssetFileFormat<T>>>newArrayList());
+    private final List<Source<AssetAlterationFileFormat<T>>> supplementSources = Collections.synchronizedList(Lists.<Source<AssetAlterationFileFormat<T>>>newArrayList());
+    private final List<Source<AssetAlterationFileFormat<T>>> deltaSources = Collections.synchronizedList(Lists.<Source<AssetAlterationFileFormat<T>>>newArrayList());
 
     /**
      * @param urn         The urn of the asset this unloaded asset data corresponds to.
@@ -177,15 +179,19 @@ class UnloadedAssetData<T extends AssetData> {
         T result = assetDataLoader.load();
         if (result != null) {
             Name baseModule = assetDataLoader.getProvidingModule();
-            for (Source<AssetAlterationFileFormat<T>> source : supplementSources) {
-                if (source.providingModule.equals(baseModule)) {
-                    source.format.apply(source.input, result);
+            synchronized (supplementSources) {
+                for (Source<AssetAlterationFileFormat<T>> source : supplementSources) {
+                    if (source.providingModule.equals(baseModule)) {
+                        source.format.apply(source.input, result);
+                    }
                 }
             }
-            Collections.sort(deltaSources, new SourceComparator<AssetAlterationFileFormat<T>>(environment.getModuleIdsOrderedByDependencies()));
-            for (Source<AssetAlterationFileFormat<T>> source : deltaSources) {
-                if (source.providingModule.equals(baseModule) || !environment.getDependencyNamesOf(baseModule).contains(source.providingModule)) {
-                    source.format.apply(source.input, result);
+            synchronized (deltaSources) {
+                Collections.sort(deltaSources, new SourceComparator<AssetAlterationFileFormat<T>>(environment.getModuleIdsOrderedByDependencies()));
+                for (Source<AssetAlterationFileFormat<T>> source : deltaSources) {
+                    if (source.providingModule.equals(baseModule) || !environment.getDependencyNamesOf(baseModule).contains(source.providingModule)) {
+                        source.format.apply(source.input, result);
+                    }
                 }
             }
             return Optional.of(result);
@@ -203,9 +209,9 @@ class UnloadedAssetData<T extends AssetData> {
      * @param <U> The type of the file format
      */
     private static class Source<U extends FileFormat> {
-        private Name providingModule;
-        private U format;
-        private AssetDataFile input;
+        private final Name providingModule;
+        private final U format;
+        private final AssetDataFile input;
 
         public Source(Name providingModule, U format, AssetDataFile input) {
             this.providingModule = providingModule;
@@ -251,24 +257,26 @@ class UnloadedAssetData<T extends AssetData> {
 
         public AssetSourceResolver() {
             final List<Name> moduleOrdering = environment.getModuleIdsOrderedByDependencies();
-            Collections.sort(sources, new SourceComparator<AssetFileFormat<T>>(moduleOrdering));
-            for (Source<AssetFileFormat<T>> source : sources) {
-                if (providingModule == null) {
-                    providingModule = source.providingModule;
-                    format = source.format;
-                    inputs.add(source.input);
-                } else if (providingModule.equals(source.providingModule)) {
-                    if (format.equals(source.format)) {
+            synchronized (sources) {
+                Collections.sort(sources, new SourceComparator<AssetFileFormat<T>>(moduleOrdering));
+                for (Source<AssetFileFormat<T>> source : sources) {
+                    if (providingModule == null) {
+                        providingModule = source.providingModule;
+                        format = source.format;
                         inputs.add(source.input);
-                    }
-                } else if (environment.getDependencyNamesOf(source.providingModule).contains(providingModule)) {
-                    providingModule = source.providingModule;
-                    format = source.format;
-                    inputs.clear();
-                    inputs.add(source.input);
-                } else if (!environment.getDependencyNamesOf(providingModule).contains(source.providingModule)) {
-                    logger.warn("Conflict - both module '{}' and '{}' override {}, selecting '{}'", providingModule, source.providingModule, urn, providingModule);
+                    } else if (providingModule.equals(source.providingModule)) {
+                        if (format.equals(source.format)) {
+                            inputs.add(source.input);
+                        }
+                    } else if (environment.getDependencyNamesOf(source.providingModule).contains(providingModule)) {
+                        providingModule = source.providingModule;
+                        format = source.format;
+                        inputs.clear();
+                        inputs.add(source.input);
+                    } else if (!environment.getDependencyNamesOf(providingModule).contains(source.providingModule)) {
+                        logger.warn("Conflict - both module '{}' and '{}' override {}, selecting '{}'", providingModule, source.providingModule, urn, providingModule);
 
+                    }
                 }
             }
         }
@@ -291,7 +299,7 @@ class UnloadedAssetData<T extends AssetData> {
      */
     private static class SourceComparator<T extends FileFormat> implements Comparator<Source<T>> {
 
-        private List<Name> moduleOrdering;
+        private final List<Name> moduleOrdering;
 
         public SourceComparator(List<Name> moduleOrdering) {
             this.moduleOrdering = moduleOrdering;
