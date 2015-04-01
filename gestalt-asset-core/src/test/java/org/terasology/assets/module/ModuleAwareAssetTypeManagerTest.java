@@ -258,7 +258,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assetTypeManager.registerCoreAssetType(AlternateAsset.class, mock(AssetFactory.class));
         assetTypeManager.switchEnvironment(createEmptyEnvironment());
 
-        List<AssetType<? extends ParentAsset, ? extends AssetData>> assetTypes = assetTypeManager.getAssetTypes(ParentAsset.class);
+        List<AssetType<? extends ParentAsset, ?>> assetTypes = assetTypeManager.getAssetTypes(ParentAsset.class);
         assertEquals(2, assetTypes.size());
         assertEquals(AlternateAsset.class, assetTypes.get(0).getAssetClass());
         assertEquals(ChildAsset.class, assetTypes.get(1).getAssetClass());

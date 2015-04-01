@@ -108,10 +108,10 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Asset<U>, U extends AssetData> List<AssetType<? extends T, ? extends U>> getAssetTypes(Class<T> type) {
-        List<AssetType<? extends T, ? extends U>> result = Lists.newArrayList();
+    public <T extends Asset<?>> List<AssetType<? extends T, ?>> getAssetTypes(Class<T> type) {
+        List<AssetType<? extends T, ?>> result = Lists.newArrayList();
         for (Class<? extends Asset> subtype : subtypes.get(type)) {
-            result.add((AssetType<? extends T, ? extends U>) assetTypes.get(subtype));
+            result.add((AssetType<? extends T, ?>) assetTypes.get(subtype));
         }
         return result;
     }
@@ -136,7 +136,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
      */
     public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory) {
         Preconditions.checkState(!assetTypes.containsKey(type), "Asset type '" + type.getSimpleName() + "' already registered");
-        coreAssetTypes.add(new AssetType<>(type, factory));
+        AssetType<T, U> assetType = new AssetType<>(type, factory);
+        coreAssetTypes.add(assetType);
     }
 
     /**

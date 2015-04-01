@@ -37,18 +37,18 @@ configure (subprojects.findAll {!it.name.contains(":testpack:")}) {
         
     // Primary dependencies definition
     dependencies {
-        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.9'
+        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.12'
         compile group: 'com.google.guava', name: 'guava', version: '18.0'
         
         // These dependencies are only needed for running tests
-        testCompile group: 'junit', name: 'junit', version: '4.11'
-        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.2'
-        testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.3'
+        testCompile group: 'org.mockito', name: 'mockito-core', version: '1.10.19'
     }
 
     // Set the expected module Java level (can use a higher Java to run, but should not use features from a higher Java)
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
     
     jar {
         manifest {
@@ -163,8 +163,8 @@ description = 'A set of libraries providing core capabilities for games and game
 // Setup IntelliJ-IDEA
 idea {
     project {
-        jdkName = '1.7'
-        languageLevel = 'JDK_1_7'
+        jdkName = '1.8'
+        languageLevel = 'JDK_1_8'
 
         ipr {
             withXml { xmlProvider ->

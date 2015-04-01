@@ -49,10 +49,9 @@ public interface AssetTypeManager {
      *
      * @param type The class of Asset to get the AssetTypes for
      * @param <T>  The class of Asset
-     * @param <U>  The class of AssetData
      * @return A list of available AssetTypes.
      */
-    <T extends Asset<U>, U extends AssetData> List<AssetType<? extends T, ? extends U>> getAssetTypes(Class<T> type);
+    <T extends Asset<?>> List<AssetType<? extends T, ?>> getAssetTypes(Class<T> type);
 
 
 }
