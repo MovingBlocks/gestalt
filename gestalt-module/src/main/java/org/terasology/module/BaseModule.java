@@ -119,7 +119,7 @@ public abstract class BaseModule implements Module {
         if (reflectionsFragment == null) {
             for (Path path : paths) {
                 if (Files.isDirectory(path) && Files.isRegularFile(path.resolve(REFLECTIONS_CACHE_FILE))) {
-                    collectCacheFromPath(path);
+                    collectCacheFromPath(path.resolve(REFLECTIONS_CACHE_FILE));
                 } else if (Files.isRegularFile(path)) {
                     collectCacheFromArchive(path);
                 }
@@ -142,11 +142,12 @@ public abstract class BaseModule implements Module {
         try (FileSystem archive = FileSystems.newFileSystem(path, null)) {
             Path cachePath = archive.getPath(REFLECTIONS_CACHE_FILE);
             if (Files.isRegularFile(cachePath)) {
-                if (reflectionsFragment == null) {
-                    reflectionsFragment = new Reflections(new ConfigurationBuilder().addClassLoader(ClasspathHelper.staticClassLoader()));
-                }
                 try (InputStream stream = new BufferedInputStream(Files.newInputStream(cachePath))) {
-                    reflectionsFragment.collect(stream);
+                    if (reflectionsFragment == null) {
+                        reflectionsFragment = new ConfigurationBuilder().getSerializer().read(stream);
+                    } else {
+                        reflectionsFragment.collect(stream);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -156,9 +157,14 @@ public abstract class BaseModule implements Module {
 
     private void collectCacheFromPath(Path path) {
         if (reflectionsFragment == null) {
-            reflectionsFragment = new Reflections(new ConfigurationBuilder().addClassLoader(ClasspathHelper.staticClassLoader()));
+            try (InputStream stream = new BufferedInputStream(Files.newInputStream(path))) {
+                reflectionsFragment = new ConfigurationBuilder().getSerializer().read(stream);
+            } catch (IOException e) {
+                logger.error("Failure attempting to read reflections cache from {}", path, e);
+            }
+        } else {
+            reflectionsFragment.collect(path.toFile());
         }
-        reflectionsFragment.collect(path.resolve(REFLECTIONS_CACHE_FILE).toFile());
     }
 
     @Override

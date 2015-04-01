@@ -80,7 +80,7 @@ public class ModuleClassLoader extends URLClassLoader {
         pool = new ClassPool(ClassPool.getDefault());
         for (URL url : urls) {
             try {
-                logger.info("Module path: {}", Paths.get(url.toURI()).toString());
+                logger.debug("Module path: {}", Paths.get(url.toURI()).toString());
                 pool.appendClassPath(Paths.get(url.toURI()).toString());
             } catch (NotFoundException | URISyntaxException e) {
                 logger.error("Failed to process module url: {}", url);
