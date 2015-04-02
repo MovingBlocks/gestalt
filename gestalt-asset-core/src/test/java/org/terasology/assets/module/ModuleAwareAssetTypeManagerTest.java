@@ -18,7 +18,6 @@ package org.terasology.assets.module;
 
 import com.google.common.base.Optional;
 import org.junit.Test;
-import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
