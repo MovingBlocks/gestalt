@@ -26,7 +26,7 @@ subprojects {
     apply plugin: 'java'
 }
 
-configure (subprojects.findAll {!it.name.contains(":testpack:")}) {
+configure (subprojects.findAll {!it.name.contains("testpack") && !it.name.startsWith("module")}) {
     apply plugin: 'checkstyle'
     apply plugin: 'pmd'
     apply plugin: 'findbugs'
@@ -116,6 +116,7 @@ configure (subprojects.findAll {!it.name.contains(":testpack:")}) {
         ignoreFailures = true
         configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
         configProperties.samedir = new File(rootDir, "config/checkstyle")
+        toolVersion = "6.5"
     }
 
     pmd {
