@@ -108,10 +108,10 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Asset<U>, U extends AssetData> List<AssetType<? extends T, ? extends U>> getAssetTypes(Class<T> type) {
-        List<AssetType<? extends T, ? extends U>> result = Lists.newArrayList();
+    public <T extends Asset<?>> List<AssetType<? extends T, ?>> getAssetTypes(Class<T> type) {
+        List<AssetType<? extends T, ?>> result = Lists.newArrayList();
         for (Class<? extends Asset> subtype : subtypes.get(type)) {
-            result.add((AssetType<? extends T, ? extends U>) assetTypes.get(subtype));
+            result.add((AssetType<? extends T, ?>) assetTypes.get(subtype));
         }
         return result;
     }
@@ -136,7 +136,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
      */
     public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory) {
         Preconditions.checkState(!assetTypes.containsKey(type), "Asset type '" + type.getSimpleName() + "' already registered");
-        coreAssetTypes.add(new AssetType<>(type, factory));
+        AssetType<T, U> assetType = new AssetType<>(type, factory);
+        coreAssetTypes.add(assetType);
     }
 
     /**
@@ -521,12 +522,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
     private <T> List<T> findAndInstantiateClasses(ModuleEnvironment environment, final Class<T> baseType, Class<? extends Annotation> annotation) {
         List<T> result = Lists.newArrayList();
-        for (Class<?> discoveredType : environment.getTypesAnnotatedWith(annotation, new Predicate<Class<?>>() {
-            @Override
-            public boolean apply(Class<?> input) {
-                return baseType.isAssignableFrom(input) && !Modifier.isAbstract(input.getModifiers());
-            }
-        })) {
+        for (Class<?> discoveredType : environment.getTypesAnnotatedWith(annotation, input -> baseType.isAssignableFrom(input) && !Modifier.isAbstract(input.getModifiers()))) {
             T instance = null;
             try {
                 Constructor<?> assetManagerConstructor = discoveredType.getConstructor(AssetManager.class);

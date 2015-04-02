@@ -67,14 +67,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).makeMap();
     private final ListMultimap<ResourceUrn, T> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, T>create());
     private boolean closed;
-    private volatile ResolutionStrategy resolutionStrategy = new ResolutionStrategy() {
-        @Override
-        public Set<Name> resolve(Set<Name> modules, Name context) {
-            if (modules.contains(context)) {
-                return ImmutableSet.of(context);
-            } else {
-                return modules;
-            }
+    private volatile ResolutionStrategy resolutionStrategy = (modules, context) -> {
+        if (modules.contains(context)) {
+            return ImmutableSet.of(context);
+        } else {
+            return modules;
         }
     };
 
@@ -83,7 +80,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * (e.g. MyType extends Asset&lt;MyDataType&gt;)
      *
      * @param assetClass The class of asset this AssetType will manage.
-     * @param factory The factory used to convert AssetData to Assets for this type
+     * @param factory    The factory used to convert AssetData to Assets for this type
      */
     @SuppressWarnings("unchecked")
     public AssetType(Class<T> assetClass, AssetFactory<T, U> factory) {

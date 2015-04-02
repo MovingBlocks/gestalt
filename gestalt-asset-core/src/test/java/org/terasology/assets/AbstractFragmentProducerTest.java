@@ -53,7 +53,7 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
 
     public AbstractFragmentProducerTest() throws Exception {
         when(assetTypeManager.getAssetType(Book.class)).thenReturn(Optional.of(bookType));
-        when(assetTypeManager.getAssetTypes(Book.class)).thenReturn(ImmutableList.<AssetType<? extends Book, ? extends BookData>>of(bookType));
+        when(assetTypeManager.getAssetTypes(Book.class)).thenReturn(ImmutableList.<AssetType<? extends Book, ?>>of(bookType));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
         AssetType<Text, TextData> textType = new AssetType<>(Text.class, new TextFactory());
         textType.addProducer(bookFragmentProducer);
         when(assetTypeManager.getAssetType(Text.class)).thenReturn(Optional.of(textType));
-        when(assetTypeManager.getAssetTypes(Text.class)).thenReturn(ImmutableList.<AssetType<? extends Text, ? extends TextData>>of(textType));
+        when(assetTypeManager.getAssetTypes(Text.class)).thenReturn(ImmutableList.<AssetType<? extends Text, ?>>of(textType));
 
         assertEquals(ImmutableSet.of(FRAGMENT_URN), textType.resolve(FRAGMENT_URN.getResourceName() + "#" + FRAGMENT_URN.getFragmentName()));
     }
