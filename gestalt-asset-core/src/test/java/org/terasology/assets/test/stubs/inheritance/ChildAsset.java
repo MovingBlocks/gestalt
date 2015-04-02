@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,22 @@
 package org.terasology.assets.test.stubs.inheritance;
 
 import org.terasology.assets.Asset;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.AssetType;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius
  */
 public class ChildAsset extends ParentAsset<ChildAssetData> {
-    public ChildAsset(ResourceUrn urn, ChildAssetData data) {
-        super(urn);
+
+    public ChildAsset(ResourceUrn urn, ChildAssetData data, AssetType<?, ChildAssetData> type) {
+        super(urn, type);
         doReload(data);
     }
 
     @Override
-    protected Asset<ChildAssetData> doCreateInstance(ResourceUrn instanceUrn) {
-        return this;
+    protected Asset<ChildAssetData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, ChildAssetData> parentAssetType) {
+        return new ChildAsset(instanceUrn, new ChildAssetData(), parentAssetType);
     }
 
     @Override

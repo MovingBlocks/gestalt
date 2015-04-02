@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ import java.util.Set;
 
 /**
  * ModuleRegistry is a specialised collection of modules with lookup support for latest versions, specific version or all versions of a particular module.
- * <p/>
+ * <p>
  * For add operations, if a module already exists in the registry it will not be added (similar to a set)
+ * </p>
  *
  * @author Immortius
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 package org.terasology.assets.test.stubs.text;
 
 import org.terasology.assets.Asset;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.AssetType;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius
@@ -26,14 +27,14 @@ public class Text extends Asset<TextData> {
 
     private String value;
 
-    public Text(ResourceUrn urn, TextData data) {
-        super(urn);
+    public Text(ResourceUrn urn, TextData data, AssetType<?, TextData> type) {
+        super(urn, type);
         reload(data);
     }
 
     @Override
-    protected Asset<TextData> doCreateInstance(ResourceUrn instanceUrn) {
-        return new Text(instanceUrn, new TextData(value));
+    protected Asset<TextData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, TextData> parentAssetType) {
+        return new Text(instanceUrn, new TextData(value), parentAssetType);
     }
 
     @Override

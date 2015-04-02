@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,24 @@
 
 package org.terasology.assets;
 
-import org.terasology.naming.ResourceUrn;
+import org.terasology.module.sandbox.API;
 
 /**
+ * AssetFactorys are used to load AssetData into new assets.
+ * <p>For many assets, the assets just have one asset implementation so the factory would simply call the constructor for the implementation and pass the urn and data
+ * straight through. However other assets may have multiple implementations (e.g. Texture may have an OpenGL and a DirectX implementation) so the factory installed
+ * will determine that. Additionally the factory may pass through other information (OpenGL texture handle, or a reference to a central OpenGL context).</p>
+ *
  * @author Immortius
  */
+@API
 public interface AssetFactory<T extends Asset<U>, U extends AssetData> {
 
-    T build(ResourceUrn urn, U data);
+    /**
+     * @param urn  The urn of the asset to construct
+     * @param data The data for the asset
+     * @param assetType The assetType the asset belongs to
+     * @return The built asset
+     */
+    T build(ResourceUrn urn, U data, AssetType<T, U> assetType);
 }

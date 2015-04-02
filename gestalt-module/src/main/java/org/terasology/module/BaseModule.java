@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,11 +64,7 @@ public abstract class BaseModule implements Module {
     public BaseModule(Collection<Path> paths, ModuleMetadata metadata) {
         this.paths = ImmutableList.copyOf(paths);
         this.metadata = metadata;
-        try {
-            this.fileSystem = new ModuleFileSystemProvider(this).newFileSystem(this);
-        } catch (IOException e) {
-            throw new RuntimeException("Error creating module '" + metadata.getId() + ":" + metadata.getVersion() + "'", e);
-        }
+        this.fileSystem = new ModuleFileSystemProvider(this).newFileSystem(this);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,20 @@ package org.terasology.i18n;
 
 import com.google.common.collect.ImmutableMap;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
 /**
  * I18nMap is a map of Strings by Locale, to support lookup fields that can have different values for different languages (internationalized fields).
- * <p/>
+ * <p>
  * This is not intended to be used as a replacement of Java's existing internationalisation support for strings, but instead used for
  * internationalised strings read from external sources.
- * <p/>
+ * </p>
+ * <p>
  * If a String is not available for a particular locale, then it will fallback though the following steps to find one:
+ * </p>
  * <ol>
  * <li>Drop Locale variant</li>
  * <li>Drop Locale country</li>
@@ -39,6 +42,7 @@ import java.util.Map;
  *
  * @author Immortius
  */
+@Immutable
 public class I18nMap implements Iterable<Map.Entry<Locale, String>> {
     private final Map<Locale, String> values;
 

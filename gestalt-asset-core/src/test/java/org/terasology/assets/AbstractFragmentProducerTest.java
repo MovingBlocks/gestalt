@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@ package org.terasology.assets;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
+import org.terasology.assets.management.AssetManager;
+import org.terasology.assets.management.AssetTypeManager;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.book.Book;
 import org.terasology.assets.test.stubs.book.BookData;
 import org.terasology.assets.test.stubs.book.BookFactory;
-import org.terasology.assets.test.stubs.book.BookFragmentProducer;
+import org.terasology.assets.test.stubs.book.BookFragmentDataProducer;
+import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
-import org.terasology.naming.Name;
-import org.terasology.naming.ResourceUrn;
-
-import java.util.Set;
+import org.terasology.assets.test.stubs.text.TextFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -48,29 +48,16 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
 
     private AssetTypeManager assetTypeManager = mock(AssetTypeManager.class);
     private AssetManager assetManager = new AssetManager(assetTypeManager);
-    private BookFragmentProducer bookFragmentProducer = new BookFragmentProducer(assetManager);
-    private AssetType<Book, BookData> bookType = new AssetType<>(Book.class);
+    private BookFragmentDataProducer bookFragmentProducer = new BookFragmentDataProducer(assetManager);
+    private AssetType<Book, BookData> bookType = new AssetType<>(Book.class, new BookFactory());
 
     public AbstractFragmentProducerTest() throws Exception {
-        when(assetTypeManager.getAssetType(Book.class)).thenReturn(bookType);
+        when(assetTypeManager.getAssetType(Book.class)).thenReturn(Optional.of(bookType));
         when(assetTypeManager.getAssetTypes(Book.class)).thenReturn(ImmutableList.<AssetType<? extends Book, ? extends BookData>>of(bookType));
     }
 
     @Test
-    public void resolveFragmentUrn() {
-        AssetProducer<BookData> bookProducer = mock(AssetProducer.class);
-        bookType.addProducer(bookProducer);
-
-        when(bookProducer.resolve(FRAGMENT_URN.getResourceName().toString(), Name.EMPTY)).thenReturn(Sets.newHashSet(FRAGMENT_URN.getRootUrn()));
-
-        Set<ResourceUrn> result = bookFragmentProducer.resolve("test#0", Name.EMPTY);
-        assertEquals(1, result.size());
-        assertTrue(result.contains(FRAGMENT_URN));
-    }
-
-    @Test
     public void getAssetData() throws Exception {
-        bookType.setFactory(new BookFactory());
         bookType.loadAsset(FRAGMENT_URN.getRootUrn(), new BookData(LINE_0, LINE_1));
 
         Optional<TextData> result = bookFragmentProducer.getAssetData(FRAGMENT_URN);
@@ -81,6 +68,21 @@ public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
         assertTrue(result2.isPresent());
         assertEquals(LINE_1, result2.get().getValue());
 
+    }
+
+    @Test
+    public void resolvePartialFragmentUrn() throws Exception {
+        bookType.loadAsset(FRAGMENT_URN.getRootUrn(), new BookData(LINE_0, LINE_1));
+        AssetDataProducer<BookData> bookProducer = mock(AssetDataProducer.class);
+        when(bookProducer.getModulesProviding(FRAGMENT_URN.getResourceName())).thenReturn(ImmutableSet.of(FRAGMENT_URN.getModuleName()));
+        bookType.addProducer(bookProducer);
+
+        AssetType<Text, TextData> textType = new AssetType<>(Text.class, new TextFactory());
+        textType.addProducer(bookFragmentProducer);
+        when(assetTypeManager.getAssetType(Text.class)).thenReturn(Optional.of(textType));
+        when(assetTypeManager.getAssetTypes(Text.class)).thenReturn(ImmutableList.<AssetType<? extends Text, ? extends TextData>>of(textType));
+
+        assertEquals(ImmutableSet.of(FRAGMENT_URN), textType.resolve(FRAGMENT_URN.getResourceName() + "#" + FRAGMENT_URN.getFragmentName()));
     }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,17 @@ package org.terasology.assets.module;
 import com.google.common.base.Optional;
 import org.junit.Test;
 import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetFactory;
-import org.terasology.assets.AssetProducer;
 import org.terasology.assets.AssetType;
+import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.test.Return;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.assets.test.stubs.extensions.ExtensionAsset;
-import org.terasology.assets.test.stubs.extensions.ExtensionDeltaFormat;
-import org.terasology.assets.test.stubs.extensions.ExtensionFormat;
-import org.terasology.assets.test.stubs.extensions.ExtensionProducer;
-import org.terasology.assets.test.stubs.extensions.ExtensionSupplementalFormat;
+import org.terasology.assets.test.stubs.extensions.ExtensionDataProducer;
+import org.terasology.assets.test.stubs.extensions.ExtensionDeltaFileFormat;
+import org.terasology.assets.test.stubs.extensions.ExtensionFileFormat;
+import org.terasology.assets.test.stubs.extensions.ExtensionSupplementalFileFormat;
 import org.terasology.assets.test.stubs.inheritance.AlternateAsset;
 import org.terasology.assets.test.stubs.inheritance.ChildAsset;
 import org.terasology.assets.test.stubs.inheritance.ParentAsset;
@@ -37,14 +38,11 @@ import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextFactory;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
-import org.terasology.naming.ResourceUrn;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -60,118 +58,96 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
 
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
-    private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManager(createEmptyEnvironment());
+    private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManager();
 
     public ModuleAwareAssetTypeManagerTest() throws Exception {
     }
 
     @Test
-    public void createCoreAssetType() {
+    public void registerCoreAssetType() {
         TextFactory factory = new TextFactory();
-        AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory);
-        assertTrue(assetType.getProducers().isEmpty());
-        assertEquals(factory, assetType.getFactory());
+        assetTypeManager.registerCoreAssetType(Text.class, factory);
+        assertFalse(assetTypeManager.getAssetType(Text.class).isPresent());
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
+        assertTrue(assetTypeManager.getAssetType(Text.class).isPresent());
+        assertTrue(assetTypeManager.getAssetType(Text.class).get().getProducers().isEmpty());
     }
 
     @Test
     public void createCoreAssetTypeWithAssetFolder() {
         TextFactory factory = new TextFactory();
-        AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
-        assertEquals(1, assetType.getProducers().size());
-        assertTrue(assetType.getProducers().get(0) instanceof ModuleAssetProducer);
-        assertEquals(factory, assetType.getFactory());
-    }
-
-    @Test
-    public void getModuleAssetProducerForFileBasedAssetType() {
-        assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
-        Optional<ModuleAssetProducer<TextData>> moduleProducer = assetTypeManager.getModuleProducerFor(Text.class);
-        assertTrue(moduleProducer.isPresent());
-    }
-
-    @Test
-    public void getModuleAssetProducerForFolderlessAssetType() {
-        assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
-        Optional<ModuleAssetProducer<TextData>> moduleProducer = assetTypeManager.getModuleProducerFor(Text.class);
-        assertFalse(moduleProducer.isPresent());
+        assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
+        assertFalse(assetTypeManager.getAssetType(Text.class).isPresent());
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
+        assertTrue(assetTypeManager.getAssetType(Text.class).get().getProducers().get(0) instanceof ModuleAssetDataProducer);
     }
 
     @Test
     public void setEnvironmentPopulatesModuleProducers() throws Exception {
         TextFactory factory = new TextFactory();
-        AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
-        ModuleAssetProducer<TextData> producer = (ModuleAssetProducer<TextData>) assetType.getProducers().get(0);
+        assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
 
-        ModuleEnvironment environment = createEnvironment();
-        assertFalse(environment.equals(producer.getModuleEnvironment()));
-        assetTypeManager.setEnvironment(environment);
-        assertEquals(environment, assetTypeManager.getEnvironment());
-        assertEquals(environment, producer.getModuleEnvironment());
-    }
+        ModuleEnvironment environment = createEmptyEnvironment();
+        assetTypeManager.switchEnvironment(environment);
+        ModuleAssetDataProducer moduleAssetDataProducer = (ModuleAssetDataProducer) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
 
-    @Test
-    public void setUpNewTypesWithLastSetEnvironment() throws Exception {
-        ModuleEnvironment environment = createEnvironment();
-        assetTypeManager.setEnvironment(environment);
-
-        TextFactory factory = new TextFactory();
-        AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, factory, "text");
-        ModuleAssetProducer<TextData> producer = (ModuleAssetProducer<TextData>) assetType.getProducers().get(0);
-        assertEquals(environment, producer.getModuleEnvironment());
+        assertEquals(environment, moduleAssetDataProducer.getModuleEnvironment());
     }
 
     @Test
     public void disposeUnavailableAssetsOnEnvironmentChange() throws Exception {
-        AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
-
-        AssetProducer producer = mock(AssetProducer.class);
-        assetType.addProducer(producer);
+        assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetTypeManager.registerCoreProducer(Text.class, producer);
         when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.absent());
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
 
-
-        Optional<Text> asset = assetType.getAsset(URN);
+        Optional<Text> asset = assetTypeManager.getAssetType(Text.class).get().getAsset(URN);
         assertTrue(asset.isPresent());
         assertFalse(asset.get().isDisposed());
 
         when(producer.getAssetData(URN)).thenReturn(Optional.absent());
-        assetTypeManager.setEnvironment(createEnvironment());
+        assetTypeManager.switchEnvironment(createEnvironment());
         assertTrue(asset.get().isDisposed());
     }
 
     @Test
     public void reloadAvailableAssetsOnEnvironmentChange() throws Exception {
-        AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
+        assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
 
-        AssetProducer producer = mock(AssetProducer.class);
-        assetType.addProducer(producer);
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetTypeManager.registerCoreProducer(Text.class, producer);
         when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
 
-        Optional<Text> asset = assetType.getAsset(URN);
+        Optional<? extends Text> asset = assetTypeManager.getAssetManager().getAsset(URN, Text.class);
         assertTrue(asset.isPresent());
         assertEquals(TEXT_VALUE, asset.get().getValue());
 
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE_2)));
-        assetTypeManager.setEnvironment(createEnvironment());
+        assetTypeManager.switchEnvironment(createEnvironment());
         assertEquals(TEXT_VALUE_2, asset.get().getValue());
         assertFalse(asset.get().isDisposed());
     }
 
     @Test
     public void disposeAssetOnEnvironmentChangeIfRedirectExists() throws Exception {
-        AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
+        assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
 
-        AssetProducer producer = mock(AssetProducer.class);
-        assetType.addProducer(producer);
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetTypeManager.registerCoreProducer(Text.class, producer);
         when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
-        Optional<Text> asset = assetType.getAsset(URN);
-        when(producer.redirect(URN)).thenReturn(new ResourceUrn(URN.getModuleName(), new Name("redirect")));
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
 
-        assetTypeManager.setEnvironment(createEnvironment());
+        Optional<? extends Text> asset = assetTypeManager.getAssetManager().getAsset(URN, Text.class);
+
+        when(producer.redirect(URN)).thenReturn(new ResourceUrn(URN.getModuleName(), new Name("redirect")));
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
         assertTrue(asset.get().isDisposed());
     }
 
@@ -179,99 +155,108 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     public void removeAssetType() {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
         assetTypeManager.removeCoreAssetType(Text.class);
-        assertNull(assetTypeManager.getAssetType(Text.class));
+        assertFalse(assetTypeManager.getAssetType(Text.class).isPresent());
     }
 
     @Test
     public void removedAssetTypeIsDisposed() {
-        AssetType<Text, TextData> assetType = assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
-        Text asset = assetType.loadAsset(URN, new TextData(TEXT_VALUE));
+        assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
+        Text asset = assetTypeManager.getAssetManager().loadAsset(URN, new TextData(TEXT_VALUE), Text.class);
         assetTypeManager.removeCoreAssetType(Text.class);
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
         assertTrue(asset.isDisposed());
     }
 
     @Test
     public void setEnvironmentTriggersLoadOfExtensionAssetType() throws Exception {
-        assertNull(assetTypeManager.getAssetType(ExtensionAsset.class));
-        assetTypeManager.setEnvironment(createEnvironment());
-        assertNotNull(assetTypeManager.getAssetType(ExtensionAsset.class));
+        assertFalse(assetTypeManager.getAssetType(ExtensionAsset.class).isPresent());
+        assetTypeManager.switchEnvironment(createEnvironment());
+        assertTrue(assetTypeManager.getAssetType(ExtensionAsset.class).isPresent());
     }
 
     @Test
     public void extensionAssetTypeRemovedOnEnvironmentChange() throws Exception {
-        assetTypeManager.setEnvironment(createEnvironment());
-        assetTypeManager.setEnvironment(createEmptyEnvironment());
-        assertNull(assetTypeManager.getAssetType(ExtensionAsset.class));
+        assetTypeManager.switchEnvironment(createEnvironment());
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
+        assertFalse(assetTypeManager.getAssetType(ExtensionAsset.class).isPresent());
     }
 
     @Test
     public void setEnvironmentTriggersLoadOfExtensionProducers() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
-        assetTypeManager.setEnvironment(createEnvironment());
-        assertEquals(1, assetTypeManager.getAssetType(Text.class).getProducers().size());
-        assertTrue(assetTypeManager.getAssetType(Text.class).getProducers().get(0) instanceof ExtensionProducer);
+        assetTypeManager.switchEnvironment(createEnvironment());
+        assertEquals(1, assetTypeManager.getAssetType(Text.class).get().getProducers().size());
+        assertTrue(assetTypeManager.getAssetType(Text.class).get().getProducers().get(0) instanceof ExtensionDataProducer);
     }
 
     @Test
     public void extensionProducerRemovedOnEnvironmentChange() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
-        assetTypeManager.setEnvironment(createEnvironment());
-        assetTypeManager.setEnvironment(createEmptyEnvironment());
-        assertTrue(assetTypeManager.getAssetType(Text.class).getProducers().isEmpty());
+        assetTypeManager.switchEnvironment(createEnvironment());
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
+        assertTrue(assetTypeManager.getAssetType(Text.class).get().getProducers().isEmpty());
     }
 
     @Test
     public void setEnvironmentTriggersLoadOfExtensionFormats() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
-        assetTypeManager.setEnvironment(createEnvironment());
-        assertEquals(1, assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().size());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().get(0) instanceof ExtensionFormat);
+        assetTypeManager.switchEnvironment(createEnvironment());
+        ModuleAssetDataProducer<TextData> moduleProducer = (ModuleAssetDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
+        assertEquals(1, moduleProducer.getAssetFormats().size());
+        assertTrue(moduleProducer.getAssetFormats().get(0) instanceof ExtensionFileFormat);
     }
 
     @Test
     public void extensionFormatRemovedOnEnvironmentChange() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
-        assetTypeManager.setEnvironment(createEnvironment());
-        assetTypeManager.setEnvironment(createEmptyEnvironment());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getAssetFormats().isEmpty());
+        assetTypeManager.switchEnvironment(createEnvironment());
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
+        ModuleAssetDataProducer<TextData> moduleProducer = (ModuleAssetDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
+        assertTrue(moduleProducer.getAssetFormats().isEmpty());
     }
 
     @Test
     public void setEnvironmentTriggersLoadOfExtensionSupplementalFormats() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
-        assetTypeManager.setEnvironment(createEnvironment());
-        assertEquals(1, assetTypeManager.getModuleProducerFor(Text.class).get().getSupplementFormats().size());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getSupplementFormats().get(0) instanceof ExtensionSupplementalFormat);
+        assetTypeManager.switchEnvironment(createEnvironment());
+        ModuleAssetDataProducer<TextData> moduleProducer = (ModuleAssetDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
+        assertEquals(1, moduleProducer.getSupplementFormats().size());
+        assertTrue(moduleProducer.getSupplementFormats().get(0) instanceof ExtensionSupplementalFileFormat);
     }
 
     @Test
     public void extensionSupplementalFormatRemovedOnEnvironmentChange() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
-        assetTypeManager.setEnvironment(createEnvironment());
-        assetTypeManager.setEnvironment(createEmptyEnvironment());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getSupplementFormats().isEmpty());
+        assetTypeManager.switchEnvironment(createEnvironment());
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
+        ModuleAssetDataProducer<TextData> moduleProducer = (ModuleAssetDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
+        assertTrue(moduleProducer.getSupplementFormats().isEmpty());
     }
 
     @Test
     public void setEnvironmentTriggersLoadOfExtensionDeltaFormats() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
-        assetTypeManager.setEnvironment(createEnvironment());
-        assertEquals(1, assetTypeManager.getModuleProducerFor(Text.class).get().getDeltaFormats().size());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getDeltaFormats().get(0) instanceof ExtensionDeltaFormat);
+        assetTypeManager.switchEnvironment(createEnvironment());
+        ModuleAssetDataProducer<TextData> moduleProducer = (ModuleAssetDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
+        assertEquals(1, moduleProducer.getDeltaFormats().size());
+        assertTrue(moduleProducer.getDeltaFormats().get(0) instanceof ExtensionDeltaFileFormat);
     }
 
     @Test
     public void extensionDeltaFormatRemovedOnEnvironmentChange() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory(), "text");
-        assetTypeManager.setEnvironment(createEnvironment());
-        assetTypeManager.setEnvironment(createEmptyEnvironment());
-        assertTrue(assetTypeManager.getModuleProducerFor(Text.class).get().getDeltaFormats().isEmpty());
+        assetTypeManager.switchEnvironment(createEnvironment());
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
+        ModuleAssetDataProducer<TextData> moduleProducer = (ModuleAssetDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
+        assertTrue(moduleProducer.getDeltaFormats().isEmpty());
     }
 
     @Test
     public void handleInheritanceRelationOfAssetTypes() {
         assetTypeManager.registerCoreAssetType(ChildAsset.class, mock(AssetFactory.class));
         assetTypeManager.registerCoreAssetType(AlternateAsset.class, mock(AssetFactory.class));
+        assetTypeManager.switchEnvironment(createEmptyEnvironment());
 
         List<AssetType<? extends ParentAsset, ? extends AssetData>> assetTypes = assetTypeManager.getAssetTypes(ParentAsset.class);
         assertEquals(2, assetTypes.size());

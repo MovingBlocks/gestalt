@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 package org.terasology.assets.test.stubs.extensions;
 
 import org.terasology.assets.Asset;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.AssetType;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius
@@ -25,14 +26,14 @@ import org.terasology.naming.ResourceUrn;
 public class ExtensionAsset extends Asset<ExtensionData> {
     private String value;
 
-    public ExtensionAsset(ResourceUrn urn, ExtensionData data) {
-        super(urn);
+    public ExtensionAsset(ResourceUrn urn, ExtensionData data, AssetType<?, ExtensionData> type) {
+        super(urn, type);
         doReload(data);
     }
 
     @Override
-    protected Asset<ExtensionData> doCreateInstance(ResourceUrn urn) {
-        return new ExtensionAsset(urn, new ExtensionData(value));
+    protected Asset<ExtensionData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, ExtensionData> parentAssetType) {
+        return new ExtensionAsset(instanceUrn, new ExtensionData(value), parentAssetType);
     }
 
     @Override

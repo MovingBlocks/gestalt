@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,8 @@ public class PermissionSet {
     }
 
     /**
-     * @param permission
-     * @param context
+     * @param permission The permission to check
+     * @param context The context to check
      * @return Whether the given permission is granted in the given context, by this permission set
      */
     public boolean isPermitted(Permission permission, Class<?> context) {

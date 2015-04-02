@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ import java.util.Map;
 /**
  * ModuleSecurityManager establishes and enforces a sandbox environment for modules. Modules are restricted to make use of specific classes, packages and permissions
  * - they are prevented from accessing anything else.
- * <p/>
+ * <p>
  * The following access may be granted:
+ * </p>
  * <ul>
  * <li>Access to a specific class (API class)</li>
  * <li>Access to a specific package (API package)</li>
@@ -38,11 +39,13 @@ import java.util.Map;
  * <li>Allow a permission if requested from a specific non-module class or package</li>
  * <li>Give a non-module package all permissions</li>
  * </ul>
- * <p/>
+ * <p>
  * When checking permissions, only the stack down to the calling module (if any) is considered. This means that a module cannot exploit a package with higher
  * permissions.
- * <p/>
+ * </p>
+ * <p>
  * AccessController.doPrivileged() is fully supported by this system, so non-module code can use this to avoid needing to be explicitly registered as allowing a permission.
+ * </p>
  *
  * @author Immortius
  * @see ModuleClassLoader

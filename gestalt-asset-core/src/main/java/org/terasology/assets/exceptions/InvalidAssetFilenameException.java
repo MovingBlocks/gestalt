@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.terasology.assets.exceptions;
 
 /**
+ * Thrown to indicate the name of an asset file doesn't meet the necessary structure to derive the corresponding asset name.
  * @author Immortius
  */
 public class InvalidAssetFilenameException extends Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 package org.terasology.assets.test.stubs.book;
 
 import org.terasology.assets.AssetFactory;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.AssetType;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius
@@ -25,7 +26,7 @@ import org.terasology.naming.ResourceUrn;
 public class BookFactory implements AssetFactory<Book, BookData> {
 
     @Override
-    public Book build(ResourceUrn urn, BookData data) {
-        return new Book(urn, data);
+    public Book build(ResourceUrn urn, BookData data, AssetType<Book, BookData> type) {
+        return new Book(urn, data, type);
     }
 }

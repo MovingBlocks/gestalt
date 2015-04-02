@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 package org.terasology.assets.test.stubs.extensions;
 
 import org.terasology.assets.AssetFactory;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.module.annotations.RegisterAssetType;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius
@@ -27,7 +28,7 @@ import org.terasology.naming.ResourceUrn;
 public class ExtensionFactory implements AssetFactory<ExtensionAsset, ExtensionData> {
 
     @Override
-    public ExtensionAsset build(ResourceUrn urn, ExtensionData data) {
-        return new ExtensionAsset(urn, data);
+    public ExtensionAsset build(ResourceUrn urn, ExtensionData data, AssetType<ExtensionAsset, ExtensionData> type) {
+        return new ExtensionAsset(urn, data, type);
     }
 }

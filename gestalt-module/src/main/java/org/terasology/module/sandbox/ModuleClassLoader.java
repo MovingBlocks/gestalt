@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,9 @@ import java.util.List;
  * <li>Restricting the classes visible to modules to those belonging those the module module has access to - as determined by the PermissionProvider.
  * Accessing any other class outside of the modules results in a ClassNotFoundException</li>
  * </ul>
- * <p/>
+ * <p>
  * Additionally, the ModuleClassLoader provides hooks for any injection that needs to be done to module classes as they are loaded, via javassist.
+ * </p>
  *
  * @author Immortius
  */

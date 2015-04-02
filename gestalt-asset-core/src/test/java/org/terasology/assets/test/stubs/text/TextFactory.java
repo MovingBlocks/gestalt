@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@
 package org.terasology.assets.test.stubs.text;
 
 import org.terasology.assets.AssetFactory;
-import org.terasology.naming.ResourceUrn;
+import org.terasology.assets.AssetType;
+import org.terasology.assets.ResourceUrn;
 
 /**
  * @author Immortius
  */
 public class TextFactory implements AssetFactory<Text, TextData> {
     @Override
-    public Text build(ResourceUrn urn, TextData data) {
-        return new Text(urn, data);
+    public Text build(ResourceUrn urn, TextData data, AssetType<Text, TextData> type) {
+        return new Text(urn, data, type);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,10 +64,11 @@ public final class ClasspathModule extends BaseModule {
 
     /**
      * Creates a classpath module from a set of code sources.
-     * <p/>
+     * <p>
      * There is an option to include directories on the classpath. This should only be done for one classpath module - this is for use when running from source
      * in environments that keep resources and classes in separate locations (e.g. gradle by default). Any directory on the classpath (as opposed to jars) will be
      * included in this module
+     * </p>
      *
      * @param metadata           Metadata describing the module to create
      * @param includeDirectories Whether to include directories on the classpath.
@@ -104,14 +105,16 @@ public final class ClasspathModule extends BaseModule {
 
     /**
      * Creates a classpath module from a set of representative classes. The code source (e.g. Jar or directory) for each class is included in the Classpath module.
-     * <p/>
+     * <p>
      * There is an option to include directories on the classpath. This should only be done for one classpath module - this is for use when running from source
      * in environments that keep resources and classes in separate locations (e.g. gradle by default). Any directory on the classpath (as opposed to jars) will be
      * included in this module
+     * </p>
      *
-     * @param metadata          Metadata describing the module to create
-     * @param primaryClass      The first representative class to include in the module
-     * @param additionalClasses Any additional representative classes to include.
+     * @param metadata           Metadata describing the module to create
+     * @param includeDirectories Should directories on the classpath be included in this module?
+     * @param primaryClass       The first representative class to include in the module
+     * @param additionalClasses  Any additional representative classes to include.
      * @return A new ClasspathModule
      * @throws URISyntaxException If a source location cannot be converted to a proper URI (typically because the path to the source includes an invalid character).
      */

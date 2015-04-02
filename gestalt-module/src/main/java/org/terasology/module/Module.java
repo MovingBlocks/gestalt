@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public interface Module {
     /**
      * Finds files in a module. This will return all files (including class files)
      * @return A collection of discovered files
+     * @throws IOException if there is an error scanning the module
      */
     ImmutableList<Path> findFiles() throws IOException;
 
@@ -55,6 +56,7 @@ public interface Module {
      * Finds files in a module. This method allows a globbing filter to be provided to restrict the discovered files.
      * @param fileFilterGlob  A globbing filter, see {@link java.nio.file.FileSystem#getPathMatcher(String) java.nio.file.FileSystem.getPathMatcher}
      * @return A collection of discovered files
+     * @throws java.io.IOException if there is an error scanning the module
      */
     ImmutableList<Path> findFiles(String fileFilterGlob) throws IOException;
 
@@ -66,9 +68,11 @@ public interface Module {
      * <p>
      *     The file filter determines what files will be returned.
      * </p>
+     * @param rootPath The root path to start scanning from
      * @param scanFilter A filter on the directories to visit
      * @param fileFilter A filter on the files to be returned
      * @return A collection of discovered files
+     * @throws java.io.IOException if there is an error scanning the module
      */
     ImmutableList<Path> findFiles(Path rootPath, PathMatcher scanFilter, PathMatcher fileFilter) throws IOException;
 
@@ -108,8 +112,9 @@ public interface Module {
      * Provides the partial reflection information for this module, in isolation of other modules.  This information is of limited use by itself - without combining
      * it with the information from its dependencies, it will be unable to resolve subtypes if an intermediate class is missing. Discovered classes will also not be
      * instantiable.
-     * <p/>
+     * <p>
      * Intended for use in building a reflection information for a complete environment.
+     * </p>
      *
      * @return The partial reflection information for this module in isolation
      */
