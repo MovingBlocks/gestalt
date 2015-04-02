@@ -64,6 +64,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * ModuleAssetDataProducer produces asset data from files within modules. In addition to files defining assets, it supports
@@ -258,33 +259,31 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
     private void scanForAssets() {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            ModuleNameProvider moduleNameProvider = new FixedModuleNameProvider(module.getId());
             Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
             if (Files.exists(rootPath)) {
-                scanLocationForAssets(module, rootPath, moduleNameProvider);
+                scanLocationForAssets(module, rootPath, path -> module.getId());
             }
         }
     }
 
     private void scanForOverrides() {
-        ModuleNameProvider moduleNameProvider = new PathModuleNameProvider(1);
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
             if (Files.exists(rootPath)) {
-                scanLocationForAssets(module, rootPath, moduleNameProvider);
+                scanLocationForAssets(module, rootPath, path -> new Name(path.getName(1).toString()));
             }
         }
     }
 
-    private void scanLocationForAssets(final Module origin, Path rootPath, final ModuleNameProvider moduleNameProvider) {
+    private void scanLocationForAssets(final Module origin, Path rootPath, Function<Path, Name> moduleNameProvider) {
         try {
             Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Name module = moduleNameProvider.getModuleName(file);
-                    Optional<ResourceUrn> assetUrn = registerSource(module, file, origin.getId(), assetFormats, new RegisterAssetSourceHandler());
+                    Name module = moduleNameProvider.apply(file);
+                    Optional<ResourceUrn> assetUrn = registerSource(module, file, origin.getId(), assetFormats, UnloadedAssetData::addSource);
                     if (!assetUrn.isPresent()) {
-                        registerSource(moduleNameProvider.getModuleName(file), file, origin.getId(), supplementFormats, new RegisterAssetSupplementSourceHandler());
+                        registerSource(moduleNameProvider.apply(file), file, origin.getId(), supplementFormats, UnloadedAssetData::addSupplementSource);
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -295,7 +294,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     }
 
     private void scanForDeltas() {
-        final ModuleNameProvider moduleNameProvider = new PathModuleNameProvider(1);
         for (final Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, DELTA_FOLDER);
             if (Files.exists(rootPath)) {
@@ -303,7 +301,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                     Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                            registerAssetDelta(moduleNameProvider.getModuleName(file), file, module.getId());
+                            registerAssetDelta(new Name(file.getName(1).toString()), file, module.getId());
                             return FileVisitResult.CONTINUE;
                         }
                     });
@@ -806,9 +804,9 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected void onFileCreated(Path target, Set<ResourceUrn> outChanged) {
-            Optional<ResourceUrn> urn = registerSource(module, target, providingModule, assetFormats, new RegisterAssetSourceHandler());
+            Optional<ResourceUrn> urn = registerSource(module, target, providingModule, assetFormats, UnloadedAssetData::addSource);
             if (!urn.isPresent()) {
-                urn = registerSource(module, target, providingModule, supplementFormats, new RegisterAssetSupplementSourceHandler());
+                urn = registerSource(module, target, providingModule, supplementFormats, UnloadedAssetData::addSupplementSource);
             }
             if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
                 outChanged.add(urn.get());
@@ -878,55 +876,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
      */
     private interface RegisterSourceHandler<T extends AssetData, U extends FileFormat> {
         boolean registerSource(UnloadedAssetData<T> source, Name providingModule, U format, Path input);
-    }
-
-    private class RegisterAssetSourceHandler implements RegisterSourceHandler<U, AssetFileFormat<U>> {
-
-        @Override
-        public boolean registerSource(UnloadedAssetData<U> source, Name providingModule, AssetFileFormat<U> format, Path input) {
-            return source.addSource(providingModule, format, input);
-        }
-    }
-
-    private class RegisterAssetSupplementSourceHandler implements RegisterSourceHandler<U, AssetAlterationFileFormat<U>> {
-
-        @Override
-        public boolean registerSource(UnloadedAssetData<U> source, Name providingModule, AssetAlterationFileFormat<U> format, Path input) {
-            return source.addSupplementSource(providingModule, format, input);
-        }
-    }
-
-    /**
-     * Interface providing a module name for a given path
-     */
-    private interface ModuleNameProvider {
-        Name getModuleName(Path file);
-    }
-
-    private static class FixedModuleNameProvider implements ModuleNameProvider {
-        private Name moduleName;
-
-        public FixedModuleNameProvider(Name name) {
-            this.moduleName = name;
-        }
-
-        @Override
-        public Name getModuleName(Path file) {
-            return moduleName;
-        }
-    }
-
-    private static class PathModuleNameProvider implements ModuleNameProvider {
-        private int nameIndex;
-
-        public PathModuleNameProvider(int index) {
-            this.nameIndex = index;
-        }
-
-        @Override
-        public Name getModuleName(Path file) {
-            return new Name(file.getName(nameIndex).toString());
-        }
     }
 
 }
