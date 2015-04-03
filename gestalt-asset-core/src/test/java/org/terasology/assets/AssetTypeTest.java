@@ -16,7 +16,6 @@
 
 package org.terasology.assets;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 import org.terasology.assets.test.Return;
@@ -27,6 +26,7 @@ import org.terasology.assets.test.stubs.text.TextFactory;
 import org.terasology.naming.Name;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -214,12 +214,12 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         ResourceUrn realUrn2 = new ResourceUrn("engine:real2");
 
         AssetDataProducer producer = mock(AssetDataProducer.class);
-        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.absent());
+        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.empty());
         when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer.redirect(URN)).thenReturn(realUrn);
 
         AssetDataProducer producer2 = mock(AssetDataProducer.class);
-        when(producer2.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.absent());
+        when(producer2.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.empty());
         when(producer2.getAssetData(realUrn2)).thenReturn(Optional.of(new TextData(TEXT_VALUE_2)));
         when(producer2.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer2.redirect(realUrn)).thenReturn(realUrn2);
@@ -239,7 +239,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         ResourceUrn realUrn2 = new ResourceUrn("engine:real2");
 
         AssetDataProducer producer = mock(AssetDataProducer.class);
-        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.absent());
+        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.empty());
         when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer.redirect(URN)).thenReturn(realUrn);
 
@@ -272,14 +272,14 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         AssetDataProducer producer = mock(AssetDataProducer.class);
         assetType.addProducer(producer);
         when(producer.redirect(URN)).thenReturn(URN);
-        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.absent());
+        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.empty());
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
 
         Optional<Text> asset = assetType.getAsset(URN);
         assertTrue(asset.isPresent());
         assertFalse(asset.get().isDisposed());
 
-        when(producer.getAssetData(URN)).thenReturn(Optional.absent());
+        when(producer.getAssetData(URN)).thenReturn(Optional.empty());
         assetType.refresh();
         assertTrue(asset.get().isDisposed());
     }

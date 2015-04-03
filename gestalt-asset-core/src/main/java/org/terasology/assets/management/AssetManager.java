@@ -16,7 +16,6 @@
 
 package org.terasology.assets.management;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
@@ -28,6 +27,7 @@ import org.terasology.naming.Name;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -166,7 +166,7 @@ public final class AssetManager {
         if (resourceUrns.size() == 1) {
             return getAsset(resourceUrns.iterator().next(), type);
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     /**
@@ -182,7 +182,7 @@ public final class AssetManager {
         List<AssetType<? extends T, ?>> assetTypes = assetTypeManager.getAssetTypes(type);
         switch (assetTypes.size()) {
             case 0:
-                return Optional.absent();
+                return Optional.empty();
             case 1:
                 return assetTypes.get(0).getAsset(urn);
             default:
@@ -193,7 +193,7 @@ public final class AssetManager {
                     }
                 }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     /**

@@ -16,7 +16,6 @@
 
 package org.terasology.assets.module;
 
-import com.google.common.base.Optional;
 import org.junit.Test;
 import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetFactory;
@@ -39,6 +38,7 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -99,7 +99,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         AssetDataProducer producer = mock(AssetDataProducer.class);
         assetTypeManager.registerCoreProducer(Text.class, producer);
         when(producer.redirect(URN)).thenReturn(URN);
-        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.absent());
+        when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.empty());
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
         assetTypeManager.switchEnvironment(createEmptyEnvironment());
 
@@ -107,7 +107,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
         assertTrue(asset.isPresent());
         assertFalse(asset.get().isDisposed());
 
-        when(producer.getAssetData(URN)).thenReturn(Optional.absent());
+        when(producer.getAssetData(URN)).thenReturn(Optional.empty());
         assetTypeManager.switchEnvironment(createEnvironment());
         assertTrue(asset.get().isDisposed());
     }

@@ -16,9 +16,10 @@
 
 package org.terasology.assets.test;
 
-import com.google.common.base.Optional;
 import org.mockito.internal.stubbing.defaultanswers.ReturnsEmptyValues;
 import org.mockito.invocation.InvocationOnMock;
+
+import java.util.Optional;
 
 /**
  * @author Immortius
@@ -29,7 +30,7 @@ public class OptionalAnswer extends ReturnsEmptyValues {
     public Object answer(InvocationOnMock invocation) {
         Class<?> returnType = invocation.getMethod().getReturnType();
         if (returnType == Optional.class) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return super.answer(invocation);
     }

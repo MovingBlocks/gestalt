@@ -16,11 +16,11 @@
 
 package org.terasology.assets;
 
-import com.google.common.base.Optional;
 import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 /**

@@ -17,7 +17,6 @@
 package org.terasology.assets.module;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
@@ -63,6 +62,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -254,7 +254,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                 return source.load();
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     private void scanForAssets() {
@@ -371,7 +371,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         Path filename = target.getFileName();
         if (filename == null) {
             logger.error("Missing filename for asset file");
-            return Optional.absent();
+            return Optional.empty();
         }
         for (V format : formats) {
             if (format.getFileMatcher().matches(target)) {
@@ -391,20 +391,20 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                             return Optional.of(urn);
                         }
                     }
-                    return Optional.absent();
+                    return Optional.empty();
                 } catch (InvalidAssetFilenameException e) {
                     logger.warn("Invalid name for asset - {}", filename);
                 }
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     private Optional<ResourceUrn> registerAssetDelta(Name module, Path target, Name providingModule) {
         Path filename = target.getFileName();
         if (filename == null) {
             logger.error("Missing file name for asset delta for '{}'", folderName);
-            return Optional.absent();
+            return Optional.empty();
         }
         for (AssetAlterationFileFormat<U> format : deltaFormats) {
             if (format.getFileMatcher().matches(target)) {
@@ -414,7 +414,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                     UnloadedAssetData<U> unloadedAssetData = unloadedAssetLookup.get(urn);
                     if (unloadedAssetData == null) {
                         logger.warn("Discovered delta for unknown asset '{}'", urn);
-                        return Optional.absent();
+                        return Optional.empty();
                     }
                     if (unloadedAssetData.addDeltaSource(providingModule, format, target)) {
                         return Optional.of(urn);
@@ -424,7 +424,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                 }
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     private ImmutableList<WatchService> startWatchService() {
@@ -625,7 +625,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                     }
                 }
             }
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 
@@ -643,7 +643,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             if (target.getNameCount() == 2 && target.getName(1).toString().equals(folderName)) {
                 return Optional.of(new AssetPathWatcher(target, module, module, getWatchService()));
             }
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 
@@ -663,7 +663,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             } else if (target.getNameCount() == 3) {
                 return Optional.of(new AssetPathWatcher(target, new Name(target.getName(1).toString()), module, getWatchService()));
             }
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 
@@ -683,7 +683,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             } else if (target.getNameCount() == 3) {
                 return Optional.of(new DeltaPathWatcher(target, new Name(target.getName(1).toString()), module, getWatchService()));
             }
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 

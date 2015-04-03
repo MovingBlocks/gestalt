@@ -16,7 +16,6 @@
 
 package org.terasology.assets.management;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
@@ -36,6 +35,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A basically Map-based AssetTypeManager.
@@ -52,7 +52,7 @@ public final class MapAssetTypeManager implements AssetTypeManager {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Asset<U>, U extends AssetData> Optional<AssetType<T, U>> getAssetType(Class<T> type) {
-        return Optional.fromNullable((AssetType<T, U>) assetTypes.get(type));
+        return Optional.ofNullable((AssetType<T, U>) assetTypes.get(type));
 
     }
 

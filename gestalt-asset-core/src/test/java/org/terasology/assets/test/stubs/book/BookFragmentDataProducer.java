@@ -16,13 +16,13 @@
 
 package org.terasology.assets.test.stubs.book;
 
-import com.google.common.base.Optional;
 import org.terasology.assets.AbstractFragmentDataProducer;
+import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.test.stubs.text.TextData;
-import org.terasology.assets.ResourceUrn;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -41,9 +41,9 @@ public class BookFragmentDataProducer extends AbstractFragmentDataProducer<TextD
             if (i >= 0 && i < book.getLines().size()) {
                 return Optional.of(new TextData(book.getLines().get(i)));
             }
-            return Optional.absent();
+            return Optional.empty();
         } catch (NumberFormatException e) {
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 

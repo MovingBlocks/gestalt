@@ -17,7 +17,6 @@
 package org.terasology.assets;
 
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
@@ -42,6 +41,7 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -253,9 +253,9 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private Optional<T> getInstanceAsset(ResourceUrn urn) {
         Optional<T> parentAsset = getAsset(urn.getParentUrn());
         if (parentAsset.isPresent()) {
-            return Optional.fromNullable(assetClass.cast(parentAsset.get().createInstance()));
+            return Optional.ofNullable(assetClass.cast(parentAsset.get().createInstance()));
         } else {
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 
@@ -284,7 +284,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                 }
             }
         }
-        return Optional.fromNullable(asset);
+        return Optional.ofNullable(asset);
     }
 
     /**
@@ -331,7 +331,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         } else {
             logger.warn("Failed to resolve asset '{}' - no matches found", urn);
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     /**

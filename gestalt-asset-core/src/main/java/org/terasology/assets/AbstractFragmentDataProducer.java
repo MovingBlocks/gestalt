@@ -17,7 +17,6 @@
 package org.terasology.assets;
 
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import org.terasology.assets.management.AssetManager;
@@ -27,6 +26,7 @@ import org.terasology.naming.Name;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -89,7 +89,7 @@ public abstract class AbstractFragmentDataProducer<T extends AssetData, U extend
         if (rootAsset.isPresent()) {
             return getFragmentData(urn, rootAsset.get());
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     /**

@@ -16,12 +16,12 @@
 
 package org.terasology.util.reflection;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Optional;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;

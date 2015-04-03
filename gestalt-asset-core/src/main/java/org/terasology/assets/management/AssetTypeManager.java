@@ -16,12 +16,12 @@
 
 package org.terasology.assets.management;
 
-import com.google.common.base.Optional;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetType;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * AssetTypeManagers manage a set of AssetTypes, allowing them to be retrieved by Asset class.

@@ -16,11 +16,11 @@
 
 package org.terasology.util.reflection;
 
-import com.google.common.base.Optional;
 import com.googlecode.gentyref.GenericTypeReflector;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Optional;
 
 /**
  * Utility methods for working with Generics in reflection.
@@ -69,7 +69,7 @@ public final class GenericsUtil {
                 return Optional.of(paramType);
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     /**
