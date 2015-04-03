@@ -16,16 +16,16 @@
 
 package org.terasology.assets.test.stubs.extensions;
 
-import com.google.common.base.Optional;
-import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.AssetDataProducer;
+import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.annotations.RegisterAssetDataProducer;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.naming.Name;
-import org.terasology.assets.ResourceUrn;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -54,6 +54,6 @@ public class ExtensionDataProducer implements AssetDataProducer<TextData> {
 
     @Override
     public Optional<TextData> getAssetData(ResourceUrn urn) throws IOException {
-        return Optional.absent();
+        return Optional.empty();
     }
 }

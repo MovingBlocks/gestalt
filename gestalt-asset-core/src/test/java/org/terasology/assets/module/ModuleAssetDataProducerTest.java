@@ -16,7 +16,6 @@
 
 package org.terasology.assets.module;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
@@ -31,6 +30,7 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;

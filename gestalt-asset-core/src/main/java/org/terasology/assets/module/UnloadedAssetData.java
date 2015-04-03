@@ -16,15 +16,14 @@
 
 package org.terasology.assets.module;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.AssetAlterationFileFormat;
-import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.AssetDataFile;
+import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
@@ -36,6 +35,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Holds the details of an available but unloaded asset data. This includes all primary sources, supplements, deltas and overrides.
@@ -171,6 +171,7 @@ class UnloadedAssetData<T extends AssetData> {
     /**
      * Loads the asset data from the sources. This determines which primary and supplemental sources to use (taking into account overrides), which deltas to apply
      * and in which order (again taking into account overrides, as well as the module dependency hierarchy).
+     *
      * @return An Optional with the asset data if loaded, or absent if the {@link #isValid} is false
      * @throws IOException If there as an issue loading the asset data.
      */
@@ -196,7 +197,7 @@ class UnloadedAssetData<T extends AssetData> {
             }
             return Optional.of(result);
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     @Override
@@ -206,6 +207,7 @@ class UnloadedAssetData<T extends AssetData> {
 
     /**
      * A source encapsulates a providing module, file format and input path.
+     *
      * @param <U> The type of the file format
      */
     private static class Source<U extends FileFormat> {
@@ -295,6 +297,7 @@ class UnloadedAssetData<T extends AssetData> {
 
     /**
      * A comparator for ordering sources by their providing module.
+     *
      * @param <T> The type of the file format of the sources being ordered
      */
     private static class SourceComparator<T extends FileFormat> implements Comparator<Source<T>> {

@@ -16,7 +16,6 @@
 
 package org.terasology.assets.module;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
@@ -60,6 +59,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -103,7 +103,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Asset<U>, U extends AssetData> Optional<AssetType<T, U>> getAssetType(Class<T> type) {
-        return Optional.fromNullable((AssetType<T, U>) assetTypes.get(type));
+        return Optional.ofNullable((AssetType<T, U>) assetTypes.get(type));
     }
 
     @Override
