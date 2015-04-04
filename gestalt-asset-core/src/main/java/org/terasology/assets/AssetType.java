@@ -422,7 +422,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     public T loadAsset(ResourceUrn urn, U data) {
         if (urn.isInstance()) {
-            return factory.build(urn, data, this);
+            return factory.build(urn, this, data);
         } else {
             T asset = loadedAssets.get(urn);
             if (asset != null) {
@@ -432,7 +432,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                     if (!closed) {
                         asset = loadedAssets.get(urn);
                         if (asset == null) {
-                            asset = factory.build(urn, data, this);
+                            asset = factory.build(urn, this, data);
                             loadedAssets.put(urn, asset);
                         } else {
                             asset.reload(data);

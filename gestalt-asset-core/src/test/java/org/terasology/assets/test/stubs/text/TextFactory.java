@@ -25,7 +25,7 @@ import org.terasology.assets.ResourceUrn;
  */
 public class TextFactory implements AssetFactory<Text, TextData> {
     @Override
-    public Text build(ResourceUrn urn, TextData data, AssetType<Text, TextData> type) {
+    public Text build(ResourceUrn urn, AssetType<Text, TextData> type, TextData data) {
         return new Text(urn, data, type);
     }
 }

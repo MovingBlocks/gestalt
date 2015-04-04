@@ -28,7 +28,7 @@ import org.terasology.assets.ResourceUrn;
 public class ExtensionFactory implements AssetFactory<ExtensionAsset, ExtensionData> {
 
     @Override
-    public ExtensionAsset build(ResourceUrn urn, ExtensionData data, AssetType<ExtensionAsset, ExtensionData> type) {
+    public ExtensionAsset build(ResourceUrn urn, AssetType<ExtensionAsset, ExtensionData> type, ExtensionData data) {
         return new ExtensionAsset(urn, data, type);
     }
 }

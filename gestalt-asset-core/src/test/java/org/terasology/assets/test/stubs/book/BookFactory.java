@@ -26,7 +26,7 @@ import org.terasology.assets.ResourceUrn;
 public class BookFactory implements AssetFactory<Book, BookData> {
 
     @Override
-    public Book build(ResourceUrn urn, BookData data, AssetType<Book, BookData> type) {
+    public Book build(ResourceUrn urn, AssetType<Book, BookData> type, BookData data) {
         return new Book(urn, data, type);
     }
 }
