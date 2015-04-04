@@ -31,9 +31,9 @@ public interface AssetFactory<T extends Asset<U>, U extends AssetData> {
 
     /**
      * @param urn  The urn of the asset to construct
-     * @param data The data for the asset
      * @param assetType The assetType the asset belongs to
+     * @param data The data for the asset
      * @return The built asset
      */
-    T build(ResourceUrn urn, U data, AssetType<T, U> assetType);
+    T build(ResourceUrn urn, AssetType<T, U> assetType, U data);
 }
