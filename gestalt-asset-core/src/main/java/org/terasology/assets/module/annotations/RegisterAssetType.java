@@ -43,7 +43,7 @@ public @interface RegisterAssetType {
     /**
      * @return The subdirectory where assets of this type will be discovered. Can be omitted for asset types that are not loaded from files.
      */
-    String folderName() default "";
+    String[] folderName() default {};
 
     /**
      * @return The factory class to use when generating assets of this type

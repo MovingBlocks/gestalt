@@ -17,8 +17,6 @@
 package org.terasology.assets.module;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -59,6 +57,7 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +124,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAssetDataProducer.class);
 
-    private final String folderName;
+    private final ImmutableList<String> folderNames;
 
     private final ModuleEnvironment moduleEnvironment;
 
@@ -144,19 +143,35 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     /**
      * Creates a ModuleAssetDataProducer
      *
-     * @param folderName          The subfolder that contains files relevant to the asset data this producer loads
      * @param moduleEnvironment   The module environment to load asset data from
      * @param assetFormats        The file formats supported for loading asset files
      * @param supplementalFormats The supplementary file formats supported when loading asset files
      * @param deltaFormats        The delta file formats supported when loading asset files
+     * @param folderNames         The subfolders that contains files relevant to the asset data this producer loads
      */
-    public ModuleAssetDataProducer(String folderName,
-                                   ModuleEnvironment moduleEnvironment,
+    public ModuleAssetDataProducer(ModuleEnvironment moduleEnvironment,
                                    Collection<AssetFileFormat<U>> assetFormats,
                                    Collection<AssetAlterationFileFormat<U>> supplementalFormats,
-                                   Collection<AssetAlterationFileFormat<U>> deltaFormats) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(folderName), "folderName must not be null or empty");
-        this.folderName = folderName;
+                                   Collection<AssetAlterationFileFormat<U>> deltaFormats,
+                                   String ... folderNames) {
+        this(moduleEnvironment, assetFormats, supplementalFormats, deltaFormats, Arrays.asList(folderNames));
+    }
+
+    /**
+     * Creates a ModuleAssetDataProducer
+     *
+     * @param moduleEnvironment   The module environment to load asset data from
+     * @param assetFormats        The file formats supported for loading asset files
+     * @param supplementalFormats The supplementary file formats supported when loading asset files
+     * @param deltaFormats        The delta file formats supported when loading asset files
+     * @param folderNames         The subfolders that contains files relevant to the asset data this producer loads
+     */
+    public ModuleAssetDataProducer(ModuleEnvironment moduleEnvironment,
+                                   Collection<AssetFileFormat<U>> assetFormats,
+                                   Collection<AssetAlterationFileFormat<U>> supplementalFormats,
+                                   Collection<AssetAlterationFileFormat<U>> deltaFormats,
+                                   Collection<String> folderNames) {
+        this.folderNames = ImmutableList.copyOf(folderNames);
         this.moduleEnvironment = moduleEnvironment;
         this.assetFormats = ImmutableList.copyOf(assetFormats);
         this.supplementFormats = ImmutableList.copyOf(supplementalFormats);
@@ -259,23 +274,27 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
     private void scanForAssets() {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
-            if (Files.exists(rootPath)) {
-                scanLocationForAssets(module, rootPath, path -> module.getId());
+            for (String folderName : folderNames) {
+                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+                if (Files.exists(rootPath)) {
+                    scanLocationForAssets(module, folderName, rootPath, path -> module.getId());
+                }
             }
         }
     }
 
     private void scanForOverrides() {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
-            if (Files.exists(rootPath)) {
-                scanLocationForAssets(module, rootPath, path -> new Name(path.getName(1).toString()));
+            for (String folderName : folderNames) {
+                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
+                if (Files.exists(rootPath)) {
+                    scanLocationForAssets(module, folderName, rootPath, path -> new Name(path.getName(1).toString()));
+                }
             }
         }
     }
 
-    private void scanLocationForAssets(final Module origin, Path rootPath, Function<Path, Name> moduleNameProvider) {
+    private void scanLocationForAssets(final Module origin, String folderName, Path rootPath, Function<Path, Name> moduleNameProvider) {
         try {
             Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
                 @Override
@@ -295,18 +314,20 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
     private void scanForDeltas() {
         for (final Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, DELTA_FOLDER);
-            if (Files.exists(rootPath)) {
-                try {
-                    Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-                        @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                            registerAssetDelta(new Name(file.getName(1).toString()), file, module.getId());
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
-                } catch (IOException e) {
-                    logger.error("Failed to scan for asset deltas of '{}' in 'module://{}:{}", folderName, module.getId(), rootPath, e);
+            for (String folderName : folderNames) {
+                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, DELTA_FOLDER);
+                if (Files.exists(rootPath)) {
+                    try {
+                        Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
+                            @Override
+                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                                registerAssetDelta(new Name(file.getName(1).toString()), file, module.getId());
+                                return FileVisitResult.CONTINUE;
+                            }
+                        });
+                    } catch (IOException e) {
+                        logger.error("Failed to scan for asset deltas of '{}' in 'module://{}:{}", folderName, module.getId(), rootPath, e);
+                    }
                 }
             }
         }
@@ -316,14 +337,16 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private Map<ResourceUrn, ResourceUrn> scanModulesForRedirects() {
         Map<ResourceUrn, ResourceUrn> rawRedirects = Maps.newLinkedHashMap();
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
-            if (Files.exists(rootPath)) {
-                try {
-                    for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
-                        processRedirectFile(file, module.getId(), rawRedirects);
+            for (String folderName : folderNames) {
+                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+                if (Files.exists(rootPath)) {
+                    try {
+                        for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
+                            processRedirectFile(file, module.getId(), rawRedirects);
+                        }
+                    } catch (IOException e) {
+                        logger.error("Failed to scan module '{}' for assets", module.getId(), e);
                     }
-                } catch (IOException e) {
-                    logger.error("Failed to scan module '{}' for assets", module.getId(), e);
                 }
             }
         }
@@ -403,7 +426,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private Optional<ResourceUrn> registerAssetDelta(Name module, Path target, Name providingModule) {
         Path filename = target.getFileName();
         if (filename == null) {
-            logger.error("Missing file name for asset delta for '{}'", folderName);
+            logger.error("Missing file name for asset delta for '{}'", target);
             return Optional.empty();
         }
         for (AssetAlterationFileFormat<U> format : deltaFormats) {
@@ -420,7 +443,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                         return Optional.of(urn);
                     }
                 } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset delta for '{}'", target.getFileName(), folderName, e);
+                    logger.error("Invalid file name '{}' for asset delta", target.getFileName(), e);
                 }
             }
         }
@@ -640,7 +663,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 2 && target.getName(1).toString().equals(folderName)) {
+            if (target.getNameCount() == 2 && folderNames.contains(target.getName(1).toString())) {
                 return Optional.of(new AssetPathWatcher(target, module, module, getWatchService()));
             }
             return Optional.empty();
