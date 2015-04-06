@@ -359,21 +359,24 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
                                           ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionSupplementalFormats,
                                           ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionDeltaFormats,
                                           ResolutionStrategy resolutionStrategy, Map<Class<? extends Asset>, AssetType<?, ?>> outAssetTypes) {
-        for (AssetFactory factory : findAndInstantiateClasses(environment, AssetFactory.class, RegisterAssetType.class)) {
-            Optional<Type> assetClassType = GenericsUtil.getTypeParameterBindingForInheritedClass(factory.getClass(), AssetFactory.class, 0);
-            if (!assetClassType.isPresent()) {
-                logger.error("Could not register AssetType with factory '{}' - asset type must be bound in inheritance tree", factory.getClass());
+        for (Class<?> type : environment.getTypesAnnotatedWith(RegisterAssetType.class, input -> Asset.class.isAssignableFrom(input))) {
+            Class<? extends Asset> assetClass = (Class<? extends Asset>) type;
+            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(assetClass, Asset.class, 1);
+            if (!assetDataType.isPresent()) {
+                logger.error("Could not register AssetType for '{}' - asset data type must be bound in inheritance tree", assetClass);
                 continue;
             }
-            Class<? extends Asset> assetClass = (Class<? extends Asset>) GenericsUtil.getClassOfType(assetClassType.get());
-            RegisterAssetType registrationInfo = factory.getClass().getAnnotation(RegisterAssetType.class);
-            AssetType<?, ?> assetType = new AssetType<>(assetClass, factory);
-            prepareAssetType(assetType, registrationInfo.value(), resolutionStrategy, environment, extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats);
-            if (!outAssetTypes.containsKey(assetType.getAssetClass())) {
-                outAssetTypes.put(assetType.getAssetClass(), assetType);
-            } else {
-                logger.error("Asset Type already registered for type '{}' - discarding additional registration", assetType.getAssetClass());
-                assetType.close();
+            RegisterAssetType registrationInfo = assetClass.getAnnotation(RegisterAssetType.class);
+            Optional<? extends AssetFactory> factory = instantiateClass(AssetFactory.class, registrationInfo.factoryClass());
+            if (factory.isPresent()) {
+                AssetType<?, ?> assetType = new AssetType<>(assetClass, factory.get());
+                prepareAssetType(assetType, registrationInfo.folderName(), resolutionStrategy, environment, extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats);
+                if (!outAssetTypes.containsKey(assetType.getAssetClass())) {
+                    outAssetTypes.put(assetType.getAssetClass(), assetType);
+                } else {
+                    logger.error("Asset Type already registered for type '{}' - discarding additional registration", assetType.getAssetClass());
+                    assetType.close();
+                }
             }
         }
     }
@@ -524,34 +527,36 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
         List<T> result = Lists.newArrayList();
         for (Class<?> discoveredType : environment.getTypesAnnotatedWith(annotation, input -> baseType.isAssignableFrom(input)
                 && !Modifier.isAbstract(input.getModifiers()))) {
-            T instance = null;
-            try {
-                Constructor<?> assetManagerConstructor = discoveredType.getConstructor(AssetManager.class);
-                instance = baseType.cast(assetManagerConstructor.newInstance(assetManager));
-            } catch (NoSuchMethodException e) {
-                logger.debug("No asset manager constructor for {}, falling back on default constructor", discoveredType);
-            } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                logger.error("Failed to instantiate class: {}", discoveredType, e);
-            }
-
-            if (instance == null) {
-                try {
-                    discoveredType.getConstructor();
-                } catch (NoSuchMethodException e) {
-                    logger.error("Type '" + discoveredType + "' missing usable constructor");
-                    continue;
-                }
-                try {
-                    instance = baseType.cast(discoveredType.newInstance());
-                } catch (InstantiationException | IllegalAccessException e) {
-                    logger.error("Failed to instantiate class: {}", discoveredType, e);
-                }
-            }
-            if (instance != null) {
-                result.add(instance);
+            Optional<? extends T> instance = instantiateClass(baseType, discoveredType);
+            if (instance.isPresent()) {
+                result.add(instance.get());
             }
         }
         return result;
+    }
+
+    private <T> Optional<? extends T> instantiateClass(Class<T> baseType, Class<?> discoveredType) {
+        T instance = null;
+        try {
+            Constructor<?> assetManagerConstructor = discoveredType.getConstructor(AssetManager.class);
+            instance = baseType.cast(assetManagerConstructor.newInstance(assetManager));
+        } catch (NoSuchMethodException e) {
+            logger.debug("No asset manager constructor for {}, falling back on default constructor", discoveredType);
+        } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            logger.error("Failed to instantiate class: {}", discoveredType, e);
+        }
+
+        if (instance == null) {
+            try {
+                discoveredType.getConstructor();
+                instance = baseType.cast(discoveredType.newInstance());
+            } catch (NoSuchMethodException e) {
+                logger.error("Type '" + discoveredType + "' missing usable constructor");
+            } catch (InstantiationException | IllegalAccessException e) {
+                logger.error("Failed to instantiate class: {}", discoveredType, e);
+            }
+        }
+        return Optional.ofNullable(instance);
     }
 
 }

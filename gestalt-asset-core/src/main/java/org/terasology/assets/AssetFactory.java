@@ -27,6 +27,7 @@ import org.terasology.module.sandbox.API;
  * @author Immortius
  */
 @API
+@FunctionalInterface
 public interface AssetFactory<T extends Asset<U>, U extends AssetData> {
 
     /**

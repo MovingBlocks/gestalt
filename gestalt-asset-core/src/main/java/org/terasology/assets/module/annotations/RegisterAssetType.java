@@ -16,6 +16,7 @@
 
 package org.terasology.assets.module.annotations;
 
+import org.terasology.assets.AssetFactory;
 import org.terasology.module.sandbox.API;
 
 import java.lang.annotation.ElementType;
@@ -24,14 +25,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks an {@link org.terasology.assets.AssetFactory AssetFactory} to be automatically registered as an asset type by
+ * Marks an {@link org.terasology.assets.Asset Asset} to be automatically registered as an asset type by
  * {@link org.terasology.assets.module.ModuleAwareAssetTypeManager ModuleAwareAssetTypeManager} on environment change.
  *
  * <p>Note that asset types loaded in this way will be unloaded when switching environments, and all assets disposed. If an asset type should persist across environment
  * changes and assets reloaded instead they should be manually registered as a core asset type. This will be typically only be the case for assets types from the
  * classpath module(s)</p>
  * <p>
- * The AssetFactory must have an empty constructor, or one taking an AssetManager
+ * The AssetFactory must either have an empty constructor, or one taking an AssetManager
  * </p>
  * @author Immortius
  */
@@ -42,5 +43,10 @@ public @interface RegisterAssetType {
     /**
      * @return The subdirectory where assets of this type will be discovered. Can be omitted for asset types that are not loaded from files.
      */
-    String value() default "";
+    String folderName() default "";
+
+    /**
+     * @return The factory class to use when generating assets of this type
+     */
+    Class<? extends AssetFactory> factoryClass();
 }

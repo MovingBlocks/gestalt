@@ -24,7 +24,6 @@ import org.terasology.assets.ResourceUrn;
 /**
  * @author Immortius
  */
-@RegisterAssetType("extension")
 public class ExtensionFactory implements AssetFactory<ExtensionAsset, ExtensionData> {
 
     @Override
