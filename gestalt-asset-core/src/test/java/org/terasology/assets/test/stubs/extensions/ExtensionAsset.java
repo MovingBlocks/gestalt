@@ -19,10 +19,12 @@ package org.terasology.assets.test.stubs.extensions;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.module.annotations.RegisterAssetType;
 
 /**
  * @author Immortius
  */
+@RegisterAssetType(folderName = "extension", factoryClass = ExtensionFactory.class)
 public class ExtensionAsset extends Asset<ExtensionData> {
     private String value;
 
