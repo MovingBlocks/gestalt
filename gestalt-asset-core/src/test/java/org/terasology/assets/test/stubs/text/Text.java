@@ -20,6 +20,8 @@ import org.terasology.assets.Asset;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
+import java.util.Optional;
+
 /**
  * @author Immortius
  */
@@ -33,8 +35,8 @@ public class Text extends Asset<TextData> {
     }
 
     @Override
-    protected Asset<TextData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, TextData> parentAssetType) {
-        return new Text(instanceUrn, new TextData(value), parentAssetType);
+    protected Optional<? extends Asset<TextData>> doCreateCopy(ResourceUrn copyUrn, AssetType<?, TextData> parentAssetType) {
+        return Optional.of(new Text(copyUrn, new TextData(value), parentAssetType));
     }
 
     @Override

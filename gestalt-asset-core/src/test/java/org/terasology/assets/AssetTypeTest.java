@@ -63,11 +63,10 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
     @Test
     public void loadData() {
         TextData data = new TextData(TEXT_VALUE);
-        Text text = new Text(URN, data, assetType);
 
         assertFalse(assetType.isLoaded(URN));
         Text createdText = assetType.loadAsset(URN, data);
-        assertEquals(text, createdText);
+        assertEquals(TEXT_VALUE, createdText.getValue());
         assertTrue(assetType.isLoaded(URN));
     }
 
@@ -76,7 +75,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         TextData data = new TextData(TEXT_VALUE);
 
         Text loadedText = assetType.loadAsset(URN, data);
-        Optional<Text> retrievedText = assetType.getAsset(URN);
+        Optional<? extends Text> retrievedText = assetType.getAsset(URN);
         assertEquals(loadedText, retrievedText.get());
     }
 
@@ -175,7 +174,7 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
 
-        Optional<Text> asset = assetType.getAsset(URN);
+        Optional<? extends Text> asset = assetType.getAsset(URN);
         assertTrue(asset.isPresent());
         assertEquals(URN, asset.get().getUrn());
         assertEquals(TEXT_VALUE, asset.get().getValue());
@@ -383,10 +382,11 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
         TextData data = new TextData(TEXT_VALUE);
 
         Text loadedText = assetType.loadAsset(URN, data);
-        Text newText = loadedText.createInstance();
+        Optional<Text> newText = loadedText.createInstance();
+        assertTrue(newText.isPresent());
         assetType.close();
         assertTrue(assetType.isClosed());
-        assertTrue(newText.isDisposed());
+        assertTrue(newText.get().isDisposed());
     }
 
 }

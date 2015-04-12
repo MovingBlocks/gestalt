@@ -21,6 +21,8 @@ import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.module.annotations.RegisterAssetType;
 
+import java.util.Optional;
+
 /**
  * @author Immortius
  */
@@ -34,8 +36,8 @@ public class ExtensionAsset extends Asset<ExtensionData> {
     }
 
     @Override
-    protected Asset<ExtensionData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, ExtensionData> parentAssetType) {
-        return new ExtensionAsset(instanceUrn, new ExtensionData(value), parentAssetType);
+    protected Optional<? extends Asset<ExtensionData>> doCreateCopy(ResourceUrn instanceUrn, AssetType<?, ExtensionData> parentAssetType) {
+        return Optional.of(new ExtensionAsset(instanceUrn, new ExtensionData(value), parentAssetType));
     }
 
     @Override

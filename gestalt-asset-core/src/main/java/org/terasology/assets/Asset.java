@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.terasology.module.sandbox.API;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.Optional;
 
 /**
  * Abstract base class common to all assets.
@@ -62,11 +63,12 @@ public abstract class Asset<T extends AssetData> {
      * @param urn       The urn identifying the asset.
      * @param assetType The asset type this asset belongs to.
      */
-    protected Asset(ResourceUrn urn, AssetType<?, T> assetType) {
+    public Asset(ResourceUrn urn, AssetType<?, T> assetType) {
         Preconditions.checkNotNull(urn);
         Preconditions.checkNotNull(assetType);
         this.urn = urn;
         this.assetType = assetType;
+        assetType.registerAsset(this);
     }
 
     /**
@@ -93,15 +95,17 @@ public abstract class Asset<T extends AssetData> {
      * Instance assets are reloaded back to the same value as their origin if their asset type is refreshed.
      * </p>
      *
-     * @param <U> The type of the asset to return (this is a bit of a hack since there is no way to force the return value to have the type of the object instance)
      * @return A new instance of the asset.
      */
     @SuppressWarnings("unchecked")
-    public final synchronized <U extends Asset<T>> U createInstance() {
+    public final <U extends Asset<T>> Optional<U> createInstance() {
         Preconditions.checkState(!disposed);
-        U instance = (U) doCreateInstance(urn.getInstanceUrn(), assetType);
-        assetType.registerInstance(instance);
-        return instance;
+        return (Optional<U>) assetType.createInstance(this);
+    }
+
+    final synchronized Optional<? extends Asset<T>> createCopy(ResourceUrn copyUrn) {
+        Preconditions.checkState(!disposed);
+        return doCreateCopy(copyUrn, assetType);
     }
 
     /**
@@ -111,7 +115,7 @@ public abstract class Asset<T extends AssetData> {
         if (!disposed) {
             disposed = true;
             doDispose();
-            assetType.containedAssetDisposed(this);
+            assetType.onAssetDisposed(this);
         }
     }
 
@@ -123,19 +127,23 @@ public abstract class Asset<T extends AssetData> {
     protected abstract void doReload(T data);
 
     /**
-     * Called if an instance of this asset is required. An instance is an independent copy of an asset, but identified in terms of its origin - so if the reference
-     * to the asset is saved and reloaded a new copy of the parent can be provided.
+     * Attempts to create a copy of the asset, with the given urn. This is used as part of the process of creating an asset instance.
      * <p>
-     * Implementing classes should essentially create a copy of the asset. This may be done by creating an AssetData of the current asset and using it to create
+     * If direct copies are not supported, then {@link Optional#empty} should be returned.
+     * </p>
+     * <p>
+     * Implementing classes should create a copy of the asset. This may be done by creating an AssetData of the current asset and using it to create
      * a new asset, or may need to use more implementation specific methods (an OpenGL texture may use an OpenGL texture handle copy technique to produce the
      * copy, for example)
      * </p>
      *
-     * @param instanceUrn The urn for the new instance
+     * @param copyUrn         The urn for the new instance
      * @param parentAssetType The type of the parent asset
-     * @return The created instance.
+     * @return The created copy if any
      */
-    protected abstract Asset<T> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, T> parentAssetType);
+    protected Optional<? extends Asset<T>> doCreateCopy(ResourceUrn copyUrn, AssetType<?, T> parentAssetType) {
+        return Optional.empty();
+    }
 
     /**
      * Called to dispose an asset. If the asset uses any resources that need to be manually cleaned up, this is where it should be done. This will only ever
