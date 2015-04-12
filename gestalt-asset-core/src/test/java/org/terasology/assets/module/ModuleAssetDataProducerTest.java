@@ -49,8 +49,9 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
 
 
     private ModuleAssetDataProducer<TextData> createProducer(ModuleEnvironment environment) {
-        return new ModuleAssetDataProducer<>(environment, Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(), Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME
-        );
+        return new ModuleAssetDataProducer<>(environment,
+                Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME);
     }
 
     @Test
@@ -123,8 +124,9 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
     @Test
     public void loadWithDelta() throws Exception {
         ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
-                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("deltaA"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME
-        );
+                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("deltaA"))),
+                Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(),
+                Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME);
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -136,8 +138,8 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
         ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
                 createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                         moduleRegistry.getLatestModuleVersion(new Name("overrideA")),
-                        moduleRegistry.getLatestModuleVersion(new Name("deltaA"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME
-        );
+                        moduleRegistry.getLatestModuleVersion(new Name("deltaA"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME);
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -149,7 +151,8 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
         ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
                 createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                         moduleRegistry.getLatestModuleVersion(new Name("deltaA")),
-                        moduleRegistry.getLatestModuleVersion(new Name("overrideD"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME
+                        moduleRegistry.getLatestModuleVersion(new Name("overrideD"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME
         );
 
 
@@ -182,7 +185,9 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
     @Test
     public void applySupplements() throws Exception {
         ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
-                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextMetadataFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME
+                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextMetadataFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME
         );
 
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
@@ -193,7 +198,10 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
     @Test
     public void overrideWithSupplement() throws Exception {
         ModuleAssetDataProducer<TextData> moduleProducer = new ModuleAssetDataProducer<>(
-                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA")), moduleRegistry.getLatestModuleVersion(new Name("overrideSupplement"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextMetadataFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME
+                createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("supplementA")),
+                        moduleRegistry.getLatestModuleVersion(new Name("overrideSupplement"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
+                Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextMetadataFileFormat()),
+                Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME
         );
 
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
