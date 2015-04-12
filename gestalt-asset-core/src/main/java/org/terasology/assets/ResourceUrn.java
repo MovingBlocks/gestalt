@@ -45,12 +45,53 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
     public static final String RESOURCE_SEPARATOR = ":";
     public static final String FRAGMENT_SEPARATOR = "#";
     public static final String INSTANCE_INDICATOR = "!instance";
-    private static final Pattern URN_PATTERN = Pattern.compile("([^:#]+):([^#!]+)(?:#([^#!]+))?(!instance)?");
+    private static final Pattern URN_PATTERN = Pattern.compile("([^:]+):([^#!]+)(?:#([^!]+))?(!instance)?");
 
     private final Name moduleName;
     private final Name resourceName;
     private final Name fragmentName;
     private final boolean instance;
+
+    /**
+     * Creates a urn with the module and resource name from the provided urn, but the fragment name provided. This urn will not be an instance urn.
+     * @param urn The urn to create this urn from
+     * @param fragmentName The fragment name this urn should have
+     */
+    public ResourceUrn(ResourceUrn urn, String fragmentName) {
+        this(urn, new Name(fragmentName), false);
+    }
+
+    /**
+     * Creates a urn with the module and resource name from the provided urn, but the fragment name provided. This urn will not be an instance urn.
+     * @param urn The urn to create this urn from
+     * @param fragmentName The fragment name this urn should have
+     */
+    public ResourceUrn(ResourceUrn urn, Name fragmentName) {
+        this(urn, fragmentName, false);
+    }
+
+    /**
+     * Creates a urn with the module and resource name from the provided urn, but the fragment name provided.
+     * @param urn The urn to create this urn from
+     * @param fragmentName The fragment name this urn should have
+     * @param instance Whether this urn should be a fragment
+     */
+    public ResourceUrn(ResourceUrn urn, String fragmentName, boolean instance) {
+        this(urn, new Name(fragmentName), instance);
+    }
+
+    /**
+     * Creates a urn with the module and resource name from the provided urn, but the fragment name provided.
+     * @param urn The urn to create this urn from
+     * @param fragmentName The fragment name this urn should have
+     * @param instance Whether this urn should be a fragment
+     */
+    public ResourceUrn(ResourceUrn urn, Name fragmentName, boolean instance) {
+        this.moduleName = urn.getModuleName();
+        this.resourceName = urn.getResourceName();
+        this.fragmentName = fragmentName;
+        this.instance = instance;
+    }
 
     /**
      * Creates a ModuleUri with the given module:resource combo

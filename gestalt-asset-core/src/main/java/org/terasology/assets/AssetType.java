@@ -232,7 +232,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      *
      * @param asset The asset that was disposed.
      */
-    void containedAssetDisposed(Asset<U> asset) {
+    void onAssetDisposed(Asset<U> asset) {
         if (asset.getUrn().isInstance()) {
             instanceAssets.get(asset.getUrn()).remove(assetClass.cast(asset));
         } else {
@@ -241,22 +241,60 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     }
 
     /**
-     * Notifies the asset type when an instance asset is created
+     * Notifies the asset type when an asset is created
      *
-     * @param instanceAsset The asset that was created
+     * @param asset The asset that was created
      */
-    void registerInstance(Asset<U> instanceAsset) {
-        instanceAssets.put(instanceAsset.getUrn(), assetClass.cast(instanceAsset));
+    synchronized void registerAsset(Asset<U> asset) {
+        if (asset.getUrn().isInstance()) {
+            instanceAssets.put(asset.getUrn(), assetClass.cast(asset));
+        } else {
+            loadedAssets.put(asset.getUrn(), assetClass.cast(asset));
+        }
     }
 
+    /**
+     * Creates and returns an instance of an asset, if possible. The following methods are used to create the copy, in order, with the first technique to succeeed used:
+     * <ol>
+     * <li>Delegate to the parent asset to create the copy</li>
+     * <li>Loads the AssetData of the parent asset and create a new instance from that</li>
+     * </ol>
+     *
+     * @param urn The urn of the asset to create an instance of
+     * @return An instance of the desired asset
+     */
     @SuppressWarnings("unchecked")
-    private Optional<T> getInstanceAsset(ResourceUrn urn) {
-        Optional<T> parentAsset = getAsset(urn.getParentUrn());
+    public Optional<T> getInstanceAsset(ResourceUrn urn) {
+        Optional<? extends T> parentAsset = getAsset(urn.getParentUrn());
         if (parentAsset.isPresent()) {
-            return Optional.ofNullable(assetClass.cast(parentAsset.get().createInstance()));
+            return createInstance(parentAsset.get());
         } else {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Creates an instance of the given asset
+     *
+     * @param asset The asset to create an instance of
+     * @return The new instance, or {@link Optional#empty} if it could not be created
+     */
+    Optional<T> createInstance(Asset<U> asset) {
+        Preconditions.checkArgument(assetClass.isAssignableFrom(asset.getClass()));
+        Optional<? extends Asset<U>> result = asset.createCopy(asset.getUrn().getInstanceUrn());
+        if (!result.isPresent()) {
+            try {
+                for (AssetDataProducer<U> producer : producers) {
+                    Optional<U> data = producer.getAssetData(asset.getUrn());
+                    if (data.isPresent()) {
+                        return Optional.of(loadAsset(asset.getUrn().getInstanceUrn(), data.get()));
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e);
+            }
+        }
+        return Optional.ofNullable(assetClass.cast(result.get()));
     }
 
     /**

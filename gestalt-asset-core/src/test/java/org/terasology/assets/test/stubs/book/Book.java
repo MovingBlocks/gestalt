@@ -21,6 +21,8 @@ import org.terasology.assets.Asset;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
+import java.util.Optional;
+
 /**
  * @author Immortius
  */
@@ -34,8 +36,9 @@ public class Book extends Asset<BookData> {
     }
 
     @Override
-    protected Asset<BookData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, BookData> parentAssetType) {
-        return new Book(instanceUrn, new BookData(lines), parentAssetType);
+    protected Optional<? extends Asset<BookData>> doCreateCopy(ResourceUrn instanceUrn, AssetType<?, BookData> parentAssetType) {
+        return Optional.of(new Book(instanceUrn, new BookData(lines), parentAssetType))
+                ;
     }
 
     @Override

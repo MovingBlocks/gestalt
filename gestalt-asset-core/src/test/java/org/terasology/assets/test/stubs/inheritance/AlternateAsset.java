@@ -20,6 +20,8 @@ import org.terasology.assets.Asset;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 
+import java.util.Optional;
+
 /**
  * @author Immortius
  */
@@ -30,8 +32,8 @@ public class AlternateAsset extends ParentAsset<AlternateAssetData> {
     }
 
     @Override
-    protected Asset<AlternateAssetData> doCreateInstance(ResourceUrn instanceUrn, AssetType<?, AlternateAssetData> parentAssetType) {
-        return new AlternateAsset(instanceUrn, new AlternateAssetData(), parentAssetType);
+    protected Optional<? extends Asset<AlternateAssetData>> doCreateCopy(ResourceUrn instanceUrn, AssetType<?, AlternateAssetData> parentAssetType) {
+        return Optional.of(new AlternateAsset(instanceUrn, new AlternateAssetData(), parentAssetType));
     }
 
     @Override
