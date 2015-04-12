@@ -18,7 +18,6 @@ package org.terasology.assets.test.stubs.extensions;
 
 import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
-import org.terasology.assets.module.annotations.RegisterAssetType;
 import org.terasology.assets.ResourceUrn;
 
 /**

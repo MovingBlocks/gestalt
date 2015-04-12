@@ -360,7 +360,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
             Optional<? extends AssetFactory> factory = instantiateClass(AssetFactory.class, registrationInfo.factoryClass());
             if (factory.isPresent()) {
                 AssetType<?, ?> assetType = new AssetType<>(assetClass, factory.get());
-                prepareAssetType(assetType, Arrays.asList(registrationInfo.folderName()), resolutionStrategy, environment, extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats);
+                prepareAssetType(assetType, Arrays.asList(registrationInfo.folderName()), resolutionStrategy, environment,
+                        extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats);
                 if (!outAssetTypes.containsKey(assetType.getAssetClass())) {
                     outAssetTypes.put(assetType.getAssetClass(), assetType);
                 } else {

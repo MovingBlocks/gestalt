@@ -37,8 +37,7 @@ public class Book extends Asset<BookData> {
 
     @Override
     protected Optional<? extends Asset<BookData>> doCreateCopy(ResourceUrn instanceUrn, AssetType<?, BookData> parentAssetType) {
-        return Optional.of(new Book(instanceUrn, new BookData(lines), parentAssetType))
-                ;
+        return Optional.of(new Book(instanceUrn, new BookData(lines), parentAssetType));
     }
 
     @Override
