@@ -59,9 +59,16 @@ public class ModuleSecurityManager extends SecurityManager implements Permission
 
     private final Map<String, PermissionSet> permissionSets = Maps.newHashMap();
 
+    private final boolean isPermissive;
+
     private ThreadLocal<Boolean> calculatingPermission = new ThreadLocal<>();
 
     public ModuleSecurityManager() {
+        this(false);
+    }
+
+    public ModuleSecurityManager(boolean isPermissive) {
+        this.isPermissive = isPermissive;
         permissionSets.put(BASE_PERMISSION_SET, new PermissionSet());
     }
 
@@ -79,14 +86,14 @@ public class ModuleSecurityManager extends SecurityManager implements Permission
 
     @Override
     public void checkPermission(Permission perm) {
-        if (checkModuleDeniedAccess(perm)) {
+        if (!isPermissive && checkModuleDeniedAccess(perm)) {
             super.checkPermission(perm);
         }
     }
 
     @Override
     public void checkPermission(Permission perm, Object context) {
-        if (checkModuleDeniedAccess(perm)) {
+        if (!isPermissive && checkModuleDeniedAccess(perm)) {
             super.checkPermission(perm);
         }
     }

@@ -55,14 +55,16 @@ public class ModuleClassLoader extends URLClassLoader {
     private final Name moduleId;
     private final List<BytecodeInjector> bytecodeInjectors;
 
+    private final boolean isPermissive;
+
     /**
      * @param module      The name of the module this classloader belongs to
      * @param urls        The urls where the module classes can be found
      * @param parent      The parent classloader, where the API classes can be found
      * @param permissionProvider The security manager that sandboxes the classes
      */
-    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, PermissionProvider permissionProvider) {
-        this(module, urls, parent, permissionProvider, Collections.<BytecodeInjector>emptyList());
+    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, PermissionProvider permissionProvider, boolean isPermissive) {
+        this(module, urls, parent, permissionProvider, Collections.<BytecodeInjector>emptyList(), isPermissive);
     }
 
     /**
@@ -72,11 +74,12 @@ public class ModuleClassLoader extends URLClassLoader {
      * @param permissionProvider The security manager that sandboxes the classes
      * @param injectors   A collection of byte code injectors to pass all loaded module code through
      */
-    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, PermissionProvider permissionProvider, Iterable<BytecodeInjector> injectors) {
+    public ModuleClassLoader(Name module, URL[] urls, ClassLoader parent, PermissionProvider permissionProvider, Iterable<BytecodeInjector> injectors, boolean isPermissive) {
         super(urls, parent);
         this.moduleId = module;
         this.permissionProvider = permissionProvider;
         this.bytecodeInjectors = ImmutableList.copyOf(injectors);
+        this.isPermissive = isPermissive;
         pool = new ClassPool(ClassPool.getDefault());
         for (URL url : urls) {
             try {
@@ -122,6 +125,9 @@ public class ModuleClassLoader extends URLClassLoader {
         ClassLoader parentLoader = AccessController.doPrivileged(new ObtainClassloader(clazz));
         if (parentLoader != this && !(parentLoader instanceof ModuleClassLoader)) {
             if (permissionProvider.isPermitted(clazz)) {
+                return clazz;
+            } else if (isPermissive) {
+                logger.error("Permissive Denied access to class (not allowed with this module's permissions): {}", name);
                 return clazz;
             } else {
                 logger.error("Denied access to class (not allowed with this module's permissions): {}", name);
