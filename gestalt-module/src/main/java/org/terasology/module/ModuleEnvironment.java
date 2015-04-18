@@ -76,6 +76,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private final Reflections fullReflections;
     private final ImmutableList<Module> modulesOrderByDependencies;
     private final ImmutableList<Name> moduleIdsOrderedByDependencies;
+    private final boolean isPermissive;
 
     /**
      * @param modules                   The modules this environment should encompass.
@@ -84,7 +85,18 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
      */
     public ModuleEnvironment(Iterable<Module> modules, PermissionProviderFactory permissionProviderFactory, Iterable<BytecodeInjector> injectors) {
-        this(modules, permissionProviderFactory, injectors, ModuleEnvironment.class.getClassLoader());
+        this(modules, permissionProviderFactory, injectors, ModuleEnvironment.class.getClassLoader(), false);
+    }
+
+    /**
+     * @param modules                   The modules this environment should encompass.
+     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
+     * @param injectors                 Any Bytecode Injectors that should be run over any loaded module class.
+     * @param isPermissive              Still logs security checks but does not deny, should be for testing only.
+     * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
+     */
+    public ModuleEnvironment(Iterable<Module> modules, PermissionProviderFactory permissionProviderFactory, Iterable<BytecodeInjector> injectors, boolean isPermissive) {
+        this(modules, permissionProviderFactory, injectors, ModuleEnvironment.class.getClassLoader(), isPermissive);
     }
 
     /**
@@ -95,11 +107,12 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
      */
     public ModuleEnvironment(Iterable<Module> modules, final PermissionProviderFactory permissionProviderFactory,
-                             final Iterable<BytecodeInjector> injectors, ClassLoader apiClassLoader) {
+                             final Iterable<BytecodeInjector> injectors, ClassLoader apiClassLoader, boolean isPermissive) {
         Map<Name, Reflections> reflectionsByModule = Maps.newLinkedHashMap();
         this.modules = buildModuleMap(modules);
         this.apiClassLoader = apiClassLoader;
         this.modulesOrderByDependencies = calculateModulesOrderedByDependencies();
+        this.isPermissive = isPermissive;
         this.moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(modulesOrderByDependencies, new Function<Module, Name>() {
 
             @Override
@@ -156,7 +169,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
                 @Override
                 public ModuleClassLoader run() {
                     return new ModuleClassLoader(module.getId(), module.getClasspaths().toArray(new URL[module.getClasspaths().size()]),
-                            parent, permissionProviderFactory.createPermissionProviderFor(module), injectors);
+                            parent, permissionProviderFactory.createPermissionProviderFor(module), injectors, isPermissive);
                 }
             });
             return Optional.of(moduleClassloader);
@@ -348,5 +361,9 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     @Override
     public Iterator<Module> iterator() {
         return modules.values().iterator();
+    }
+
+    public boolean isPermissive() {
+        return isPermissive;
     }
 }

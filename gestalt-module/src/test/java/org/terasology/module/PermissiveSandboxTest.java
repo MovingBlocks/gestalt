@@ -25,16 +25,15 @@ import org.terasology.module.sandbox.PermissionSet;
 import org.terasology.naming.Name;
 
 import java.io.FilePermission;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.security.Policy;
 import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * @author Immortius
+ * @author OvermindDL1
  */
-public class SandboxTest {
+public class PermissiveSandboxTest {
 
     private ModuleRegistry registry;
     private ModuleSecurityManager securityManager;
@@ -44,7 +43,7 @@ public class SandboxTest {
         registry = new TableModuleRegistry();
         new ModulePathScanner().scan(registry, Paths.get("test-modules"));
 
-        securityManager = new ModuleSecurityManager();
+        securityManager = new ModuleSecurityManager(true);
         securityManager.getBasePermissionSet().addAPIPackage("sun.reflect");
         securityManager.getBasePermissionSet().addAPIPackage("java.lang");
         securityManager.getBasePermissionSet().addAPIPackage("java.util");
@@ -63,18 +62,20 @@ public class SandboxTest {
     @Test
     public void accessToNormalMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList());
+        ModuleEnvironment environment =
+                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList(), true);
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
         type.getMethod("standardMethod").invoke(instance);
     }
 
-    // Ensure access to disallowed classes fails
-    @Test(expected = InvocationTargetException.class)
+    // Ensure access to disallowed classes passes on permissive
+    @Test
     public void deniedAccessToRestrictedClass() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList());
+        ModuleEnvironment environment =
+                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList(), true);
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
@@ -85,18 +86,20 @@ public class SandboxTest {
     @Test
     public void allowedAccessToClassFromRequiredPermissionSet() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList());
+        ModuleEnvironment environment =
+                new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList(), true);
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
         type.getMethod("requiresIoMethod").invoke(instance);
     }
 
-    // Ensure that a module doesn't gain accesses required by the parent but not by itself
-    @Test(expected = InvocationTargetException.class)
+    // Ensure that a module doesn't gain accesses required by the parent but not by itself, permissive
+    @Test
     public void deniedAccessToClassPermittedToParent() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList());
+        ModuleEnvironment environment =
+                new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), securityManager, Collections.<BytecodeInjector>emptyList(), true);
 
         Class<?> type = findClass("ModuleCClass", environment);
         Object instance = type.newInstance();
