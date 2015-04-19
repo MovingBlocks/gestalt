@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * @author Immortius
+ * @author OvermindDL1
  */
 public class PermissiveSandboxTest {
 
