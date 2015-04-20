@@ -808,21 +808,21 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             return Optional.of(new AssetPathWatcher(target, module, providingModule, getWatchService()));
         }
 
-        private ResourceUrn getResourceUrn(Path target, Collection<? extends FileFormat> formats) {
+        private Optional<ResourceUrn> getResourceUrn(Path target, Collection<? extends FileFormat> formats) {
             Path filename = target.getFileName();
             if (filename != null) {
                 for (FileFormat fileFormat : formats) {
                     if (fileFormat.getFileMatcher().matches(target)) {
                         try {
                             Name assetName = fileFormat.getAssetName(filename.toString());
-                            return new ResourceUrn(module, assetName);
+                            return Optional.of(new ResourceUrn(module, assetName));
                         } catch (InvalidAssetFilenameException e) {
                             logger.debug("Modified file does not have a valid asset name - '{}'", filename);
                         }
                     }
                 }
             }
-            return null;
+            return Optional.empty();
         }
 
         @Override
@@ -838,12 +838,12 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected void onFileModified(Path target, Set<ResourceUrn> outChanged) {
-            ResourceUrn urn = getResourceUrn(target, assetFormats);
-            if (urn == null) {
+            Optional<ResourceUrn> urn = getResourceUrn(target, assetFormats);
+            if (!urn.isPresent()) {
                 urn = getResourceUrn(target, supplementFormats);
             }
-            if (urn != null && unloadedAssetLookup.get(urn).isValid()) {
-                outChanged.add(urn);
+            if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
+                outChanged.add(urn.get());
             }
         }
 

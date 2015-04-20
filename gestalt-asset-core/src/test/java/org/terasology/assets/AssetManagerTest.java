@@ -35,6 +35,8 @@ import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextFactory;
 
+import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -82,17 +84,32 @@ public class AssetManagerTest {
     }
 
     @Test
-    public void getLoadedAssets() {
+    public void getLoadedAssetUrns() {
         textAssetType.loadAsset(ENGINE_TEST_URN, new TextData("moo"));
-        assertEquals(ImmutableSet.of(ENGINE_TEST_URN), assetManager.getLoadedAssets(Text.class));
+        assertEquals(ImmutableSet.of(ENGINE_TEST_URN), assetManager.getLoadedAssetUrns(Text.class));
+    }
+
+    @Test
+    public void getLoadedAssetUrnsCombinesInherited() {
+        childAssetType.loadAsset(ENGINE_TEST_URN, new ChildAssetData());
+        alternateAssetType.loadAsset(ENGINE_TEST2_URN, new AlternateAssetData());
+
+        assertEquals(ImmutableSet.of(ENGINE_TEST_URN, ENGINE_TEST2_URN), assetManager.getLoadedAssetUrns(ParentAsset.class));
+    }
+
+    @Test
+    public void getLoadedAssets() {
+        Text asset = textAssetType.loadAsset(ENGINE_TEST_URN, new TextData("moo"));
+        assertEquals(ImmutableSet.of(asset), assetManager.getLoadedAssets(Text.class));
     }
 
     @Test
     public void getLoadedAssetsCombinesInherited() {
-        childAssetType.loadAsset(ENGINE_TEST_URN, new ChildAssetData());
-        alternateAssetType.loadAsset(ENGINE_TEST2_URN, new AlternateAssetData());
-
-        assertEquals(ImmutableSet.of(ENGINE_TEST_URN, ENGINE_TEST2_URN), assetManager.getLoadedAssets(ParentAsset.class));
+        ChildAsset asset1 = childAssetType.loadAsset(ENGINE_TEST_URN, new ChildAssetData());
+        AlternateAsset asset2 = alternateAssetType.loadAsset(ENGINE_TEST2_URN, new AlternateAssetData());
+        Set<ParentAsset> expected = ImmutableSet.of(asset1, asset2);
+        Set<ParentAsset> actual = assetManager.getLoadedAssets(ParentAsset.class);
+        assertEquals(expected, actual);
     }
 
     @Test

@@ -16,65 +16,32 @@
 
 package org.terasology.module.sandbox;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terasology.module.Module;
-
 import java.security.Permission;
-import java.util.List;
-import java.util.Map;
 
 /**
  * ModuleSecurityManager establishes and enforces a sandbox environment for modules. Modules are restricted to make use of specific classes, packages and permissions
  * - they are prevented from accessing anything else.
- * <p>
- * The following access may be granted:
- * </p>
- * <ul>
- * <li>Access to a specific class (API class)</li>
- * <li>Access to a specific package (API package)</li>
- * <li>Globally allow a permission</li>
- * <li>Allow a permission if requested from a specific non-module class or package</li>
- * <li>Give a non-module package all permissions</li>
- * </ul>
+ * <p>The actual permissions are determined by the PermissionProvider associated with the module</p>
  * <p>
  * When checking permissions, only the stack down to the calling module (if any) is considered. This means that a module cannot exploit a package with higher
  * permissions.
  * </p>
  * <p>
- * AccessController.doPrivileged() is fully supported by this system, so non-module code can use this to avoid needing to be explicitly registered as allowing a permission.
+ * AccessController.doPrivileged() is fully supported by this system, so non-module code can use this to avoid needing to be explicitly registered as allowing a permission
+ * to modules using it, if the code is intended to run at the engine's security level.
  * </p>
  *
  * @author Immortius
  * @see ModuleClassLoader
  */
-public class ModuleSecurityManager extends SecurityManager implements PermissionProviderFactory {
+public class ModuleSecurityManager extends SecurityManager {
 
     public static final Permission UPDATE_ALLOWED_PERMISSIONS = new ModuleSecurityPermission(ModuleSecurityPermission.UPDATE_ALLOWED_PERMISSIONS);
     public static final Permission UPDATE_API_CLASSES = new ModuleSecurityPermission(ModuleSecurityPermission.UPDATE_API_CLASSES);
-    public static final String BASE_PERMISSION_SET = "";
-    private static final Logger logger = LoggerFactory.getLogger(ModuleSecurityManager.class);
-
-    private final Map<String, PermissionSet> permissionSets = Maps.newHashMap();
 
     private ThreadLocal<Boolean> calculatingPermission = new ThreadLocal<>();
 
     public ModuleSecurityManager() {
-        permissionSets.put(BASE_PERMISSION_SET, new PermissionSet());
-    }
-
-    public PermissionSet getBasePermissionSet() {
-        return getPermissionSet(BASE_PERMISSION_SET);
-    }
-
-    public PermissionSet getPermissionSet(String name) {
-        return permissionSets.get(name);
-    }
-
-    public void addPermissionSet(String name, PermissionSet permissionSet) {
-        this.permissionSets.put(name, permissionSet);
     }
 
     @Override
@@ -92,15 +59,10 @@ public class ModuleSecurityManager extends SecurityManager implements Permission
     }
 
     /**
-     * Checks whether a permission is allowed under the current module context. The process for this is:
-     * <ol>
-     * <li>If the permission is globally allowed, then permission is granted</li>
-     * <li>Determine if a module is involved in the stack. If not, permission is granted</li>
-     * <li>If a module is involved, determine whether it is calling through an API class that grants the necessary permission</li>
-     * <li>If not, permission denied</li>
-     * </ol>
+     * Checks whether a permission is allowed under the current module context.
      *
      * @param perm The permission under question
+     * @return Whether the permission is denied
      */
     private boolean checkModuleDeniedAccess(Permission perm) {
 
@@ -142,18 +104,4 @@ public class ModuleSecurityManager extends SecurityManager implements Permission
     }
 
 
-    @Override
-    public PermissionProvider createPermissionProviderFor(Module module) {
-        List<PermissionSet> grantedPermissionSets = Lists.newArrayList();
-        grantedPermissionSets.add(permissionSets.get(BASE_PERMISSION_SET));
-        for (String permissionSetId : module.getRequiredPermissions()) {
-            PermissionSet set = permissionSets.get(permissionSetId);
-            if (set != null) {
-                grantedPermissionSets.add(set);
-            } else {
-                logger.warn("Module '{}' requires unknown permission '{}'", module, permissionSetId);
-            }
-        }
-        return new SetUnionPermissionProvider(grantedPermissionSets);
-    }
 }

@@ -36,5 +36,5 @@ public interface AssetFactory<T extends Asset<U>, U extends AssetData> {
      * @param data The data for the asset
      * @return The built asset
      */
-    T build(ResourceUrn urn, AssetType<T, U> assetType, U data);
+    T build(ResourceUrn urn, AssetType<? super T, U> assetType, U data);
 }

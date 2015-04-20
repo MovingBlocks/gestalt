@@ -26,10 +26,10 @@ import org.terasology.module.ModuleRegistry;
  */
 public class APIScanner {
 
-    private ModuleSecurityManager securityManager;
+    private StandardPermissionProviderFactory permissionProviderFactory;
 
-    public APIScanner(ModuleSecurityManager securityManager) {
-        this.securityManager = securityManager;
+    public APIScanner(StandardPermissionProviderFactory permissionProviderFactory) {
+        this.permissionProviderFactory = permissionProviderFactory;
     }
 
     /**
@@ -54,10 +54,10 @@ public class APIScanner {
     public void scan(Module module) {
         for (Class<?> apiClass : module.getReflectionsFragment().getTypesAnnotatedWith(API.class, true)) {
             for (String permissionSetId : apiClass.getAnnotation(API.class).permissionSet()) {
-                PermissionSet permissionSet = securityManager.getPermissionSet(permissionSetId);
+                PermissionSet permissionSet = permissionProviderFactory.getPermissionSet(permissionSetId);
                 if (permissionSet == null) {
                     permissionSet = new PermissionSet();
-                    securityManager.addPermissionSet(permissionSetId, permissionSet);
+                    permissionProviderFactory.addPermissionSet(permissionSetId, permissionSet);
                 }
                 if (apiClass.isSynthetic()) {
                     // This is a package-info
