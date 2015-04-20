@@ -41,11 +41,11 @@ public class APIScannerTest {
         metadata.setVersion(new Version("1.0.0"));
         Module module = ClasspathModule.create(metadata, true, getClass());
 
-        ModuleSecurityManager manager = mock(ModuleSecurityManager.class);
+        StandardPermissionProviderFactory permissionProviderFactory = mock(StandardPermissionProviderFactory.class);
         PermissionSet permSet = new PermissionSet();
-        when(manager.getPermissionSet(any(String.class))).thenReturn(permSet);
+        when(permissionProviderFactory.getPermissionSet(any(String.class))).thenReturn(permSet);
 
-        new APIScanner(manager).scan(module);
+        new APIScanner(permissionProviderFactory).scan(module);
         assertTrue(permSet.isPermitted(APIClass.class));
         assertFalse(permSet.isPermitted(NonAPIClassInheritingAPIClass.class));
     }

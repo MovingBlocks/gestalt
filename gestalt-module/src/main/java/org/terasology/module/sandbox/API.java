@@ -32,5 +32,5 @@ public @interface API {
     /**
      * @return The permission sets that should be granted access to the marked class
      */
-    String[] permissionSet() default {ModuleSecurityManager.BASE_PERMISSION_SET};
+    String[] permissionSet() default {StandardPermissionProviderFactory.BASE_PERMISSION_SET};
 }

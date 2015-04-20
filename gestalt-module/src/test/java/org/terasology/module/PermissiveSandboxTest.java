@@ -18,41 +18,45 @@ package org.terasology.module;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleSecurityManager;
 import org.terasology.module.sandbox.ModuleSecurityPolicy;
+import org.terasology.module.sandbox.WarnOnlyProviderFactory;
+import org.terasology.module.sandbox.PermissionProviderFactory;
 import org.terasology.module.sandbox.PermissionSet;
 import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
 
 import java.io.FilePermission;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.security.Policy;
 import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * @author Immortius
+ * @author OvermindDL1
  */
-public class SandboxTest {
+public class PermissiveSandboxTest {
 
     private ModuleRegistry registry;
-    private StandardPermissionProviderFactory permissionProviderFactory = new StandardPermissionProviderFactory();
+    private PermissionProviderFactory permissionProviderFactory;
 
     @Before
     public void setup() {
         registry = new TableModuleRegistry();
         new ModulePathScanner().scan(registry, Paths.get("test-modules"));
+        StandardPermissionProviderFactory standardPermissionProviderFactory = new StandardPermissionProviderFactory();
 
-        permissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");
-        permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
-        permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.util");
+        standardPermissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");
+        standardPermissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
+        standardPermissionProviderFactory.getBasePermissionSet().addAPIPackage("java.util");
         PermissionSet ioPermissionSet = new PermissionSet();
         ioPermissionSet.addAPIPackage("java.io");
         ioPermissionSet.addAPIPackage("java.nio.file");
         ioPermissionSet.addAPIPackage("java.nio.file.attribute");
         ioPermissionSet.grantPermission(FilePermission.class);
-        permissionProviderFactory.addPermissionSet("io", ioPermissionSet);
+        standardPermissionProviderFactory.addPermissionSet("io", ioPermissionSet);
+        permissionProviderFactory = new WarnOnlyProviderFactory(standardPermissionProviderFactory);
 
         Policy.setPolicy(new ModuleSecurityPolicy());
         System.setSecurityManager(new ModuleSecurityManager());
@@ -62,18 +66,20 @@ public class SandboxTest {
     @Test
     public void accessToNormalMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment =
+                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
         type.getMethod("standardMethod").invoke(instance);
     }
 
-    // Ensure access to disallowed classes fails
-    @Test(expected = InvocationTargetException.class)
+    // Ensure access to disallowed classes passes on permissive
+    @Test
     public void deniedAccessToRestrictedClass() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment =
+                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
@@ -84,18 +90,20 @@ public class SandboxTest {
     @Test
     public void allowedAccessToClassFromRequiredPermissionSet() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment =
+                new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
         type.getMethod("requiresIoMethod").invoke(instance);
     }
 
-    // Ensure that a module doesn't gain accesses required by the parent but not by itself
-    @Test(expected = InvocationTargetException.class)
+    // Ensure that a module doesn't gain accesses required by the parent but not by itself, permissive
+    @Test
     public void deniedAccessToClassPermittedToParent() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment =
+                new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
 
         Class<?> type = findClass("ModuleCClass", environment);
         Object instance = type.newInstance();

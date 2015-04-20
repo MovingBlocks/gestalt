@@ -25,7 +25,7 @@ import org.terasology.assets.ResourceUrn;
  */
 public class ChildAssetFactory implements AssetFactory<ChildAsset, ChildAssetData> {
     @Override
-    public ChildAsset build(ResourceUrn urn, AssetType<ChildAsset, ChildAssetData> type, ChildAssetData data) {
+    public ChildAsset build(ResourceUrn urn, AssetType<? super ChildAsset, ChildAssetData> type, ChildAssetData data) {
         return new ChildAsset(urn, data, type);
     }
 }

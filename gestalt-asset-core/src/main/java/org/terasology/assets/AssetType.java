@@ -62,7 +62,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
 
     private final Class<T> assetClass;
     private final Class<U> assetDataClass;
-    private final AssetFactory<T, U> factory;
+    private final AssetFactory<? extends T, U> factory;
     private final List<AssetDataProducer<U>> producers = Lists.newCopyOnWriteArrayList();
     private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).makeMap();
     private final ListMultimap<ResourceUrn, T> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, T>create());
@@ -83,7 +83,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @param factory    The factory used to convert AssetData to Assets for this type
      */
     @SuppressWarnings("unchecked")
-    public AssetType(Class<T> assetClass, AssetFactory<T, U> factory) {
+    public AssetType(Class<T> assetClass, AssetFactory<? extends T, U> factory) {
         Preconditions.checkNotNull(assetClass);
         Preconditions.checkNotNull(factory);
 
@@ -497,6 +497,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     public Set<ResourceUrn> getLoadedAssetUrns() {
         return ImmutableSet.copyOf(loadedAssets.keySet());
+    }
+
+    /**
+     * @return A list of all the loaded assets.
+     */
+    public Set<T> getLoadedAssets() {
+        return ImmutableSet.copyOf(loadedAssets.values());
     }
 
     /**
