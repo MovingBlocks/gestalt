@@ -36,12 +36,12 @@ public class PermissionSet {
 
     private static final Logger logger = LoggerFactory.getLogger(PermissionSet.class);
 
-    private final Set<Class> apiClasses = Sets.newHashSet();
+    private final Set<Class<?>> apiClasses = Sets.newHashSet();
     private final Set<String> apiPackages = Sets.newHashSet();
     private final Set<Class<? extends Permission>> globallyAllowedPermissionsTypes = Sets.newHashSet();
     private final Set<Permission> globallyAllowedPermissionsInstances = Sets.newHashSet();
-    private final SetMultimap<Class<? extends Permission>, Class> allowedPermissionsTypes = HashMultimap.create();
-    private final SetMultimap<Permission, Class> allowedPermissionInstances = HashMultimap.create();
+    private final SetMultimap<Class<? extends Permission>, Class<?>> allowedPermissionsTypes = HashMultimap.create();
+    private final SetMultimap<Permission, Class<?>> allowedPermissionInstances = HashMultimap.create();
     private final SetMultimap<Class<? extends Permission>, String> allowedPackagePermissionsTypes = HashMultimap.create();
     private final SetMultimap<Permission, String> allowedPackagePermissionInstances = HashMultimap.create();
 
@@ -100,7 +100,7 @@ public class PermissionSet {
      * @param apiType    The type that requires the permission
      * @param permission The class of permission to grant
      */
-    public void grantPermission(Class apiType, Class<? extends Permission> permission) {
+    public void grantPermission(Class<?> apiType, Class<? extends Permission> permission) {
         Preconditions.checkNotNull(apiType);
         Preconditions.checkNotNull(permission);
         if (System.getSecurityManager() != null) {
@@ -116,7 +116,7 @@ public class PermissionSet {
      * @param apiType    The type that requires the permission
      * @param permission The permission to grant
      */
-    public void grantPermission(Class apiType, Permission permission) {
+    public void grantPermission(Class<?> apiType, Permission permission) {
         Preconditions.checkNotNull(apiType);
         Preconditions.checkNotNull(permission);
         if (System.getSecurityManager() != null) {
@@ -163,7 +163,7 @@ public class PermissionSet {
      *
      * @param clazz The class to add to the API.
      */
-    public void addAPIClass(Class clazz) {
+    public void addAPIClass(Class<?> clazz) {
         Preconditions.checkNotNull(clazz);
         if (System.getSecurityManager() != null) {
             System.getSecurityManager().checkPermission(ModuleSecurityManager.UPDATE_API_CLASSES);
@@ -224,7 +224,7 @@ public class PermissionSet {
      * @param permission The permission to revoke
      * @return whether the permission had previously been granted to the given class.
      */
-    public boolean revokePermission(Class apiType, Class<? extends Permission> permission) {
+    public boolean revokePermission(Class<?> apiType, Class<? extends Permission> permission) {
         Preconditions.checkNotNull(apiType);
         Preconditions.checkNotNull(permission);
         if (System.getSecurityManager() != null) {
@@ -242,7 +242,7 @@ public class PermissionSet {
      * @param permission The permission to revoke
      * @return whether the permission had previously been granted to the given class.
      */
-    public boolean revokePermission(Class apiType, Permission permission) {
+    public boolean revokePermission(Class<?> apiType, Permission permission) {
         Preconditions.checkNotNull(apiType);
         Preconditions.checkNotNull(permission);
         if (System.getSecurityManager() != null) {
@@ -268,9 +268,9 @@ public class PermissionSet {
 
         logger.debug("Revoking permission '{}' from '{}.*'", permission, packageName);
         allowedPackagePermissionsTypes.remove(permission, packageName);
-        Iterator<Class> iterator = allowedPermissionsTypes.get(permission).iterator();
+        Iterator<Class<?>> iterator = allowedPermissionsTypes.get(permission).iterator();
         while (iterator.hasNext()) {
-            Class clazz = iterator.next();
+            Class<?> clazz = iterator.next();
             if (packageName.equals(clazz.getPackage().getName())) {
                 iterator.remove();
             }
@@ -294,9 +294,9 @@ public class PermissionSet {
 
         logger.debug("Revoking permission '{}' from '{}.*'", permission, packageName);
         allowedPackagePermissionInstances.remove(permission, packageName);
-        Iterator<Class> iterator = allowedPermissionInstances.get(permission).iterator();
+        Iterator<Class<?>> iterator = allowedPermissionInstances.get(permission).iterator();
         while (iterator.hasNext()) {
-            Class clazz = iterator.next();
+            Class<?> clazz = iterator.next();
             if (packageName.equals(clazz.getPackage().getName())) {
                 iterator.remove();
             }
@@ -310,7 +310,7 @@ public class PermissionSet {
      * @param clazz The class to remove from the API
      * @return Whether the class was perviously an API class
      */
-    public boolean revokeAPIClass(Class clazz) {
+    public boolean revokeAPIClass(Class<?> clazz) {
         Preconditions.checkNotNull(clazz);
         if (System.getSecurityManager() != null) {
             System.getSecurityManager().checkPermission(ModuleSecurityManager.UPDATE_API_CLASSES);
@@ -332,9 +332,9 @@ public class PermissionSet {
 
         logger.debug("Removing from API '{}.*'", packageName);
         apiPackages.remove(packageName);
-        Iterator<Class> iterator = apiClasses.iterator();
+        Iterator<Class<?>> iterator = apiClasses.iterator();
         while (iterator.hasNext()) {
-            Class clazz = iterator.next();
+            Class<?> clazz = iterator.next();
             if (packageName.equals(clazz.getPackage().getName())) {
                 iterator.remove();
             }

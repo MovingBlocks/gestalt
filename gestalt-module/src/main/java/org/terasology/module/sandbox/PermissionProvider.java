@@ -29,7 +29,7 @@ public interface PermissionProvider {
      * @param type The class to check
      * @return Whether access to the given class is permitted
      */
-    boolean isPermitted(Class type);
+    boolean isPermitted(Class<?> type);
 
     /**
      * @param permission The permission to check

@@ -73,7 +73,7 @@ public class ModuleSecurityManager extends SecurityManager {
         calculatingPermission.set(true);
 
         try {
-            Class[] stack = getClassContext();
+            Class<?>[] stack = getClassContext();
             for (int i = 0; i < stack.length; ++i) {
                 ClassLoader owningLoader = stack[i].getClassLoader();
                 if (owningLoader != null && owningLoader instanceof ModuleClassLoader) {
@@ -94,7 +94,7 @@ public class ModuleSecurityManager extends SecurityManager {
      * @param stack       The classes involved in the current stack
      * @return Whether the permission has been granted to any of the API classes involved.
      */
-    private boolean checkAPIPermissionsFor(Permission permission, int moduleDepth, Class[] stack, PermissionProvider permissionProvider) {
+    private boolean checkAPIPermissionsFor(Permission permission, int moduleDepth, Class<?>[] stack, PermissionProvider permissionProvider) {
         for (int i = moduleDepth - 1; i >= 0; i--) {
             if (permissionProvider.isPermitted(permission, stack[i])) {
                 return true;

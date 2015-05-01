@@ -46,7 +46,7 @@ public class WarnOnlyProviderFactory implements PermissionProviderFactory {
             private PermissionProvider wrapped = wrappedFactory.createPermissionProviderFor(module);
 
             @Override
-            public boolean isPermitted(Class type) {
+            public boolean isPermitted(Class<?> type) {
                 if (!wrapped.isPermitted(type)) {
                     logger.error("Use of non-permitted class '{}' detected by module '{}': this should be fixed for production use", type.toString(), module);
                 }
