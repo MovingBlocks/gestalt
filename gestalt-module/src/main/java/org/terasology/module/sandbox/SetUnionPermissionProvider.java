@@ -34,7 +34,7 @@ public class SetUnionPermissionProvider implements PermissionProvider {
     }
 
     @Override
-    public boolean isPermitted(Class type) {
+    public boolean isPermitted(Class<?> type) {
         for (PermissionSet set : permissionSets) {
             if (set.isPermitted(type)) {
                 return true;
