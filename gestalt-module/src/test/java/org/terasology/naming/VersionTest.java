@@ -94,6 +94,11 @@ public class VersionTest {
     }
 
     @Test(expected = VersionParseException.class)
+    public void exceptionParsingMalformedSeparator() {
+        new Version("1,2,3");
+    }
+
+    @Test(expected = VersionParseException.class)
     public void exceptionParsingInvalidNumbers() {
         new Version("1.1.6a");
     }
