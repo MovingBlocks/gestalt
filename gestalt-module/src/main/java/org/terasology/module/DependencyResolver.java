@@ -68,7 +68,17 @@ public class DependencyResolver {
      * @return A set of compatible modules based on the required modules.
      */
     public ResolutionResult resolve(Name rootModule, Name... additionalModules) {
-        return resolve(Varargs.combineToSet(rootModule, additionalModules));
+        return resolve(true, rootModule, additionalModules);
+    }
+
+    /**
+     * @param includeOptional   If optional modules should be included
+     * @param rootModule        The first root module
+     * @param additionalModules Any further root modules
+     * @return A set of compatible modules based on the required modules.
+     */
+    public ResolutionResult resolve(boolean includeOptional, Name rootModule, Name... additionalModules) {
+        return resolve(includeOptional, Varargs.combineToSet(rootModule, additionalModules));
     }
 
     /**
@@ -76,9 +86,18 @@ public class DependencyResolver {
      * @return A set of compatible modules based on the required modules.
      */
     public ResolutionResult resolve(Iterable<Name> moduleIds) {
+        return resolve(true, moduleIds);
+    }
+
+    /**
+     * @param includeOptional If optional modules should be included
+     * @param moduleIds       The set of module ids to build a set of compatible modules from
+     * @return A set of compatible modules based on the required modules.
+     */
+    public ResolutionResult resolve(boolean includeOptional, Iterable<Name> moduleIds) {
         rootModules = ImmutableSet.copyOf(moduleIds);
-        populateDomains();
-        populateConstraints();
+        populateDomains(includeOptional);
+        populateConstraints(includeOptional);
         if (!includesModules(rootModules)) {
             return new ResolutionResult(false, Collections.<Module>emptySet());
         }
@@ -91,13 +110,13 @@ public class DependencyResolver {
             return new ResolutionResult(false, Collections.<Module>emptySet());
         }
 
-        return new ResolutionResult(true, finaliseModules());
+        return new ResolutionResult(true, finaliseModules(includeOptional));
     }
 
     /**
      * Populates the domains (modules of interest) for resolution. Includes all versions of all modules depended on by any version of a module of interest, recursively.
      */
-    private void populateDomains() {
+    private void populateDomains(boolean includeOptional) {
         moduleVersionPool = HashMultimap.create();
         Set<Name> involvedModules = Sets.newHashSet();
         Deque<Name> moduleQueue = Queues.newArrayDeque();
@@ -111,8 +130,10 @@ public class DependencyResolver {
             for (Module version : registry.getModuleVersions(id)) {
                 moduleVersionPool.put(id, version.getVersion());
                 for (DependencyInfo dependency : version.getMetadata().getDependencies()) {
-                    if (involvedModules.add(dependency.getId())) {
-                        moduleQueue.push(dependency.getId());
+                    if (includeOptional || !dependency.isOptional()) {
+                        if (involvedModules.add(dependency.getId())) {
+                            moduleQueue.push(dependency.getId());
+                        }
                     }
                 }
             }
@@ -123,13 +144,15 @@ public class DependencyResolver {
      * Populates the constraints between the domains. For each module, any dependency that at least one version of the module has becomes a constraint
      * between the two, with a mapping of version to version-range.
      */
-    private void populateConstraints() {
+    private void populateConstraints(boolean includeOptional) {
         constraints = ArrayListMultimap.create();
         for (Name name : moduleVersionPool.keySet()) {
             Set<Name> dependencies = Sets.newLinkedHashSet();
             for (Module module : registry.getModuleVersions(name)) {
                 for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
-                    dependencies.add(dependency.getId());
+                    if (includeOptional || !dependency.isOptional()) {
+                        dependencies.add(dependency.getId());
+                    }
                 }
             }
 
@@ -252,7 +275,7 @@ public class DependencyResolver {
      *
      * @return The final set of compatible modules.
      */
-    private Set<Module> finaliseModules() {
+    private Set<Module> finaliseModules(boolean includeOptional) {
         Set<Module> finalModuleSet = Sets.newLinkedHashSetWithExpectedSize(moduleVersionPool.keySet().size());
         Deque<Module> moduleQueue = Queues.newArrayDeque();
         for (Name rootModule : rootModules) {
@@ -264,9 +287,12 @@ public class DependencyResolver {
         while (!moduleQueue.isEmpty()) {
             Module module = moduleQueue.pop();
             for (DependencyInfo dependency : module.getMetadata().getDependencies()) {
-                Module dependencyModule = registry.getModule(dependency.getId(), reduceToLatestVersion(dependency.getId()));
-                if (finalModuleSet.add(dependencyModule)) {
-                    moduleQueue.push(dependencyModule);
+                if (includeOptional || !dependency.isOptional()) {
+                    Module dependencyModule = registry.getModule(dependency.getId(), reduceToLatestVersion(dependency.getId()));
+                    if (finalModuleSet.add(dependencyModule)) {
+                        moduleQueue.push(dependencyModule);
+
+                    }
                 }
             }
         }

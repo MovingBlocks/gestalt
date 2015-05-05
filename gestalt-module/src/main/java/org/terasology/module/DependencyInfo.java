@@ -29,6 +29,7 @@ public class DependencyInfo {
     private Name id = new Name("");
     private Version minVersion = new Version(1, 0, 0);
     private Version maxVersion;
+    private boolean optional;
 
     public DependencyInfo() {
     }
@@ -37,6 +38,15 @@ public class DependencyInfo {
         this.id = other.id;
         this.minVersion = other.minVersion;
         this.maxVersion = other.maxVersion;
+        this.optional = other.optional;
+    }
+
+    public boolean isOptional() {
+        return optional;
+    }
+
+    public void setOptional(boolean optional) {
+        this.optional = optional;
     }
 
     /**

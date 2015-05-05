@@ -120,9 +120,52 @@ public class DependencyResolverTest {
         assertFalse(resolver.resolve(new Name("core")).isSuccess());
     }
 
+    @Test
+    public void resolvesOptionalIfNotSpecified() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        Module moduleB = createStubModule(registry, "b", "1.0.0");
+        Module moduleC = createStubModule(registry, "c", "1.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b", true);
+        addDependency(moduleB, "c");
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA, moduleB, moduleC), results.getModules());
+    }
+
+    @Test
+    public void doesNotResolveOptionalsWhenAsked() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        Module moduleB = createStubModule(registry, "b", "1.0.0");
+        Module moduleC = createStubModule(registry, "c", "1.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b", true);
+        addDependency(moduleB, "c");
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(false, new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA), results.getModules());
+    }
+
     private void addDependency(Module dependant, String dependencyId) {
         DependencyInfo dependencyInfo = new DependencyInfo();
         dependencyInfo.setId(new Name(dependencyId));
+        dependant.getMetadata().getDependencies().add(dependencyInfo);
+    }
+
+    private void addDependency(Module dependant, String dependencyId, boolean optional) {
+        DependencyInfo dependencyInfo = new DependencyInfo();
+        dependencyInfo.setId(new Name(dependencyId));
+        dependencyInfo.setOptional(optional);
         dependant.getMetadata().getDependencies().add(dependencyInfo);
     }
 
