@@ -41,10 +41,18 @@ public class DependencyInfo {
         this.optional = other.optional;
     }
 
+    /**
+     * If this dependency is optional.
+     * @return
+     */
     public boolean isOptional() {
         return optional;
     }
 
+    /**
+     * Sets the optional flag for a dependency.
+     * @param optional If dependency should be optional.
+     */
     public void setOptional(boolean optional) {
         this.optional = optional;
     }

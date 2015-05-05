@@ -121,6 +121,22 @@ public class DependencyResolverTest {
     }
 
     @Test
+    public void shouldNotInvalidateResolvingIfVersionNotUsed() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA1 = createStubModule(registry, "a", "1.0.0");
+        Module moduleA2 = createStubModule(registry, "a", "2.0.0");
+
+        addDependency(core, "a", "1.0.0", "3.0.0");
+        addDependency(moduleA1, "c");
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA2), results.getModules());
+    }
+
+    @Test
     public void resolvesOptionalIfNotSpecified() {
         ModuleRegistry registry = new TableModuleRegistry();
         Module core = createStubModule(registry, "core", "1.0.0");
@@ -156,6 +172,60 @@ public class DependencyResolverTest {
         assertEquals(Sets.newHashSet(core, moduleA), results.getModules());
     }
 
+    @Test
+    public void optionalDependencyInvalidatesVersionIfOutOfRange() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        Module moduleB = createStubModule(registry, "b", "1.0.0");
+        Module moduleC = createStubModule(registry, "c", "1.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b", "2.0.0", "3.0.0", true);
+        addDependency(core, "c");
+        addDependency(moduleC, "b");
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(false, new Name("core"));
+        assertFalse(results.isSuccess());
+    }
+
+    @Test
+    public void versionDependencyDoesNotMatterInOptionalIfNotIncluded() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA1 = createStubModule(registry, "a", "1.0.0");
+        Module moduleA2 = createStubModule(registry, "a", "2.0.0");
+        Module moduleB = createStubModule(registry, "b", "1.0.0");
+
+        addDependency(core, "a", "1.0.0", "3.0.0");
+        addDependency(core, "b", true);
+        addDependency(moduleB, "a", "1.0.0", "1.0.1");
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(false, new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA2), results.getModules());
+    }
+
+    @Test
+    public void chooseCorrectVersionForDependencyIfOptionalDependencyNarrowsChoice() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        Module moduleB1 = createStubModule(registry, "b", "1.0.0");
+        Module moduleB2 = createStubModule(registry, "b", "2.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b", "1.0.0", "1.0.1", true);
+        addDependency(moduleA, "b", "1.0.0", "3.0.0");
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(false, new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA, moduleB1), results.getModules());
+    }
+
     private void addDependency(Module dependant, String dependencyId) {
         DependencyInfo dependencyInfo = new DependencyInfo();
         dependencyInfo.setId(new Name(dependencyId));
@@ -177,12 +247,22 @@ public class DependencyResolverTest {
         dependant.getMetadata().getDependencies().add(dependencyInfo);
     }
 
+    private void addDependency(Module dependant, String dependencyId, String lowerbound, String upperbound, boolean optional) {
+        DependencyInfo dependencyInfo = new DependencyInfo();
+        dependencyInfo.setId(new Name(dependencyId));
+        dependencyInfo.setMinVersion(new Version(lowerbound));
+        dependencyInfo.setMaxVersion(new Version(upperbound));
+        dependencyInfo.setOptional(optional);
+        dependant.getMetadata().getDependencies().add(dependencyInfo);
+    }
+
     private Module createStubModule(ModuleRegistry forRegistry, String id, String version) {
         Module module = mock(Module.class);
         ModuleMetadata metadata = new ModuleMetadata();
         when(module.getMetadata()).thenReturn(metadata);
         when(module.getId()).thenReturn(new Name(id));
         when(module.getVersion()).thenReturn(new Version(version));
+        when(module.toString()).thenReturn(id + "-" + version);
         forRegistry.add(module);
         return module;
     }
