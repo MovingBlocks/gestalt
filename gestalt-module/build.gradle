@@ -12,17 +12,19 @@ dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
     compile group: 'dom4j', name : 'dom4j', version: '1.6.1'
     compile group: 'org.apache.commons', name : 'commons-vfs2', version: '2.0'
+	testCompile project(":gestalt-module:testpack-api")
 }
 
 // Library and distribution config
 description = 'Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment'
 
-task gatherModules(dependsOn: [':gestalt-module:testpack:moduleA:jar', ':gestalt-module:testpack:moduleB:jar', ':gestalt-module:testpack:moduleC:jar'], type: Copy) 
+task gatherModules(dependsOn: [':gestalt-module:testpack:moduleA:jar', ':gestalt-module:testpack:moduleB:jar', ':gestalt-module:testpack:moduleC:jar', ':gestalt-module:testpack:moduleD:jar'], type: Copy) 
 
 gatherModules {
     from 'testpack/moduleA/build/libs/'
     from 'testpack/moduleB/build/libs/'
     from 'testpack/moduleC/build/libs/'
+	from 'testpack/moduleD/build/libs/'
     into 'test-modules'
     include('*.jar')
 }

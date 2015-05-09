@@ -14,28 +14,19 @@
  * limitations under the License.
  */
 
-package org.terasology.moduleA;
+package org.terasology.moduleD;
 
-import java.nio.file.Files;
-import java.util.Comparator;
+import org.terasology.test.api.IndexForTest;
+import org.terasology.test.api.RestrictedInterface;
 
 /**
  * @author Immortius
  */
-public class ModuleCClass implements Comparator<String> {
-
-    public void standardMethod() {
-        float a = 10;
-        float b = 22;
-        String result = String.format("%f + %f", a, b);
-    }
-
-    public void requiresIoMethod() throws Exception {
-        Files.createTempFile("Temp", "txt");
-    }
+@IndexForTest
+public class ModuleDRestrictedClass implements RestrictedInterface {
 
     @Override
-    public int compare(String o1, String o2) {
+    public float restrictedMethod() {
         return 0;
     }
 }

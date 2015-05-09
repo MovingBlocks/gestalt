@@ -20,7 +20,11 @@
  * - Gradle Documentation: http://gradle.org/documentation
  * - View tasks for this project: $ gradlew tasks
  */
- 
+
 jar {
     version = ''
+}
+
+dependencies {
+    compile project(":gestalt-module:testpack-api")
 }
