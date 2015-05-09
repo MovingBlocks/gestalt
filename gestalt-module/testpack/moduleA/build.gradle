@@ -24,3 +24,7 @@
 jar {
     version = ''
 }
+
+dependencies {
+    compile project(":gestalt-module:testpack-api")
+}

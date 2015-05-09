@@ -114,11 +114,13 @@ public class ModuleClassLoader extends URLClassLoader {
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        Class<?> clazz = super.loadClass(name, resolve);
-        // Skip back to the API classloader (in case the class is allowed in this module but disallowed in an early module in the chain)
-        if (clazz == null) {
+        Class<?> clazz;
+        try {
             clazz = getBaseClassLoader().loadClass(name);
+        } catch (ClassNotFoundException e) {
+            clazz = super.loadClass(name, resolve);
         }
+
         ClassLoader parentLoader = AccessController.doPrivileged(new ObtainClassloader(clazz));
         if (parentLoader != this && !(parentLoader instanceof ModuleClassLoader)) {
             if (permissionProvider.isPermitted(clazz)) {

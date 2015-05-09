@@ -14,28 +14,13 @@
  * limitations under the License.
  */
 
-package org.terasology.moduleA;
-
-import java.nio.file.Files;
-import java.util.Comparator;
-
-/**
- * @author Immortius
+/*
+ * This is a Gradle build file:
+ * - Gradle Homepage: http://gradle.org/
+ * - Gradle Documentation: http://gradle.org/documentation
+ * - View tasks for this project: $ gradlew tasks
  */
-public class ModuleBClass implements Comparator<String> {
 
-    public void standardMethod() {
-        float a = 10;
-        float b = 22;
-        String result = String.format("%f + %f", a, b);
-    }
-
-    public void requiresIoMethod() throws Exception {
-        Files.createTempFile("Temp", "txt");
-    }
-
-    @Override
-    public int compare(String o1, String o2) {
-        return 0;
-    }
+jar {
+    version = ''
 }

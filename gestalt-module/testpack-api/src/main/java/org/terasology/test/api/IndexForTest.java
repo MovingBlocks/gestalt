@@ -14,26 +14,19 @@
  * limitations under the License.
  */
 
-package org.terasology.moduleA;
+package org.terasology.test.api;
 
-import org.terasology.test.api.IndexForTest;
-
-import java.nio.file.Files;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ * Marks classes to be index for sandbox testing
+ *
  * @author Immortius
  */
-@IndexForTest
-public class ModuleAClass {
-
-    public void standardMethod() {
-        float a = 10;
-        float b = 22;
-        String result = String.format("%f + %f", a, b);
-    }
-
-    public void requiresIoMethod() throws Exception {
-        Files.createTempFile("Temp", "txt");
-    }
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface IndexForTest {
 }

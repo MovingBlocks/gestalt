@@ -18,18 +18,23 @@ package org.terasology.module;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.reflections.ReflectionsException;
 import org.terasology.module.sandbox.ModuleSecurityManager;
 import org.terasology.module.sandbox.ModuleSecurityPolicy;
 import org.terasology.module.sandbox.PermissionSet;
 import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
+import org.terasology.test.api.IOInterface;
+import org.terasology.test.api.IndexForTest;
 
 import java.io.FilePermission;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.security.Policy;
 import java.util.Collections;
-import java.util.Comparator;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Immortius
@@ -51,8 +56,10 @@ public class SandboxTest {
         ioPermissionSet.addAPIPackage("java.io");
         ioPermissionSet.addAPIPackage("java.nio.file");
         ioPermissionSet.addAPIPackage("java.nio.file.attribute");
+        ioPermissionSet.addAPIClass(IOInterface.class);
         ioPermissionSet.grantPermission(FilePermission.class);
         permissionProviderFactory.addPermissionSet("io", ioPermissionSet);
+
 
         Policy.setPolicy(new ModuleSecurityPolicy());
         System.setSecurityManager(new ModuleSecurityManager());
@@ -71,13 +78,31 @@ public class SandboxTest {
 
     // Ensure access to disallowed classes fails
     @Test(expected = InvocationTargetException.class)
-    public void deniedAccessToRestrictedClass() throws Exception {
+    public void deniedAccessToRestrictedClassInMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory, Collections.emptyList());
 
-        Class<?> type = findClass("ModuleAClass", environment);
+        Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
-        type.getMethod("requiresIoMethod").invoke(instance);
+        type.getMethod("illegalMethod").invoke(instance);
+    }
+
+    @Test(expected = ReflectionsException.class)
+    public void deniedAccessToClassImplementingRestrictedInterface() throws Exception {
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory, Collections.emptyList());
+
+        findClass("ModuleDRestrictedClass", environment);
+    }
+
+    @Test
+    public void allowedAccessToClassImplementingPermissionSetInterface() throws Exception {
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory, Collections.emptyList());
+
+        Class<?> type = findClass("ModuleBPermittedClass", environment);
+        assertNotNull(type);
+        assertTrue(IOInterface.class.isAssignableFrom(type));
     }
 
     // Ensures access to additionally required permission sets works (both classes and permissions)
@@ -102,12 +127,12 @@ public class SandboxTest {
         type.getMethod("requiresIoMethod").invoke(instance);
     }
 
-    private Class<?> findClass(String name, ModuleEnvironment environment) {
-        for (Class<?> type : environment.getSubtypesOf(Comparator.class)) {
+    private Class<?> findClass(String name, ModuleEnvironment environment) throws ClassNotFoundException {
+        for (Class<?> type : environment.getTypesAnnotatedWith(IndexForTest.class)) {
             if (type.getSimpleName().equals(name)) {
                 return type;
             }
         }
-        return null;
+        throw new ClassNotFoundException(name);
     }
 }

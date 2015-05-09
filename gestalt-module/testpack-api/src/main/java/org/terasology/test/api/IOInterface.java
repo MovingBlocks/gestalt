@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-package org.terasology.moduleA;
-
-import org.terasology.test.api.IndexForTest;
-
-import java.nio.file.Files;
+package org.terasology.test.api;
 
 /**
  * @author Immortius
  */
-@IndexForTest
-public class ModuleAClass {
+public interface IOInterface {
 
-    public void standardMethod() {
-        float a = 10;
-        float b = 22;
-        String result = String.format("%f + %f", a, b);
-    }
-
-    public void requiresIoMethod() throws Exception {
-        Files.createTempFile("Temp", "txt");
-    }
-
+    float ioMethod();
 }

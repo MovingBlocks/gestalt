@@ -1,0 +1,6 @@
+{
+    "id" : "Root",
+    "version" : "1.0.0",
+    "displayName" : "Root",
+    "description" : "This is the root module containing api used by other modules"
+}

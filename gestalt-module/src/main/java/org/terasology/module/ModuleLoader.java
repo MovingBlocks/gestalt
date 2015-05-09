@@ -18,6 +18,7 @@ package org.terasology.module;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.gson.JsonParseException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -98,7 +99,13 @@ public class ModuleLoader {
             ZipEntry modInfoEntry = zipFile.getEntry(moduleInfoPath.toString());
             if (modInfoEntry != null) {
                 try (Reader reader = new InputStreamReader(zipFile.getInputStream(modInfoEntry), Charsets.UTF_8)) {
-                    return new ArchiveModule(modulePath, metadataReader.read(reader));
+                    try {
+                        ModuleMetadata metadata = metadataReader.read(reader);
+                        return new ArchiveModule(modulePath, metadata);
+                    } catch (JsonParseException e) {
+                        throw new IOException("Failed to read metadata for module " + modulePath, e);
+                    }
+
                 }
             }
         }

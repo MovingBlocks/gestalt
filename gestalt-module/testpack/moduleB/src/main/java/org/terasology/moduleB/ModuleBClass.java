@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package org.terasology.moduleA;
+package org.terasology.moduleB;
 
 import org.terasology.test.api.IndexForTest;
 
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 
 /**
  * @author Immortius
  */
 @IndexForTest
-public class ModuleAClass {
+public class ModuleBClass {
 
     public void standardMethod() {
         float a = 10;
@@ -34,6 +36,10 @@ public class ModuleAClass {
 
     public void requiresIoMethod() throws Exception {
         Files.createTempFile("Temp", "txt");
+    }
+
+    public void illegalMethod() throws Exception {
+        ClassLoader classLoader = new URLClassLoader(new URL[]{new URL("file://text.txt")});
     }
 
 }

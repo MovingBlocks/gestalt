@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.moduleA;
+package org.terasology.moduleC;
 
 import org.terasology.test.api.IndexForTest;
 
@@ -24,7 +24,7 @@ import java.nio.file.Files;
  * @author Immortius
  */
 @IndexForTest
-public class ModuleAClass {
+public class ModuleCClass {
 
     public void standardMethod() {
         float a = 10;
@@ -35,5 +35,4 @@ public class ModuleAClass {
     public void requiresIoMethod() throws Exception {
         Files.createTempFile("Temp", "txt");
     }
-
 }
