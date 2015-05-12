@@ -19,18 +19,15 @@ package org.terasology.module;
 import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.terasology.naming.Name;
-import org.terasology.naming.Version;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Immortius
  */
-public class DependencyResolverTest {
+public class NormalDependencyResolverTest extends DependencyResolverTestBase {
 
     @Test
     public void singleModuleResolution() {
@@ -120,27 +117,88 @@ public class DependencyResolverTest {
         assertFalse(resolver.resolve(new Name("core")).isSuccess());
     }
 
-    private void addDependency(Module dependant, String dependencyId) {
-        DependencyInfo dependencyInfo = new DependencyInfo();
-        dependencyInfo.setId(new Name(dependencyId));
-        dependant.getMetadata().getDependencies().add(dependencyInfo);
+    @Test
+    public void shouldNotInvalidateResolvingIfVersionNotUsed() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA1 = createStubModule(registry, "a", "1.0.0");
+        Module moduleA2 = createStubModule(registry, "a", "2.0.0");
+
+        addDependency(core, "a", "1.0.0", "3.0.0");
+        addDependency(moduleA1, "c");
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA2), results.getModules());
     }
 
-    private void addDependency(Module dependant, String dependencyId, String lowerbound, String upperbound) {
-        DependencyInfo dependencyInfo = new DependencyInfo();
-        dependencyInfo.setId(new Name(dependencyId));
-        dependencyInfo.setMinVersion(new Version(lowerbound));
-        dependencyInfo.setMaxVersion(new Version(upperbound));
-        dependant.getMetadata().getDependencies().add(dependencyInfo);
+    @Test
+    public void optionalNotRequired() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b", true);
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA), results.getModules());
     }
 
-    private Module createStubModule(ModuleRegistry forRegistry, String id, String version) {
-        Module module = mock(Module.class);
-        ModuleMetadata metadata = new ModuleMetadata();
-        when(module.getMetadata()).thenReturn(metadata);
-        when(module.getId()).thenReturn(new Name(id));
-        when(module.getVersion()).thenReturn(new Version(version));
-        forRegistry.add(module);
-        return module;
+    @Test
+    public void optionalNotUsedIfAvailableButNotRequired() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        createStubModule(registry, "b", "1.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b", true);
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA), results.getModules());
+    }
+
+    @Test
+    public void optionalVersionConstraintsAppliedWhenIncluded() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        Module moduleB = createStubModule(registry, "b", "1.0.0");
+        createStubModule(registry, "b", "2.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b", "1.0.0", "3.0.0");
+        addDependency(moduleA, "b", "1.0.0", "2.0.0", true);
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA, moduleB), results.getModules());
+    }
+
+    @Test
+    public void optionalVersionConstraintsNotAppliedWhenNotIncluded() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        createStubModule(registry, "b", "1.0.0");
+        Module moduleC = createStubModule(registry, "c", "1.0.0");
+        Module moduleBLatest = createStubModule(registry, "b", "2.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b", "1.0.0", "3.0.0");
+        addDependency(core, "c", true);
+        addDependency(moduleC, "b", "1.0.0", "2.0.0");
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA, moduleBLatest), results.getModules());
     }
 }

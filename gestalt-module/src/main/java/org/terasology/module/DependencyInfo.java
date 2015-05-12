@@ -29,6 +29,7 @@ public class DependencyInfo {
     private Name id = new Name("");
     private Version minVersion = new Version(1, 0, 0);
     private Version maxVersion;
+    private boolean optional;
 
     public DependencyInfo() {
     }
@@ -37,6 +38,7 @@ public class DependencyInfo {
         this.id = other.id;
         this.minVersion = other.minVersion;
         this.maxVersion = other.maxVersion;
+        this.optional = other.optional;
     }
 
     /**
@@ -66,6 +68,15 @@ public class DependencyInfo {
             return minVersion.getNextMajorVersion();
         }
         return maxVersion;
+    }
+
+    /**
+     * An optional dependency does not need to be present for a module with the dependency to be used. If it is present, it must fall within
+     * the allowed version range.
+     * @return Whether this dependency is optional
+     */
+    public boolean isOptional() {
+        return optional;
     }
 
     /**
@@ -100,5 +111,14 @@ public class DependencyInfo {
      */
     public void setMaxVersion(Version value) {
         this.maxVersion = value;
+    }
+
+    /**
+     * Sets whether the dependency is optional
+     *
+     * @param optional Whether this dependency should be optional
+     */
+    public void setOptional(boolean optional) {
+        this.optional = optional;
     }
 }
