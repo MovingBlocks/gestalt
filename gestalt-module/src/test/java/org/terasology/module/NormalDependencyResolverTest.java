@@ -201,4 +201,43 @@ public class NormalDependencyResolverTest extends DependencyResolverTestBase {
         assertTrue(results.isSuccess());
         assertEquals(Sets.newHashSet(core, moduleA, moduleBLatest), results.getModules());
     }
+
+    @Test
+    public void optionalConstraintAppliedIfUsed() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        Module moduleB = createStubModule(registry, "b", "1.0.0");
+        Module moduleC = createStubModule(registry, "c", "1.0.0");
+        createStubModule(registry, "c", "2.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b");
+        addDependency(moduleA, "c", "1.0.0", "3.0.0");
+        addDependency(moduleB, "c", "1.0.0", "2.0.0", true);
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertTrue(results.isSuccess());
+        assertEquals(Sets.newHashSet(core, moduleA, moduleB, moduleC), results.getModules());
+    }
+
+    @Test
+    public void optionalConstraintCanCauseFailuresDueToConflict() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        Module core = createStubModule(registry, "core", "1.0.0");
+        Module moduleA = createStubModule(registry, "a", "1.0.0");
+        Module moduleB = createStubModule(registry, "b", "1.0.0");
+        createStubModule(registry, "c", "1.0.0");
+        createStubModule(registry, "c", "2.0.0");
+
+        addDependency(core, "a");
+        addDependency(core, "b");
+        addDependency(moduleA, "c", "1.0.0", "2.0.0");
+        addDependency(moduleB, "c", "2.0.0", "3.0.0", true);
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult results = resolver.resolve(new Name("core"));
+        assertFalse(results.isSuccess());
+    }
 }
