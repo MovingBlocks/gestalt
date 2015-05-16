@@ -17,6 +17,7 @@
 package org.terasology.assets.format;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import javax.annotation.concurrent.Immutable;
 import java.io.BufferedInputStream;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -51,6 +53,17 @@ public class AssetDataFile {
         Preconditions.checkNotNull(path);
         Preconditions.checkArgument(Files.isRegularFile(path));
         this.path = path;
+    }
+
+    /**
+     * @return The path to the file (excluding file name) relative to the module
+     */
+    public List<String> getPath() {
+        List<String> result = Lists.newArrayListWithCapacity(path.getNameCount() - 1);
+        for (int i = 0; i < path.getNameCount() - 1; ++i) {
+            result.add(path.getName(i).toString());
+        }
+        return result;
     }
 
     /**
