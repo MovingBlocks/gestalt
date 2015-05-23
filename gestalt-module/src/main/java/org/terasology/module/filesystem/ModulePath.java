@@ -509,7 +509,7 @@ class ModulePath implements Path {
      */
     static Path convertFromActualToModulePath(ModuleFileSystem fileSystem, Path root, Path actualPath) throws IOException {
         Path actualRealPath = actualPath.toRealPath();
-        Path relative = root.relativize(actualRealPath);
+        Path relative = root.toRealPath().relativize(actualRealPath);
         List<String> pathParts = Lists.newArrayListWithCapacity(relative.getNameCount() + 1);
         pathParts.add(ModuleFileSystemProvider.SEPARATOR);
         for (Path part : relative) {

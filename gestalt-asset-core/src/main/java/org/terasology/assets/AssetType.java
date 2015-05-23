@@ -38,6 +38,10 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -127,11 +131,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             asset.dispose();
         }
         if (!loadedAssets.isEmpty()) {
-            logger.error("Assets remained loaded after disposal - " + loadedAssets.keySet());
+            logger.error("Assets remained loaded after disposal - {}", loadedAssets.keySet());
             loadedAssets.clear();
         }
         if (!instanceAssets.isEmpty()) {
-            logger.error("Asset instances remained loaded after disposal - " + instanceAssets.keySet());
+            logger.error("Asset instances remained loaded after disposal - {}", instanceAssets.keySet());
             instanceAssets.clear();
         }
     }
@@ -308,17 +312,20 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         T asset = loadedAssets.get(redirectUrn);
         if (asset == null) {
             try {
-                for (AssetDataProducer<U> producer : producers) {
-                    Optional<U> data = producer.getAssetData(redirectUrn);
-                    if (data.isPresent()) {
-                        asset = loadAsset(redirectUrn, data.get());
+                asset = AccessController.doPrivileged((PrivilegedExceptionAction<T>) () -> {
+                    for (AssetDataProducer<U> producer : producers) {
+                        Optional<U> data = producer.getAssetData(redirectUrn);
+                        if (data.isPresent()) {
+                            return loadAsset(redirectUrn, data.get());
+                        }
                     }
-                }
-            } catch (IOException e) {
+                    return null;
+                });
+            } catch (PrivilegedActionException e) {
                 if (redirectUrn.equals(urn)) {
-                    logger.error("Failed to load asset '" + redirectUrn + "'", e);
+                    logger.error("Failed to load asset '{}'", redirectUrn, e);
                 } else {
-                    logger.error("Failed to load asset '" + redirectUrn + "' redirected from '" + urn + "'", e);
+                    logger.error("Failed to load asset '{}' redirected from '{}'", redirectUrn, urn, e);
                 }
             }
         }
@@ -446,7 +453,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                 }
             }
         } catch (IOException e) {
-            logger.error("Failed to reload asset '{}', disposing");
+            logger.error("Failed to reload asset '{}', disposing", asset.getUrn());
         }
         return false;
     }

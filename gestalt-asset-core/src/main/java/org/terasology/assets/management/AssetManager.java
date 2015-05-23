@@ -237,7 +237,7 @@ public final class AssetManager {
         if (assetType.isPresent()) {
             return assetType.get().loadAsset(urn, data);
         } else {
-            throw new IllegalStateException(type + " is not a support type of asset");
+            throw new IllegalStateException(type + " is not a supported type of asset");
         }
     }
 

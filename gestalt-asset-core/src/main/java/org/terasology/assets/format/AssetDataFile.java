@@ -51,7 +51,6 @@ public class AssetDataFile {
      */
     public AssetDataFile(Path path) {
         Preconditions.checkNotNull(path);
-        Preconditions.checkArgument(Files.isRegularFile(path));
         this.path = path;
     }
 
@@ -97,13 +96,9 @@ public class AssetDataFile {
      * @throws IOException If there was an error opening the file
      */
     public BufferedInputStream openStream() throws IOException {
+        Preconditions.checkState(Files.isRegularFile(path));
         try {
-            return AccessController.doPrivileged(new PrivilegedExceptionAction<BufferedInputStream>() {
-                @Override
-                public BufferedInputStream run() throws IOException {
-                    return new BufferedInputStream(Files.newInputStream(path));
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedExceptionAction<BufferedInputStream>) () -> new BufferedInputStream(Files.newInputStream(path)));
         } catch (PrivilegedActionException e) {
             throw new IOException("Failed to open stream for '" + path + "'", e);
         }
