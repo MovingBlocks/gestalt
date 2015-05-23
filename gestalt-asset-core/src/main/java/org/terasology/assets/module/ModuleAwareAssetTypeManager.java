@@ -27,6 +27,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,12 +93,15 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     private volatile ImmutableListMultimap<Class<? extends Asset>, Class<? extends Asset>> subtypes = ImmutableListMultimap.of();
 
     private final List<AssetType<?, ?>> coreAssetTypes = Lists.newArrayList();
+    private final Set<Class<? extends Asset>> reloadOnSwitchAssetTypes = Sets.newHashSet();
+
     private final SetMultimap<Class<? extends Asset>, String> coreAssetTypeFolderNames = HashMultimap.create();
     private final ListMultimap<Class<? extends Asset<?>>, AssetDataProducer<?>> coreProducers = ArrayListMultimap.create();
     private final ListMultimap<Class<? extends Asset<?>>, AssetFileFormat<?>> coreFormats = ArrayListMultimap.create();
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreSupplementalFormats = ArrayListMultimap.create();
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreDeltaFormats = ArrayListMultimap.create();
     private final Map<Class<? extends Asset>, ModuleAssetDataProducer<?>> moduleAssetDataProducers = Maps.newHashMap();
+
 
     public ModuleAwareAssetTypeManager() {
         this.assetManager = new AssetManager(this);
@@ -133,16 +137,35 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
      * read from modules from the provided subfolders. If there are no subfolders then assets will not be loaded from modules.
      *
      * @param type           The type of to register as a core type
-     * @param factory        The factory to create assets of the desired type from asset data.
+     * @param factory        The factory to create assets of the desired type from asset data
      * @param subfolderNames The name of the subfolders which asset files related to this type will be read from within modules
      * @param <T>            The type of asset
      * @param <U>            The type of asset data
      */
     public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<? extends T, U> factory, String... subfolderNames) {
+        registerCoreAssetType(type, factory, true, subfolderNames);
+    }
+
+    /**
+     * Registers an asset type. It will be available after the next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called. Asset files will be
+     * read from modules from the provided subfolders. If there are no subfolders then assets will not be loaded from modules.
+     *
+     * @param type           The type of to register as a core type
+     * @param factory        The factory to create assets of the desired type from asset data
+     * @param reloadOnSwitch Whether assets of this type should be reloaded on environment switch rather than just disposed
+     * @param subfolderNames The name of the subfolders which asset files related to this type will be read from within modules
+     * @param <T>            The type of asset
+     * @param <U>            The type of asset data
+     */
+    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<? extends T, U> factory, boolean reloadOnSwitch,
+                                                                                             String... subfolderNames) {
         Preconditions.checkState(!assetTypes.containsKey(type), "Asset type '" + type.getSimpleName() + "' already registered");
         AssetType<T, U> assetType = new AssetType<>(type, factory);
         coreAssetTypes.add(assetType);
         coreAssetTypeFolderNames.putAll(type, Arrays.asList(subfolderNames));
+        if (reloadOnSwitch) {
+            reloadOnSwitchAssetTypes.add(type);
+        }
     }
 
     /**
@@ -160,6 +183,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
             if (assetType.getAssetClass() == type) {
                 iterator.remove();
                 coreAssetTypeFolderNames.removeAll(type);
+                reloadOnSwitchAssetTypes.remove(type);
                 break;
             }
         }
@@ -304,7 +328,11 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
         assetTypes = ImmutableMap.copyOf(newAssetTypes);
         for (AssetType<?, ?> assetType : assetTypes.values()) {
-            assetType.refresh();
+            if (reloadOnSwitchAssetTypes.contains(assetType.getAssetClass())) {
+                assetType.refresh();
+            } else {
+                assetType.disposeAll();
+            }
         }
 
         updateSubtypesMap();
