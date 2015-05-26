@@ -82,10 +82,13 @@ public abstract class Asset<T extends AssetData> {
      * Reloads this assets using the new data.
      *
      * @param data The data to reload the asset with.
+     * @throws org.terasology.assets.exceptions.InvalidAssetDataException If the asset data is invalid or cannot be loaded
      */
     public final synchronized void reload(T data) {
         if (!disposed) {
             doReload(data);
+        } else {
+            throw new IllegalStateException("Cannot reload disposed asset '" + getUrn() + "'");
         }
     }
 
@@ -123,6 +126,7 @@ public abstract class Asset<T extends AssetData> {
      * Called to reload an asset with the given data.
      *
      * @param data The data to load.
+     * @throws org.terasology.assets.exceptions.InvalidAssetDataException If the asset data is invalid or cannot be loaded
      */
     protected abstract void doReload(T data);
 

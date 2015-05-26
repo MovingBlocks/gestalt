@@ -48,12 +48,13 @@ import org.terasology.assets.module.annotations.RegisterAssetFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetSupplementalFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetType;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.util.reflection.ClassFactory;
 import org.terasology.util.reflection.GenericsUtil;
+import org.terasology.util.reflection.ParameterProvider;
+import org.terasology.util.reflection.SimpleClassFactory;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -102,9 +103,26 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreDeltaFormats = ArrayListMultimap.create();
     private final Map<Class<? extends Asset>, ModuleAssetDataProducer<?>> moduleAssetDataProducers = Maps.newHashMap();
 
+    private final ClassFactory classFactory;
+
 
     public ModuleAwareAssetTypeManager() {
         this.assetManager = new AssetManager(this);
+        this.classFactory = new SimpleClassFactory(new ParameterProvider() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> Optional<T> get(Class<T> type) {
+                if (type.equals(AssetManager.class)) {
+                    return (Optional<T>) Optional.of(assetManager);
+                }
+                return Optional.empty();
+            }
+        });
+    }
+
+    public ModuleAwareAssetTypeManager(ClassFactory classFactory) {
+        this.assetManager = new AssetManager(this);
+        this.classFactory = classFactory;
     }
 
     @Override
@@ -385,7 +403,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
                 continue;
             }
             RegisterAssetType registrationInfo = assetClass.getAnnotation(RegisterAssetType.class);
-            Optional<? extends AssetFactory> factory = instantiateClass(AssetFactory.class, registrationInfo.factoryClass());
+            Optional<AssetFactory> factory = classFactory.instantiateClass(registrationInfo.factoryClass());
             if (factory.isPresent()) {
                 AssetType<?, ?> assetType = new AssetType<>(assetClass, factory.get());
                 prepareAssetType(assetType, Arrays.asList(registrationInfo.folderName()), resolutionStrategy, environment,
@@ -542,11 +560,12 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
         return extensionFormats;
     }
 
+    @SuppressWarnings("unchecked")
     private <T> List<T> findAndInstantiateClasses(ModuleEnvironment environment, final Class<T> baseType, Class<? extends Annotation> annotation) {
         List<T> result = Lists.newArrayList();
         for (Class<?> discoveredType : environment.getTypesAnnotatedWith(annotation, input -> baseType.isAssignableFrom(input)
                 && !Modifier.isAbstract(input.getModifiers()))) {
-            Optional<? extends T> instance = instantiateClass(baseType, discoveredType);
+            Optional<T> instance = classFactory.instantiateClass((Class<? extends T>) discoveredType);
             if (instance.isPresent()) {
                 result.add(instance.get());
             }
@@ -554,28 +573,5 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
         return result;
     }
 
-    private <T> Optional<? extends T> instantiateClass(Class<T> baseType, Class<?> discoveredType) {
-        T instance = null;
-        try {
-            Constructor<?> assetManagerConstructor = discoveredType.getConstructor(AssetManager.class);
-            instance = baseType.cast(assetManagerConstructor.newInstance(assetManager));
-        } catch (NoSuchMethodException e) {
-            logger.debug("No asset manager constructor for {}, falling back on default constructor", discoveredType);
-        } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            logger.error("Failed to instantiate class: {}", discoveredType, e);
-        }
-
-        if (instance == null) {
-            try {
-                discoveredType.getConstructor();
-                instance = baseType.cast(discoveredType.newInstance());
-            } catch (NoSuchMethodException e) {
-                logger.error("Type '" + discoveredType + "' missing usable constructor");
-            } catch (InstantiationException | IllegalAccessException e) {
-                logger.error("Failed to instantiate class: {}", discoveredType, e);
-            }
-        }
-        return Optional.ofNullable(instance);
-    }
 
 }

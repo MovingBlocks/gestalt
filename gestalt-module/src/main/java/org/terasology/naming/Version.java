@@ -71,7 +71,6 @@ public final class Version implements Comparable<Version> {
         this.snapshot = snapshot;
     }
 
-
     /**
      * @param version The string of the version
      * @throws VersionParseException If the version string is not a valid version.
@@ -105,6 +104,13 @@ public final class Version implements Comparable<Version> {
      */
     public boolean isSnapshot() {
         return snapshot;
+    }
+
+    public Version getSnapshot() {
+        if (snapshot) {
+            return this;
+        }
+        return new Version(major, minor, patch, true);
     }
 
     public Version getNextMajorVersion() {

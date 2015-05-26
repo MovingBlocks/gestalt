@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * For example, an AssetDataProducer may handle resource urns like "engine:color#FF00FF" to provide a texture with that color.
  * </p>
  * <p>
- * The AssetDataProducer must have an empty constructor, or one taking an AssetManager
+ * By default the AssetDataProducer must have an empty constructor, or one taking an AssetManager
  * </p>
  * @author Immortius
  */
