@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * Marks a {@link org.terasology.assets.format.AssetFileFormat AssetFileFormat} to be automatically registered by
  * {@link org.terasology.assets.module.ModuleAwareAssetTypeManager ModuleAwareAssetTypeManager} on environment change to handle loading assets and asset overrides from files.
  * <p>
- * The AssetFileFormat must have an empty constructor, or one taking an AssetManager
+ * By default the AssetFileFormat must have an empty constructor, or one taking an AssetManager
  * </p>
  * @author Immortius
  */

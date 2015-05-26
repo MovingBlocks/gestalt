@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * changes and assets reloaded instead they should be manually registered as a core asset type. This will be typically only be the case for assets types from the
  * classpath module(s)</p>
  * <p>
- * The AssetFactory must either have an empty constructor, or one taking an AssetManager
+ * By default the AssetFactory must either have an empty constructor, or one taking an AssetManager
  * </p>
  * @author Immortius
  */

@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  * Supplemental file formats are used both for loading standard asset and overrides.
  * </p>
  * <p>
- * The AssetAlterationFormat must have an empty constructor, or one taking an AssetManager
+ * By default the AssetAlterationFormat must have an empty constructor, or one taking an AssetManager
  * </p>
  * @author Immortius
  */

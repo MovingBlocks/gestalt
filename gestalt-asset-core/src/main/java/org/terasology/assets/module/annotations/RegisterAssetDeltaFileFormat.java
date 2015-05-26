@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * This is an alternative to using overrides, which completely replace an asset provided by another module.
  * </p>
  * <p>
- * The AssetAlterationFileFormat must have an empty constructor, or one taking an AssetManager
+ * By default the AssetAlterationFileFormat must have an empty constructor, or one taking an AssetManager
  * </p>
  * @author Immortius
  */
