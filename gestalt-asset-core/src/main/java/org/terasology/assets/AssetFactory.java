@@ -31,10 +31,11 @@ import org.terasology.module.sandbox.API;
 public interface AssetFactory<T extends Asset<U>, U extends AssetData> {
 
     /**
-     * @param urn  The urn of the asset to construct
+     * @param urn       The urn of the asset to construct
      * @param assetType The assetType the asset belongs to
-     * @param data The data for the asset
+     * @param data      The data for the asset
      * @return The built asset
+     * @throws org.terasology.assets.exceptions.InvalidAssetDataException If the asset failed to load due to invalid data
      */
     T build(ResourceUrn urn, AssetType<? super T, U> assetType, U data);
 }

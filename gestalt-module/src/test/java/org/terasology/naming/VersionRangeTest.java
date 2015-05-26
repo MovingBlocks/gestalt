@@ -63,4 +63,14 @@ public class VersionRangeTest {
     public void errorIfUpperBoundLowerThanLowerBound() {
         new VersionRange(new Version("2.0.0"), new Version("1.0.0"));
     }
+
+    @Test
+    public void lowerSnapshotInRange() {
+        assertTrue(range.contains(new Version("1.2.3-SNAPSHOT")));
+    }
+
+    @Test
+    public void higherSnapshotOutOfRange() {
+        assertFalse(range.contains(new Version("2.3.4-SNAPSHOT")));
+    }
 }
