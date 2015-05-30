@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.terasology.module.Module;
+import org.terasology.module.ModuleEnvironment;
 import org.terasology.util.Varargs;
 
 import java.io.IOException;
@@ -36,12 +37,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
- * A file system providing access to the contents of a Module.
+ * A file system providing access to the contents of a Module environment.
  * <p/>
- * A ModuleFileSystem has a single root '/', and separates each directory and file with '/'.
- * Modification and write operations are not supported. WatchService is supported though, for detecting external changes to a module - this is only
+ * A ModuleFileSystem has a root for each module ('/moduleName'), and separates each directory and file with '/'.
+ * Modification and write operations are not supported. WatchService is supported though, for detecting external changes - this is only
  * supported to changes happening on the default filesystem (so directories, not in archives).
  *
  * @author Immortius
@@ -51,17 +53,17 @@ class ModuleFileSystem extends FileSystem {
     private static final Set<String> SUPPORTED_FILE_ATTRIBUTE_VIEWS = ImmutableSet.of("basic");
 
     private final ModuleFileSystemProvider provider;
-    private final Module module;
+    private final ModuleEnvironment environment;
     private Map<Path, FileSystem> openedFileSystems = Maps.newConcurrentMap();
     private boolean open = true;
 
-    ModuleFileSystem(ModuleFileSystemProvider provider, Module module) {
+    ModuleFileSystem(ModuleFileSystemProvider provider, ModuleEnvironment environment) {
         this.provider = provider;
-        this.module = module;
+        this.environment = environment;
     }
 
-    public Module getModule() {
-        return module;
+    public ModuleEnvironment getEnvironment() {
+        return environment;
     }
 
     @Override
@@ -95,7 +97,8 @@ class ModuleFileSystem extends FileSystem {
 
     @Override
     public Iterable<Path> getRootDirectories() {
-        return Arrays.<Path>asList(getPath("/"));
+        return environment.getModulesOrderedByDependencies().stream()
+                .<Path>map(module -> getPath("/", module.getId().toString())).collect(Collectors.toList());
     }
 
     @Override
@@ -143,21 +146,11 @@ class ModuleFileSystem extends FileSystem {
             switch (parts[0]) {
                 case "regex": {
                     final Pattern pattern = Pattern.compile(parts[1]);
-                    return new PathMatcher() {
-                        @Override
-                        public boolean matches(Path path) {
-                            return pattern.matcher(path.toString()).matches();
-                        }
-                    };
+                    return path -> pattern.matcher(path.toString()).matches();
                 }
                 case "glob": {
                     final Pattern pattern = Pattern.compile(GlobSupport.globToRegex(parts[1]));
-                    return new PathMatcher() {
-                        @Override
-                        public boolean matches(Path path) {
-                            return pattern.matcher(path.toString()).matches();
-                        }
-                    };
+                    return path -> pattern.matcher(path.toString()).matches();
                 }
                 default:
                     throw new UnsupportedOperationException("Syntax '" + parts[0] + "' not recognized");
@@ -177,13 +170,11 @@ class ModuleFileSystem extends FileSystem {
         return new ModuleWatchService(this);
     }
 
-    FileSystem getContainedFileSystem(Path location) throws IOException {
-        Preconditions.checkArgument(module.getLocations().contains(location), "Location not contained in module");
-
-        FileSystem containedFileSystem = openedFileSystems.get(location);
+    FileSystem getRealFileSystem(Path moduleLocation) throws IOException {
+        FileSystem containedFileSystem = openedFileSystems.get(moduleLocation);
         if (containedFileSystem == null) {
-            containedFileSystem = FileSystems.newFileSystem(location, null);
-            openedFileSystems.put(location, containedFileSystem);
+            containedFileSystem = FileSystems.newFileSystem(moduleLocation, null);
+            openedFileSystems.put(moduleLocation, containedFileSystem);
         }
         return containedFileSystem;
     }

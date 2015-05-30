@@ -21,12 +21,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.terasology.module.Module;
+import org.terasology.naming.Name;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -41,6 +42,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -269,12 +271,7 @@ class ModulePath implements Path {
 
     @Override
     public URI toUri() {
-        try {
-            return new URI(String.format("%s://%s:%s%s",
-                    ModuleFileSystemProvider.SCHEME, fileSystem.getModule().getId(), fileSystem.getModule().getVersion(), this.toAbsolutePath().normalize()));
-        } catch (URISyntaxException e) {
-            throw new RuntimeException("Failed to create uri for module path: " + toString(), e);
-        }
+        throw new UnsupportedOperationException("Module filesystem does not support URIs");
     }
 
     @Override
@@ -288,20 +285,25 @@ class ModulePath implements Path {
 
     @Override
     public Path toRealPath(LinkOption... options) throws IOException {
+        Optional<Module> module = getModule();
+        if (!module.isPresent()) {
+            throw new IOException("Path does not exist: " + toString());
+        }
+
         ModulePath normalisedPath = toAbsolutePath().normalize();
 
-        for (Path location : fileSystem.getModule().getLocations()) {
+        for (Path location : module.get().getLocations()) {
             if (Files.isDirectory(location)) {
                 Path actualLocation = applyModulePathToActual(location, normalisedPath);
                 if (Files.exists(actualLocation)) {
-                    return convertFromActualToModulePath(getFileSystem(), location, actualLocation);
+                    return convertFromActualToModulePath(getFileSystem(), module.get().getId().toString(), location, actualLocation);
                 }
             } else if (Files.isRegularFile(location)) {
-                FileSystem moduleArchive = fileSystem.getContainedFileSystem(location);
+                FileSystem moduleArchive = fileSystem.getRealFileSystem(location);
                 for (Path archiveRoot : moduleArchive.getRootDirectories()) {
                     Path actualLocation = applyModulePathToActual(archiveRoot, normalisedPath);
                     if (Files.exists(actualLocation)) {
-                        return convertFromActualToModulePath(getFileSystem(), archiveRoot, actualLocation);
+                        return convertFromActualToModulePath(getFileSystem(), module.get().getId().toString(), archiveRoot, actualLocation);
                     }
                 }
             }
@@ -371,6 +373,14 @@ class ModulePath implements Path {
         return Objects.hash(fileSystem, path.toLowerCase(Locale.ENGLISH));
     }
 
+    Optional<Module> getModule() {
+        ModulePath normalisedPath = toAbsolutePath().normalize();
+        if (normalisedPath.getNameCount() > 0) {
+            return Optional.ofNullable(fileSystem.getEnvironment().get(new Name(normalisedPath.getName(0).toString())));
+        }
+        return Optional.empty();
+    }
+
     /**
      * @return A list of the name components of the path, including the root
      */
@@ -412,26 +422,31 @@ class ModulePath implements Path {
      * @return The real, underlying path for this path, or null if it doesn't exist.
      * @throws IOException
      */
-    Path getUnderlyingPath() throws IOException {
+    Optional<Path> getUnderlyingPath() throws IOException {
+        Optional<Module> module = getModule();
+        if (!module.isPresent()) {
+            return Optional.empty();
+        }
+
         ModulePath normalisedPath = toAbsolutePath().normalize();
 
-        for (Path location : fileSystem.getModule().getLocations()) {
+        for (Path location : module.get().getLocations()) {
             if (Files.isDirectory(location)) {
                 Path actualLocation = applyModulePathToActual(location, normalisedPath);
                 if (Files.exists(actualLocation)) {
-                    return actualLocation;
+                    return Optional.of(actualLocation);
                 }
             } else if (Files.isRegularFile(location)) {
-                FileSystem moduleArchive = fileSystem.getContainedFileSystem(location);
+                FileSystem moduleArchive = fileSystem.getRealFileSystem(location);
                 for (Path archiveRoot : moduleArchive.getRootDirectories()) {
                     Path actualLocation = applyModulePathToActual(archiveRoot, normalisedPath);
                     if (Files.exists(actualLocation)) {
-                        return actualLocation;
+                        return Optional.of(actualLocation);
                     }
                 }
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -441,17 +456,21 @@ class ModulePath implements Path {
      * @throws IOException
      */
     Set<Path> getUnderlyingPaths() throws IOException {
-        ModulePath normalisedPath = toAbsolutePath().normalize();
-
         Set<Path> underlyingPaths = Sets.newLinkedHashSet();
-        for (Path location : fileSystem.getModule().getLocations()) {
+        Optional<Module> module = getModule();
+        if (!module.isPresent()) {
+            return underlyingPaths;
+        }
+
+        ModulePath normalisedPath = toAbsolutePath().normalize();
+        for (Path location : module.get().getLocations()) {
             if (Files.isDirectory(location)) {
                 Path actualLocation = applyModulePathToActual(location, normalisedPath);
                 if (Files.exists(actualLocation)) {
                     underlyingPaths.add(actualLocation);
                 }
             } else if (Files.isRegularFile(location)) {
-                FileSystem moduleArchive = fileSystem.getContainedFileSystem(location);
+                FileSystem moduleArchive = fileSystem.getRealFileSystem(location);
                 for (Path archiveRoot : moduleArchive.getRootDirectories()) {
                     Path actualLocation = applyModulePathToActual(archiveRoot, normalisedPath);
                     if (Files.exists(actualLocation)) {
@@ -465,13 +484,18 @@ class ModulePath implements Path {
 
     /**
      * Applies a modulePath on top of an external path - used to produce the underlying path.
+     *
      * @param actualRoot The root path in a different filesystem
      * @param modulePath The module path to convert to a real path
      * @return The real path. This will be the actualRoot with the name parts of the modulePath appended.
      */
     static Path applyModulePathToActual(Path actualRoot, ModulePath modulePath) {
         Path result = actualRoot;
-        for (String part : modulePath.getPathPartsExcludingRoot()) {
+        List<String> parts = modulePath.getPathPartsExcludingRoot();
+        if (parts.size() < 2) {
+            return result;
+        }
+        for (String part : parts.subList(1, parts.size())) {
             result = result.resolve(part);
         }
         return result;
@@ -479,7 +503,7 @@ class ModulePath implements Path {
 
     /**
      * @param fileSystem The fileSystem the produced path will belong to
-     * @param parts The parts to construct the path from
+     * @param parts      The parts to construct the path from
      * @return A new module path belonging to the given fileSystem and with the given name parts
      */
     static ModulePath newPathFromParts(ModuleFileSystem fileSystem, List<String> parts) {
@@ -488,7 +512,7 @@ class ModulePath implements Path {
 
     /**
      * @param fileSystem The fileSystem the produced path will belong to
-     * @param parts The parts to construct the path from
+     * @param parts      The parts to construct the path from
      * @return A new module path belonging to the given fileSystem and with the given subset of name parts
      */
     static ModulePath newPathFromParts(ModuleFileSystem fileSystem, List<String> parts, int beginIndex, int endIndex) {
@@ -507,11 +531,12 @@ class ModulePath implements Path {
      * @return The module path equivalent of a given path
      * @throws IOException
      */
-    static Path convertFromActualToModulePath(ModuleFileSystem fileSystem, Path root, Path actualPath) throws IOException {
+    static Path convertFromActualToModulePath(ModuleFileSystem fileSystem, String moduleName, Path root, Path actualPath) throws IOException {
         Path actualRealPath = actualPath.toRealPath();
         Path relative = root.toRealPath().relativize(actualRealPath);
         List<String> pathParts = Lists.newArrayListWithCapacity(relative.getNameCount() + 1);
         pathParts.add(ModuleFileSystemProvider.SEPARATOR);
+        pathParts.add(moduleName);
         for (Path part : relative) {
             pathParts.add(part.toString());
         }

@@ -23,12 +23,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.ClasspathModule;
 import org.terasology.module.Module;
+import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleMetadata;
 import org.terasology.module.TableModuleRegistry;
+import org.terasology.module.sandbox.PermissionProvider;
+import org.terasology.module.sandbox.PermissionProviderFactory;
+import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
 
+import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -59,7 +64,9 @@ public class ModuleFileSystemPathMatcherGlobTest {
         metadata.setVersion(new Version("1.0.0"));
         Module module = ClasspathModule.create(metadata, getClass());
 
-        this.fileSystem = new ModuleFileSystemProvider(new TableModuleRegistry()).newFileSystem(module);
+        ModuleEnvironment environment = new ModuleEnvironment(Arrays.asList(module), new StandardPermissionProviderFactory());
+
+        this.fileSystem = new ModuleFileSystemProvider().newFileSystem(environment);
     }
 
     @Parameterized.Parameters

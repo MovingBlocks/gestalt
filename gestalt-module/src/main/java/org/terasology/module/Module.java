@@ -41,42 +41,6 @@ public interface Module {
     ImmutableList<Path> getLocations();
 
     /**
-     * @return A filesystem providing read access to the contents of the module.
-     */
-    FileSystem getFileSystem();
-
-    /**
-     * Finds files in a module. This will return all files (including class files)
-     * @return A collection of discovered files
-     * @throws IOException if there is an error scanning the module
-     */
-    ImmutableList<Path> findFiles() throws IOException;
-
-    /**
-     * Finds files in a module. This method allows a globbing filter to be provided to restrict the discovered files.
-     * @param fileFilterGlob  A globbing filter, see {@link java.nio.file.FileSystem#getPathMatcher(String) java.nio.file.FileSystem.getPathMatcher}
-     * @return A collection of discovered files
-     * @throws java.io.IOException if there is an error scanning the module
-     */
-    ImmutableList<Path> findFiles(String fileFilterGlob) throws IOException;
-
-    /**
-     * Finds files in a module. This method allows a directory filter and file filter to be provided to restrict the discovered files.
-     * <p>
-     *     The scan filter determines what directories will be visited, starting from the given relative path.
-     * </p>
-     * <p>
-     *     The file filter determines what files will be returned.
-     * </p>
-     * @param rootPath The root path to start scanning from
-     * @param scanFilter A filter on the directories to visit
-     * @param fileFilter A filter on the files to be returned
-     * @return A collection of discovered files
-     * @throws java.io.IOException if there is an error scanning the module
-     */
-    ImmutableList<Path> findFiles(Path rootPath, PathMatcher scanFilter, PathMatcher fileFilter) throws IOException;
-
-    /**
      * @return The urls forming the classpath of the module
      */
     ImmutableList<URL> getClasspaths();

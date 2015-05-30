@@ -21,17 +21,21 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.terasology.module.ClasspathModule;
 import org.terasology.module.Module;
+import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleMetadata;
 import org.terasology.module.TableModuleRegistry;
+import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -51,8 +55,9 @@ public class ModulePathTest {
         metadata.setId(new Name("test"));
         metadata.setVersion(new Version("1.0.0"));
         Module module = ClasspathModule.create(metadata, true, getClass());
+        ModuleEnvironment environment = new ModuleEnvironment(Arrays.asList(module), new StandardPermissionProviderFactory());
 
-        fileSystem = new ModuleFileSystemProvider(new TableModuleRegistry()).newFileSystem(module);
+        fileSystem = new ModuleFileSystemProvider().newFileSystem(environment);
     }
 
     @Test
@@ -293,14 +298,8 @@ public class ModulePathTest {
     }
 
     @Test
-    public void pathToUri() throws Exception {
-        Path path = fileSystem.getPath("/", "hello", "world");
-        assertEquals(new URI(String.format("%s://%s:%s/hello/world", "module", "test", "1.0.0")), path.toUri());
-    }
-
-    @Test
     public void readFile() throws Exception {
-        Path path = fileSystem.getPath("/", "subfolder", "test.resource");
+        Path path = fileSystem.getPath("/", "test", "subfolder", "test.resource");
         try (BufferedReader reader = Files.newBufferedReader(path, Charsets.UTF_8)) {
             assertEquals("this space intentionally left blank", reader.readLine());
         }
@@ -308,24 +307,31 @@ public class ModulePathTest {
 
     @Test
     public void exists() throws Exception {
-        assertTrue(Files.exists(fileSystem.getPath("/", "subfolder")));
+        assertTrue(Files.exists(fileSystem.getPath("/", "test", "subfolder")));
         assertFalse(Files.exists(fileSystem.getPath("/", "makebelieverubbish")));
     }
 
     @Test
     public void isDirectory() throws Exception {
-        Path path = fileSystem.getPath("/");
+        Path path = fileSystem.getPath("/test/subfolder");
         assertTrue(Files.isDirectory(path));
         assertFalse(Files.isRegularFile(path));
     }
 
     @Test
     public void getContents() throws Exception {
-        Path path = fileSystem.getPath("/", "subfolder");
+        Path path = fileSystem.getPath("/", "test", "subfolder");
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(path);) {
             List<Path> contents = Lists.newArrayList(stream.iterator());
             assertEquals(1, contents.size());
-            assertEquals(fileSystem.getPath("/", "subfolder", "test.resource"), contents.get(0));
+            assertEquals(fileSystem.getPath("/", "test", "subfolder", "test.resource"), contents.get(0));
         }
+    }
+
+    @Test
+    public void lowerRootBehaviours() throws IOException {
+        Path path = fileSystem.getPath("/");
+        assertFalse(Files.isDirectory(path));
+        assertFalse(Files.isRegularFile(path));
     }
 }

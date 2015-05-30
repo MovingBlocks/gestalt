@@ -275,7 +275,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private void scanForAssets() {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER, folderName);
                 if (Files.exists(rootPath)) {
                     scanLocationForAssets(module, folderName, rootPath, path -> module.getId());
                 }
@@ -286,9 +286,9 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private void scanForOverrides() {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), OVERRIDE_FOLDER);
                 if (Files.exists(rootPath)) {
-                    scanLocationForAssets(module, folderName, rootPath, path -> new Name(path.getName(1).toString()));
+                    scanLocationForAssets(module, folderName, rootPath, path -> new Name(path.getName(2).toString()));
                 }
             }
         }
@@ -315,13 +315,13 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private void scanForDeltas() {
         for (final Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, DELTA_FOLDER);
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), DELTA_FOLDER);
                 if (Files.exists(rootPath)) {
                     try {
                         Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                registerAssetDelta(new Name(file.getName(1).toString()), file, module.getId());
+                                registerAssetDelta(new Name(file.getName(2).toString()), file, module.getId());
                                 return FileVisitResult.CONTINUE;
                             }
                         });
@@ -338,10 +338,10 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         Map<ResourceUrn, ResourceUrn> rawRedirects = Maps.newLinkedHashMap();
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER, folderName);
                 if (Files.exists(rootPath)) {
                     try {
-                        for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
+                        for (Path file : FileScanning.findFilesInPath(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
                             processRedirectFile(file, module.getId(), rawRedirects);
                         }
                     } catch (IOException e) {
@@ -454,13 +454,12 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         ImmutableList.Builder<WatchService> watchServiceBuilder = ImmutableList.builder();
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             try {
-                final WatchService moduleWatchService = module.getFileSystem().newWatchService();
+                final WatchService moduleWatchService = moduleEnvironment.getFileSystem().newWatchService();
                 watchServiceBuilder.add(moduleWatchService);
 
-                for (Path rootPath : module.getFileSystem().getRootDirectories()) {
-                    PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), moduleWatchService);
-                    watcher.onRegistered();
-                }
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString());
+                PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), moduleWatchService);
+                watcher.onRegistered();
             } catch (IOException e) {
                 logger.warn("Failed to establish change watch service for module '{}'", module, e);
             }
@@ -635,8 +634,8 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 1) {
-                switch (target.getName(0).toString()) {
+            if (target.getNameCount() == 2) {
+                switch (target.getName(1).toString()) {
                     case ASSET_FOLDER: {
                         return Optional.of(new AssetRootPathWatcher(target, module, getWatchService()));
                     }
@@ -663,7 +662,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 2 && folderNames.contains(target.getName(1).toString())) {
+            if (target.getNameCount() == 3 && folderNames.contains(target.getName(2).toString())) {
                 return Optional.of(new AssetPathWatcher(target, module, module, getWatchService()));
             }
             return Optional.empty();
@@ -681,10 +680,10 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 2) {
+            if (target.getNameCount() == 3) {
                 return Optional.of(new OverrideRootPathWatcher(target, module, getWatchService()));
-            } else if (target.getNameCount() == 3) {
-                return Optional.of(new AssetPathWatcher(target, new Name(target.getName(1).toString()), module, getWatchService()));
+            } else if (target.getNameCount() == 4) {
+                return Optional.of(new AssetPathWatcher(target, new Name(target.getName(2).toString()), module, getWatchService()));
             }
             return Optional.empty();
         }
@@ -701,10 +700,10 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
         @Override
         protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 2) {
+            if (target.getNameCount() == 3) {
                 return Optional.of(new DeltaRootPathWatcher(target, module, getWatchService()));
-            } else if (target.getNameCount() == 3) {
-                return Optional.of(new DeltaPathWatcher(target, new Name(target.getName(1).toString()), module, getWatchService()));
+            } else if (target.getNameCount() == 4) {
+                return Optional.of(new DeltaPathWatcher(target, new Name(target.getName(2).toString()), module, getWatchService()));
             }
             return Optional.empty();
         }

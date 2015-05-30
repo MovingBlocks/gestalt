@@ -26,10 +26,8 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
-import org.terasology.util.io.FileScanning;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -38,7 +36,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -55,7 +52,6 @@ public abstract class BaseModule implements Module {
     protected ModuleMetadata metadata;
 
     private Reflections reflectionsFragment;
-    private final FileSystem fileSystem;
 
     /**
      * @param paths    The paths composing the module
@@ -64,33 +60,11 @@ public abstract class BaseModule implements Module {
     public BaseModule(Collection<Path> paths, ModuleMetadata metadata) {
         this.paths = ImmutableList.copyOf(paths);
         this.metadata = metadata;
-        this.fileSystem = new ModuleFileSystemProvider(this).newFileSystem(this);
     }
 
     @Override
     public ImmutableList<Path> getLocations() {
         return paths;
-    }
-
-    @Override
-    public FileSystem getFileSystem() {
-        return fileSystem;
-    }
-
-    @Override
-    public ImmutableList<Path> findFiles() throws IOException {
-        return findFiles(getFileSystem().getPath(ModuleFileSystemProvider.ROOT), FileScanning.acceptAll(), FileScanning.acceptAll());
-    }
-
-    @Override
-    public ImmutableList<Path> findFiles(String fileFilterGlob) throws IOException {
-        PathMatcher globFilter = getFileSystem().getPathMatcher(fileFilterGlob);
-        return ImmutableList.copyOf(FileScanning.findFilesInPath(getFileSystem().getPath(ModuleFileSystemProvider.ROOT), FileScanning.acceptAll(), globFilter));
-    }
-
-    @Override
-    public ImmutableList<Path> findFiles(Path path, PathMatcher scanFilter, PathMatcher fileFilter) throws IOException {
-        return ImmutableList.copyOf(FileScanning.findFilesInPath(path, scanFilter, fileFilter));
     }
 
     @Override

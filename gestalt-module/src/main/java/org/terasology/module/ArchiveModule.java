@@ -35,7 +35,7 @@ public class ArchiveModule extends BaseModule {
     private final ImmutableList<URL> classpath;
 
     /**
-     * @param path     Must be a file, and must be convertible to a url (some limits on special characters)
+     * @param path Must be a file, and must be convertible to a url (some limits on special characters)
      * @param metadata The metadata describing this module
      */
     public ArchiveModule(Path path, ModuleMetadata metadata) {
