@@ -21,11 +21,8 @@ import org.reflections.Reflections;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
-import java.io.IOException;
 import java.net.URL;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 
 /**
  * A module is an identified and versioned set of code and/or resources that can be loaded and used at runtime. This class encapsulates information on a

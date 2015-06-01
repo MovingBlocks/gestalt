@@ -23,14 +23,12 @@ import org.terasology.module.ClasspathModule;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleMetadata;
-import org.terasology.module.TableModuleRegistry;
 import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;

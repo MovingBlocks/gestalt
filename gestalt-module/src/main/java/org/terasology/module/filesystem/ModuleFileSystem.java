@@ -16,10 +16,8 @@
 
 package org.terasology.module.filesystem;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.util.Varargs;
 
@@ -32,7 +30,6 @@ import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +38,7 @@ import java.util.stream.Collectors;
 
 /**
  * A file system providing access to the contents of a Module environment.
- * <p/>
+ * <p>
  * A ModuleFileSystem has a root for each module ('/moduleName'), and separates each directory and file with '/'.
  * Modification and write operations are not supported. WatchService is supported though, for detecting external changes - this is only
  * supported to changes happening on the default filesystem (so directories, not in archives).

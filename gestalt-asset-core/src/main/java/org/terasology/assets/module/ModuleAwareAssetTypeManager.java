@@ -53,6 +53,7 @@ import org.terasology.util.reflection.GenericsUtil;
 import org.terasology.util.reflection.ParameterProvider;
 import org.terasology.util.reflection.SimpleClassFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
@@ -84,7 +85,7 @@ import java.util.Set;
  *
  * @author Immortius
  */
-public class ModuleAwareAssetTypeManager implements AssetTypeManager {
+public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAwareAssetTypeManager.class);
 
@@ -104,6 +105,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     private final Map<Class<? extends Asset>, ModuleAssetDataProducer<?>> moduleAssetDataProducers = Maps.newHashMap();
 
     private final ClassFactory classFactory;
+    private Optional<ModuleWatcher> watcher = Optional.empty();
 
 
     public ModuleAwareAssetTypeManager() {
@@ -126,6 +128,15 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     }
 
     @Override
+    public synchronized void close() throws IOException {
+        closeModuleProducers();
+        clearAssetTypes();
+        if (watcher.isPresent()) {
+            watcher.get().shutdown();
+        }
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T extends Asset<U>, U extends AssetData> Optional<AssetType<T, U>> getAssetType(Class<T> type) {
         return Optional.ofNullable((AssetType<T, U>) assetTypes.get(type));
@@ -144,9 +155,17 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
     /**
      * Triggers the reload of any assets that have been altered in directory modules.
      */
-    public void reloadChangedOnDisk() {
-        for (Map.Entry<Class<? extends Asset>, ModuleAssetDataProducer<?>> entry : moduleAssetDataProducers.entrySet()) {
-            reloadChanged(entry.getKey(), entry.getValue());
+    public synchronized void reloadChangedOnDisk() {
+        if (watcher.isPresent()) {
+            SetMultimap<AssetType<?, ?>, ResourceUrn> changes = watcher.get().checkForChanges();
+            for (Map.Entry<AssetType<?, ?>, ResourceUrn> entry : changes.entries()) {
+                if (entry.getKey().isLoaded(entry.getValue())) {
+                    AssetType<?, ?> assetType = entry.getKey();
+                    ResourceUrn changedUrn = entry.getValue();
+                    logger.info("Reloading changed asset '{}'", changedUrn);
+                    assetType.reload(changedUrn);
+                }
+            }
         }
     }
 
@@ -332,6 +351,19 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
 
         closeModuleProducers();
         clearAssetTypes();
+        if (watcher.isPresent()) {
+            try {
+                watcher.get().shutdown();
+            } catch (IOException e) {
+                logger.error("Failed to shut down watch service", e);
+            }
+        }
+
+        try {
+            watcher = Optional.of(new ModuleWatcher(newEnvironment));
+        } catch (IOException e) {
+            logger.warn("Failed to establish watch service, will not auto-reload changed assets", e);
+        }
 
         ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFileFormats = scanForExtensionFormats(newEnvironment);
         ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionSupplementalFormats = scanForExtensionSupplementalFormats(newEnvironment);
@@ -378,6 +410,14 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
             }
         }
         subtypes = ImmutableListMultimap.copyOf(subtypesBuilder);
+    }
+
+    private void subscribeToChanges(AssetType<?, ?> assetType, ModuleAssetDataProducer<?> producer, Collection<String> folderNames) {
+        if (watcher.isPresent()) {
+            for (String folder : folderNames) {
+                watcher.get().register(folder, producer, assetType);
+            }
+        }
     }
 
     private void setupCoreAssetTypes(ModuleEnvironment environment, ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFileFormats,
@@ -445,6 +485,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
             ModuleAssetDataProducer moduleProducer = new ModuleAssetDataProducer(environment, assetFormats, supplementalFormats, deltaFormats, folderNames);
             assetType.addProducer(moduleProducer);
             moduleAssetDataProducers.put(assetType.getAssetClass(), moduleProducer);
+            subscribeToChanges(assetType, moduleProducer, folderNames);
         }
     }
 
@@ -465,26 +506,6 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
             producer.close();
         }
         moduleAssetDataProducers.clear();
-    }
-
-    private <T extends AssetData> void reloadChanged(Class<? extends Asset> type, ModuleAssetDataProducer<T> producer) {
-        Set<ResourceUrn> changedUrns = producer.checkForChanges();
-        if (!changedUrns.isEmpty()) {
-            Optional<? extends AssetType<? extends Asset, AssetData>> assetType = getAssetType(type);
-            for (ResourceUrn changedUrn : changedUrns) {
-                if (assetType.get().isLoaded(changedUrn)) {
-                    try {
-                        logger.info("Reloading changed asset '{}'", changedUrn);
-                        Optional<T> assetData = producer.getAssetData(changedUrn);
-                        if (assetData.isPresent()) {
-                            assetType.get().loadAsset(changedUrn, assetData.get());
-                        }
-                    } catch (IOException e) {
-                        logger.error("Failed to reload asset '{}'", changedUrn, e);
-                    }
-                }
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -572,6 +593,5 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager {
         }
         return result;
     }
-
 
 }
