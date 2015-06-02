@@ -301,6 +301,37 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     }
 
     /**
+     * Forces a reload of an asset from a data producer, if possible.
+     * @param urn The urn of the resource to reload.
+     * @return The asset if it exists (regardless of whether it was reloaded or not)
+     */
+    public Optional<T> reload(ResourceUrn urn) {
+        if (urn.isInstance()) {
+            reload(new ResourceUrn(urn.getModuleName(), urn.getResourceName(), urn.getFragmentName(), false));
+            return getAsset(urn);
+        }
+        ResourceUrn redirectUrn = followRedirects(urn);
+        try {
+            return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
+                for (AssetDataProducer<U> producer : producers) {
+                    Optional<U> data = producer.getAssetData(redirectUrn);
+                    if (data.isPresent()) {
+                        return Optional.of(loadAsset(redirectUrn, data.get()));
+                    }
+                }
+                return Optional.ofNullable(loadedAssets.get(redirectUrn));
+            });
+        } catch (PrivilegedActionException e) {
+            if (redirectUrn.equals(urn)) {
+                logger.error("Failed to load asset '{}'", redirectUrn, e);
+            } else {
+                logger.error("Failed to load asset '{}' redirected from '{}'", redirectUrn, urn, e);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Obtains a non-instance asset
      *
      * @param urn The urn of the asset
@@ -310,23 +341,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         ResourceUrn redirectUrn = followRedirects(urn);
         T asset = loadedAssets.get(redirectUrn);
         if (asset == null) {
-            try {
-                asset = AccessController.doPrivileged((PrivilegedExceptionAction<T>) () -> {
-                    for (AssetDataProducer<U> producer : producers) {
-                        Optional<U> data = producer.getAssetData(redirectUrn);
-                        if (data.isPresent()) {
-                            return loadAsset(redirectUrn, data.get());
-                        }
-                    }
-                    return null;
-                });
-            } catch (PrivilegedActionException e) {
-                if (redirectUrn.equals(urn)) {
-                    logger.error("Failed to load asset '{}'", redirectUrn, e);
-                } else {
-                    logger.error("Failed to load asset '{}' redirected from '{}'", redirectUrn, urn, e);
-                }
-            }
+            return reload(redirectUrn);
         }
         return Optional.ofNullable(asset);
     }

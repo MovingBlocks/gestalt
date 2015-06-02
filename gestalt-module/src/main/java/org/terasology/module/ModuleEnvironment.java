@@ -31,6 +31,7 @@ import org.reflections.ReflectionsException;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleClassLoader;
 import org.terasology.module.sandbox.ObtainClassloader;
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
@@ -76,6 +78,17 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private final Reflections fullReflections;
     private final ImmutableList<Module> modulesOrderByDependencies;
     private final ImmutableList<Name> moduleIdsOrderedByDependencies;
+    private final FileSystem fileSystem;
+
+
+    /**
+     * @param modules                   The modules this environment should encompass.
+     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
+     * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
+     */
+    public ModuleEnvironment(Iterable<Module> modules, PermissionProviderFactory permissionProviderFactory) {
+        this(modules, permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
+    }
 
     /**
      * @param modules                   The modules this environment should encompass.
@@ -125,6 +138,8 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         this.fullReflections = buildFullReflections(reflectionsByModule);
         this.managedClassLoaders = managedClassLoaderListBuilder.build();
         this.moduleDependencies = buildModuleDependencies();
+
+        this.fileSystem = new ModuleFileSystemProvider().newFileSystem(this);
 
     }
 
@@ -348,5 +363,9 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     @Override
     public Iterator<Module> iterator() {
         return modules.values().iterator();
+    }
+
+    public FileSystem getFileSystem() {
+        return fileSystem;
     }
 }

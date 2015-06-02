@@ -25,7 +25,6 @@ import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,15 +46,10 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Collection;
@@ -100,7 +94,7 @@ import java.util.function.Function;
  * @author Immortius
  */
 @ThreadSafe
-public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataProducer<U>, Closeable {
+public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataProducer<U>, Closeable, AssetFileChangeSubscriber {
 
     /**
      * The name of the module directory that contains asset files.
@@ -136,10 +130,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private final ImmutableMap<ResourceUrn, ResourceUrn> redirectMap;
     private final SetMultimap<Name, Name> resolutionMap = Multimaps.synchronizedSetMultimap(HashMultimap.<Name, Name>create());
 
-    private final ImmutableList<WatchService> moduleWatchServices;
-    private final Map<WatchKey, PathWatcher> pathWatchers = new MapMaker().concurrencyLevel(1).makeMap();
-    private final Map<Path, WatchKey> watchKeys = new MapMaker().concurrencyLevel(1).makeMap();
-
     /**
      * Creates a ModuleAssetDataProducer
      *
@@ -153,7 +143,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                                    Collection<AssetFileFormat<U>> assetFormats,
                                    Collection<AssetAlterationFileFormat<U>> supplementalFormats,
                                    Collection<AssetAlterationFileFormat<U>> deltaFormats,
-                                   String ... folderNames) {
+                                   String... folderNames) {
         this(moduleEnvironment, assetFormats, supplementalFormats, deltaFormats, Arrays.asList(folderNames));
     }
 
@@ -181,8 +171,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         scanForOverrides();
         scanForDeltas();
         redirectMap = buildRedirectMap(scanModulesForRedirects());
-
-        moduleWatchServices = startWatchService();
     }
 
     /**
@@ -211,7 +199,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
      */
     @Override
     public synchronized void close() {
-        shutdownWatchService();
         unloadedAssetLookup.clear();
         resolutionMap.clear();
     }
@@ -223,24 +210,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         return moduleEnvironment;
     }
 
-    /**
-     * Checks the file system for any changes that affects assets.
-     *
-     * @return A set of ResourceUrns of changed assets.
-     */
-    public synchronized Set<ResourceUrn> checkForChanges() {
-        Set<ResourceUrn> changed = Sets.newLinkedHashSet();
-        for (WatchService service : moduleWatchServices) {
-            WatchKey key = service.poll();
-            while (key != null) {
-                PathWatcher pathWatcher = pathWatchers.get(key);
-                changed.addAll(pathWatcher.update(key.pollEvents()));
-                key.reset();
-                key = service.poll();
-            }
-        }
-        return changed;
-    }
 
     @Override
     public Set<ResourceUrn> getAvailableAssetUrns() {
@@ -275,7 +244,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private void scanForAssets() {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER, folderName);
                 if (Files.exists(rootPath)) {
                     scanLocationForAssets(module, folderName, rootPath, path -> module.getId());
                 }
@@ -286,9 +255,9 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private void scanForOverrides() {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, OVERRIDE_FOLDER);
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), OVERRIDE_FOLDER);
                 if (Files.exists(rootPath)) {
-                    scanLocationForAssets(module, folderName, rootPath, path -> new Name(path.getName(1).toString()));
+                    scanLocationForAssets(module, folderName, rootPath, path -> new Name(path.getName(2).toString()));
                 }
             }
         }
@@ -315,13 +284,13 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private void scanForDeltas() {
         for (final Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, DELTA_FOLDER);
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), DELTA_FOLDER);
                 if (Files.exists(rootPath)) {
                     try {
                         Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                registerAssetDelta(new Name(file.getName(1).toString()), file, module.getId());
+                                registerAssetDelta(new Name(file.getName(2).toString()), file, module.getId());
                                 return FileVisitResult.CONTINUE;
                             }
                         });
@@ -338,10 +307,10 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         Map<ResourceUrn, ResourceUrn> rawRedirects = Maps.newLinkedHashMap();
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
-                Path rootPath = module.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, ASSET_FOLDER, folderName);
+                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER, folderName);
                 if (Files.exists(rootPath)) {
                     try {
-                        for (Path file : module.findFiles(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
+                        for (Path file : FileScanning.findFilesInPath(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
                             processRedirectFile(file, module.getId(), rawRedirects);
                         }
                     } catch (IOException e) {
@@ -450,446 +419,139 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         return Optional.empty();
     }
 
-    private ImmutableList<WatchService> startWatchService() {
-        ImmutableList.Builder<WatchService> watchServiceBuilder = ImmutableList.builder();
-        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            try {
-                final WatchService moduleWatchService = module.getFileSystem().newWatchService();
-                watchServiceBuilder.add(moduleWatchService);
-
-                for (Path rootPath : module.getFileSystem().getRootDirectories()) {
-                    PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), moduleWatchService);
-                    watcher.onRegistered();
-                }
-            } catch (IOException e) {
-                logger.warn("Failed to establish change watch service for module '{}'", module, e);
-            }
+    @Override
+    public Optional<ResourceUrn> assetFileAdded(Path path, Name module, Name providingModule) {
+        Optional<ResourceUrn> urn = registerSource(module, path, providingModule, assetFormats, UnloadedAssetData::addSource);
+        if (!urn.isPresent()) {
+            urn = registerSource(module, path, providingModule, supplementFormats, UnloadedAssetData::addSupplementSource);
         }
-        return watchServiceBuilder.build();
+        if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
+            return urn;
+        }
+        return Optional.empty();
     }
 
-    private void shutdownWatchService() {
-        for (WatchService watchService : moduleWatchServices) {
-            try {
-                watchService.close();
-            } catch (IOException e) {
-                logger.error("Failed to shutdown watch service", e);
-            }
-        }
-        pathWatchers.clear();
-        watchKeys.clear();
-    }
-
-    /**
-     * A PathWatcher watches a path for changes, and reacts to those changes.
-     */
-    private abstract class PathWatcher {
-        private Path watchedPath;
-        private WatchService watchService;
-
-        public PathWatcher(Path path, WatchService watchService) throws IOException {
-            this.watchedPath = path;
-            this.watchService = watchService;
-            WatchKey key = path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE);
-            if (key.isValid()) {
-                pathWatchers.put(key, this);
-                watchKeys.put(path, key);
-            }
-        }
-
-        public Path getWatchedPath() {
-            return watchedPath;
-        }
-
-        public WatchService getWatchService() {
-            return watchService;
-        }
-
-        @SuppressWarnings("unchecked")
-        public final Set<ResourceUrn> update(List<WatchEvent<?>> watchEvents) {
-            final Set<ResourceUrn> changedAssets = Sets.newLinkedHashSet();
-            for (WatchEvent<?> event : watchEvents) {
-                WatchEvent.Kind kind = event.kind();
-                if (kind == StandardWatchEventKinds.OVERFLOW) {
-                    logger.warn("File event overflow - lost change events");
-                    continue;
-                }
-
-                WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
-                Path target = watchedPath.resolve(pathEvent.context());
-                if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                    if (Files.isDirectory(target)) {
-                        onDirectoryCreated(target, changedAssets);
-                    } else {
-                        onFileCreated(target, changedAssets);
-                    }
-                } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                    if (Files.isRegularFile(target)) {
-                        onFileModified(target, changedAssets);
-                    }
-                } else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-                    WatchKey key = watchKeys.remove(target);
-                    if (key != null) {
-                        pathWatchers.remove(key);
-                    } else {
-                        onFileDeleted(target, changedAssets);
-                    }
-                }
-            }
-            return changedAssets;
-        }
-
-        private void onDirectoryCreated(Path target, Set<ResourceUrn> outChanged) {
-            try {
-                Optional<? extends PathWatcher> pathWatcher = processPath(target);
-                if (pathWatcher.isPresent()) {
-                    pathWatcher.get().onCreated(outChanged);
-                }
-            } catch (IOException e) {
-                logger.error("Error registering path for change watching '{}'", getWatchedPath(), e);
-            }
-        }
-
-        /**
-         * Called when the path watcher is registered for an existing path
-         */
-        public final void onRegistered() {
-            try (DirectoryStream<Path> contents = Files.newDirectoryStream(getWatchedPath())) {
-                for (Path path : contents) {
-                    if (Files.isDirectory(path)) {
-                        Optional<? extends PathWatcher> pathWatcher = processPath(path);
-                        if (pathWatcher.isPresent()) {
-                            pathWatcher.get().onRegistered();
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("Error registering path for change watching '{}'", getWatchedPath(), e);
-            }
-        }
-
-        /**
-         * Called when the path watcher is for a newly created path
-         *
-         * @param outChanged The ResourceUrns of any assets affected by the creation of this path
-         */
-        public final void onCreated(Set<ResourceUrn> outChanged) {
-            try (DirectoryStream<Path> contents = Files.newDirectoryStream(getWatchedPath())) {
-                for (Path path : contents) {
-                    if (Files.isDirectory(path)) {
-                        onDirectoryCreated(path, outChanged);
-                    } else {
-                        onFileCreated(path, outChanged);
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("Error registering path for change watching '{}'", getWatchedPath(), e);
-            }
-        }
-
-        /**
-         * Processes a path within this path watcher
-         *
-         * @param target The path to process
-         * @return A new path watcher for the path
-         * @throws IOException If there was any issue processing the path
-         */
-        protected abstract Optional<? extends PathWatcher> processPath(Path target) throws IOException;
-
-        /**
-         * Called when a file is created
-         *
-         * @param target     The created file
-         * @param outChanged The ResourceUrns of any assets affected
-         */
-        protected void onFileCreated(Path target, final Set<ResourceUrn> outChanged) {
-        }
-
-        /**
-         * Called when a file is modified
-         *
-         * @param target     The modified file
-         * @param outChanged The ResourceUrns of any assets affected
-         */
-        protected void onFileModified(Path target, final Set<ResourceUrn> outChanged) {
-        }
-
-        /**
-         * Called when a file is deleted
-         *
-         * @param target     The deleted file
-         * @param outChanged The ResourceUrns of any assets affected
-         */
-        protected void onFileDeleted(Path target, final Set<ResourceUrn> outChanged) {
-        }
-    }
-
-    private class RootPathWatcher extends PathWatcher {
-
-        private Name module;
-
-        public RootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.module = module;
-        }
-
-        @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 1) {
-                switch (target.getName(0).toString()) {
-                    case ASSET_FOLDER: {
-                        return Optional.of(new AssetRootPathWatcher(target, module, getWatchService()));
-                    }
-                    case DELTA_FOLDER: {
-                        return Optional.of(new DeltaRootPathWatcher(target, module, getWatchService()));
-                    }
-                    case OVERRIDE_FOLDER: {
-                        return Optional.of(new OverrideRootPathWatcher(target, module, getWatchService()));
-                    }
-                }
-            }
-            return Optional.empty();
-        }
-    }
-
-    private class AssetRootPathWatcher extends PathWatcher {
-
-        private Name module;
-
-        public AssetRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.module = module;
-        }
-
-        @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 2 && folderNames.contains(target.getName(1).toString())) {
-                return Optional.of(new AssetPathWatcher(target, module, module, getWatchService()));
-            }
-            return Optional.empty();
-        }
-    }
-
-    private class OverrideRootPathWatcher extends PathWatcher {
-
-        private Name module;
-
-        public OverrideRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.module = module;
-        }
-
-        @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 2) {
-                return Optional.of(new OverrideRootPathWatcher(target, module, getWatchService()));
-            } else if (target.getNameCount() == 3) {
-                return Optional.of(new AssetPathWatcher(target, new Name(target.getName(1).toString()), module, getWatchService()));
-            }
-            return Optional.empty();
-        }
-    }
-
-    private class DeltaRootPathWatcher extends PathWatcher {
-
-        private Name module;
-
-        public DeltaRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.module = module;
-        }
-
-        @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 2) {
-                return Optional.of(new DeltaRootPathWatcher(target, module, getWatchService()));
-            } else if (target.getNameCount() == 3) {
-                return Optional.of(new DeltaPathWatcher(target, new Name(target.getName(1).toString()), module, getWatchService()));
-            }
-            return Optional.empty();
-        }
-    }
-
-    private class DeltaPathWatcher extends PathWatcher {
-
-        private final Name providingModule;
-        private final Name module;
-
-        public DeltaPathWatcher(Path path, Name module, Name providingModule, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.module = module;
-            this.providingModule = providingModule;
-        }
-
-        @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            return Optional.of(new DeltaPathWatcher(target, module, providingModule, getWatchService()));
-        }
-
-        private ResourceUrn getResourceUrn(Path target) {
-            Path filename = target.getFileName();
-            if (filename == null) {
-                logger.error("Missing filename for resource target");
-                return null;
-            }
-
-            for (FileFormat fileFormat : deltaFormats) {
+    private Optional<ResourceUrn> getResourceUrn(Path target, Name module, Collection<? extends FileFormat> formats) {
+        Path filename = target.getFileName();
+        if (filename != null) {
+            for (FileFormat fileFormat : formats) {
                 if (fileFormat.getFileMatcher().matches(target)) {
                     try {
                         Name assetName = fileFormat.getAssetName(filename.toString());
-                        return new ResourceUrn(module, assetName);
+                        return Optional.of(new ResourceUrn(module, assetName));
                     } catch (InvalidAssetFilenameException e) {
                         logger.debug("Modified file does not have a valid asset name - '{}'", filename);
                     }
                 }
             }
-            return null;
         }
+        return Optional.empty();
+    }
 
-        @Override
-        protected void onFileCreated(Path target, Set<ResourceUrn> outChanged) {
-            Optional<ResourceUrn> urn = registerAssetDelta(module, target, providingModule);
-            if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
-                outChanged.add(urn.get());
-            }
+    @Override
+    public Optional<ResourceUrn> assetFileModified(Path path, Name module, Name providingModule) {
+        Optional<ResourceUrn> urn = getResourceUrn(path, module, assetFormats);
+        if (!urn.isPresent()) {
+            urn = getResourceUrn(path, module, supplementFormats);
         }
-
-        @Override
-        protected void onFileModified(Path target, Set<ResourceUrn> outChanged) {
-            ResourceUrn urn = getResourceUrn(target);
-            if (urn != null) {
-                if (unloadedAssetLookup.get(urn).isValid()) {
-                    outChanged.add(urn);
-                }
-            }
+        if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
+            return urn;
         }
+        return Optional.empty();
+    }
 
-        @Override
-        protected void onFileDeleted(Path target, Set<ResourceUrn> outChanged) {
-            Path filename = target.getFileName();
-            if (filename == null) {
-                logger.error("Missing filename for deleted file");
-                return;
-            }
-            for (AssetAlterationFileFormat<U> format : deltaFormats) {
-                if (format.getFileMatcher().matches(target)) {
+    @Override
+    public Optional<ResourceUrn> assetFileDeleted(Path path, Name module, Name providingModule) {
+        Path filename = path.getFileName();
+        if (filename != null) {
+            for (AssetFileFormat<U> format : assetFormats) {
+                if (format.getFileMatcher().matches(path)) {
                     try {
                         Name assetName = format.getAssetName(filename.toString());
                         ResourceUrn urn = new ResourceUrn(module, assetName);
                         UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                         if (existing != null) {
-                            existing.removeDeltaSource(providingModule, format, target);
+                            existing.removeSource(providingModule, format, path);
                             if (existing.isValid()) {
-                                outChanged.add(urn);
+                                return Optional.of(urn);
                             }
                         }
-                        return;
+                        return Optional.empty();
                     } catch (InvalidAssetFilenameException e) {
-                        logger.debug("Deleted file does not have a valid file name - {}", target);
+                        logger.debug("Deleted file does not have a valid file name - {}", path);
+                    }
+                }
+            }
+            for (AssetAlterationFileFormat<U> format : supplementFormats) {
+                if (format.getFileMatcher().matches(path)) {
+                    try {
+                        Name assetName = format.getAssetName(filename.toString());
+                        ResourceUrn urn = new ResourceUrn(module, assetName);
+                        UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
+                        if (existing != null) {
+                            existing.removeSupplementSource(providingModule, format, path);
+                            if (existing.isValid()) {
+                                return Optional.of(urn);
+                            }
+                        }
+                        return Optional.empty();
+                    } catch (InvalidAssetFilenameException e) {
+                        logger.debug("Deleted file does not have a valid file name - {}", path);
                     }
                 }
             }
         }
+        return Optional.empty();
     }
 
-    private class AssetPathWatcher extends PathWatcher {
-
-        private Name module;
-        private Name providingModule;
-
-        public AssetPathWatcher(Path path, Name module, Name providingModule, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.module = module;
-            this.providingModule = providingModule;
+    @Override
+    public Optional<ResourceUrn> deltaFileAdded(Path path, Name module, Name providingModule) {
+        Optional<ResourceUrn> urn = registerAssetDelta(module, path, providingModule);
+        if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
+            return urn;
         }
+        return Optional.empty();
+    }
 
-        @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            return Optional.of(new AssetPathWatcher(target, module, providingModule, getWatchService()));
-        }
-
-        private Optional<ResourceUrn> getResourceUrn(Path target, Collection<? extends FileFormat> formats) {
-            Path filename = target.getFileName();
-            if (filename != null) {
-                for (FileFormat fileFormat : formats) {
-                    if (fileFormat.getFileMatcher().matches(target)) {
-                        try {
-                            Name assetName = fileFormat.getAssetName(filename.toString());
-                            return Optional.of(new ResourceUrn(module, assetName));
-                        } catch (InvalidAssetFilenameException e) {
-                            logger.debug("Modified file does not have a valid asset name - '{}'", filename);
-                        }
-                    }
-                }
+    @Override
+    public Optional<ResourceUrn> deltaFileModified(Path path, Name module, Name providingModule) {
+        Optional<ResourceUrn> urn = getResourceUrn(path, module, deltaFormats);
+        if (urn.isPresent()) {
+            if (unloadedAssetLookup.get(urn.get()).isValid()) {
+                return urn;
             }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<ResourceUrn> deltaFileDeleted(Path path, Name module, Name providingModule) {
+        Path filename = path.getFileName();
+        if (filename == null) {
+            logger.error("Missing filename for deleted file");
             return Optional.empty();
         }
-
-        @Override
-        protected void onFileCreated(Path target, Set<ResourceUrn> outChanged) {
-            Optional<ResourceUrn> urn = registerSource(module, target, providingModule, assetFormats, UnloadedAssetData::addSource);
-            if (!urn.isPresent()) {
-                urn = registerSource(module, target, providingModule, supplementFormats, UnloadedAssetData::addSupplementSource);
-            }
-            if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
-                outChanged.add(urn.get());
-            }
-        }
-
-        @Override
-        protected void onFileModified(Path target, Set<ResourceUrn> outChanged) {
-            Optional<ResourceUrn> urn = getResourceUrn(target, assetFormats);
-            if (!urn.isPresent()) {
-                urn = getResourceUrn(target, supplementFormats);
-            }
-            if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
-                outChanged.add(urn.get());
-            }
-        }
-
-        @Override
-        protected void onFileDeleted(Path target, Set<ResourceUrn> outChanged) {
-            Path filename = target.getFileName();
-            if (filename != null) {
-                for (AssetFileFormat<U> format : assetFormats) {
-                    if (format.getFileMatcher().matches(target)) {
-                        try {
-                            Name assetName = format.getAssetName(filename.toString());
-                            ResourceUrn urn = new ResourceUrn(module, assetName);
-                            UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
-                            if (existing != null) {
-                                existing.removeSource(providingModule, format, target);
-                                if (existing.isValid()) {
-                                    outChanged.add(urn);
-                                }
-                            }
-                            return;
-                        } catch (InvalidAssetFilenameException e) {
-                            logger.debug("Deleted file does not have a valid file name - {}", target);
+        for (AssetAlterationFileFormat<U> format : deltaFormats) {
+            if (format.getFileMatcher().matches(path)) {
+                try {
+                    Name assetName = format.getAssetName(filename.toString());
+                    ResourceUrn urn = new ResourceUrn(module, assetName);
+                    UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
+                    if (existing != null) {
+                        existing.removeDeltaSource(providingModule, format, path);
+                        if (existing.isValid()) {
+                            return Optional.of(urn);
                         }
                     }
-                }
-                for (AssetAlterationFileFormat<U> format : supplementFormats) {
-                    if (format.getFileMatcher().matches(target)) {
-                        try {
-                            Name assetName = format.getAssetName(filename.toString());
-                            ResourceUrn urn = new ResourceUrn(module, assetName);
-                            UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
-                            if (existing != null) {
-                                existing.removeSupplementSource(providingModule, format, target);
-                                if (existing.isValid()) {
-                                    outChanged.add(urn);
-                                }
-                            }
-                            return;
-                        } catch (InvalidAssetFilenameException e) {
-                            logger.debug("Deleted file does not have a valid file name - {}", target);
-                        }
-                    }
+                    return Optional.empty();
+                } catch (InvalidAssetFilenameException e) {
+                    logger.debug("Deleted file does not have a valid file name - {}", path);
                 }
             }
         }
+        return Optional.empty();
     }
+
 
     /**
      * Interface for registering a source. Allows the same outer logic to be used for registering different types of asset sources.

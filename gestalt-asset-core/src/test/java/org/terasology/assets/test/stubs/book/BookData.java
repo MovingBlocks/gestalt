@@ -27,6 +27,8 @@ import java.util.List;
  */
 public class BookData implements AssetData {
     private final List<String> lines = Lists.newArrayList();
+    private String author;
+    private String body;
 
     public BookData() {
     }
@@ -47,5 +49,21 @@ public class BookData implements AssetData {
     public void setLines(List<String> lines) {
         this.lines.clear();
         this.lines.addAll(lines);
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
     }
 }

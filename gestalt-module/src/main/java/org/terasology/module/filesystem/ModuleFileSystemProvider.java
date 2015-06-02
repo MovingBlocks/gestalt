@@ -20,14 +20,11 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.Module;
-import org.terasology.module.ModuleRegistry;
-import org.terasology.module.TableModuleRegistry;
+import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
-import org.terasology.naming.Version;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -49,13 +46,14 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A provider for ModuleFileSystems - the factory for ModuleFileSystem. This can be registered to allow module content to be accessed by uri.
+ * A provider for ModuleFileSystems - the factory for ModuleFileSystem.
  * <p>
  * The FileSystemProvider in addition to producing FileSystems, also provides the low level methods that drive many file operations.  ModuleFileSystemProvider does this
  * by delegating down to the underlying file systems, translating ModulePaths to real paths and back again as necessary. In situations where a file occurs in multiple
@@ -70,23 +68,14 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ModuleFileSystemProvider extends FileSystemProvider {
 
     public static final String SCHEME = "module";
+    public static final String MODULE_ENVIRONMENT = "environment";
     public static final String ROOT = "/";
     public static final String SEPARATOR = "/";
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleFileSystemProvider.class);
 
-    private final ModuleRegistry registry;
-    private ConcurrentMap<URI, ModuleFileSystem> moduleFileSystems = new ConcurrentHashMap<>();
+    private ConcurrentMap<ModuleEnvironment, ModuleFileSystem> moduleFileSystems = new ConcurrentHashMap<>();
     private final ReentrantLock creationLock = new ReentrantLock();
-
-    public ModuleFileSystemProvider(Module module) {
-        registry = new TableModuleRegistry();
-        registry.add(module);
-    }
-
-    public ModuleFileSystemProvider(ModuleRegistry registry) {
-        this.registry = registry;
-    }
 
     @Override
     public String getScheme() {
@@ -95,74 +84,42 @@ public class ModuleFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-        Module module = uriToModule(uri);
-        if (module == null) {
-            throw new IllegalArgumentException("Unable to resolve " + uri.toString());
+        Object moduleEnvironmentRaw = env.get(MODULE_ENVIRONMENT);
+        if (moduleEnvironmentRaw == null || !(moduleEnvironmentRaw instanceof ModuleEnvironment)) {
+            throw new IllegalArgumentException("Module environment is required");
         }
-        return newFileSystem(module);
+        return newFileSystem((ModuleEnvironment) moduleEnvironmentRaw);
     }
 
     @Override
     public FileSystem getFileSystem(URI uri) {
-        if (moduleFileSystems.containsKey(uri)) {
-            return moduleFileSystems.get(uri);
-        }
-        throw new FileSystemNotFoundException("Filesystem " + uri + " does not exist or has not been loaded");
+        throw new FileSystemNotFoundException("Module file systems cannot be discovered by URI");
     }
 
     /**
      * Creates a new file system for the given module.
      *
-     * @param module The module to create a file system for
-     * @return A new filesystem for the module
-     * @throws java.nio.file.FileSystemAlreadyExistsException If a filesystem already exists for the given module
+     * @param environment The module environment to create a file system for
+     * @return A new filesystem for the module environment
+     * @throws java.nio.file.FileSystemAlreadyExistsException If a filesystem already exists for the given module environment
      */
-    public ModuleFileSystem newFileSystem(Module module) {
-        URI uri;
-        try {
-            uri = moduleToUri(module);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Could not generate URI for module '" + module.toString() + "'", e);
-        }
+    public ModuleFileSystem newFileSystem(ModuleEnvironment environment) {
         creationLock.lock();
         try {
-            if (moduleFileSystems.containsKey(uri)) {
-                throw new FileSystemAlreadyExistsException("Already created filesystem for '" + uri + "'");
+            if (moduleFileSystems.containsKey(environment)) {
+                throw new FileSystemAlreadyExistsException("Already created filesystem for '" + environment + "'");
             }
-            ModuleFileSystem newFileSystem = new ModuleFileSystem(this, module);
-            moduleFileSystems.put(uri, newFileSystem);
+            ModuleFileSystem newFileSystem = new ModuleFileSystem(this, environment);
+            moduleFileSystems.put(environment, newFileSystem);
             return newFileSystem;
         } finally {
             creationLock.unlock();
         }
     }
 
-    private URI moduleToUri(Module module) throws URISyntaxException {
-        return new URI(String.format("%s://%s:%s", getScheme(), module.getId().toString(), module.getVersion().toString()));
-    }
-
-    private Module uriToModule(URI uri) {
-        if (uri != null && uri.getScheme().equalsIgnoreCase(this.getScheme())) {
-            String[] authorityParts = uri.getAuthority().split(":", 2);
-            if (authorityParts.length != 2) {
-                throw new IllegalArgumentException("Malformed uri: '" + uri.toString() + "'");
-            }
-            Name moduleId = new Name(authorityParts[0]);
-            Version version = new Version(authorityParts[1]);
-            return registry.getModule(moduleId, version);
-        } else {
-            throw new IllegalArgumentException("URI scheme is not '" + this.getScheme() + "'");
-        }
-    }
-
     @Override
     public Path getPath(URI uri) {
-        Module module = uriToModule(uri);
-        if (module == null) {
-            throw new IllegalArgumentException("Failed to resolve uri '" + uri + "', module not found");
-        }
-        ModuleFileSystem fileSystem = newFileSystem(module);
-        return fileSystem.getPath(uri.getPath());
+        throw new IllegalArgumentException("URI lookup not supported by this file system");
     }
 
     @Override
@@ -259,14 +216,13 @@ public class ModuleFileSystemProvider extends FileSystemProvider {
 
     /**
      * Called when a module file system is closed, removes it from the provider. It can be recreated if desired.
+     *
      * @param moduleFileSystem The filesystem to remove
      */
     void removeFileSystem(ModuleFileSystem moduleFileSystem) {
         creationLock.lock();
         try {
-            moduleFileSystems.remove(moduleToUri(moduleFileSystem.getModule()));
-        } catch (URISyntaxException e) {
-            logger.error("Failed to close module, unable to resolve uri", e);
+            moduleFileSystems.remove(moduleFileSystem.getEnvironment());
         } finally {
             creationLock.unlock();
         }
@@ -281,9 +237,9 @@ public class ModuleFileSystemProvider extends FileSystemProvider {
 
     private Path getUnderlyingPath(Path path) throws IOException {
         ModulePath modulePath = getModulePath(path);
-        Path underlying = modulePath.getUnderlyingPath();
-        if (underlying != null) {
-            return underlying;
+        Optional<Path> underlying = modulePath.getUnderlyingPath();
+        if (underlying.isPresent()) {
+            return underlying.get();
         } else {
             throw new IOException("Path does not exist: " + path.toString());
         }
@@ -295,31 +251,37 @@ public class ModuleFileSystemProvider extends FileSystemProvider {
     private static class ModuleDirectoryStream implements DirectoryStream<Path> {
         private Set<Path> contents = Sets.newLinkedHashSet();
 
-        public ModuleDirectoryStream(ModulePath modulePath, Filter<? super Path> filter) {
-            Module module = modulePath.getFileSystem().getModule();
+        public ModuleDirectoryStream(ModulePath modulePath, Filter<? super Path> filter) throws NotDirectoryException {
+            ModuleEnvironment moduleEnvironment = modulePath.getFileSystem().getEnvironment();
             ModulePath normalisedPath = modulePath.toAbsolutePath().normalize();
+
+            String moduleName = normalisedPath.getName(0).toString();
+            Module module = moduleEnvironment.get(new Name(moduleName));
+            if (module == null) {
+                throw new NotDirectoryException("No such module in the environment: " + moduleName);
+            }
 
             for (Path location : module.getLocations()) {
                 try {
                     if (Files.isDirectory(location)) {
                         Path actualLocation = ModulePath.applyModulePathToActual(location, normalisedPath);
                         if (Files.exists(actualLocation)) {
-                            Filter<? super Path> wrappedFilter = new ModulePathWrappedFilter(filter, actualLocation, modulePath.getFileSystem());
+                            Filter<? super Path> wrappedFilter = new ModulePathWrappedFilter(filter, moduleName, actualLocation, modulePath.getFileSystem());
                             try (DirectoryStream<Path> stream = actualLocation.getFileSystem().provider().newDirectoryStream(actualLocation, wrappedFilter)) {
                                 for (Path content : stream) {
-                                    contents.add(ModulePath.convertFromActualToModulePath(modulePath.getFileSystem(), location, content));
+                                    contents.add(ModulePath.convertFromActualToModulePath(modulePath.getFileSystem(), moduleName, location, content));
                                 }
                             }
                         }
                     } else if (Files.isRegularFile(location)) {
-                        FileSystem moduleArchive = modulePath.getFileSystem().getContainedFileSystem(location);
+                        FileSystem moduleArchive = modulePath.getFileSystem().getRealFileSystem(location);
                         for (Path archiveRoot : moduleArchive.getRootDirectories()) {
                             Path actualLocation = ModulePath.applyModulePathToActual(archiveRoot, normalisedPath);
                             if (Files.exists(actualLocation)) {
-                                Filter<? super Path> wrappedFilter = new ModulePathWrappedFilter(filter, actualLocation, modulePath.getFileSystem());
+                                Filter<? super Path> wrappedFilter = new ModulePathWrappedFilter(filter, moduleName, actualLocation, modulePath.getFileSystem());
                                 try (DirectoryStream<Path> stream = actualLocation.getFileSystem().provider().newDirectoryStream(actualLocation, wrappedFilter)) {
                                     for (Path content : stream) {
-                                        contents.add(ModulePath.convertFromActualToModulePath(modulePath.getFileSystem(), archiveRoot, content));
+                                        contents.add(ModulePath.convertFromActualToModulePath(modulePath.getFileSystem(), moduleName, archiveRoot, content));
                                     }
                                 }
                             }
@@ -350,16 +312,18 @@ public class ModuleFileSystemProvider extends FileSystemProvider {
         private DirectoryStream.Filter<? super Path> innerFilter;
         private Path basePath;
         private ModuleFileSystem moduleFileSystem;
+        private String moduleName;
 
-        public ModulePathWrappedFilter(DirectoryStream.Filter<? super Path> innerFilter, Path basePath, ModuleFileSystem moduleFileSystem) {
+        public ModulePathWrappedFilter(DirectoryStream.Filter<? super Path> innerFilter, String moduleName, Path basePath, ModuleFileSystem moduleFileSystem) {
             this.innerFilter = innerFilter;
             this.basePath = basePath;
             this.moduleFileSystem = moduleFileSystem;
+            this.moduleName = moduleName;
         }
 
         @Override
         public boolean accept(Path entry) throws IOException {
-            return innerFilter.accept(ModulePath.convertFromActualToModulePath(moduleFileSystem, basePath, entry));
+            return innerFilter.accept(ModulePath.convertFromActualToModulePath(moduleFileSystem, moduleName, basePath, entry));
         }
     }
 }

@@ -19,8 +19,7 @@ package org.terasology.module.sandbox;
 import java.security.Permission;
 
 /**
- * ModuleSecurityManager establishes and enforces a sandbox environment for modules. Modules are restricted to make use of specific classes, packages and permissions
- * - they are prevented from accessing anything else.
+ * <p>ModuleSecurityManager enforces permission access for modules.</p>
  * <p>The actual permissions are determined by the PermissionProvider associated with the module</p>
  * <p>
  * When checking permissions, only the stack down to the calling module (if any) is considered. This means that a module cannot exploit a package with higher

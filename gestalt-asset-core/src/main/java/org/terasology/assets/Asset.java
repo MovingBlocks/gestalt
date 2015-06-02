@@ -188,7 +188,7 @@ public abstract class Asset<T extends AssetData> {
     protected final void finalize() throws Throwable {
         super.finalize();
         if (!disposed) {
-            logger.warn("Asset '{}' not correctly disposed but garbage collected");
+            logger.warn("Asset '{}' not correctly disposed but garbage collected", urn);
             dispose();
         }
     }
