@@ -34,6 +34,7 @@ import org.terasology.naming.Name;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
@@ -51,9 +52,9 @@ import java.util.concurrent.BlockingDeque;
  * Centralised detector of changes to asset files (creation, modification, deletion), to inform ModuleAssetDataProducers of the changes
  * and trigger the reload of those assets.
  * <p>
- *     One small note: Sometimes it is possible to get file change notifications before the change has actually happened. I observed this under windows
- *     when using the New->Folder/New->File optional in explorer - the path will report as not existing unless you wait a short period of time. To address
- *     this those events are added into a unreadyEvents queue and processed next check.
+ * One small note: Sometimes it is possible to get file change notifications before the change has actually happened. I observed this under windows
+ * when using the New->Folder/New->File optional in explorer - the path will report as not existing unless you wait a short period of time. To address
+ * this those events are added into a unreadyEvents queue and processed next check.
  * </p>
  *
  * @author Immortius
@@ -71,6 +72,7 @@ class ModuleWatcher {
 
     /**
      * Creates a ModuleWatcher for the given module environment
+     *
      * @param environment The environment to watch.
      * @throws IOException If there is an issue establishing the watch service
      */
@@ -80,8 +82,11 @@ class ModuleWatcher {
         for (Path rootPath : environment.getFileSystem().getRootDirectories()) {
             try {
                 Module module = environment.get(new Name(rootPath.getName(0).toString()));
-                PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), service);
-                watcher.onRegistered();
+                boolean canWatch = module.getLocations().stream().anyMatch(location -> FileSystems.getDefault().equals(location.getFileSystem()));
+                if (canWatch) {
+                    PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), service);
+                    watcher.onRegistered();
+                }
             } catch (IOException e) {
                 logger.warn("Failed to establish change watch service for path '{}'", rootPath, e);
             }
@@ -90,9 +95,10 @@ class ModuleWatcher {
 
     /**
      * Registers an subscriber to a specific asset folder, for a given asset type.
+     *
      * @param folderName The name of the folder to subscribe to - under which assets of interest lie (e.g. "textures")
      * @param subscriber The subscriber to notify of changes
-     * @param assetType The asset type whom changes urns belong to
+     * @param assetType  The asset type whom changes urns belong to
      */
     public synchronized void register(String folderName, AssetFileChangeSubscriber subscriber, AssetType<?, ?> assetType) {
         subscribers.put(folderName, new SubscriberInfo(assetType, subscriber));
@@ -100,6 +106,7 @@ class ModuleWatcher {
 
     /**
      * Shuts down the ModuleWatcher.
+     *
      * @throws IOException If there is an error shutting down the service
      */
     public synchronized void shutdown() throws IOException {
@@ -134,12 +141,13 @@ class ModuleWatcher {
 
     /**
      * Notifies subscribers of an asset file change
-     * @param folderName The asset folder in which the changed asset resides
-     * @param target The path of the file
-     * @param module The module the file contributes to
+     *
+     * @param folderName      The asset folder in which the changed asset resides
+     * @param target          The path of the file
+     * @param module          The module the file contributes to
      * @param providingModule The module that provides the file
-     * @param method The subscription method to call to notify
-     * @param outChanged A map of asset types and their changed urns to add any modified resource urns to.
+     * @param method          The subscription method to call to notify
+     * @param outChanged      A map of asset types and their changed urns to add any modified resource urns to.
      */
     private void notifySubscribers(String folderName, Path target, Name module, Name providingModule, SubscriptionMethod method,
                                    SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
