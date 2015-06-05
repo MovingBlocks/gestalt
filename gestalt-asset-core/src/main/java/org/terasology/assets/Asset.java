@@ -55,7 +55,7 @@ public abstract class Asset<T extends AssetData> {
 
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
-    private boolean disposed;
+    private transient boolean disposed;
 
     /**
      * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
@@ -158,7 +158,7 @@ public abstract class Asset<T extends AssetData> {
     /**
      * @return Whether this asset has been disposed
      */
-    public final synchronized boolean isDisposed() {
+    public final boolean isDisposed() {
         return disposed;
     }
 

@@ -102,10 +102,9 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     private final ListMultimap<Class<? extends Asset<?>>, AssetFileFormat<?>> coreFormats = ArrayListMultimap.create();
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreSupplementalFormats = ArrayListMultimap.create();
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreDeltaFormats = ArrayListMultimap.create();
-    private final Map<Class<? extends Asset>, ModuleAssetDataProducer<?>> moduleAssetDataProducers = Maps.newHashMap();
 
     private final ClassFactory classFactory;
-    private Optional<ModuleWatcher> watcher = Optional.empty();
+    private volatile ModuleWatcher watcher;
 
 
     public ModuleAwareAssetTypeManager() {
@@ -129,10 +128,12 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
 
     @Override
     public synchronized void close() throws IOException {
-        closeModuleProducers();
-        clearAssetTypes();
-        if (watcher.isPresent()) {
-            watcher.get().shutdown();
+        for (AssetType assetType : assetTypes.values()) {
+            assetType.close();
+        }
+        if (watcher != null) {
+            watcher.shutdown();
+            watcher = null;
         }
     }
 
@@ -147,7 +148,10 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     public <T extends Asset<?>> List<AssetType<? extends T, ?>> getAssetTypes(Class<T> type) {
         List<AssetType<? extends T, ?>> result = Lists.newArrayList();
         for (Class<? extends Asset> subtype : subtypes.get(type)) {
-            result.add((AssetType<? extends T, ?>) assetTypes.get(subtype));
+            AssetType<? extends T, ?> subAssetType = (AssetType<? extends T, ?>) assetTypes.get(subtype);
+            if (subAssetType != null) {
+                result.add(subAssetType);
+            }
         }
         return result;
     }
@@ -155,9 +159,9 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     /**
      * Triggers the reload of any assets that have been altered in directory modules.
      */
-    public synchronized void reloadChangedOnDisk() {
-        if (watcher.isPresent()) {
-            SetMultimap<AssetType<?, ?>, ResourceUrn> changes = watcher.get().checkForChanges();
+    public void reloadChangedOnDisk() {
+        if (watcher != null) {
+            SetMultimap<AssetType<?, ?>, ResourceUrn> changes = watcher.checkForChanges();
             for (Map.Entry<AssetType<?, ?>, ResourceUrn> entry : changes.entries()) {
                 if (entry.getKey().isLoaded(entry.getValue())) {
                     AssetType<?, ?> assetType = entry.getKey();
@@ -349,20 +353,23 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     public synchronized void switchEnvironment(ModuleEnvironment newEnvironment) {
         Preconditions.checkNotNull(newEnvironment);
 
-        closeModuleProducers();
-        clearAssetTypes();
-        if (watcher.isPresent()) {
+        if (watcher != null) {
             try {
-                watcher.get().shutdown();
+                watcher.shutdown();
+                watcher = null;
             } catch (IOException e) {
                 logger.error("Failed to shut down watch service", e);
             }
         }
 
         try {
-            watcher = Optional.of(new ModuleWatcher(newEnvironment));
+            watcher = new ModuleWatcher(newEnvironment);
         } catch (IOException e) {
             logger.warn("Failed to establish watch service, will not auto-reload changed assets", e);
+        }
+
+        for (AssetType<?, ?> assetType : assetTypes.values()) {
+            assetType.clearProducers();
         }
 
         ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFileFormats = scanForExtensionFormats(newEnvironment);
@@ -376,6 +383,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
         setupExtensionAssetTypes(newEnvironment, extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats, resolutionStrategy, newAssetTypes);
         scanForExtensionProducers(newEnvironment, newAssetTypes);
 
+        ImmutableMap<Class<? extends Asset>, AssetType<?, ?>> oldAssetTypes = assetTypes;
         assetTypes = ImmutableMap.copyOf(newAssetTypes);
         for (AssetType<?, ?> assetType : assetTypes.values()) {
             if (reloadOnSwitchAssetTypes.contains(assetType.getAssetClass())) {
@@ -385,6 +393,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
             }
         }
 
+        oldAssetTypes.values().stream().filter(assetType -> !coreAssetTypes.contains(assetType)).forEach(assetType -> assetType.close());
         updateSubtypesMap();
     }
 
@@ -413,9 +422,9 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     }
 
     private void subscribeToChanges(AssetType<?, ?> assetType, ModuleAssetDataProducer<?> producer, Collection<String> folderNames) {
-        if (watcher.isPresent()) {
+        if (watcher != null) {
             for (String folder : folderNames) {
-                watcher.get().register(folder, producer, assetType);
+                watcher.register(folder, producer, assetType);
             }
         }
     }
@@ -484,28 +493,8 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
 
             ModuleAssetDataProducer moduleProducer = new ModuleAssetDataProducer(environment, assetFormats, supplementalFormats, deltaFormats, folderNames);
             assetType.addProducer(moduleProducer);
-            moduleAssetDataProducers.put(assetType.getAssetClass(), moduleProducer);
             subscribeToChanges(assetType, moduleProducer, folderNames);
         }
-    }
-
-    private void clearAssetTypes() {
-        ImmutableMap<Class<? extends Asset>, AssetType<?, ?>> oldAssetTypes = assetTypes;
-        assetTypes = ImmutableMap.of();
-        for (Map.Entry<Class<? extends Asset>, AssetType<?, ?>> entry : oldAssetTypes.entrySet()) {
-            if (coreAssetTypes.contains(entry.getValue())) {
-                entry.getValue().clearProducers();
-            } else {
-                entry.getValue().close();
-            }
-        }
-    }
-
-    private void closeModuleProducers() {
-        for (ModuleAssetDataProducer producer : moduleAssetDataProducers.values()) {
-            producer.close();
-        }
-        moduleAssetDataProducers.clear();
     }
 
     @SuppressWarnings("unchecked")
