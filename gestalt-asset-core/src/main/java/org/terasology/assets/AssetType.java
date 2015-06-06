@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 /**
  * AssetType manages all assets of a particular type/class.  It provides the ability to resolve and load assets by Urn, and caches assets so that there is only
@@ -69,6 +70,8 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private final List<AssetDataProducer<U>> producers = Lists.newCopyOnWriteArrayList();
     private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).makeMap();
     private final ListMultimap<ResourceUrn, T> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, T>create());
+    private final Map<ResourceUrn, ResourceLock> locks = new MapMaker().concurrencyLevel(1).makeMap();
+
     private boolean closed;
     private volatile ResolutionStrategy resolutionStrategy = (modules, context) -> {
         if (modules.contains(context)) {
@@ -146,7 +149,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * This method is useful when switching contexts (such as changing module environment)
      * </p>
      */
-    public synchronized void refresh() {
+    public void refresh() {
         if (!closed) {
             for (T asset : loadedAssets.values()) {
                 if (!followRedirects(asset.getUrn()).equals(asset.getUrn()) || !reloadFromProducers(asset)) {
@@ -249,10 +252,14 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @param asset The asset that was created
      */
     synchronized void registerAsset(Asset<U> asset) {
-        if (asset.getUrn().isInstance()) {
-            instanceAssets.put(asset.getUrn(), assetClass.cast(asset));
+        if (closed) {
+            asset.dispose();
         } else {
-            loadedAssets.put(asset.getUrn(), assetClass.cast(asset));
+            if (asset.getUrn().isInstance()) {
+                instanceAssets.put(asset.getUrn(), assetClass.cast(asset));
+            } else {
+                loadedAssets.put(asset.getUrn(), assetClass.cast(asset));
+            }
         }
     }
 
@@ -302,6 +309,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
 
     /**
      * Forces a reload of an asset from a data producer, if possible.
+     *
      * @param urn The urn of the resource to reload.
      * @return The asset if it exists (regardless of whether it was reloaded or not)
      */
@@ -487,16 +495,31 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             if (asset != null) {
                 asset.reload(data);
             } else {
-                synchronized (this) {
+                ResourceLock lock;
+                synchronized (locks) {
+                    lock = locks.get(urn);
+                    if (lock == null) {
+                        lock = new ResourceLock(urn);
+                        locks.put(urn, lock);
+                    }
+                }
+                try {
+                    lock.lock();
                     if (!closed) {
                         asset = loadedAssets.get(urn);
                         if (asset == null) {
                             asset = factory.build(urn, this, data);
-                            loadedAssets.put(urn, asset);
                         } else {
                             asset.reload(data);
                         }
                     }
+                    synchronized (locks) {
+                        if (lock.unlock()) {
+                            locks.remove(urn);
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    logger.error("Failed to load asset - interrupted awaiting lock on resource {}", urn);
                 }
             }
 
@@ -560,4 +583,23 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         return assetClass.getSimpleName();
     }
 
+
+    private static final class ResourceLock {
+        private final ResourceUrn urn;
+        private final Semaphore semaphore = new Semaphore(1);
+
+        public ResourceLock(ResourceUrn urn) {
+            this.urn = urn;
+        }
+
+        public void lock() throws InterruptedException {
+            semaphore.acquire();
+        }
+
+        public boolean unlock() {
+            boolean lockFinished = !semaphore.hasQueuedThreads();
+            semaphore.release();
+            return lockFinished;
+        }
+    }
 }

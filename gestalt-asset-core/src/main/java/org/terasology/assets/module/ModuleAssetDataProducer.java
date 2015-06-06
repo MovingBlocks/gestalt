@@ -44,7 +44,6 @@ import org.terasology.util.io.FileScanning;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -94,7 +93,7 @@ import java.util.function.Function;
  * @author Immortius
  */
 @ThreadSafe
-public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataProducer<U>, Closeable, AssetFileChangeSubscriber {
+public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataProducer<U>, AssetFileChangeSubscriber {
 
     /**
      * The name of the module directory that contains asset files.
@@ -192,15 +191,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
      */
     public ImmutableList<AssetAlterationFileFormat<U>> getDeltaFormats() {
         return deltaFormats;
-    }
-
-    /**
-     * Closes the producer, shutting down the watch service that observes the file system for changes
-     */
-    @Override
-    public synchronized void close() {
-        unloadedAssetLookup.clear();
-        resolutionMap.clear();
     }
 
     /**
