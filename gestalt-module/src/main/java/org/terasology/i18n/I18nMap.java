@@ -113,4 +113,25 @@ public class I18nMap implements Iterable<Map.Entry<Locale, String>> {
     public Iterator<Map.Entry<Locale, String>> iterator() {
         return values.entrySet().iterator();
     }
+
+    @Override
+    public int hashCode() {
+        return 31 * values.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        I18nMap other = (I18nMap) obj;
+
+        return values.equals(other.values);
+    }
 }
