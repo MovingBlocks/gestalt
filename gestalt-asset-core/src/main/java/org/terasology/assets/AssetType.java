@@ -331,9 +331,9 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             });
         } catch (PrivilegedActionException e) {
             if (redirectUrn.equals(urn)) {
-                logger.error("Failed to load asset '{}'", redirectUrn, e);
+                logger.error("Failed to load asset '{}'", redirectUrn, e.getCause());
             } else {
-                logger.error("Failed to load asset '{}' redirected from '{}'", redirectUrn, urn, e);
+                logger.error("Failed to load asset '{}' redirected from '{}'", redirectUrn, urn, e.getCause());
             }
         }
         return Optional.empty();
