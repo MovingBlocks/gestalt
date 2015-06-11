@@ -15,6 +15,8 @@
  */
 package org.terasology.module;
 
+import java.util.Objects;
+
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.naming.VersionRange;
@@ -120,5 +122,33 @@ public class DependencyInfo {
      */
     public void setOptional(boolean optional) {
         this.optional = optional;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("DependencyInfo [id=%s, minVersion=%s, maxVersion=%s, optional=%s]",
+                id, minVersion, maxVersion, optional);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, minVersion, maxVersion, optional);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj instanceof DependencyInfo) {
+            DependencyInfo other = (DependencyInfo) obj;
+            return Objects.equals(id, other.id)
+                && Objects.equals(minVersion, other.minVersion)
+                && Objects.equals(maxVersion, other.maxVersion)
+                && Objects.equals(optional, other.optional);
+        }
+
+        return false;
     }
 }

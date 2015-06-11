@@ -179,4 +179,28 @@ public class ModuleMetadata {
         extensions.put(extensionId, extension);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, version, displayName, description, requiredPermissions, dependencies, extensions);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj instanceof ModuleMetadata) {
+            ModuleMetadata other = (ModuleMetadata) obj;
+
+            return Objects.equals(id, other.id)
+                && Objects.equals(version, other.version)
+                && Objects.equals(displayName, other.displayName)
+                && Objects.equals(description, other.description)
+                && Objects.equals(requiredPermissions, other.requiredPermissions)
+                && Objects.equals(dependencies, other.dependencies)
+                && Objects.equals(extensions, other.extensions);
+        }
+        return false;
+    }
 }

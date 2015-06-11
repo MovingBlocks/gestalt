@@ -22,6 +22,7 @@ import javax.annotation.concurrent.Immutable;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * I18nMap is a map of Strings by Locale, to support lookup fields that can have different values for different languages (internationalized fields).
@@ -112,5 +113,25 @@ public class I18nMap implements Iterable<Map.Entry<Locale, String>> {
     @Override
     public Iterator<Map.Entry<Locale, String>> iterator() {
         return values.entrySet().iterator();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(values);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj instanceof I18nMap) {
+            I18nMap other = (I18nMap) obj;
+
+            return Objects.equals(values, other.values);
+        }
+
+        return false;
     }
 }
