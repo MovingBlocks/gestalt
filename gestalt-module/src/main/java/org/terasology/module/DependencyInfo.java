@@ -140,16 +140,15 @@ public class DependencyInfo {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
-            return false;
+
+        if (obj instanceof DependencyInfo) {
+            DependencyInfo other = (DependencyInfo) obj;
+            return Objects.equals(id, other.id)
+                && Objects.equals(minVersion, other.minVersion)
+                && Objects.equals(maxVersion, other.maxVersion)
+                && Objects.equals(optional, other.optional);
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        DependencyInfo other = (DependencyInfo) obj;
-        return Objects.equals(id, other.id)
-            && Objects.equals(minVersion, other.minVersion)
-            && Objects.equals(maxVersion, other.maxVersion)
-            && Objects.equals(optional, other.optional);
+
+        return false;
     }
 }

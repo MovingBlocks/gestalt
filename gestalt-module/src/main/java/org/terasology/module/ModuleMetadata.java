@@ -189,20 +189,18 @@ public class ModuleMetadata {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        ModuleMetadata other = (ModuleMetadata) obj;
 
-        return Objects.equals(id, other.id)
-            && Objects.equals(version, other.version)
-            && Objects.equals(displayName, other.displayName)
-            && Objects.equals(description, other.description)
-            && Objects.equals(requiredPermissions, other.requiredPermissions)
-            && Objects.equals(dependencies, other.dependencies)
-            && Objects.equals(extensions, other.extensions);
+        if (obj instanceof ModuleMetadata) {
+            ModuleMetadata other = (ModuleMetadata) obj;
+
+            return Objects.equals(id, other.id)
+                && Objects.equals(version, other.version)
+                && Objects.equals(displayName, other.displayName)
+                && Objects.equals(description, other.description)
+                && Objects.equals(requiredPermissions, other.requiredPermissions)
+                && Objects.equals(dependencies, other.dependencies)
+                && Objects.equals(extensions, other.extensions);
+        }
+        return false;
     }
 }
