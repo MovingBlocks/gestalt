@@ -37,5 +37,5 @@ public interface AssetFactory<T extends Asset<U>, U extends AssetData> {
      * @return The built asset
      * @throws org.terasology.assets.exceptions.InvalidAssetDataException If the asset failed to load due to invalid data
      */
-    T build(ResourceUrn urn, AssetType<? super T, U> assetType, U data);
+    T build(ResourceUrn urn, AssetType<T, U> assetType, U data);
 }

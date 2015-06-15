@@ -25,7 +25,7 @@ import org.terasology.assets.ResourceUrn;
  */
 public class AlternateAssetFactory implements AssetFactory<AlternateAsset, AlternateAssetData> {
     @Override
-    public AlternateAsset build(ResourceUrn urn, AssetType<? super AlternateAsset, AlternateAssetData> type, AlternateAssetData data) {
+    public AlternateAsset build(ResourceUrn urn, AssetType<AlternateAsset, AlternateAssetData> type, AlternateAssetData data) {
         return new AlternateAsset(urn, data, type);
     }
 }

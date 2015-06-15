@@ -183,7 +183,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
      * @param <T>            The type of asset
      * @param <U>            The type of asset data
      */
-    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<? extends T, U> factory, String... subfolderNames) {
+    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory, String... subfolderNames) {
         registerCoreAssetType(type, factory, true, subfolderNames);
     }
 
@@ -198,7 +198,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
      * @param <T>            The type of asset
      * @param <U>            The type of asset data
      */
-    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<? extends T, U> factory, boolean reloadOnSwitch,
+    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory, boolean reloadOnSwitch,
                                                                                              String... subfolderNames) {
         Preconditions.checkState(!assetTypes.containsKey(type), "Asset type '" + type.getSimpleName() + "' already registered");
         AssetType<T, U> assetType = new AssetType<>(type, factory);
