@@ -29,7 +29,9 @@ import org.terasology.assets.test.stubs.extensions.ExtensionDeltaFileFormat;
 import org.terasology.assets.test.stubs.extensions.ExtensionFileFormat;
 import org.terasology.assets.test.stubs.extensions.ExtensionSupplementalFileFormat;
 import org.terasology.assets.test.stubs.inheritance.AlternateAsset;
+import org.terasology.assets.test.stubs.inheritance.AlternateAssetData;
 import org.terasology.assets.test.stubs.inheritance.ChildAsset;
+import org.terasology.assets.test.stubs.inheritance.ChildAssetData;
 import org.terasology.assets.test.stubs.inheritance.ParentAsset;
 import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
@@ -88,7 +90,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
 
         ModuleEnvironment environment = createEmptyEnvironment();
         assetTypeManager.switchEnvironment(environment);
-        ModuleAssetDataProducer moduleAssetDataProducer = (ModuleAssetDataProducer) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
+        ModuleAssetDataProducer<?> moduleAssetDataProducer = (ModuleAssetDataProducer<?>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
 
         assertEquals(environment, moduleAssetDataProducer.getModuleEnvironment());
     }
@@ -96,7 +98,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     @Test
     public void disposeUnavailableAssetsOnEnvironmentChange() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
-        AssetDataProducer producer = mock(AssetDataProducer.class);
+        AssetDataProducer<TextData> producer = mock(AssetDataProducer.class);
         assetTypeManager.registerCoreProducer(Text.class, producer);
         when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(any(ResourceUrn.class))).thenReturn(Optional.empty());
@@ -116,7 +118,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     public void reloadAvailableAssetsOnEnvironmentChange() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
 
-        AssetDataProducer producer = mock(AssetDataProducer.class);
+        AssetDataProducer<TextData> producer = mock(AssetDataProducer.class);
         assetTypeManager.registerCoreProducer(Text.class, producer);
         when(producer.redirect(URN)).thenReturn(URN);
         when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
@@ -136,7 +138,7 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
     public void disposeAssetOnEnvironmentChangeIfRedirectExists() throws Exception {
         assetTypeManager.registerCoreAssetType(Text.class, new TextFactory());
 
-        AssetDataProducer producer = mock(AssetDataProducer.class);
+        AssetDataProducer<TextData> producer = mock(AssetDataProducer.class);
         assetTypeManager.registerCoreProducer(Text.class, producer);
         when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
         when(producer.redirect(URN)).thenReturn(URN);
@@ -253,8 +255,10 @@ public class ModuleAwareAssetTypeManagerTest extends VirtualModuleEnvironment {
 
     @Test
     public void handleInheritanceRelationOfAssetTypes() {
-        assetTypeManager.registerCoreAssetType(ChildAsset.class, mock(AssetFactory.class));
-        assetTypeManager.registerCoreAssetType(AlternateAsset.class, mock(AssetFactory.class));
+        AssetFactory<ChildAsset, ChildAssetData> childAssetFactory = mock(AssetFactory.class);
+        assetTypeManager.registerCoreAssetType(ChildAsset.class, childAssetFactory);
+        AssetFactory<AlternateAsset, AlternateAssetData> alternativeAssetFactory = mock(AssetFactory.class);
+        assetTypeManager.registerCoreAssetType(AlternateAsset.class, alternativeAssetFactory);
         assetTypeManager.switchEnvironment(createEmptyEnvironment());
 
         List<AssetType<? extends ParentAsset, ?>> assetTypes = assetTypeManager.getAssetTypes(ParentAsset.class);
