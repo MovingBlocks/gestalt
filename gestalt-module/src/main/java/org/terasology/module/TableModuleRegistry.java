@@ -18,7 +18,6 @@ package org.terasology.module;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
@@ -195,7 +194,31 @@ public class TableModuleRegistry implements ModuleRegistry {
 
     @Override
     public Iterator<Module> iterator() {
-        return Iterators.unmodifiableIterator(modules.values().iterator());
+        Iterator<Module> it = modules.values().iterator();
+        return new Iterator<Module>() {
+
+            private Module current;
+
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+
+            @Override
+            public Module next() {
+                current = it.next();
+                return current;
+            }
+
+            @Override
+            public void remove() {
+                it.remove();
+                Module latest = latestModules.get(current.getId());
+                if (latest.getVersion().compareTo(current.getVersion()) == 0) {
+                    updateLatestFor(current.getId());
+                }
+            }
+        };
     }
 
     @Override

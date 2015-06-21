@@ -20,7 +20,9 @@ import org.junit.Test;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -57,5 +59,27 @@ public class TableModuleRegistryTest {
         when(moduleSnapshot.getVersion()).thenReturn(new Version(1, 0, 0, true));
         registry.add(moduleSnapshot);
         assertFalse(registry.getLatestModuleVersion(MODULE_NAME).getVersion().isSnapshot());
+    }
+
+    @Test
+    public void iteratorRemove() {
+        TableModuleRegistry registry = new TableModuleRegistry();
+        Module moduleV1 = mock(Module.class);
+        when(moduleV1.getId()).thenReturn(MODULE_NAME);
+        when(moduleV1.getVersion()).thenReturn(new Version(1, 0, 0));
+        registry.add(moduleV1);
+        Module moduleV2 = mock(Module.class);
+        when(moduleV2.getId()).thenReturn(MODULE_NAME);
+        when(moduleV2.getVersion()).thenReturn(new Version(2, 0, 0));
+        registry.add(moduleV2);
+
+        // remove entries based on their version
+        registry.removeIf(mod -> mod.getVersion().compareTo(new Version(1, 5, 0)) > 0);
+
+        assertEquals(new Version(1, 0, 0), registry.getLatestModuleVersion(MODULE_NAME).getVersion());
+
+        registry.removeIf(mod -> mod.getId().equals(MODULE_NAME));
+
+        assertTrue(registry.isEmpty());
     }
 }
