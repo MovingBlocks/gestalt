@@ -64,7 +64,7 @@ public class DependencyResolver {
      * @return A set of compatible modules based on the required modules.
      */
     public ResolutionResult resolve(Name rootModule, Name... additionalModules) {
-        return builder().add(rootModule).addAll(additionalModules).build();
+        return builder().require(rootModule).requireAll(additionalModules).build();
     }
 
     /**
@@ -72,7 +72,7 @@ public class DependencyResolver {
      * @return A set of compatible modules based on the required modules.
      */
     public ResolutionResult resolve(Iterable<Name> moduleIds) {
-        return builder().addAll(moduleIds).build();
+        return builder().requireAll(moduleIds).build();
     }
 
     /**
@@ -82,32 +82,70 @@ public class DependencyResolver {
         return new ResolutionBuilder();
     }
 
+    /**
+     * Prepares and performs the process of resolving dependencies.
+     */
     public class ResolutionBuilder {
         private final Map<Name, Optional<VersionRange>> validVersions = new HashMap<>();
 
-        public ResolutionBuilder add(Name moduleId) {
+        /**
+         * Adds a module to the set of requirements.
+         * Previously defined requirements on a module are overwritten.
+         * @param moduleId the id of the module that must be resolved. Any version matches;
+         *                 later versions are preferred, if multiple versions are available.
+         * @return this instance
+         */
+        public ResolutionBuilder require(Name moduleId) {
             validVersions.put(moduleId, Optional.empty());
             return this;
         }
 
-        public ResolutionBuilder add(Name moduleId, Version version) {
+        /**
+         * Adds a module to the set of requirements.
+         * Previously defined requirements on a module are overwritten.
+         * @param moduleId the id of the module that must be resolved. Only the specified version matches.
+         * @param version the version of the module that must be matched
+         * @return this instance
+         */
+        public ResolutionBuilder requireVersion(Name moduleId, Version version) {
             validVersions.put(moduleId, Optional.of(new VersionRange(version, version.getNextPatchVersion())));
             return this;
         }
 
-        public ResolutionBuilder add(Name moduleId, VersionRange range) {
+        /**
+         * Adds a module to the set of requirements.
+         * Previously defined requirements on a module are overwritten.
+         * @param moduleId the id of the module that must be resolved. Only the specified version range matches.
+         * @param range the version range of the module that must be matched
+         * @return this instance
+         */
+        public ResolutionBuilder requireVersionRange(Name moduleId, VersionRange range) {
             validVersions.put(moduleId, Optional.of(range));
             return this;
         }
 
-        public ResolutionBuilder addAll(Name[] moduleIds) {
+        /**
+         * Adds multiple modules to the set of requirements.
+         * Previously defined requirements on a module are overwritten.
+         * @param moduleIds an array of module IDs that must be resolved. Any version matches;
+         *                 later versions are preferred, if multiple versions of a module are available.
+         * @return this instance
+         */
+        public ResolutionBuilder requireAll(Name[] moduleIds) {
             for (Name name : moduleIds) {
                 validVersions.put(name, Optional.empty());
             }
             return this;
         }
 
-        public ResolutionBuilder addAll(Iterable<Name> moduleIds) {
+        /**
+         * Adds multiple modules to the set of requirements.
+         * Previously defined requirements on a module are overwritten.
+         * @param moduleIds a group of module IDs that must be resolved. Any version matches;
+         *                 later versions are preferred, if multiple versions of a module are available.
+         * @return this instance
+         */
+        public ResolutionBuilder requireAll(Iterable<Name> moduleIds) {
             Iterator<Name> iterator = moduleIds.iterator();
             while (iterator.hasNext()) {
                 validVersions.put(iterator.next(), Optional.empty());
@@ -115,6 +153,10 @@ public class DependencyResolver {
             return this;
         }
 
+        /**
+         * Performs the actual dependency resolution.
+         * @return the result of the process.
+         */
         public ResolutionResult build() {
             ResolutionAttempt attempt = new ResolutionAttempt(registry, optionalStrategy);
             return attempt.resolve(validVersions);

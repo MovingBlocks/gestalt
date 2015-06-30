@@ -252,7 +252,7 @@ public class NormalDependencyResolverTest extends DependencyResolverTestBase {
         Version targetVersion = new Version(1, 0, 0);
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        ResolutionResult result = resolver.builder().add(new Name("a"), targetVersion).build();
+        ResolutionResult result = resolver.builder().requireVersion(new Name("a"), targetVersion).build();
         assertTrue(result.getModules().iterator().next().getVersion().equals(targetVersion));
     }
 
@@ -264,7 +264,7 @@ public class NormalDependencyResolverTest extends DependencyResolverTestBase {
         Version targetVersion = new Version(1, 0, 0);
 
         DependencyResolver resolver = new DependencyResolver(registry);
-        ResolutionResult result = resolver.builder().add(new Name("a"),
+        ResolutionResult result = resolver.builder().requireVersionRange(new Name("a"),
                 new VersionRange(new Version(1, 0, 0), new Version(2, 0, 0))).build();
         assertTrue(result.getModules().iterator().next().getVersion().equals(targetVersion));
     }
