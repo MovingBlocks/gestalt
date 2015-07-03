@@ -17,8 +17,11 @@
 package org.terasology.module;
 
 import com.google.common.collect.Sets;
+
 import org.junit.Test;
 import org.terasology.naming.Name;
+import org.terasology.naming.Version;
+import org.terasology.naming.VersionRange;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -239,5 +242,30 @@ public class NormalDependencyResolverTest extends DependencyResolverTestBase {
         DependencyResolver resolver = new DependencyResolver(registry);
         ResolutionResult results = resolver.resolve(new Name("core"));
         assertFalse(results.isSuccess());
+    }
+
+    @Test
+    public void resolveExplicitVersion() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        createStubModule(registry, "a", "1.0.0");
+        createStubModule(registry, "a", "2.0.0");
+        Version targetVersion = new Version(1, 0, 0);
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult result = resolver.builder().requireVersion(new Name("a"), targetVersion).build();
+        assertTrue(result.getModules().iterator().next().getVersion().equals(targetVersion));
+    }
+
+    @Test
+    public void resolveExplicitVersionRange() {
+        ModuleRegistry registry = new TableModuleRegistry();
+        createStubModule(registry, "a", "1.0.0");
+        createStubModule(registry, "a", "2.0.0");
+        Version targetVersion = new Version(1, 0, 0);
+
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ResolutionResult result = resolver.builder().requireVersionRange(new Name("a"),
+                new VersionRange(new Version(1, 0, 0), new Version(2, 0, 0))).build();
+        assertTrue(result.getModules().iterator().next().getVersion().equals(targetVersion));
     }
 }
