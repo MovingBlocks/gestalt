@@ -79,7 +79,7 @@ public class ModuleMetadataJsonAdapter {
     }.getType();
 
     private final GsonBuilder builder;
-    private transient Gson cachedGson;
+    private volatile Gson cachedGson;
     private final Map<String, Type> extensionMap = Maps.newHashMap();
 
     public ModuleMetadataJsonAdapter() {
