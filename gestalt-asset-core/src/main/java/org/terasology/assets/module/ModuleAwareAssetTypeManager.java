@@ -356,7 +356,6 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
         if (watcher != null) {
             try {
                 watcher.shutdown();
-                watcher = null;
             } catch (IOException e) {
                 logger.error("Failed to shut down watch service", e);
             }

@@ -16,6 +16,7 @@
 
 package org.terasology.assets.module;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.ListMultimap;
@@ -70,6 +71,8 @@ class ModuleWatcher {
     private final ListMultimap<String, SubscriberInfo> subscribers = Multimaps.synchronizedListMultimap(ArrayListMultimap.create());
     private final BlockingDeque<DelayedEvent> unreadyEvents = Queues.newLinkedBlockingDeque();
 
+    private boolean closed;
+
     /**
      * Creates a ModuleWatcher for the given module environment
      *
@@ -101,7 +104,12 @@ class ModuleWatcher {
      * @param assetType  The asset type whom changes urns belong to
      */
     public synchronized void register(String folderName, AssetFileChangeSubscriber subscriber, AssetType<?, ?> assetType) {
+        Preconditions.checkState(!closed, "Cannot register folder into closed ModuleWatcher");
         subscribers.put(folderName, new SubscriberInfo(assetType, subscriber));
+    }
+
+    public synchronized boolean isClosed() {
+        return closed;
     }
 
     /**
@@ -110,9 +118,12 @@ class ModuleWatcher {
      * @throws IOException If there is an error shutting down the service
      */
     public synchronized void shutdown() throws IOException {
-        pathWatchers.clear();
-        watchKeys.clear();
-        service.close();
+        if (!closed) {
+            pathWatchers.clear();
+            watchKeys.clear();
+            service.close();
+            closed = true;
+        }
     }
 
     /**
@@ -121,6 +132,10 @@ class ModuleWatcher {
      * @return A set of ResourceUrns of changed assets.
      */
     public synchronized SetMultimap<AssetType<?, ?>, ResourceUrn> checkForChanges() {
+        if (closed) {
+            return LinkedHashMultimap.create();
+        }
+
         SetMultimap<AssetType<?, ?>, ResourceUrn> changed = LinkedHashMultimap.create();
 
         List<DelayedEvent> events = Lists.newArrayList();
