@@ -38,16 +38,16 @@ public class ModuleLoader {
 
     private Path moduleInfoPath = Paths.get("module.info");
     private Path directoryCodeLocation = Paths.get("build", "classes");
-    private final ModuleMetadataReader metadataReader;
+    private final ModuleMetadataJsonAdapter metadataReader;
 
     public ModuleLoader() {
-        metadataReader = new ModuleMetadataReader();
+        metadataReader = new ModuleMetadataJsonAdapter();
     }
 
     /**
      * @param metadataReader The metadata reader to use when loading module metadata.
      */
-    public ModuleLoader(ModuleMetadataReader metadataReader) {
+    public ModuleLoader(ModuleMetadataJsonAdapter metadataReader) {
         this.metadataReader = metadataReader;
     }
 
