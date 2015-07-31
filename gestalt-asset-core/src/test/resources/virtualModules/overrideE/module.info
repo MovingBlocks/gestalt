@@ -1,0 +1,14 @@
+{
+    "id": "overrideE",
+    "version": "1.0.0",
+    "displayName": {
+        "en": "Test module"
+    },
+    "description" : "Provides an override for a file in the 'test' module, but under a different asset type so it should be ignored",
+    "dependencies" : [
+        {
+            "id": "test",
+            "minVersion": "1.0.0"
+        }
+    ]
+}
