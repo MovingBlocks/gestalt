@@ -102,6 +102,16 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
     }
 
     @Test
+    public void ignoreOverrideInDifferentTypeFolder() throws Exception {
+        ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
+                moduleRegistry.getLatestModuleVersion(new Name("overrideE"))));
+
+        Optional<TextData> assetData = moduleProducer.getAssetData(URN);
+        assertTrue(assetData.isPresent());
+        assertEquals("Example text", assetData.get().getValue());
+    }
+
+    @Test
     public void loadWithOverrideInDependencyChain() throws Exception {
         ModuleAssetDataProducer<TextData> moduleProducer = createProducer(createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")),
                 moduleRegistry.getLatestModuleVersion(new Name("overrideA")), moduleRegistry.getLatestModuleVersion(new Name("overrideB"))));

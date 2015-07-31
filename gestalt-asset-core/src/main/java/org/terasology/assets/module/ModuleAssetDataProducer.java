@@ -247,7 +247,30 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             for (String folderName : folderNames) {
                 Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), OVERRIDE_FOLDER);
                 if (Files.exists(rootPath)) {
-                    scanLocationForAssets(module, folderName, rootPath, path -> new Name(path.getName(2).toString()));
+                    try {
+                        Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
+                            @Override
+                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                                return FileVisitResult.SKIP_SIBLINGS;
+                            }
+
+                            @Override
+                            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                                if (dir.getNameCount() == rootPath.getNameCount() + 1) {
+                                    Path overridePath = dir.resolve(folderName);
+                                    if (Files.isDirectory(overridePath)) {
+                                        scanLocationForAssets(module, folderName, overridePath, path -> new Name(path.getName(2).toString()));
+                                    }
+                                    return FileVisitResult.SKIP_SUBTREE;
+                                }
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                        });
+                    } catch (IOException e) {
+                        logger.error("Failed to scan for override assets of '{}' in 'module://{}:{}", folderName, module.getId(), rootPath, e);
+                    }
+
                 }
             }
         }
