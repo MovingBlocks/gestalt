@@ -26,6 +26,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
@@ -46,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -68,9 +71,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private final Class<U> assetDataClass;
     private final AssetFactory<T, U> factory;
     private final List<AssetDataProducer<U>> producers = Lists.newCopyOnWriteArrayList();
-    private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).makeMap();
-    private final ListMultimap<ResourceUrn, T> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, T>create());
+    private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).weakValues().makeMap();
+    private final ListMultimap<ResourceUrn, WeakReference<T>> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, WeakReference<T>>create());
     private final Map<ResourceUrn, ResourceLock> locks = new MapMaker().concurrencyLevel(1).makeMap();
+
+    private final BlockingQueue<Asset> disposalQueue = Queues.newLinkedBlockingQueue();
 
     private boolean closed;
     private volatile ResolutionStrategy resolutionStrategy = (modules, context) -> {
@@ -116,6 +121,28 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     }
 
     /**
+     * Disposes any assets queued for disposal. This occurs if an asset is no longer referenced by anything.
+     */
+    public void processDisposal() {
+        if (!disposalQueue.isEmpty()) {
+            List<Asset> unreferencedAssets = Lists.newArrayListWithExpectedSize(disposalQueue.size());
+            disposalQueue.drainTo(unreferencedAssets);
+            unreferencedAssets.forEach(org.terasology.assets.Asset::dispose);
+        }
+    }
+
+    synchronized void queueForDisposal(Asset asset) {
+        if (!asset.isDisposed()) {
+            disposalQueue.add(asset);
+            if (asset.getUrn().isInstance()) {
+                instanceAssets.remove(asset.getUrn(), new WeakReference<>(asset));
+            } else {
+                loadedAssets.remove(asset.getUrn());
+            }
+        }
+    }
+
+    /**
      * @return Whether the AssetType is closed.
      */
     public synchronized boolean isClosed() {
@@ -126,12 +153,15 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * Disposes all assets of this type.
      */
     public synchronized void disposeAll() {
-        for (T asset : loadedAssets.values()) {
-            asset.dispose();
+        loadedAssets.values().forEach(T::dispose);
+
+        for (WeakReference<T> assetRef : ImmutableList.copyOf(instanceAssets.values())) {
+            T asset = assetRef.get();
+            if (asset != null) {
+                asset.dispose();
+            }
         }
-        for (T asset : ImmutableList.copyOf(instanceAssets.values())) {
-            asset.dispose();
-        }
+        processDisposal();
         if (!loadedAssets.isEmpty()) {
             logger.error("Assets remained loaded after disposal - {}", loadedAssets.keySet());
             loadedAssets.clear();
@@ -154,8 +184,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             for (T asset : loadedAssets.values()) {
                 if (!followRedirects(asset.getUrn()).equals(asset.getUrn()) || !reloadFromProducers(asset)) {
                     asset.dispose();
-                    for (T instance : ImmutableList.copyOf(instanceAssets.get(asset.getUrn().getInstanceUrn()))) {
-                        instance.dispose();
+                    for (WeakReference<T> instanceRef : ImmutableList.copyOf(instanceAssets.get(asset.getUrn().getInstanceUrn()))) {
+                        T instance = instanceRef.get();
+                        if (instance != null) {
+                            instance.dispose();
+                        }
                     }
                 }
             }
@@ -240,7 +273,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     void onAssetDisposed(Asset<U> asset) {
         if (asset.getUrn().isInstance()) {
-            instanceAssets.get(asset.getUrn()).remove(assetClass.cast(asset));
+            instanceAssets.get(asset.getUrn()).remove(new WeakReference<>(assetClass.cast(asset)));
         } else {
             loadedAssets.remove(asset.getUrn());
         }
@@ -256,7 +289,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             asset.dispose();
         } else {
             if (asset.getUrn().isInstance()) {
-                instanceAssets.put(asset.getUrn(), assetClass.cast(asset));
+                instanceAssets.put(asset.getUrn(), new WeakReference<>(assetClass.cast(asset)));
             } else {
                 loadedAssets.put(asset.getUrn(), assetClass.cast(asset));
             }
@@ -468,8 +501,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
 
                 if (data.isPresent()) {
                     asset.reload(data.get());
-                    for (T assetInstance : instanceAssets.get(asset.getUrn().getInstanceUrn())) {
-                        assetInstance.reload(data.get());
+                    for (WeakReference<T> assetInstanceRef : instanceAssets.get(asset.getUrn().getInstanceUrn())) {
+                        T assetInstance = assetInstanceRef.get();
+                        if (assetInstance != null) {
+                            assetInstance.reload(data.get());
+                        }
                     }
                     return true;
                 }
@@ -600,6 +636,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             boolean lockFinished = !semaphore.hasQueuedThreads();
             semaphore.release();
             return lockFinished;
+        }
+
+        @Override
+        public String toString() {
+            return "lock(" + urn + ")";
         }
     }
 }

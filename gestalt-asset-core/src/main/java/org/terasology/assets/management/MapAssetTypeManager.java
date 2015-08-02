@@ -66,6 +66,11 @@ public final class MapAssetTypeManager implements AssetTypeManager {
         return result;
     }
 
+    @Override
+    public void disposedUnusedAssets() {
+        assetTypes.values().forEach(type -> type.processDisposal());
+    }
+
     /**
      * Creates a new asset type for the given class of asset. There must not be an existing asset type for that class.
      *

@@ -17,8 +17,6 @@
 package org.terasology.assets;
 
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terasology.module.sandbox.API;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -50,8 +48,6 @@ import java.util.Optional;
 @API
 @ThreadSafe
 public abstract class Asset<T extends AssetData> {
-
-    private static final Logger logger = LoggerFactory.getLogger(Asset.class);
 
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
@@ -188,8 +184,7 @@ public abstract class Asset<T extends AssetData> {
     protected final void finalize() throws Throwable {
         super.finalize();
         if (!disposed) {
-            logger.warn("Asset '{}' not correctly disposed but garbage collected", urn);
-            dispose();
+            assetType.queueForDisposal(this);
         }
     }
 }
