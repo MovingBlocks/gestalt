@@ -156,6 +156,11 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
         return result;
     }
 
+    @Override
+    public void disposedUnusedAssets() {
+        assetTypes.values().forEach(type -> type.processDisposal());
+    }
+
     /**
      * Triggers the reload of any assets that have been altered in directory modules.
      */
