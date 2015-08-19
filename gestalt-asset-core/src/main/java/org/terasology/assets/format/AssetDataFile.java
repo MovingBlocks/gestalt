@@ -106,7 +106,7 @@ public class AssetDataFile {
 
     @Override
     public String toString() {
-        return path.toUri().toString();
+        return path.toAbsolutePath().toString();
     }
 
     @Override
