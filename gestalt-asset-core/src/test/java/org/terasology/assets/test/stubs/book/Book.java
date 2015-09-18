@@ -17,8 +17,11 @@
 package org.terasology.assets.test.stubs.book;
 
 import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetType;
+import org.terasology.assets.DisposalHook;
 import org.terasology.assets.ResourceUrn;
 
 import java.util.Optional;
@@ -33,6 +36,7 @@ public class Book extends Asset<BookData> {
     public Book(ResourceUrn urn, BookData data, AssetType<?, BookData> type) {
         super(urn, type);
         reload(data);
+        getDisposalHook().setDisposeAction(new DisposalAction(urn));
     }
 
     @Override
@@ -45,12 +49,22 @@ public class Book extends Asset<BookData> {
         lines = ImmutableList.copyOf(data.getLines());
     }
 
-    @Override
-    protected void doDispose() {
-        lines = ImmutableList.of();
-    }
-
     public ImmutableList<String> getLines() {
         return lines;
+    }
+
+    private static class DisposalAction implements Runnable {
+
+        private static final Logger logger = LoggerFactory.getLogger(DisposalAction.class);
+        private ResourceUrn urn;
+
+        public DisposalAction(ResourceUrn urn) {
+            this.urn = urn;
+        }
+
+        @Override
+        public void run() {
+            logger.info("Disposed: {}", urn);
+        }
     }
 }
