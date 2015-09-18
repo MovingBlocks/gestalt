@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetType;
-import org.terasology.assets.DisposalHook;
 import org.terasology.assets.ResourceUrn;
 
 import java.util.Optional;
