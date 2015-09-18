@@ -41,8 +41,4 @@ public class AlternateAsset extends ParentAsset<AlternateAssetData> {
 
     }
 
-    @Override
-    protected void doDispose() {
-
-    }
 }

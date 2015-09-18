@@ -26,7 +26,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimaps;
-import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +37,9 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.security.AccessController;
@@ -48,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -73,11 +74,15 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private final List<AssetDataProducer<U>> producers = Lists.newCopyOnWriteArrayList();
     private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).weakValues().makeMap();
     private final ListMultimap<ResourceUrn, WeakReference<T>> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, WeakReference<T>>create());
+
+    // Per-asset locks to deal with situations where multiple threads attempt to obtain or create the same unloaded asset concurrently
     private final Map<ResourceUrn, ResourceLock> locks = new MapMaker().concurrencyLevel(1).makeMap();
 
-    private final BlockingQueue<Asset> disposalQueue = Queues.newLinkedBlockingQueue();
+    private final Set<AssetReference<? extends Asset<U>>> references = Sets.newConcurrentHashSet();
+    private final ReferenceQueue<Asset<U>> disposalQueue = new ReferenceQueue<>();
 
-    private boolean closed;
+    private volatile boolean closed;
+
     private volatile ResolutionStrategy resolutionStrategy = (modules, context) -> {
         if (modules.contains(context)) {
             return ImmutableSet.of(context);
@@ -123,22 +128,14 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     /**
      * Disposes any assets queued for disposal. This occurs if an asset is no longer referenced by anything.
      */
+    @SuppressWarnings("unchecked")
     public void processDisposal() {
-        if (!disposalQueue.isEmpty()) {
-            List<Asset> unreferencedAssets = Lists.newArrayListWithExpectedSize(disposalQueue.size());
-            disposalQueue.drainTo(unreferencedAssets);
-            unreferencedAssets.forEach(org.terasology.assets.Asset::dispose);
-        }
-    }
-
-    synchronized void queueForDisposal(Asset asset) {
-        if (!asset.isDisposed()) {
-            disposalQueue.add(asset);
-            if (asset.getUrn().isInstance()) {
-                instanceAssets.remove(asset.getUrn(), new WeakReference<>(asset));
-            } else {
-                loadedAssets.remove(asset.getUrn());
-            }
+        Reference<? extends Asset<U>> ref = disposalQueue.poll();
+        while (ref != null) {
+            AssetReference<? extends Asset<U>> assetRef = (AssetReference<? extends Asset<U>>) ref;
+            assetRef.dispose();
+            references.remove(assetRef);
+            ref = disposalQueue.poll();
         }
     }
 
@@ -284,15 +281,16 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      *
      * @param asset The asset that was created
      */
-    synchronized void registerAsset(Asset<U> asset) {
+    synchronized void registerAsset(Asset<U> asset, DisposalHook disposer) {
         if (closed) {
-            asset.dispose();
+            throw new RuntimeException("Cannot create asset for disposed asset type: " + assetClass);
         } else {
             if (asset.getUrn().isInstance()) {
                 instanceAssets.put(asset.getUrn(), new WeakReference<>(assetClass.cast(asset)));
             } else {
                 loadedAssets.put(asset.getUrn(), assetClass.cast(asset));
             }
+            references.add(new AssetReference<>(asset, disposalQueue, disposer));
         }
     }
 
@@ -641,6 +639,20 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         @Override
         public String toString() {
             return "lock(" + urn + ")";
+        }
+    }
+
+    private static final class AssetReference<T> extends PhantomReference<T> {
+
+        private final DisposalHook disposalHook;
+
+        public AssetReference(T asset, ReferenceQueue<T> queue, DisposalHook hook) {
+            super(asset, queue);
+            this.disposalHook = hook;
+        }
+
+        public void dispose() {
+            disposalHook.dispose();
         }
     }
 }

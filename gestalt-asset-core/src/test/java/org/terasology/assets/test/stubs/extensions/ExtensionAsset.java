@@ -45,11 +45,6 @@ public class ExtensionAsset extends Asset<ExtensionData> {
         this.value = data.getValue();
     }
 
-    @Override
-    protected void doDispose() {
-
-    }
-
     public String getValue() {
         return value;
     }

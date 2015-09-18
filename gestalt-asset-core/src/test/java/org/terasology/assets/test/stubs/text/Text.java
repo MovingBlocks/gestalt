@@ -44,10 +44,6 @@ public class Text extends Asset<TextData> {
         value = data.getValue();
     }
 
-    @Override
-    protected void doDispose() {
-    }
-
     public String getValue() {
         return value;
     }

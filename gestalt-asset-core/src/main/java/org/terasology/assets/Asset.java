@@ -52,6 +52,7 @@ public abstract class Asset<T extends AssetData> {
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
     private volatile boolean disposed;
+    private final DisposalHook disposalHook = new DisposalHook();
 
     /**
      * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
@@ -64,7 +65,7 @@ public abstract class Asset<T extends AssetData> {
         Preconditions.checkNotNull(assetType);
         this.urn = urn;
         this.assetType = assetType;
-        assetType.registerAsset(this);
+        assetType.registerAsset(this, disposalHook);
     }
 
     /**
@@ -72,6 +73,18 @@ public abstract class Asset<T extends AssetData> {
      */
     public final ResourceUrn getUrn() {
         return urn;
+    }
+
+    /**
+     * Retrieves this asset's disposal hook. This is used to hold the action to run when the asset is disposed.
+     * <p>
+     * The action registered to the disposal hook must not have a reference to asset - this would prevent it being garbage collected. It must be a static inner class,
+     * or not contained in the asset class (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
+     *
+     * @return This asset's disposal hook.
+     */
+    protected final DisposalHook getDisposalHook() {
+        return disposalHook;
     }
 
     /**
@@ -113,7 +126,7 @@ public abstract class Asset<T extends AssetData> {
     public final synchronized void dispose() {
         if (!disposed) {
             disposed = true;
-            doDispose();
+            disposalHook.dispose();
             assetType.onAssetDisposed(this);
         }
     }
@@ -146,12 +159,6 @@ public abstract class Asset<T extends AssetData> {
     }
 
     /**
-     * Called to dispose an asset. If the asset uses any resources that need to be manually cleaned up, this is where it should be done. This will only ever
-     * be called once per asset.
-     */
-    protected abstract void doDispose();
-
-    /**
      * @return Whether this asset has been disposed
      */
     public final boolean isDisposed() {
@@ -180,11 +187,4 @@ public abstract class Asset<T extends AssetData> {
         return urn.toString();
     }
 
-    @Override
-    protected final void finalize() throws Throwable {
-        super.finalize();
-        if (!disposed) {
-            assetType.queueForDisposal(this);
-        }
-    }
 }

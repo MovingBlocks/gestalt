@@ -42,8 +42,4 @@ public class ChildAsset extends ParentAsset<ChildAssetData> {
 
     }
 
-    @Override
-    protected void doDispose() {
-
-    }
 }
