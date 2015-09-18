@@ -47,7 +47,7 @@ public class SandboxTest {
     @Before
     public void setup() {
         registry = new TableModuleRegistry();
-        new ModulePathScanner().scan(registry, Paths.get("test-modules"));
+        new ModulePathScanner().scan(registry, Paths.get("test-modules").toAbsolutePath());
 
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
@@ -87,7 +87,7 @@ public class SandboxTest {
         type.getMethod("illegalMethod").invoke(instance);
     }
 
-    @Test(expected = ReflectionsException.class)
+    @Test(expected = ClassNotFoundException.class)
     public void deniedAccessToClassImplementingRestrictedInterface() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory, Collections.emptyList());
