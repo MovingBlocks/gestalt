@@ -72,7 +72,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private final Class<U> assetDataClass;
     private final AssetFactory<T, U> factory;
     private final List<AssetDataProducer<U>> producers = Lists.newCopyOnWriteArrayList();
-    private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).weakValues().makeMap();
+    private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).makeMap();
     private final ListMultimap<ResourceUrn, WeakReference<T>> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, WeakReference<T>>create());
 
     // Per-asset locks to deal with situations where multiple threads attempt to obtain or create the same unloaded asset concurrently
