@@ -80,4 +80,10 @@ public interface EntityManager {
      */
     boolean removeComponent(long entityId, Class<? extends Component> componentClass);
 
+    /**
+     * Starts a transaction
+     * @return A new transaction
+     */
+    Transaction beginTransaction();
+
 }

@@ -18,15 +18,21 @@ package org.terasology.entitysystem.inmemory;
 
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.iterator.TLongObjectIterator;
+import gnu.trove.set.TLongSet;
 import org.terasology.entitysystem.Component;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  *
  */
 public interface EntityStore {
+
+    long createEntityId();
+
+    int getEntityRevision(long entityId);
+
+    ClosableLock lock(TLongSet entityIds);
 
     <T extends Component> T get(long entityId, Class<T> componentClass);
 
@@ -35,10 +41,6 @@ public interface EntityStore {
     <T extends Component> boolean update(long entityId, Class<T> componentClass, T component);
 
     <T extends Component> Component remove(long entityId, Class<T> componentClass);
-
-    List<Component> removeAndReturnComponentsOf(long entityId);
-
-    void removeAll(long entityId);
 
     void clear();
 

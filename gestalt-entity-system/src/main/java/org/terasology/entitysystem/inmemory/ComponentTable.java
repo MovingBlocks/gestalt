@@ -15,21 +15,30 @@
  */
 package org.terasology.entitysystem.inmemory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import gnu.trove.TCollections;
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.iterator.TLongObjectIterator;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongIntHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.set.TIntSet;
 import gnu.trove.set.TLongSet;
-import gnu.trove.set.hash.TLongHashSet;
+import gnu.trove.set.hash.TIntHashSet;
 import org.terasology.entitysystem.Component;
 import org.terasology.entitysystem.component.ComponentManager;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A table for storing entities and components. Focused on allowing iteration across a components of a given type
@@ -37,11 +46,44 @@ import java.util.Map;
  * @author Immortius
  */
 class ComponentTable implements EntityStore {
-    private Map<Class, TLongObjectMap<Component>> store = Maps.newConcurrentMap();
-    private ComponentManager componentManager;
+    private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
+    private final Map<Class, TLongObjectMap<Component>> store = Maps.newConcurrentMap();
+    private final TLongIntMap revisions = TCollections.synchronizedMap(new TLongIntHashMap());
+    private final TLongIntMap numComponents = TCollections.synchronizedMap(new TLongIntHashMap());
+
+    private final int concurrencyLevel;
+    private final ReentrantLock[] locks;
+
+    private final ComponentManager componentManager;
+    private final AtomicLong idSource = new AtomicLong(1);
 
     public ComponentTable(ComponentManager componentManager) {
+        this(componentManager, DEFAULT_CONCURRENCY_LEVEL);
+    }
+
+    public ComponentTable(ComponentManager componentManager, int concurrencyLevel) {
+        Preconditions.checkArgument(concurrencyLevel > 0, "Concurrency level must be > 0");
         this.componentManager = componentManager;
+        this.concurrencyLevel = concurrencyLevel;
+        this.locks = new ReentrantLock[concurrencyLevel];
+        for (int i = 0; i < concurrencyLevel; i++) {
+            locks[i] = new ReentrantLock();
+        }
+    }
+
+    @Override
+    public long createEntityId() {
+        return idSource.getAndIncrement();
+    }
+
+    @Override
+    public int getEntityRevision(long entityId) {
+        return revisions.get(entityId);
+    }
+
+    @Override
+    public ClosableLock lock(TLongSet entityIds) {
+        return new CompositeLock(entityIds);
     }
 
     @Override
@@ -55,25 +97,44 @@ class ComponentTable implements EntityStore {
 
     @Override
     public synchronized <T extends Component> boolean add(long entityId, Class<T> componentType, T component) {
-        TLongObjectMap<Component> entityMap = store.get(componentType);
-        if (entityMap == null) {
-            entityMap = TCollections.synchronizedMap(new TLongObjectHashMap<>());
-            store.put(componentType, entityMap);
+        ReentrantLock lock = locks[selectLock(entityId)];
+        lock.lock();
+        try {
+            TLongObjectMap<Component> entityMap = store.get(componentType);
+            if (entityMap == null) {
+                entityMap = TCollections.synchronizedMap(new TLongObjectHashMap<>());
+                store.put(componentType, entityMap);
+            }
+            revisions.adjustOrPutValue(entityId, 1, 1);
+            boolean added = entityMap.putIfAbsent(entityId, componentManager.copy(component)) == null;
+            if (added) {
+                numComponents.adjustOrPutValue(entityId, 1, 1);
+            }
+            return added;
+        } finally {
+            lock.unlock();
         }
-        return entityMap.putIfAbsent(entityId, componentManager.copy(component)) == null;
     }
 
     @Override
     public synchronized <T extends Component> boolean update(long entityId, Class<T> componentType, T component) {
-        TLongObjectMap<Component> entityMap = store.get(componentType);
-        if (entityMap == null) {
+        ReentrantLock lock = locks[selectLock(entityId)];
+        lock.lock();
+        try {
+            TLongObjectMap<Component> entityMap = store.get(componentType);
+            if (entityMap == null) {
+                return false;
+            }
+            Component existingComponent = entityMap.get(entityId);
+            if (existingComponent != null) {
+                componentManager.copy(component, existingComponent);
+                revisions.increment(entityId);
+                return true;
+            }
             return false;
+        } finally {
+            lock.unlock();
         }
-        if (entityMap.containsKey(entityId)) {
-            entityMap.put(entityId, componentManager.copy(component));
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -82,35 +143,36 @@ class ComponentTable implements EntityStore {
      */
     @Override
     public <T extends Component> Component remove(long entityId, Class<T> componentClass) {
-        TLongObjectMap<Component> entityMap = store.get(componentClass);
-        if (entityMap != null) {
-            return entityMap.remove(entityId);
-        }
-        return null;
-    }
-
-    @Override
-    public List<Component> removeAndReturnComponentsOf(long entityId) {
-        List<Component> componentList = Lists.newArrayList();
-        for (TLongObjectMap<Component> entityMap : store.values()) {
-            Component component = entityMap.remove(entityId);
-            if (component != null) {
-                componentList.add(component);
+        ReentrantLock lock = locks[selectLock(entityId)];
+        lock.lock();
+        try {
+            TLongObjectMap<Component> entityMap = store.get(componentClass);
+            if (entityMap != null) {
+                Component removed = entityMap.remove(entityId);
+                if (removed != null) {
+                    int remainingComps = numComponents.get(entityId);
+                    if (remainingComps == 0) {
+                        numComponents.remove(entityId);
+                        revisions.remove(entityId);
+                    } else {
+                        revisions.increment(entityId);
+                    }
+                }
+                return removed;
             }
-        }
-        return componentList;
-    }
-
-    @Override
-    public void removeAll(long entityId) {
-        for (TLongObjectMap<Component> entityMap : store.values()) {
-            entityMap.remove(entityId);
+            return null;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void clear() {
         store.clear();
+        revisions.clear();
+        numComponents.clear();
+        idSource.set(1);
+
     }
 
     @Override
@@ -153,30 +215,53 @@ class ComponentTable implements EntityStore {
      */
     @Override
     public TLongIterator entityIdIterator() {
-        TLongSet idSet = new TLongHashSet();
-        for (TLongObjectMap<Component> componentMap : store.values()) {
-            idSet.addAll(componentMap.keys());
-        }
-        return idSet.iterator();
+        return revisions.keySet().iterator();
     }
 
     @Override
     public int entityCount() {
-        TLongSet idSet = new TLongHashSet();
-        for (TLongObjectMap<Component> componentMap : store.values()) {
-            idSet.addAll(componentMap.keys());
-        }
-        return idSet.size();
+        return revisions.size();
     }
 
     @Override
     public boolean isAvailable(long entityId) {
-        for (TLongObjectMap<Component> componentMap : store.values()) {
-            Component comp = componentMap.get(entityId);
-            if (comp != null) {
-                return true;
+        return revisions.keySet().contains(entityId);
+    }
+
+    private int selectLock(long id) {
+        int h = Long.hashCode(id);
+        h ^= (h >>> 20) ^ (h >>> 12);
+        return (h ^ (h >>> 7) ^ (h >>> 4)) % concurrencyLevel;
+    }
+
+    /**
+     * A lock across multiple entity locks. Locking is sorted to prevent dead lock.
+     */
+    private class CompositeLock implements ClosableLock {
+
+        private TIntList lockList;
+
+        public CompositeLock(TLongSet entityIds) {
+            TIntSet lockIds = new TIntHashSet(entityIds.size());
+            TLongIterator entityIterator = entityIds.iterator();
+            while (entityIterator.hasNext()) {
+                lockIds.add(selectLock(entityIterator.next()));
+            }
+
+            lockList = new TIntArrayList(lockIds);
+            lockList.sort();
+            TIntIterator lockIterator = lockList.iterator();
+            while (lockIterator.hasNext()) {
+                locks[lockIterator.next()].lock();
             }
         }
-        return false;
+
+        @Override
+        public void close() {
+            TIntIterator lockIterator = lockList.iterator();
+            while (lockIterator.hasNext()) {
+                locks[lockIterator.next()].unlock();
+            }
+        }
     }
 }

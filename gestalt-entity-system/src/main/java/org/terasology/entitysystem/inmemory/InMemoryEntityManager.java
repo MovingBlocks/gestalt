@@ -19,6 +19,7 @@ package org.terasology.entitysystem.inmemory;
 import com.google.common.base.Preconditions;
 import org.terasology.entitysystem.Component;
 import org.terasology.entitysystem.EntityManager;
+import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.util.Varargs;
 
@@ -34,7 +35,6 @@ public class InMemoryEntityManager implements EntityManager {
 
     private final ComponentManager library;
     private EntityStore entityStore;
-    private AtomicLong idSource = new AtomicLong(1);
 
     public InMemoryEntityManager(ComponentManager library) {
         this.library = library;
@@ -57,7 +57,7 @@ public class InMemoryEntityManager implements EntityManager {
     @SuppressWarnings("unchecked")
     public long createEntity(Collection<Component> components) {
         Preconditions.checkArgument(!components.isEmpty(), "Cannot create an entity without at least one component");
-        long entityId = idSource.getAndIncrement();
+        long entityId = entityStore.createEntityId();
         for (Component component : components) {
             Class componentType = library.getType(component.getClass()).getInterfaceType();
             entityStore.add(entityId, componentType, component);
@@ -87,6 +87,11 @@ public class InMemoryEntityManager implements EntityManager {
     @Override
     public boolean removeComponent(long entityId, Class<? extends Component> componentClass) {
         return entityStore.remove(entityId, componentClass) != null;
+    }
+
+    @Override
+    public Transaction beginTransaction() {
+        return new InMemoryTransaction(entityStore, library);
     }
 
 }

@@ -4,6 +4,12 @@
  * - Gradle Documentation: http://gradle.org/documentation
  * - View tasks for this project: $ gradlew tasks
  */
+ 
+plugins {
+   id 'me.champeau.gradle.jmh' version '0.2.0'
+}
+
+apply plugin: 'me.champeau.gradle.jmh'
 
 // Primary dependencies definition
 dependencies {
@@ -13,6 +19,12 @@ dependencies {
     
     compile 'net.sf.trove4j:trove4j:3.0.3'
     compile group: 'com.esotericsoftware', name: 'reflectasm', version: '1.11.0'
+    
+    jmh "ch.qos.logback:logback-classic:1.1.5"
 }
 
 description = 'Entity system.'
+
+jmh {
+  jmhVersion = '1.11.3'
+}
