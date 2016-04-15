@@ -23,7 +23,8 @@ import java.lang.reflect.Modifier;
 import java.util.Optional;
 
 /**
- * Asset disposer is used to set the action to run at the
+ * DisposalHook holds the action to occur when an asset is disposed. This is handled outside of the asset class itself to allow disposal to occur after the asset has been
+ * garbage collected via a disposed reference queue mechanism in AssetType.
  */
 public class DisposalHook {
 
