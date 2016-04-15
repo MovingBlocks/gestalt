@@ -17,7 +17,7 @@
 package org.terasology.entitysystem.component;
 
 import org.junit.Test;
-import org.terasology.entitysystem.ComponentInterface;
+import org.terasology.entitysystem.stubs.ComponentInterface;
 import org.terasology.valuetype.TypeLibrary;
 
 import static org.junit.Assert.assertEquals;

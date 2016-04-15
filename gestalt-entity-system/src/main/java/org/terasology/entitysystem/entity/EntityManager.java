@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem;
+package org.terasology.entitysystem.entity;
+
+import gnu.trove.iterator.TLongIterator;
+import org.terasology.entitysystem.Transaction;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * EntityManager is the core of the entity system. It provides atomic operations on the entity system, or to start a transaction.
@@ -85,5 +89,22 @@ public interface EntityManager {
      * @return A new transaction
      */
     Transaction beginTransaction();
+
+    /**
+     * Find entities with the desired components. Note that the components could potentially be removed from the entities between when they are found and when the components
+     * are requested.
+     * @param first A component all the found entities should have.
+     * @param additional Additional components the entities should have.
+     * @return An iterator over the entities with the desired component(s)
+     */
+    TLongIterator findEntitiesWithComponents(Class<? extends Component> first, Class<? extends Component> ... additional);
+
+    /**
+     * Find entities with the desired components. Note that the components could potentially be removed from the entities between when they are found and when the components
+     * are requested.
+     * @param componentTypes The desired components. Must contain at least one component
+     * @return An iterator over the entities with the desired component(s)
+     */
+    TLongIterator findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes);
 
 }

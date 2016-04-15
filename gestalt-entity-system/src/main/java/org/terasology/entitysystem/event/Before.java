@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem;
+package org.terasology.entitysystem.event;
 
-public interface SampleComponent extends Component {
-    String getName();
-    void setName(String value);
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    String getDescription();
-    void setDescription(String description);
+/**
+ *
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value = {ElementType.METHOD, ElementType.TYPE})
+public @interface Before {
+    Class<?>[] value();
 }

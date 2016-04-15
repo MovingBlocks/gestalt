@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.exception;
+package org.terasology.entitysystem.event;
 
 /**
- * This exception is thrown if an attempt is made to remove a component from an entity that does not have a component of that type.
+ *
  */
-public class ComponentDoesNotExistException extends EntitySystemException {
+public class RegistrationFailedException extends EventSystemException {
 
-    public ComponentDoesNotExistException() {
+    public RegistrationFailedException() {
     }
 
-    public ComponentDoesNotExistException(String message) {
+    public RegistrationFailedException(String message) {
         super(message);
     }
 
-    public ComponentDoesNotExistException(String message, Throwable cause) {
+    public RegistrationFailedException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ComponentDoesNotExistException(Throwable cause) {
+    public RegistrationFailedException(Throwable cause) {
         super(cause);
     }
 
-    public ComponentDoesNotExistException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public RegistrationFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

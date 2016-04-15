@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.component;
+package org.terasology.entitysystem.event;
 
-import org.terasology.entitysystem.entity.Component;
+
+import org.terasology.entitysystem.Transaction;
 
 /**
- * Any shared implementation for all components
+ * Interface for a single event receiver
+ *
+ * @author Immortius
  */
-public class SharedComponentImpl implements Component {
-
+public interface EventHandler<T extends Event> {
+    EventResult onEvent(T event, long entityId, Transaction transaction);
 }

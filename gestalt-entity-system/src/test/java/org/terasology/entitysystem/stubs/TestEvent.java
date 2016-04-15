@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.component;
+package org.terasology.entitysystem.stubs;
 
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.event.Event;
 
 /**
- * Any shared implementation for all components
+ *
  */
-public class SharedComponentImpl implements Component {
+public class TestEvent implements Event {
+    private final String value;
 
+    public TestEvent(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
 }

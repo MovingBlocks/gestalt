@@ -16,7 +16,7 @@
 
 package org.terasology.entitysystem.jmh;
 
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.entity.Component;
 
 public interface SampleComponent extends Component {
     String getName();

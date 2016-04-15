@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem;
+package org.terasology.entitysystem.entity;
 
 import com.google.common.collect.Lists;
+import gnu.trove.iterator.TLongIterator;
+import gnu.trove.set.TLongSet;
+import gnu.trove.set.hash.TLongHashSet;
 import org.junit.After;
 import org.junit.Test;
+import org.terasology.entitysystem.stubs.SampleComponent;
+import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
-import org.terasology.entitysystem.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -155,6 +160,38 @@ public class BasicEntityTest {
         component = entityManager.getComponent(entity, SampleComponent.class).get();
         component.setName("New Name");
         assertNotEquals(component.getName(), entityManager.getComponent(entity, SampleComponent.class).get().getName());
+    }
+
+    @Test
+    public void findEntitiesWithSingleComponent() {
+        TLongSet sampleEntities = new TLongHashSet();
+        sampleEntities.add(entityManager.createEntity(entityManager.createComponent(SampleComponent.class)));
+        sampleEntities.add(entityManager.createEntity(entityManager.createComponent(SampleComponent.class), entityManager.createComponent(SecondComponent.class)));
+        entityManager.createEntity(entityManager.createComponent(SecondComponent.class));
+
+        TLongIterator iterator = entityManager.findEntitiesWithComponents(SampleComponent.class);
+        TLongSet actualEntities = new TLongHashSet();
+        while (iterator.hasNext()) {
+            actualEntities.add(iterator.next());
+        }
+
+        assertEquals(sampleEntities, actualEntities);
+    }
+
+    @Test
+    public void findEntitiesWithMultipleComponent() {
+        TLongSet sampleAndSecondEntities = new TLongHashSet();
+        entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
+        sampleAndSecondEntities.add(entityManager.createEntity(entityManager.createComponent(SampleComponent.class), entityManager.createComponent(SecondComponent.class)));
+        entityManager.createEntity(entityManager.createComponent(SecondComponent.class));
+
+        TLongIterator iterator = entityManager.findEntitiesWithComponents(SampleComponent.class, SecondComponent.class);
+        TLongSet actualEntities = new TLongHashSet();
+        while (iterator.hasNext()) {
+            actualEntities.add(iterator.next());
+        }
+
+        assertEquals(sampleAndSecondEntities, actualEntities);
     }
 
 }

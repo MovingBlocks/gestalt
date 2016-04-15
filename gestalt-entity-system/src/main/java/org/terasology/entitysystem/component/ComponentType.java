@@ -16,7 +16,7 @@
 
 package org.terasology.entitysystem.component;
 
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.entity.Component;
 
 import java.util.function.Supplier;
 

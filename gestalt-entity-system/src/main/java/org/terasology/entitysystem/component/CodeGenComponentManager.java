@@ -31,7 +31,7 @@ import javassist.CtNewMethod;
 import javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.entity.Component;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.lang.reflect.Method;

@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem;
+package org.terasology.entitysystem.event;
 
 /**
- *
+ * Base interface for all events
  */
-public interface ComponentInterface extends Component {
+public interface Event {
 
-    String getName();
-
-    void setName(String name);
-
-    String getDescription();
-
-    void setDescription(String description);
 }

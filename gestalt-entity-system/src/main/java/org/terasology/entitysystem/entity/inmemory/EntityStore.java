@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.inmemory;
+package org.terasology.entitysystem.entity.inmemory;
 
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.iterator.TLongObjectIterator;
 import gnu.trove.set.TLongSet;
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.entity.Component;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  *
@@ -55,6 +56,8 @@ public interface EntityStore {
     int entityCount();
 
     boolean isAvailable(long entityId);
+
+    TLongIterator findWithComponents(Set<Class<? extends Component>> componentTypes);
 
 
 }

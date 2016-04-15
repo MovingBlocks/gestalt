@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,14 @@
  * limitations under the License.
  */
 
-package org.terasology.valuetype;
+package org.terasology.entitysystem.stubs;
 
 import org.terasology.entitysystem.entity.Component;
 
-import java.util.Optional;
+public interface SampleComponent extends Component {
+    String getName();
+    void setName(String value);
 
-/**
- *
- */
-public class ComponentCopyProvider {
-    private TypeLibrary library;
-
-    public ComponentCopyProvider(TypeLibrary library) {
-        this.library = library;
-    }
-
-    public TypeLibrary getLibrary() {
-        return library;
-    }
-
-    public <T extends Component> T copy(T value) {
-        Optional<TypeHandler<T>> handler = library.getHandlerFor((Class<T>) value.getClass());
-        if (!handler.isPresent()) {
-
-        }
-        return handler.get().copy(value);
-    }
-
-
+    String getDescription();
+    void setDescription(String description);
 }

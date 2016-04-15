@@ -1,0 +1,54 @@
+/*
+ * Copyright 2015 MovingBlocks
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.terasology.entitysystem.event.internal;
+
+import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.event.Event;
+
+import java.util.Optional;
+
+/**
+ * @author Immortius
+ */
+class PendingEvent {
+    private long entityId;
+    private Event event;
+    private Optional<Class<? extends Component>> triggeringComponent;
+
+    public PendingEvent(long entityId, Event event) {
+        this.event = event;
+        this.entityId = entityId;
+    }
+
+    public PendingEvent(long entityId, Event event, Class<? extends Component> triggeringComponent) {
+        this.entityId = entityId;
+        this.event = event;
+        this.triggeringComponent = Optional.of(triggeringComponent);
+    }
+
+    public long getEntityId() {
+        return entityId;
+    }
+
+    public Event getEvent() {
+        return event;
+    }
+
+    public Optional<Class<? extends Component>> getComponent() {
+        return triggeringComponent;
+    }
+}

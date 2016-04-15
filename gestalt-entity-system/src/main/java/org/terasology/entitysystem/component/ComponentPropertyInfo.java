@@ -17,12 +17,11 @@
 package org.terasology.entitysystem.component;
 
 import com.google.common.collect.ImmutableMap;
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.entity.Component;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * Information and access to a property of a component

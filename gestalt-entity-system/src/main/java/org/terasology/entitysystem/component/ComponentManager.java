@@ -16,7 +16,7 @@
 
 package org.terasology.entitysystem.component;
 
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.entity.Component;
 
 /**
  * Manager for components. Provides the ability to create or copy components, or retrieve information on the properties of the component that allows the individual

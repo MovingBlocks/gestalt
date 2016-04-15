@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.inmemory;
+package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.base.Preconditions;
-import org.terasology.entitysystem.Component;
-import org.terasology.entitysystem.EntityManager;
+import gnu.trove.iterator.TLongIterator;
+import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.util.Varargs;
@@ -26,7 +27,7 @@ import org.terasology.util.Varargs;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Set;
 
 /**
  *
@@ -94,4 +95,14 @@ public class InMemoryEntityManager implements EntityManager {
         return new InMemoryTransaction(entityStore, library);
     }
 
+    @Override
+    public TLongIterator findEntitiesWithComponents(Class<? extends Component> first, Class<? extends Component>... additional) {
+        return findEntitiesWithComponents(Varargs.combineToSet(first, additional));
+    }
+
+    @Override
+    public TLongIterator findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes) {
+        Preconditions.checkArgument(!componentTypes.isEmpty());
+        return entityStore.findWithComponents(componentTypes);
+    }
 }

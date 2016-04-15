@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.inmemory;
+package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.hash.TLongIntHashMap;
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.exception.ComponentAlreadyExistsException;
-import org.terasology.entitysystem.exception.ComponentDoesNotExistException;
+import org.terasology.entitysystem.entity.ComponentAlreadyExistsException;
+import org.terasology.entitysystem.entity.ComponentDoesNotExistException;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  *
@@ -56,6 +60,29 @@ public class InMemoryTransaction implements Transaction {
     public <T extends Component> Optional<T> getComponent(long entityId, Class<T> componentType) {
         CacheEntry<T> cacheEntry = getCacheEntry(entityId, componentType);
         return Optional.ofNullable(cacheEntry.getComponent());
+    }
+
+    @Override
+    public Set<Class<? extends Component>> getEntityComposition(long entityId) {
+        Set<Class<? extends Component>> result = Sets.newHashSet();
+        cacheEntity(entityId);
+        for (Map.Entry<Class<? extends Component>, CacheEntry> entry : entityCache.row(entityId).entrySet()) {
+            if (entry.getValue().getComponent() != null) {
+                result.add(entry.getKey());
+            }
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void cacheEntity(long entityId) {
+        if (!expectedEntityRevisions.containsKey(entityId)) {
+            expectedEntityRevisions.put(entityId, entityStore.getEntityRevision(entityId));
+            for (Component component : entityStore.getComponents(entityId)) {
+                Class interfaceType = componentManager.getType(component.getClass()).getInterfaceType();
+                entityCache.put(entityId, interfaceType, new CacheEntry(entityId, interfaceType, component, Action.UPDATE));
+            }
+        }
     }
 
     @Override
@@ -143,16 +170,12 @@ public class InMemoryTransaction implements Transaction {
     private <T extends Component> CacheEntry<T> getCacheEntry(long entityId, Class<T> componentType) {
         CacheEntry<T> cacheEntry = entityCache.get(entityId, componentType);
         if (cacheEntry == null) {
-            if (!expectedEntityRevisions.containsKey(entityId)) {
-                expectedEntityRevisions.put(entityId, entityStore.getEntityRevision(entityId));
-            }
-            T comp = entityStore.get(entityId, componentType);
-            if (comp != null) {
-                cacheEntry = new CacheEntry<>(entityId, componentType, comp, Action.UPDATE);
-            } else {
+            cacheEntity(entityId);
+            cacheEntry = entityCache.get(entityId, componentType);
+            if (cacheEntry == null) {
                 cacheEntry = new CacheEntry<>(entityId, componentType, null, Action.NONE);
+                entityCache.put(entityId, componentType, cacheEntry);
             }
-            entityCache.put(entityId, componentType, cacheEntry);
         }
         return cacheEntry;
     }

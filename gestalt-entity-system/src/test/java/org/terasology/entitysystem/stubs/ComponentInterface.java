@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.inmemory;
+package org.terasology.entitysystem.stubs;
+
+import org.terasology.entitysystem.entity.Component;
 
 /**
- * Interface for a lock that is AutoClosable - so can be used in a try-with-resources statement.
+ *
  */
-public interface ClosableLock extends AutoCloseable {
+public interface ComponentInterface extends Component {
 
-    /**
-     * Unlocks the lock
-     */
-    void close();
+    String getName();
+
+    void setName(String name);
+
+    String getDescription();
+
+    void setDescription(String description);
 }

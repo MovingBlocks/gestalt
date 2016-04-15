@@ -16,11 +16,13 @@
 
 package org.terasology.entitysystem;
 
-import org.terasology.entitysystem.exception.ComponentAlreadyExistsException;
-import org.terasology.entitysystem.exception.ComponentDoesNotExistException;
+import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.entity.ComponentAlreadyExistsException;
+import org.terasology.entitysystem.entity.ComponentDoesNotExistException;
 
 import java.util.ConcurrentModificationException;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * An entity system transaction.
@@ -52,6 +54,11 @@ public interface Transaction {
      * @return An optional containing the requested component, if the entity has a component of that type
      */
     <T extends Component> Optional<T> getComponent(long entityId, Class<T> componentType);
+
+    /**
+     * Retrieves a set of the types of components that the given entity has.
+     */
+    Set<Class<? extends Component>> getEntityComposition(long entityId);
 
     /**
      * Adds a component to an entity, returning it.

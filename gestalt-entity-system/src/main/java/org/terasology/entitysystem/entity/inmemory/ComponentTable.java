@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.entitysystem.inmemory;
+package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import gnu.trove.TCollections;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TLongIterator;
@@ -31,12 +33,13 @@ import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TIntHashSet;
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.component.ComponentManager;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -228,10 +231,64 @@ class ComponentTable implements EntityStore {
         return revisions.keySet().contains(entityId);
     }
 
+    @Override
+    public TLongIterator findWithComponents(Set<Class<? extends Component>> componentTypes) {
+        return new EntityWithComponentsIterator(componentTypes);
+    }
+
     private int selectLock(long id) {
         int h = Long.hashCode(id);
         h ^= (h >>> 20) ^ (h >>> 12);
         return (h ^ (h >>> 7) ^ (h >>> 4)) % concurrencyLevel;
+    }
+
+    private class EntityWithComponentsIterator implements TLongIterator{
+        private List<Class<? extends Component>> componentClasses;
+        private TLongIterator primeEntityIterator;
+
+        private boolean hasNext;
+        private long next;
+
+        public EntityWithComponentsIterator(Set<Class<? extends Component>> componentTypes) {
+            componentClasses = ImmutableList.copyOf(componentTypes);
+            primeEntityIterator = store.get(componentClasses.get(0)).keySet().iterator();
+            findNext();
+        }
+
+        private void findNext() {
+            hasNext = false;
+            while (!hasNext && primeEntityIterator.hasNext()) {
+                long entityId = primeEntityIterator.next();
+                boolean missingComponent = false;
+                for (int i = 1; i < componentClasses.size(); ++i) {
+                    if (!store.get(componentClasses.get(i)).containsKey(entityId)) {
+                        missingComponent = true;
+                        break;
+                    }
+                }
+                if (!missingComponent) {
+                    hasNext = true;
+                    next = entityId;
+                }
+            }
+        }
+
+        @Override
+        public long next() {
+            long result = next;
+            findNext();
+            return result;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return hasNext;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**

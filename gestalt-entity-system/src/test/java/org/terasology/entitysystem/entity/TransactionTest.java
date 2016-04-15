@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem;
+package org.terasology.entitysystem.entity;
 
+import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Test;
+import org.terasology.entitysystem.Transaction;
+import org.terasology.entitysystem.stubs.SampleComponent;
+import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
-import org.terasology.entitysystem.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -121,7 +125,7 @@ public class TransactionTest {
     public void addThenRemoveComponent() throws Exception {
         long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
         Transaction transaction = entityManager.beginTransaction();
-        SecondComponent secondComponent = transaction.addComponent(entityId, SecondComponent.class);
+        transaction.addComponent(entityId, SecondComponent.class);
         transaction.removeComponent(entityId, SecondComponent.class);
         transaction.commit();
 
@@ -193,6 +197,27 @@ public class TransactionTest {
             assertFalse(entityManager.getComponent(entityId, SecondComponent.class).isPresent());
         }
 
+    }
+
+    @Test
+    public void getCompositionOfEntity() throws Exception {
+        SampleComponent originalComponent = entityManager.createComponent(SampleComponent.class);
+        long entityId = entityManager.createEntity(originalComponent);
+        entityManager.addComponent(entityId, entityManager.createComponent(SecondComponent.class));
+
+        Transaction transaction = entityManager.beginTransaction();
+        assertEquals(Sets.newHashSet(SampleComponent.class, SecondComponent.class), transaction.getEntityComposition(entityId));
+    }
+
+    @Test
+    public void getCompositionOfEntityAccountsForModification() throws Exception {
+        SampleComponent originalComponent = entityManager.createComponent(SampleComponent.class);
+        long entityId = entityManager.createEntity(originalComponent);
+        entityManager.addComponent(entityId, entityManager.createComponent(SecondComponent.class));
+
+        Transaction transaction = entityManager.beginTransaction();
+        transaction.removeComponent(entityId, SampleComponent.class);
+        assertEquals(Sets.newHashSet(SecondComponent.class), transaction.getEntityComposition(entityId));
     }
 
 
