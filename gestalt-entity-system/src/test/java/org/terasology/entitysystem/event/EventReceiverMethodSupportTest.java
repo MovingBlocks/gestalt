@@ -16,15 +16,11 @@
 
 package org.terasology.entitysystem.event;
 
-import org.junit.Test;
 import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
-import org.terasology.entitysystem.event.internal.EventProcessorImpl;
 import org.terasology.entitysystem.stubs.SampleComponent;
-import org.terasology.entitysystem.stubs.TestEvent;
-import org.terasology.entitysystem.stubs.TestEventReceiver;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -43,7 +39,7 @@ public class EventReceiverMethodSupportTest {
 
     private static String TEST_NAME = "name";
 
-    private EventProcessor eventProcessor = new EventProcessorImpl();
+    private EventProcessor eventProcessor;
     private EntityManager entityManager;
     private URLClassLoader tempLoader;
     private long testEntity;

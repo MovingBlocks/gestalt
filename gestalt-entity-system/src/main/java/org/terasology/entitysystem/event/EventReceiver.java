@@ -36,6 +36,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface EventReceiver {
+
     /**
      * What components that the entity must have for this method to be invoked
      */

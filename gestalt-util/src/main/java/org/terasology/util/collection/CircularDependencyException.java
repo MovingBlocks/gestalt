@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2016 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.event;
+package org.terasology.util.collection;
 
 /**
- *
+ * This exception is throw in response to a circular dependency. For example, TopologicalSorter will throw this exception if asked to sort an graph whose edges form a circuit
+ * and thus no linear ordering exists.
  */
-public class RegistrationFailedException extends EventSystemException {
-
-    public RegistrationFailedException() {
+public class CircularDependencyException extends RuntimeException {
+    public CircularDependencyException() {
     }
 
-    public RegistrationFailedException(String message) {
+    public CircularDependencyException(String message) {
         super(message);
     }
 
-    public RegistrationFailedException(String message, Throwable cause) {
+    public CircularDependencyException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public RegistrationFailedException(Throwable cause) {
+    public CircularDependencyException(Throwable cause) {
         super(cause);
     }
 
-    public RegistrationFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public CircularDependencyException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

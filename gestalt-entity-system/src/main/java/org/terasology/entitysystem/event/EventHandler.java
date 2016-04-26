@@ -20,10 +20,19 @@ package org.terasology.entitysystem.event;
 import org.terasology.entitysystem.Transaction;
 
 /**
- * Interface for a single event receiver
+ * Interface for an event handler. An event handler receives notification when the event of interest has been sent against an entity that matches the conditions desired
+ * when it was registered with an {@link EventProcessor}.
  *
  * @author Immortius
  */
 public interface EventHandler<T extends Event> {
+
+    /**
+     *
+     * @param event The event that was sent against the entity
+     * @param entityId The id of the entity that is receiving the event
+     * @param transaction The transaction the event is occuring within. This should be used to obtain any components or additional entities desired for processing.
+     * @return Whether the event processing should continue or be halted.
+     */
     EventResult onEvent(T event, long entityId, Transaction transaction);
 }

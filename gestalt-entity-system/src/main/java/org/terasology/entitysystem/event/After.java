@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2016 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,16 @@
 
 package org.terasology.entitysystem.event;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
- *
+ * Annotation to mark an event handler to be prioritised after one or more event handlers, by type
  */
-public class EventSystemException extends RuntimeException {
-
-    public EventSystemException() {
-    }
-
-    public EventSystemException(String message) {
-        super(message);
-    }
-
-    public EventSystemException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public EventSystemException(Throwable cause) {
-        super(cause);
-    }
-
-    public EventSystemException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value = {ElementType.METHOD, ElementType.TYPE})
+public @interface After {
+    Class<?>[] value();
 }

@@ -130,7 +130,7 @@ public final class EventReceiverMethodSupport {
 //        }
 //
 //        @Override
-//        public ImmutableList<Class<? extends Component>> getFilterComponents() {
+//        public ImmutableList<Class<? extends Component>> getRequiredComponents() {
 //            return filterComponents;
 //        }
 //
@@ -177,7 +177,7 @@ public final class EventReceiverMethodSupport {
 //        }
 //
 //        @Override
-//        public ImmutableList<Class<? extends Component>> getFilterComponents() {
+//        public ImmutableList<Class<? extends Component>> getRequiredComponents() {
 //            return filterComponents;
 //        }
 //
