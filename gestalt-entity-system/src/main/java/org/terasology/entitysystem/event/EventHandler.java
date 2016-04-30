@@ -28,7 +28,7 @@ import org.terasology.entitysystem.Transaction;
 public interface EventHandler<T extends Event> {
 
     /**
-     *
+     * Call back for when the desired event has been sent against an entity matching the desired conditions the EventHandler was registered with.
      * @param event The event that was sent against the entity
      * @param entityId The id of the entity that is receiving the event
      * @param transaction The transaction the event is occuring within. This should be used to obtain any components or additional entities desired for processing.

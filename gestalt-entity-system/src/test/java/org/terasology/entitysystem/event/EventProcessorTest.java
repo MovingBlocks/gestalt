@@ -190,11 +190,4 @@ public class EventProcessorTest {
 
     private interface EventHandlerB<T extends Event> extends EventHandler<T> {}
 
-    // TODO: (not in this class)
-    // Builder and ordering
-    // Sending event with no direct handlers (but handlers on parent class)
-    // * Transaction handling
-    // * Synchronous vs Asynchronous
-
-
 }

@@ -18,6 +18,7 @@ package org.terasology.entitysystem.event;
 import org.terasology.entitysystem.entity.Component;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -35,7 +36,8 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface EventReceiver {
+@Inherited
+public @interface ReceiveEvent {
 
     /**
      * What components that the entity must have for this method to be invoked
