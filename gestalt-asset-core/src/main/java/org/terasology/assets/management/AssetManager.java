@@ -51,6 +51,20 @@ public final class AssetManager {
     }
 
     /**
+     * @param urn The urn of the asset to check. Must not be an instance urn
+     * @param type The Asset class of interest
+     * @return whether an asset is loaded with the given urn
+     */
+    public boolean isLoaded(ResourceUrn urn, Class<? extends Asset<?>> type) {
+        for (AssetType<?, ?> assetType : assetTypeManager.getAssetTypes(type)) {
+            if (assetType.isLoaded(urn)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Retrieves a set of the ResourceUrns for all loaded assets of the given Asset class (including subtypes)
      *
      * @param type The Asset class of interest
