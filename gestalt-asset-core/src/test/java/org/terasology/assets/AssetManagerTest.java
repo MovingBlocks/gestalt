@@ -84,6 +84,14 @@ public class AssetManagerTest {
     }
 
     @Test
+    public void checkIfAssetIsLoaded() {
+        textAssetType.loadAsset(ENGINE_TEST_URN, new TextData("moo"));
+        assertFalse(assetManager.isLoaded(MORE_TEST_URN, Text.class));
+        assertFalse(assetManager.isLoaded(ENGINE_TEST_URN, AlternateAsset.class));
+        assertTrue(assetManager.isLoaded(ENGINE_TEST_URN, Text.class));
+    }
+
+    @Test
     public void getLoadedAssetUrns() {
         textAssetType.loadAsset(ENGINE_TEST_URN, new TextData("moo"));
         assertEquals(ImmutableSet.of(ENGINE_TEST_URN), assetManager.getLoadedAssetUrns(Text.class));

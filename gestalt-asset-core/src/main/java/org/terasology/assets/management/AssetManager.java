@@ -34,8 +34,8 @@ import java.util.Set;
 /**
  * AssetManager provides an simplified interface for working with assets across multiple asset types.
  * <p>
- * To do this it uses an AssetManager to obtain the AssetTypes relating to an Asset class of interest, and delegates down to them for actions such
- * as obtaining and reloading assets.
+ * To do this it uses an {@link AssetTypeManager} to obtain the AssetTypes relating to an Asset
+ * class of interest, and delegates down to them for actions such as obtaining and reloading assets.
  * </p>
  *
  * @author Immortius
@@ -46,8 +46,25 @@ public final class AssetManager {
 
     private final AssetTypeManager assetTypeManager;
 
+    /**
+     * @param assetTypeManager the asset type manager that will be used
+     */
     public AssetManager(AssetTypeManager assetTypeManager) {
         this.assetTypeManager = assetTypeManager;
+    }
+
+    /**
+     * @param urn The urn of the asset to check. Must not be an instance urn
+     * @param type The Asset class of interest
+     * @return whether an asset is loaded with the given urn
+     */
+    public boolean isLoaded(ResourceUrn urn, Class<? extends Asset<?>> type) {
+        for (AssetType<?, ?> assetType : assetTypeManager.getAssetTypes(type)) {
+            if (assetType.isLoaded(urn)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
