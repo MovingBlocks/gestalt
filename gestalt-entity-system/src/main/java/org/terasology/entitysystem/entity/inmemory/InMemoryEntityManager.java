@@ -22,6 +22,7 @@ import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.entity.EntityTransaction;
 import org.terasology.util.Varargs;
 
 import java.util.Collection;
@@ -91,7 +92,7 @@ public class InMemoryEntityManager implements EntityManager {
     }
 
     @Override
-    public Transaction beginTransaction() {
+    public EntityTransaction beginTransaction() {
         return new InMemoryTransaction(entityStore, library);
     }
 

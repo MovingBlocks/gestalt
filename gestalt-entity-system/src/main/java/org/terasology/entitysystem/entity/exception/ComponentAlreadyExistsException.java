@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2016 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity;
+package org.terasology.entitysystem.entity.exception;
+
+import org.terasology.entitysystem.entity.exception.EntitySystemException;
 
 /**
  * This exception is thrown if an attempt is made to add a component to an entity that already has a component of that type.

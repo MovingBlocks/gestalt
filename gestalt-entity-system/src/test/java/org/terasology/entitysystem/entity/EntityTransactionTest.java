@@ -20,10 +20,10 @@ import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Test;
 import org.terasology.entitysystem.Transaction;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -41,13 +41,13 @@ import static org.junit.Assert.assertTrue;
 /**
  *
  */
-public class TransactionTest {
+public class EntityTransactionTest {
     public static final String TEST_NAME = "Fred";
     public static final String TEST_NAME_2 = "Jill";
     private EntityManager entityManager;
     private URLClassLoader tempLoader;
 
-    public TransactionTest() {
+    public EntityTransactionTest() {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         tempLoader = new URLClassLoader(new URL[0]);
@@ -61,7 +61,7 @@ public class TransactionTest {
 
     @Test
     public void createEntity() throws Exception {
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         long entityId = transaction.createEntity();
         SampleComponent sampleComponent = transaction.addComponent(entityId, SampleComponent.class);
         sampleComponent.setName(TEST_NAME);
@@ -75,7 +75,7 @@ public class TransactionTest {
     @Test
     public void addComponent() throws Exception {
         long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         SecondComponent secondComponent = transaction.addComponent(entityId, SecondComponent.class);
         secondComponent.setName(TEST_NAME);
         transaction.commit();
@@ -90,7 +90,7 @@ public class TransactionTest {
         SampleComponent original = entityManager.createComponent(SampleComponent.class);
         original.setName(TEST_NAME);
         long entityId = entityManager.createEntity(original);
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
 
         Optional<SampleComponent> finalComp = transaction.getComponent(entityId, SampleComponent.class);
         assertTrue(finalComp.isPresent());
@@ -100,7 +100,7 @@ public class TransactionTest {
     @Test
     public void updateComponent() {
         long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         Optional<SampleComponent> component = transaction.getComponent(entityId, SampleComponent.class);
         component.get().setName(TEST_NAME);
         transaction.commit();
@@ -113,7 +113,7 @@ public class TransactionTest {
     @Test
     public void removeComponent() throws Exception {
         long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         transaction.removeComponent(entityId, SampleComponent.class);
         transaction.commit();
 
@@ -124,7 +124,7 @@ public class TransactionTest {
     @Test
     public void addThenRemoveComponent() throws Exception {
         long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         transaction.addComponent(entityId, SecondComponent.class);
         transaction.removeComponent(entityId, SecondComponent.class);
         transaction.commit();
@@ -136,7 +136,7 @@ public class TransactionTest {
     @Test
     public void removeThenAddComponent() throws Exception {
         long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         transaction.removeComponent(entityId, SampleComponent.class);
         SampleComponent comp = transaction.addComponent(entityId, SampleComponent.class);
         comp.setName(TEST_NAME);
@@ -150,7 +150,7 @@ public class TransactionTest {
     @Test
     public void rollback() throws Exception {
         long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         transaction.removeComponent(entityId, SampleComponent.class);
         SecondComponent comp = transaction.addComponent(entityId, SecondComponent.class);
         comp.setName(TEST_NAME);
@@ -167,7 +167,7 @@ public class TransactionTest {
         SampleComponent originalComponent = entityManager.createComponent(SampleComponent.class);
         long entityId = entityManager.createEntity(originalComponent);
 
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         SampleComponent transactionComponent = transaction.getComponent(entityId, SampleComponent.class).get();
         transactionComponent.setName(TEST_NAME);
 
@@ -182,7 +182,7 @@ public class TransactionTest {
         SampleComponent originalComponent = entityManager.createComponent(SampleComponent.class);
         long entityId = entityManager.createEntity(originalComponent);
 
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         SampleComponent transactionComponent = transaction.getComponent(entityId, SampleComponent.class).get();
         transactionComponent.setName(TEST_NAME);
         transaction.addComponent(entityId, SecondComponent.class);
@@ -205,7 +205,7 @@ public class TransactionTest {
         long entityId = entityManager.createEntity(originalComponent);
         entityManager.addComponent(entityId, entityManager.createComponent(SecondComponent.class));
 
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         assertEquals(Sets.newHashSet(SampleComponent.class, SecondComponent.class), transaction.getEntityComposition(entityId));
     }
 
@@ -215,7 +215,7 @@ public class TransactionTest {
         long entityId = entityManager.createEntity(originalComponent);
         entityManager.addComponent(entityId, entityManager.createComponent(SecondComponent.class));
 
-        Transaction transaction = entityManager.beginTransaction();
+        EntityTransaction transaction = entityManager.beginTransaction();
         transaction.removeComponent(entityId, SampleComponent.class);
         assertEquals(Sets.newHashSet(SecondComponent.class), transaction.getEntityComposition(entityId));
     }

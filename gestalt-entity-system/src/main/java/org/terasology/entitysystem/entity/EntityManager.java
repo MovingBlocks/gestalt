@@ -88,7 +88,7 @@ public interface EntityManager {
      * Starts a transaction
      * @return A new transaction
      */
-    Transaction beginTransaction();
+    EntityTransaction beginTransaction();
 
     /**
      * Find entities with the desired components. Note that the components could potentially be removed from the entities between when they are found and when the components

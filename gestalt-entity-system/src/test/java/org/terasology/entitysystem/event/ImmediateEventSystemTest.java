@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.event;
+
+import org.terasology.entitysystem.Transaction;
+import org.terasology.entitysystem.entity.EntityTransaction;
+
+import java.util.function.Supplier;
 
 /**
- * Interface for a lock that is AutoClosable - so can be used in a try-with-resources statement.
+ *
  */
-public interface ClosableLock extends AutoCloseable {
-
-    /**
-     * Unlocks the lock
-     */
-    void close();
+public class ImmediateEventSystemTest extends EventSystemTest {
+    @Override
+    protected EventSystem createEventSystem(Supplier<EntityTransaction> transactionFactory, EventProcessor eventProcessor) {
+        return new ImmediateEventSystem(eventProcessor, transactionFactory);
+    }
 }

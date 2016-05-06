@@ -18,7 +18,7 @@ package org.terasology.entitysystem.event;
 
 /**
  * Base interface for all events. An event is a notification that sent against an entity - event handlers can then pick up and react to the event based on the components
- * the entity has.
+ * the entity is composed of.
  */
 public interface Event {
 

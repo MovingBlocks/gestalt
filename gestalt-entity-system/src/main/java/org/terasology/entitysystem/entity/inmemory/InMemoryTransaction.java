@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2016 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,12 @@ import com.google.common.collect.Table;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.hash.TLongIntHashMap;
-import org.terasology.entitysystem.entity.Component;
-import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.ComponentAlreadyExistsException;
-import org.terasology.entitysystem.entity.ComponentDoesNotExistException;
+import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
+import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
+import org.terasology.entitysystem.entity.EntityTransaction;
 
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +36,7 @@ import java.util.Set;
 /**
  *
  */
-public class InMemoryTransaction implements Transaction {
+public class InMemoryTransaction implements EntityTransaction {
 
     private EntityStore entityStore;
     private ComponentManager componentManager;

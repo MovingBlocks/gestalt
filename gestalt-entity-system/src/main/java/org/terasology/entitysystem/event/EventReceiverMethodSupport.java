@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Helper to discover and register all methods annotated with {@link ReceiveEvent} in an object with an EventProcessorBuilder.
+ * Helper to discover and register all methods annotated with {@link ReceiveEvent} in an object, into an EventProcessorBuilder.
  * Also processes {@link Before} and {@link After} annotations to order the methods.
  */
 public final class EventReceiverMethodSupport {

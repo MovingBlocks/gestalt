@@ -14,15 +14,23 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.stubs;
+
+import org.terasology.entitysystem.event.Event;
+import org.terasology.entitysystem.event.Synchronous;
 
 /**
- * Interface for a lock that is AutoClosable - so can be used in a try-with-resources statement.
+ *
  */
-public interface ClosableLock extends AutoCloseable {
+@Synchronous
+public class TestSynchEvent implements Event{
+    private final String value;
 
-    /**
-     * Unlocks the lock
-     */
-    void close();
+    public TestSynchEvent(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
 }

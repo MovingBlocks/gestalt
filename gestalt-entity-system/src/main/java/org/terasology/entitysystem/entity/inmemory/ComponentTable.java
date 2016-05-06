@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import gnu.trove.TCollections;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TLongIterator;
@@ -48,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Immortius
  */
-class ComponentTable implements EntityStore {
+public class ComponentTable implements EntityStore {
     private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
     private final Map<Class, TLongObjectMap<Component>> store = Maps.newConcurrentMap();
     private final TLongIntMap revisions = TCollections.synchronizedMap(new TLongIntHashMap());

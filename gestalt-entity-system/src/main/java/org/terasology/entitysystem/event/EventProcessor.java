@@ -18,6 +18,8 @@ package org.terasology.entitysystem.event;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.entity.Component;
 
@@ -37,7 +39,7 @@ import java.util.Set;
  */
 @ThreadSafe
 public class EventProcessor {
-
+    private static final Logger logger = LoggerFactory.getLogger(EventProcessor.class);
     private final ListMultimap<Class<? extends Event>, EventHandlerRegistration> eventHandlers;
 
     /**
@@ -66,14 +68,14 @@ public class EventProcessor {
      * @return The result of the event. If any event handler returns EventResult.CANCEL then that is returned, otherwise the result will be EventResult.COMPLETE.
      */
     public EventResult send(long entityId, Event event, Transaction transaction) {
-        return send(entityId, event, transaction, Collections.emptySet());
+        return send(event, entityId, transaction, Collections.emptySet());
     }
 
     /**
      * Sends an event against an entity, within the given transaction.
      *
-     * @param entityId             The id of the entity to send the event against
      * @param event                The event to send
+     * @param entityId             The id of the entity to send the event against
      * @param transaction          The transaction to process the event within.
      * @param triggeringComponents The components triggering the event, if any. If present, then only event handlers specifically interested in those components will
      *                             be notified of the event.
@@ -82,17 +84,21 @@ public class EventProcessor {
      *                             all EventHandlers interested in components the entity has.
      * @return The result of the event. If any event handler returns EventResult.CANCEL then that is returned, otherwise the result will be EventResult.COMPLETE.
      */
-    public EventResult send(long entityId, Event event, Transaction transaction, Set<Class<? extends Component>> triggeringComponents) {
+    public EventResult send(Event event, long entityId, Transaction transaction, Set<Class<? extends Component>> triggeringComponents) {
         EventResult result = EventResult.CONTINUE;
         for (EventHandlerRegistration handler : eventHandlers.get(event.getClass())) {
             if (validToInvoke(handler, transaction.getEntityComposition(entityId), triggeringComponents)) {
-                result = handler.invoke(entityId, event, transaction);
-                switch (result) {
-                    case COMPLETE:
-                    case CANCEL:
-                        return result;
-                    default:
-                        // Continue
+                try {
+                    result = handler.invoke(entityId, event, transaction);
+                    switch (result) {
+                        case COMPLETE:
+                        case CANCEL:
+                            return result;
+                        default:
+                            // Continue
+                    }
+                } catch (RuntimeException e) {
+                    logger.error("Exception thrown when processing event {}", event.getClass(), e);
                 }
             }
         }

@@ -19,6 +19,7 @@ package org.terasology.entitysystem.event;
 import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Test;
+import org.terasology.entitysystem.EntitySystem;
 import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.entity.EntityManager;
@@ -47,9 +48,10 @@ import static org.mockito.Mockito.when;
 public class EventProcessorTest {
 
     private static String TEST_NAME = "name";
+    private static TestEvent event = new TestEvent(TEST_NAME);
+    private static TestEvent childEvent = new TestChildEvent(TEST_NAME);
 
     private EventProcessor eventProcessor;
-    private EntityManager entityManager;
     private URLClassLoader tempLoader;
     private long testEntity;
     private Transaction transaction;
@@ -58,14 +60,14 @@ public class EventProcessorTest {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         tempLoader = new URLClassLoader(new URL[0]);
-        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
+        EntityManager entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
+        EntitySystem entitySystem = new EntitySystem(entityManager, new ImmediateEventSystem(new EventProcessorBuilder().build(), entityManager::beginTransaction));
 
-        transaction = entityManager.beginTransaction();
+        transaction = entitySystem.beginTransaction();
         testEntity = transaction.createEntity();
         SampleComponent comp = transaction.addComponent(testEntity, SampleComponent.class);
         comp.setName(TEST_NAME);
         transaction.commit();
-
     }
 
     @After
@@ -75,7 +77,6 @@ public class EventProcessorTest {
 
     @Test
     public void eventHandlerReceivesEvent() {
-        TestEvent event = new TestEvent("test");
         EventHandler<TestEvent> handler = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity, transaction)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder().addHandler(handler, TestEvent.class, SampleComponent.class).build();
@@ -87,7 +88,6 @@ public class EventProcessorTest {
 
     @Test
     public void cancelStopsProcessingChain() {
-        TestEvent event = new TestEvent("test");
         EventHandler<TestEvent> handler = mock(EventHandler.class);
         EventHandler<TestEvent> handler2 = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity, transaction)).thenReturn(EventResult.CANCEL);
@@ -104,7 +104,6 @@ public class EventProcessorTest {
 
     @Test
     public void completeStopsProcessingChain() {
-        TestEvent event = new TestEvent("test");
         EventHandler<TestEvent> handler = mock(EventHandler.class);
         EventHandler<TestEvent> handler2 = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity, transaction)).thenReturn(EventResult.COMPLETE);
@@ -121,7 +120,6 @@ public class EventProcessorTest {
 
     @Test
     public void eventHandlerSkippedIfComponentNotPresent() {
-        TestEvent event = new TestEvent("test");
         EventHandler<TestEvent> handler = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity, transaction)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
@@ -137,8 +135,6 @@ public class EventProcessorTest {
         transaction.addComponent(testEntity, SecondComponent.class);
         transaction.commit();
 
-        TestEvent event = new TestEvent("test");
-
         EventHandler<TestEvent> sampleHandler = mock(EventHandler.class);
         when(sampleHandler.onEvent(event, testEntity, transaction)).thenReturn(EventResult.CONTINUE);
 
@@ -148,7 +144,7 @@ public class EventProcessorTest {
                 .addHandler(sampleHandler, TestEvent.class, SampleComponent.class)
                 .addHandler(secondHandler, TestEvent.class, SecondComponent.class).build();
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(testEntity, event, transaction, Sets.newHashSet(SampleComponent.class)));
+        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity, transaction, Sets.newHashSet(SampleComponent.class)));
 
         verify(sampleHandler).onEvent(event, testEntity, transaction);
         verifyNoMoreInteractions(secondHandler);
@@ -156,7 +152,6 @@ public class EventProcessorTest {
 
     @Test
     public void canForceEventHandlerBeforeAnotherByType() {
-        TestEvent event = new TestEvent("test");
         EventHandler<TestEvent> handlerA = mock(EventHandlerA.class);
         EventHandler<TestEvent> handlerB = mock(EventHandlerB.class);
         when(handlerA.onEvent(event, testEntity, transaction)).thenReturn(EventResult.CANCEL);
@@ -172,18 +167,32 @@ public class EventProcessorTest {
 
     @Test
     public void registeringForBaseEventReceivesChildEvent() {
-        TestChildEvent event = new TestChildEvent(TEST_NAME);
-
         EventHandler<TestEvent> handler = mock(EventHandler.class);
-        when(handler.onEvent(event, testEntity, transaction)).thenReturn(EventResult.CONTINUE);
+        when(handler.onEvent(childEvent, testEntity, transaction)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
                 .addEventClass(TestEvent.class)
                 .addEventClass(TestChildEvent.class)
                 .addHandler(handler, TestEvent.class, SampleComponent.class)
                 .build();
+        assertEquals(EventResult.COMPLETE, eventProcessor.send(testEntity, childEvent, transaction));
+
+        verify(handler).onEvent(childEvent, testEntity, transaction);
+    }
+
+    @Test
+    public void handleExceptionWhenInvokingHandler() {
+        // Errors should be logged but not stop processing
+        EventHandler<TestEvent> handlerA = mock(EventHandlerA.class);
+        EventHandler<TestEvent> handlerB = mock(EventHandlerB.class);
+        when(handlerA.onEvent(event, testEntity, transaction)).thenThrow(new RuntimeException());
+        when(handlerB.onEvent(event, testEntity, transaction)).thenReturn(EventResult.CONTINUE);
+        eventProcessor = EventProcessor.newBuilder()
+                .addHandler(handlerA, TestEvent.class, SampleComponent.class)
+                .addHandler(handlerB, TestEvent.class, SampleComponent.class).orderBefore(handlerA.getClass()).build();
+
         assertEquals(EventResult.COMPLETE, eventProcessor.send(testEntity, event, transaction));
 
-        verify(handler).onEvent(event, testEntity, transaction);
+        verify(handlerB).onEvent(event, testEntity, transaction);
     }
 
     private interface EventHandlerA<T extends Event> extends EventHandler<T> {}
