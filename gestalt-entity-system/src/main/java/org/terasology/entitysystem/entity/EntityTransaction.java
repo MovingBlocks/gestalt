@@ -24,22 +24,28 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * An entity system transaction.
+ * The interface for low-level entity transactions, working directly with entity ids. This is intended for use by entity refs.
  * <p>
  * Transactions allow for one or more entities to be updated consistently in the presence of multiple threads. Once a transaction is started, each component accessed
  * is cached in the transaction, and can be updated freely. When the transaction is committed, the changes are applied to the entity system and available for other threads.
  * If a thread has made a change to an involved entity in the meantime, then a ConcurrentModificationException is thrown and no change occurs. A transaction can also be rolled
  * back, throwing away all local modifications.
  * <p>
- * A transaction is not threadsafe - it should be used only by a single thread (at a time at least).
+ * A transaction is not threadsafe - it should be used only in its thread of origin.
  */
 public interface EntityTransaction {
 
     /**
-     * Creates a new entity.
-     * @return The id of the new entity.
+     * @return A reference to a new entity within the current transaction
      */
-    long createEntity();
+    EntityRef createEntity();
+
+    /**
+     * @param id The id of the entity
+     * @return Whether an entity with the given id exists
+     * @throws IllegalStateException If no transaction is active
+     */
+    boolean exists(long id);
 
     /**
      * Retrieves a component from an entity.
@@ -51,11 +57,13 @@ public interface EntityTransaction {
      * @param componentType The type of the component to retrieve
      * @param <T> The type of the component to retrieve
      * @return An optional containing the requested component, if the entity has a component of that type
+     * @throws IllegalStateException If no transaction is active
      */
     <T extends Component> Optional<T> getComponent(long entityId, Class<T> componentType);
 
     /**
      * Retrieves a set of the types of components that the given entity has.
+     * @throws IllegalStateException If no transaction is active
      */
     Set<Class<? extends Component>> getEntityComposition(long entityId);
 
@@ -70,6 +78,7 @@ public interface EntityTransaction {
      * @param <T> The type of the component to add
      * @return The added component
      * @throws ComponentAlreadyExistsException if the entity already has this component
+     * @throws IllegalStateException If no transaction is active
      */
     <T extends Component> T addComponent(long entityId, Class<T> componentType);
 
@@ -80,19 +89,8 @@ public interface EntityTransaction {
      * @param componentType The type of the component to remove
      * @param <T> The type of the component to remove
      * @throws ComponentDoesNotExistException if the entity does not have this component
+     * @throws IllegalStateException If no transaction is active
      */
     <T extends Component> void removeComponent(long entityId, Class<T> componentType);
 
-    /**
-     * Commits the transaction. This also clears the transaction, whether the commit succeeds for fails.
-     * <p>
-     * If a conflicting change has occurred to the entity system outside of the transaction, then no change will occur.
-     * @throws ConcurrentModificationException If a change has happened to the entity system that conflicts with this transaction.
-     */
-    void commit() throws ConcurrentModificationException;
-
-    /**
-     * Rolls back the transaction, dropping all changes and clearing the transaction.
-     */
-    void rollback();
 }

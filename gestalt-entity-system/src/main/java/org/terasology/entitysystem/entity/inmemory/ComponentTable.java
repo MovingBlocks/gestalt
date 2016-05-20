@@ -32,8 +32,9 @@ import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TIntHashSet;
-import org.terasology.entitysystem.entity.Component;
+import gnu.trove.set.hash.TLongHashSet;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.entity.Component;
 
 import java.util.Collection;
 import java.util.List;
@@ -81,6 +82,11 @@ public class ComponentTable implements EntityStore {
     @Override
     public int getEntityRevision(long entityId) {
         return revisions.get(entityId);
+    }
+
+    @Override
+    public boolean exists(long entityId) {
+        return revisions.containsKey(entityId);
     }
 
     @Override
@@ -152,7 +158,7 @@ public class ComponentTable implements EntityStore {
             if (entityMap != null) {
                 Component removed = entityMap.remove(entityId);
                 if (removed != null) {
-                    int remainingComps = numComponents.get(entityId);
+                    int remainingComps = numComponents.adjustOrPutValue(entityId, -1, 0);;
                     if (remainingComps == 0) {
                         numComponents.remove(entityId);
                         revisions.remove(entityId);
@@ -200,6 +206,7 @@ public class ComponentTable implements EntityStore {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T extends Component> TLongObjectIterator<T> componentIterator(Class<T> componentClass) {
         TLongObjectMap<T> entityMap = (TLongObjectMap<T>) store.get(componentClass);
         if (entityMap != null) {
@@ -241,7 +248,7 @@ public class ComponentTable implements EntityStore {
         return (h ^ (h >>> 7) ^ (h >>> 4)) % concurrencyLevel;
     }
 
-    private class EntityWithComponentsIterator implements TLongIterator{
+    private class EntityWithComponentsIterator implements TLongIterator {
         private List<Class<? extends Component>> componentClasses;
         private TLongIterator primeEntityIterator;
 

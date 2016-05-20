@@ -19,7 +19,9 @@ package org.terasology.entitysystem.event;
 import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.terasology.entitysystem.Transaction;
+import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.event.impl.EventProcessorBuilder;
+import org.terasology.entitysystem.event.impl.EventReceiverMethodSupport;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.entitysystem.stubs.TestEvent;
@@ -41,6 +43,7 @@ import static org.mockito.Mockito.when;
  */
 public class EventReceiverMethodSupportTest {
 
+    private EntityRef entity = mock(EntityRef.class);
 
     @Test
     public void registerEventReceiverMethod() {
@@ -52,11 +55,10 @@ public class EventReceiverMethodSupportTest {
         verify(builder).addHandler(captor.capture(), eq(TrivialEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
 
         TestEvent event = new TestEvent("test");
-        Transaction transaction = mock(Transaction.class);
-        captor.getValue().onEvent(event, 1, transaction);
+
+        captor.getValue().onEvent(event, entity);
         assertEquals(event, receiver.lastEvent);
-        assertEquals(1, receiver.lastId);
-        assertEquals(transaction, receiver.lastTransaction);
+        assertEquals(entity, receiver.lastEntity);
     }
 
     @Test
@@ -69,11 +71,9 @@ public class EventReceiverMethodSupportTest {
         verify(builder).addHandler(captor.capture(), eq(FilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(SampleComponent.class)));
 
         TestEvent event = new TestEvent("test");
-        Transaction transaction = mock(Transaction.class);
-        captor.getValue().onEvent(event, 1, transaction);
+        captor.getValue().onEvent(event, entity);
         assertEquals(event, receiver.lastEvent);
-        assertEquals(1, receiver.lastId);
-        assertEquals(transaction, receiver.lastTransaction);
+        assertEquals(entity, receiver.lastEntity);
     }
 
     @Test
@@ -86,11 +86,9 @@ public class EventReceiverMethodSupportTest {
         verify(builder).addHandler(captor.capture(), eq(MultiFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(SampleComponent.class, SecondComponent.class)));
 
         TestEvent event = new TestEvent("test");
-        Transaction transaction = mock(Transaction.class);
-        captor.getValue().onEvent(event, 1, transaction);
+        captor.getValue().onEvent(event, entity);
         assertEquals(event, receiver.lastEvent);
-        assertEquals(1, receiver.lastId);
-        assertEquals(transaction, receiver.lastTransaction);
+        assertEquals(entity, receiver.lastEntity);
     }
 
     @Test
@@ -104,13 +102,11 @@ public class EventReceiverMethodSupportTest {
 
         TestEvent event = new TestEvent("test");
 
-        Transaction transaction = mock(Transaction.class);
         SecondComponent comp = mock(SecondComponent.class);
-        when(transaction.getComponent(1, SecondComponent.class)).thenReturn(Optional.of(comp));
-        captor.getValue().onEvent(event, 1, transaction);
+        when(entity.getComponent(SecondComponent.class)).thenReturn(Optional.of(comp));
+        captor.getValue().onEvent(event, entity);
         assertEquals(event, receiver.lastEvent);
-        assertEquals(1, receiver.lastId);
-        assertEquals(transaction, receiver.lastTransaction);
+        assertEquals(entity, receiver.lastEntity);
         assertEquals(comp, receiver.comp);
     }
 
@@ -158,14 +154,12 @@ public class EventReceiverMethodSupportTest {
     public static class TrivialEventReceiver {
 
         public TestEvent lastEvent;
-        public long lastId;
-        public Transaction lastTransaction;
+        public EntityRef lastEntity;
 
         @ReceiveEvent
-        public EventResult onEvent(TestEvent event, long entityId, Transaction transaction) {
+        public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
-            this.lastId = entityId;
-            this.lastTransaction = transaction;
+            this.lastEntity = entity;
             return EventResult.CONTINUE;
         }
     }
@@ -174,14 +168,12 @@ public class EventReceiverMethodSupportTest {
     public static class GlobalBeforeEventReceiver {
 
         public TestEvent lastEvent;
-        public long lastId;
-        public Transaction lastTransaction;
+        public EntityRef lastEntity;
 
         @ReceiveEvent
-        public EventResult onEvent(TestEvent event, long entityId, Transaction transaction) {
+        public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
-            this.lastId = entityId;
-            this.lastTransaction = transaction;
+            this.lastEntity = entity;
             return EventResult.CONTINUE;
         }
     }
@@ -190,14 +182,12 @@ public class EventReceiverMethodSupportTest {
     public static class GlobalAfterEventReceiver {
 
         public TestEvent lastEvent;
-        public long lastId;
-        public Transaction lastTransaction;
+        public EntityRef lastEntity;
 
         @ReceiveEvent
-        public EventResult onEvent(TestEvent event, long entityId, Transaction transaction) {
+        public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
-            this.lastId = entityId;
-            this.lastTransaction = transaction;
+            this.lastEntity = entity;
             return EventResult.CONTINUE;
         }
     }
@@ -205,15 +195,13 @@ public class EventReceiverMethodSupportTest {
     public static class LocalBeforeEventReceiver {
 
         public TestEvent lastEvent;
-        public long lastId;
-        public Transaction lastTransaction;
+        public EntityRef lastEntity;
 
         @Before(TrivialEventReceiver.class)
         @ReceiveEvent
-        public EventResult onEvent(TestEvent event, long entityId, Transaction transaction) {
+        public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
-            this.lastId = entityId;
-            this.lastTransaction = transaction;
+            this.lastEntity = entity;
             return EventResult.CONTINUE;
         }
     }
@@ -221,15 +209,13 @@ public class EventReceiverMethodSupportTest {
     public static class LocalAfterEventReceiver {
 
         public TestEvent lastEvent;
-        public long lastId;
-        public Transaction lastTransaction;
+        public EntityRef lastEntity;
 
         @After(TrivialEventReceiver.class)
         @ReceiveEvent
-        public EventResult onEvent(TestEvent event, long entityId, Transaction transaction) {
+        public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
-            this.lastId = entityId;
-            this.lastTransaction = transaction;
+            this.lastEntity = entity;
             return EventResult.CONTINUE;
         }
     }
@@ -237,14 +223,12 @@ public class EventReceiverMethodSupportTest {
     public static class FilteredEventReceiver {
 
         public TestEvent lastEvent;
-        public long lastId;
-        public Transaction lastTransaction;
+        public EntityRef lastEntity;
 
         @ReceiveEvent(components = SampleComponent.class)
-        public EventResult onEvent(TestEvent event, long entityId, Transaction transaction) {
+        public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
-            this.lastId = entityId;
-            this.lastTransaction = transaction;
+            this.lastEntity = entity;
             return EventResult.CONTINUE;
         }
     }
@@ -252,14 +236,12 @@ public class EventReceiverMethodSupportTest {
     public static class MultiFilteredEventReceiver {
 
         public TestEvent lastEvent;
-        public long lastId;
-        public Transaction lastTransaction;
+        public EntityRef lastEntity;
 
         @ReceiveEvent(components = {SampleComponent.class, SecondComponent.class})
-        public EventResult onEvent(TestEvent event, long entityId, Transaction transaction) {
+        public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
-            this.lastId = entityId;
-            this.lastTransaction = transaction;
+            this.lastEntity = entity;
             return EventResult.CONTINUE;
         }
     }
@@ -267,15 +249,13 @@ public class EventReceiverMethodSupportTest {
     public static class MixedFilteredEventReceiver {
 
         public TestEvent lastEvent;
-        public long lastId;
-        public Transaction lastTransaction;
+        public EntityRef lastEntity;
         public SecondComponent comp;
 
         @ReceiveEvent(components = {SampleComponent.class})
-        public EventResult onEvent(TestEvent event, long entityId, Transaction transaction, SecondComponent comp) {
+        public EventResult onEvent(TestEvent event, EntityRef entity,  SecondComponent comp) {
             this.lastEvent = event;
-            this.lastId = entityId;
-            this.lastTransaction = transaction;
+            this.lastEntity = entity;
             this.comp = comp;
             return EventResult.CONTINUE;
         }

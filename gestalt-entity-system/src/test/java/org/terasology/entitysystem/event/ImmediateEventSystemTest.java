@@ -16,17 +16,16 @@
 
 package org.terasology.entitysystem.event;
 
-import org.terasology.entitysystem.Transaction;
-import org.terasology.entitysystem.entity.EntityTransaction;
-
-import java.util.function.Supplier;
+import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.event.impl.EventProcessor;
+import org.terasology.entitysystem.event.impl.ImmediateEventSystem;
 
 /**
  *
  */
 public class ImmediateEventSystemTest extends EventSystemTest {
     @Override
-    protected EventSystem createEventSystem(Supplier<EntityTransaction> transactionFactory, EventProcessor eventProcessor) {
-        return new ImmediateEventSystem(eventProcessor, transactionFactory);
+    protected EventSystem createEventSystem(EntityManager entityManager, EventProcessor eventProcessor) {
+        return new ImmediateEventSystem(eventProcessor, entityManager);
     }
 }

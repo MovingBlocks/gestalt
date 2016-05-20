@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2016 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.event;
+package org.terasology.entitysystem.event.impl;
 
 import com.esotericsoftware.reflectasm.MethodAccess;
 import com.google.common.collect.ImmutableList;
@@ -23,8 +23,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.event.After;
+import org.terasology.entitysystem.event.Before;
+import org.terasology.entitysystem.event.Event;
+import org.terasology.entitysystem.event.EventHandler;
+import org.terasology.entitysystem.event.EventResult;
+import org.terasology.entitysystem.event.ReceiveEvent;
 import org.terasology.entitysystem.event.exception.EventSystemException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -43,6 +49,8 @@ import java.util.Set;
 public final class EventReceiverMethodSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(EventReceiverMethodSupport.class);
+
+    private static final int FIXED_PARAM_COUNT = 2;
 
     private EventReceiverMethodSupport() {
     }
@@ -89,7 +97,7 @@ public final class EventReceiverMethodSupport {
                 }
 
                 Set<Class<? extends Component>> requiredComponents = Sets.newLinkedHashSet(Arrays.asList(receiveEventAnnotation.components()));
-                List<Class<? extends Component>> componentParams = gatherComponentParameters(handlerClass, method, types);
+                List<Class<? extends Component>> componentParams = gatherComponentParameters(types);
                 requiredComponents.addAll(componentParams);
 
                 registerEventHandler(new ByteCodeEventHandlerInfo(eventReceiverObject, method, componentParams), builder, handlerClass, globalBefore, globalAfter, method, types[0], requiredComponents);
@@ -113,20 +121,20 @@ public final class EventReceiverMethodSupport {
         builder.orderAfterAll(afterUnion);
     }
 
-    private static List<Class<? extends Component>> gatherComponentParameters(Class<?> handlerClass, Method method, Class<?>[] types) {
+    private static List<Class<? extends Component>> gatherComponentParameters(Class<?>[] types) {
         List<Class<? extends Component>> componentParams = Lists.newArrayList();
-        for (int i = 3; i < types.length; ++i) {
+        for (int i = FIXED_PARAM_COUNT; i < types.length; ++i) {
             componentParams.add((Class<? extends Component>) types[i]);
         }
         return componentParams;
     }
 
     private static boolean methodParametersValid(Class<?>[] types) {
-        if (!Event.class.isAssignableFrom(types[0]) && Long.TYPE.isAssignableFrom(types[1]) && Transaction.class.isAssignableFrom(types[2])) {
+        if (!Event.class.isAssignableFrom(types[0]) && Long.TYPE.isAssignableFrom(types[1])) {
             return false;
         }
 
-        for (int i = 3; i < types.length; ++i) {
+        for (int i = FIXED_PARAM_COUNT; i < types.length; ++i) {
             if (!Component.class.isAssignableFrom(types[i])) {
                 return false;
             }
@@ -151,14 +159,13 @@ public final class EventReceiverMethodSupport {
         }
 
         @Override
-        public EventResult onEvent(Event event, long entityId, Transaction transaction) {
+        public EventResult onEvent(Event event, EntityRef entity) {
             try {
-                Object[] params = new Object[3 + componentParams.size()];
+                Object[] params = new Object[FIXED_PARAM_COUNT + componentParams.size()];
                 params[0] = event;
-                params[1] = entityId;
-                params[2] = transaction;
+                params[1] = entity;
                 for (int i = 0; i < componentParams.size(); ++i) {
-                    params[i + 3] = transaction.getComponent(entityId, componentParams.get(i));
+                    params[i + FIXED_PARAM_COUNT] = entity.getComponent(componentParams.get(i));
                 }
                 return (EventResult) method.invoke(handler, params);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
@@ -187,14 +194,13 @@ public final class EventReceiverMethodSupport {
         }
 
         @Override
-        public EventResult onEvent(Event event, long entity, Transaction transaction) {
+        public EventResult onEvent(Event event, EntityRef entity) {
             try {
-                Object[] params = new Object[3 + componentParams.size()];
+                Object[] params = new Object[FIXED_PARAM_COUNT + componentParams.size()];
                 params[0] = event;
                 params[1] = entity;
-                params[2] = transaction;
                 for (int i = 0; i < componentParams.size(); ++i) {
-                    params[i + 3] = transaction.getComponent(entity, componentParams.get(i)).orElseThrow(() -> new RuntimeException("Component unexpectedly missing"));
+                    params[i + FIXED_PARAM_COUNT] = entity.getComponent(componentParams.get(i)).orElseThrow(() -> new RuntimeException("Component unexpectedly missing"));
                 }
                 return (EventResult) methodAccess.invoke(handler, methodIndex, params);
             } catch (IllegalArgumentException ex) {

@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.entitysystem.event;
+
+package org.terasology.entitysystem.event.impl;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.event.Event;
+import org.terasology.entitysystem.event.EventHandler;
+import org.terasology.entitysystem.event.EventResult;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Collections;
@@ -62,21 +66,19 @@ public class EventProcessor {
     /**
      * Sends an event against an entity, within the given transaction.
      *
-     * @param entityId    The id of the entity to send the event against
-     * @param event       The event to send
-     * @param transaction The transaction to process the event within.
+     * @param event  The event to send
+     * @param entity The entity to send the event against
      * @return The result of the event. If any event handler returns EventResult.CANCEL then that is returned, otherwise the result will be EventResult.COMPLETE.
      */
-    public EventResult send(long entityId, Event event, Transaction transaction) {
-        return send(event, entityId, transaction, Collections.emptySet());
+    public EventResult send(Event event, EntityRef entity) {
+        return send(event, entity, Collections.emptySet());
     }
 
     /**
      * Sends an event against an entity, within the given transaction.
      *
      * @param event                The event to send
-     * @param entityId             The id of the entity to send the event against
-     * @param transaction          The transaction to process the event within.
+     * @param entity               The entity to send the event against
      * @param triggeringComponents The components triggering the event, if any. If present, then only event handlers specifically interested in those components will
      *                             be notified of the event.
      *                             <p>This is specifically useful for lifecycle events - for example, it allows an ComponentAddedEvent to be sent only to event handlers
@@ -84,12 +86,12 @@ public class EventProcessor {
      *                             all EventHandlers interested in components the entity has.
      * @return The result of the event. If any event handler returns EventResult.CANCEL then that is returned, otherwise the result will be EventResult.COMPLETE.
      */
-    public EventResult send(Event event, long entityId, Transaction transaction, Set<Class<? extends Component>> triggeringComponents) {
+    public EventResult send(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
         EventResult result = EventResult.CONTINUE;
         for (EventHandlerRegistration handler : eventHandlers.get(event.getClass())) {
-            if (validToInvoke(handler, transaction.getEntityComposition(entityId), triggeringComponents)) {
+            if (validToInvoke(handler, entity.getComponentTypes(), triggeringComponents)) {
                 try {
-                    result = handler.invoke(entityId, event, transaction);
+                    result = handler.invoke(event, entity);
                     switch (result) {
                         case COMPLETE:
                         case CANCEL:
@@ -155,14 +157,13 @@ public class EventProcessor {
         /**
          * Invokes the event handler
          *
-         * @param entity      The entity the event is being sent against
-         * @param event       The event itself
-         * @param transaction The transaction to process the event within
+         * @param event  The event itself
+         * @param entity The entity the event is being sent against
          * @return The result of running the event, indicating whether processing should continue or halt
          */
         @SuppressWarnings("unchecked")
-        public EventResult invoke(long entity, Event event, Transaction transaction) {
-            return receiver.onEvent(event, entity, transaction);
+        public EventResult invoke(Event event, EntityRef entity) {
+            return receiver.onEvent(event, entity);
         }
 
         @Override

@@ -33,6 +33,8 @@ public interface EntityStore {
 
     int getEntityRevision(long entityId);
 
+    boolean exists(long entityId);
+
     ClosableLock lock(TLongSet entityIds);
 
     <T extends Component> T get(long entityId, Class<T> componentClass);

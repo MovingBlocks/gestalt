@@ -17,15 +17,13 @@
 package org.terasology.entitysystem.entity;
 
 import com.google.common.collect.Lists;
-import gnu.trove.iterator.TLongIterator;
-import gnu.trove.set.TLongSet;
-import gnu.trove.set.hash.TLongHashSet;
-import org.junit.After;
+import com.google.common.collect.Sets;
 import org.junit.Test;
+import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
-import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -33,7 +31,10 @@ import org.terasology.valuetype.TypeLibrary;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -46,6 +47,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class BasicEntityTest {
 
+    public static final String TEST_NAME = "Fred";
+    public static final String TEST_NAME_2 = "Jill";
+
     private EntityManager entityManager;
     private URLClassLoader tempLoader;
 
@@ -57,141 +61,215 @@ public class BasicEntityTest {
         entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
     }
 
-    @After
+    @org.junit.Before
+    public void setup() {
+        entityManager.beginTransaction();
+    }
+
+    @org.junit.After
     public void teardown() throws IOException {
+        while (entityManager.isTransactionActive()) {
+            entityManager.rollback();
+        }
         tempLoader.close();
     }
 
     @Test
     public void createEntity() {
-        entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
+        EntityRef entity = entityManager.createEntity();
+        assertNotNull(entity);
+        entity.addComponent(SampleComponent.class);
+        entityManager.commit();
+        entityManager.beginTransaction();
+        assertTrue(entity.isPresent());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void createEntityWithoutComponentsFails() {
-        entityManager.createEntity(Lists.newArrayList());
+        EntityRef entity = entityManager.createEntity();
+        assertNotNull(entity);
+        entityManager.commit();
+        entityManager.beginTransaction();
+        assertFalse(entity.isPresent());
+    }
+
+    @Test
+    public void newEntityDoesExist() {
+        EntityRef entity = entityManager.createEntity();
+        assertTrue(entity.isPresent());
     }
 
     @Test
     public void retrieveComponentFromEntity() {
-        SampleComponent component = entityManager.createComponent(SampleComponent.class);
+        EntityRef entity = entityManager.createEntity();
+        SampleComponent component = entity.addComponent(SampleComponent.class);
         component.setName("Name");
         component.setDescription("Description");
-        long entity = entityManager.createEntity(component);
+        entityManager.commit();
 
-        Optional<SampleComponent> retrievedComponent = entityManager.getComponent(entity, SampleComponent.class);
+        entityManager.beginTransaction();
+        Optional<SampleComponent> retrievedComponent = entity.getComponent(SampleComponent.class);
         assertTrue(retrievedComponent.isPresent());
         assertEquals(component.getName(), retrievedComponent.get().getName());
         assertEquals(component.getDescription(), retrievedComponent.get().getDescription());
     }
 
     @Test
-    public void addComponentToEntity() {
-        long entity = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-
-        SecondComponent secondComponent = entityManager.createComponent(SecondComponent.class);
-        assertTrue(entityManager.addComponent(entity, secondComponent));
-        assertTrue(entityManager.getComponent(entity, SecondComponent.class).isPresent());
-    }
-
-    @Test
-    public void addComponentToEntityThatAlreadyHasIt() {
-        SampleComponent component = entityManager.createComponent(SampleComponent.class);
-        long entity = entityManager.createEntity(component);
-        assertFalse(entityManager.addComponent(entity, component));
-    }
-
-    @Test
     public void updateComponent() {
-        SampleComponent component = entityManager.createComponent(SampleComponent.class);
-        long entity = entityManager.createEntity(component);
+        EntityRef entity = entityManager.createEntity();
+        SampleComponent sampleComponent = entity.addComponent(SampleComponent.class);
+        sampleComponent.setName(TEST_NAME);
+        entityManager.commit();
 
-        SampleComponent updatedComponent = entityManager.getComponent(entity, SampleComponent.class).get();
-        updatedComponent.setName("Mooooo");
-        assertTrue(entityManager.updateComponent(entity, updatedComponent));
-        assertEquals(updatedComponent.getName(), entityManager.getComponent(entity, SampleComponent.class).get().getName());
-    }
+        entityManager.beginTransaction();
+        Optional<SampleComponent> component = entity.getComponent(SampleComponent.class);
+        component.get().setName(TEST_NAME_2);
+        entityManager.commit();
 
-    @Test
-    public void updateComponentFailsIfComponentNotPresent() {
-        SampleComponent component = entityManager.createComponent(SampleComponent.class);
-        long entityOne = entityManager.createEntity(component);
-        long entityTwo = entityManager.createEntity(component);
-
-        SecondComponent secondComponent = entityManager.createComponent(SecondComponent.class);
-
-        entityManager.addComponent(entityOne, secondComponent);
-        secondComponent.setName("Mooooo");
-        assertFalse(entityManager.updateComponent(entityTwo, secondComponent));
-        assertFalse(entityManager.getComponent(entityTwo, SecondComponent.class).isPresent());
-    }
-
-    @Test
-    public void removeComponent() {
-        SampleComponent component = entityManager.createComponent(SampleComponent.class);
-        long entity = entityManager.createEntity(component);
-
-        assertTrue(entityManager.removeComponent(entity, SampleComponent.class));
-        assertFalse(entityManager.getComponent(entity, SampleComponent.class).isPresent());
-    }
-
-    @Test
-    public void removeComponentFailsIfNotPresent() {
-        SampleComponent component = entityManager.createComponent(SampleComponent.class);
-        long entity = entityManager.createEntity(component);
-
-        assertFalse(entityManager.removeComponent(entity, SecondComponent.class));
+        entityManager.beginTransaction();
+        Optional<SampleComponent> finalComp = entity.getComponent(SampleComponent.class);
+        assertTrue(finalComp.isPresent());
+        assertEquals(TEST_NAME_2, finalComp.get().getName());
     }
 
     @Test
     public void changesInOriginalComponentDoesNotChangeStoredComponent() {
-        SampleComponent component = entityManager.createComponent(SampleComponent.class);
-        long entity = entityManager.createEntity(component);
+        EntityRef entity = entityManager.createEntity();
+        SampleComponent component = entity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
+        entityManager.beginTransaction();
         component.setName("New Name");
-        assertNotEquals(component.getName(), entityManager.getComponent(entity, SampleComponent.class).get().getName());
+        assertNotEquals(component.getName(), entity.getComponent(SampleComponent.class).get().getName());
     }
 
     @Test
     public void changesInRetrievedComponentDoesNotChangeStoredComponent() {
-        SampleComponent component = entityManager.createComponent(SampleComponent.class);
-        long entity = entityManager.createEntity(component);
+        EntityRef entity = entityManager.createEntity();
+        SampleComponent component = entity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
-        component = entityManager.getComponent(entity, SampleComponent.class).get();
-        component.setName("New Name");
-        assertNotEquals(component.getName(), entityManager.getComponent(entity, SampleComponent.class).get().getName());
+        entityManager.beginTransaction();
+        SampleComponent retrievedComponent = entity.getComponent(SampleComponent.class).get();
+        retrievedComponent.setName("New Name");
+        assertNotEquals(component.getName(), retrievedComponent.getName());
+        entityManager.commit();
+        assertNotEquals(component.getName(), retrievedComponent.getName());
+    }
+
+    @Test
+    public void addComponent() throws Exception {
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        SecondComponent secondComponent = entity.addComponent(SecondComponent.class);
+        secondComponent.setName(TEST_NAME);
+        entityManager.commit();
+
+        entityManager.beginTransaction();
+        Optional<SecondComponent> finalComp = entity.getComponent(SecondComponent.class);
+        assertTrue(finalComp.isPresent());
+        assertEquals(TEST_NAME, finalComp.get().getName());
+    }
+
+    @Test
+    public void removeComponent() {
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entity.addComponent(SecondComponent.class);
+        entityManager.commit();
+
+        entityManager.beginTransaction();
+        entity.removeComponent(SecondComponent.class);
+        assertFalse(entity.getComponent(SecondComponent.class).isPresent());
+        entityManager.commit();
+        entityManager.beginTransaction();
+        assertFalse(entity.getComponent(SecondComponent.class).isPresent());
+    }
+
+    @Test
+    public void removeComponentDuringInitialTransaction() {
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entity.addComponent(SecondComponent.class);
+        entity.removeComponent(SecondComponent.class);
+        assertFalse(entity.getComponent(SecondComponent.class).isPresent());
+        entityManager.commit();
+
+        entityManager.beginTransaction();
+        assertFalse(entity.getComponent(SecondComponent.class).isPresent());
+    }
+
+    @Test
+    public void deleteEntity() {
+        EntityRef entity = entityManager.createEntity();
+        entityManager.commit();
+
+        entityManager.beginTransaction();
+        entity.delete();
+        assertFalse(entity.isPresent());
+        entityManager.commit();
+
+        entityManager.beginTransaction();
+        assertFalse(entity.isPresent());
     }
 
     @Test
     public void findEntitiesWithSingleComponent() {
-        TLongSet sampleEntities = new TLongHashSet();
-        sampleEntities.add(entityManager.createEntity(entityManager.createComponent(SampleComponent.class)));
-        sampleEntities.add(entityManager.createEntity(entityManager.createComponent(SampleComponent.class), entityManager.createComponent(SecondComponent.class)));
-        entityManager.createEntity(entityManager.createComponent(SecondComponent.class));
+        List<EntityRef> sampleEntities = Lists.newArrayList();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        sampleEntities.add(entity);
 
-        TLongIterator iterator = entityManager.findEntitiesWithComponents(SampleComponent.class);
-        TLongSet actualEntities = new TLongHashSet();
+        entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entity.addComponent(SecondComponent.class);
+        sampleEntities.add(entity);
+
+        entity = entityManager.createEntity();
+        entity.addComponent(SecondComponent.class);
+        entityManager.commit();
+
+        Iterator<EntityRef> iterator = entityManager.findEntitiesWithComponents(SampleComponent.class);
+        Set<EntityRef> actualEntities = Sets.newHashSet();
         while (iterator.hasNext()) {
             actualEntities.add(iterator.next());
         }
 
-        assertEquals(sampleEntities, actualEntities);
+        assertEquals(listActualEntities(sampleEntities), actualEntities);
     }
 
     @Test
     public void findEntitiesWithMultipleComponent() {
-        TLongSet sampleAndSecondEntities = new TLongHashSet();
-        entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        sampleAndSecondEntities.add(entityManager.createEntity(entityManager.createComponent(SampleComponent.class), entityManager.createComponent(SecondComponent.class)));
-        entityManager.createEntity(entityManager.createComponent(SecondComponent.class));
+        List<EntityRef> sampleAndSecondEntities = Lists.newArrayList();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entity.addComponent(SecondComponent.class);
+        sampleAndSecondEntities.add(entity);
+        entity = entityManager.createEntity();
+        entity.addComponent(SecondComponent.class);
+        entityManager.commit();
 
-        TLongIterator iterator = entityManager.findEntitiesWithComponents(SampleComponent.class, SecondComponent.class);
-        TLongSet actualEntities = new TLongHashSet();
+        Iterator<EntityRef> iterator = entityManager.findEntitiesWithComponents(SampleComponent.class, SecondComponent.class);
+        Set<EntityRef> actualEntities = Sets.newHashSet();
         while (iterator.hasNext()) {
             actualEntities.add(iterator.next());
         }
 
-        assertEquals(sampleAndSecondEntities, actualEntities);
+        assertEquals(listActualEntities(sampleAndSecondEntities), actualEntities);
+    }
+
+    private Set<EntityRef> listActualEntities(List<EntityRef> newEntities) {
+        Set<EntityRef> result = Sets.newLinkedHashSet();
+        for (EntityRef entity : newEntities) {
+            if (entity instanceof NewEntityRef) {
+                result.add(((NewEntityRef) entity).getInnerEntityRef().get());
+            } else {
+                result.add(entity);
+            }
+        }
+        return result;
     }
 
 }

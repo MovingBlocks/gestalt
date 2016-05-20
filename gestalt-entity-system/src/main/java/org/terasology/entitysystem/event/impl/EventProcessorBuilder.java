@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.event;
+package org.terasology.entitysystem.event.impl;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.ArrayListMultimap;
@@ -25,6 +25,8 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import org.reflections.ReflectionUtils;
 import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.event.Event;
+import org.terasology.entitysystem.event.EventHandler;
 import org.terasology.util.collection.KahnSorter;
 
 import java.util.Arrays;

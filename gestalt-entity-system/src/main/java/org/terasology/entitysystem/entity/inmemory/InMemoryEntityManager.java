@@ -18,16 +18,17 @@ package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.base.Preconditions;
 import gnu.trove.iterator.TLongIterator;
-import org.terasology.entitysystem.entity.Component;
-import org.terasology.entitysystem.entity.EntityManager;
-import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.entity.references.CoreEntityRef;
+import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.entity.EntityTransaction;
+import org.terasology.entitysystem.entity.TransactionEventListener;
 import org.terasology.util.Varargs;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -35,75 +36,84 @@ import java.util.Set;
  */
 public class InMemoryEntityManager implements EntityManager {
 
-    private final ComponentManager library;
-    private EntityStore entityStore;
+    private final EntityStore entityStore;
+
+    private final InMemoryTransactionManager transactionManager;
 
     public InMemoryEntityManager(ComponentManager library) {
-        this.library = library;
         entityStore = new ComponentTable(library);
+        transactionManager = new InMemoryTransactionManager(this, entityStore, library);
     }
 
     @Override
-    public <T extends Component> T createComponent(Class<T> componentClass) {
-        return library.create(componentClass);
+    public void registerTransactionListener(TransactionEventListener listener) {
+        transactionManager.registerTransactionListener(listener);
     }
 
     @Override
-    public long createEntity(Component first, Component... additional) {
-        Preconditions.checkNotNull(first);
-        List<Component> components = Varargs.combineToList(first, additional);
-        return createEntity(components);
+    public void unregisterTransactionListener(TransactionEventListener listener) {
+        transactionManager.unregisterTransactionListener(listener);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public long createEntity(Collection<Component> components) {
-        Preconditions.checkArgument(!components.isEmpty(), "Cannot create an entity without at least one component");
-        long entityId = entityStore.createEntityId();
-        for (Component component : components) {
-            Class componentType = library.getType(component.getClass()).getInterfaceType();
-            entityStore.add(entityId, componentType, component);
-        }
-        return entityId;
+    public boolean isTransactionActive() {
+        return false;
     }
 
     @Override
-    public <T extends Component> Optional<T> getComponent(long entityId, Class<T> type) {
-        return Optional.ofNullable(entityStore.get(entityId, type));
+    public void beginTransaction() {
+        transactionManager.begin();
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public boolean addComponent(long entityId, Component component) {
-        Class componentType = library.getType(component.getClass()).getInterfaceType();
-        return entityStore.add(entityId, componentType, component);
+    public void commit() throws ConcurrentModificationException {
+        transactionManager.commit();
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public boolean updateComponent(long entityId, Component component) {
-        Class componentType = library.getType(component.getClass()).getInterfaceType();
-        return entityStore.update(entityId, componentType, component);
+    public void rollback() {
+        transactionManager.rollback();
     }
 
     @Override
-    public boolean removeComponent(long entityId, Class<? extends Component> componentClass) {
-        return entityStore.remove(entityId, componentClass) != null;
+    public EntityTransaction getRawTransaction() {
+        return transactionManager.getCurrentTransaction();
     }
 
     @Override
-    public EntityTransaction beginTransaction() {
-        return new InMemoryTransaction(entityStore, library);
+    public EntityRef createEntity() {
+        return transactionManager.getCurrentTransaction().createEntity();
     }
 
     @Override
-    public TLongIterator findEntitiesWithComponents(Class<? extends Component> first, Class<? extends Component>... additional) {
+    public Iterator<EntityRef> findEntitiesWithComponents(Class<? extends Component> first, Class<? extends Component>... additional) {
         return findEntitiesWithComponents(Varargs.combineToSet(first, additional));
     }
 
     @Override
-    public TLongIterator findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes) {
+    public Iterator<EntityRef> findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes) {
         Preconditions.checkArgument(!componentTypes.isEmpty());
-        return entityStore.findWithComponents(componentTypes);
+        return new EntityRefIterator(entityStore.findWithComponents(componentTypes), this);
+    }
+
+    private static class EntityRefIterator implements Iterator<EntityRef> {
+
+        private TLongIterator internal;
+        private EntityManager entityManager;
+
+        public EntityRefIterator(TLongIterator baseIterator, EntityManager entityManager) {
+            this.internal = baseIterator;
+            this.entityManager = entityManager;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return internal.hasNext();
+        }
+
+        @Override
+        public EntityRef next() {
+            return new CoreEntityRef(entityManager, internal.next());
+        }
     }
 }

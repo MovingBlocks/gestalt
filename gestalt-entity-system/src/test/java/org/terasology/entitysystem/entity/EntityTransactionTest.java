@@ -19,11 +19,13 @@ package org.terasology.entitysystem.entity;
 import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Test;
-import org.terasology.entitysystem.Transaction;
+import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.references.CoreEntityRef;
+import org.terasology.entitysystem.entity.references.NewEntityRef;
+import org.terasology.entitysystem.entity.references.NullEntityRef;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
-import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -60,165 +62,198 @@ public class EntityTransactionTest {
     }
 
     @Test
-    public void createEntity() throws Exception {
-        EntityTransaction transaction = entityManager.beginTransaction();
-        long entityId = transaction.createEntity();
-        SampleComponent sampleComponent = transaction.addComponent(entityId, SampleComponent.class);
+    public void createEntityAddsCoreEntityRefOnCommit() throws Exception {
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        SampleComponent sampleComponent = entity.addComponent(SampleComponent.class);
         sampleComponent.setName(TEST_NAME);
-        transaction.commit();
+        entityManager.commit();
 
-        Optional<SampleComponent> finalComp = entityManager.getComponent(entityId, SampleComponent.class);
-        assertTrue(finalComp.isPresent());
-        assertEquals(TEST_NAME, finalComp.get().getName());
+        assertTrue(entity instanceof NewEntityRef);
+        NewEntityRef newEntityRef = (NewEntityRef) entity;
+        assertTrue(newEntityRef.getInnerEntityRef().isPresent());
+        assertTrue(newEntityRef.getInnerEntityRef().get() instanceof CoreEntityRef);
     }
 
     @Test
-    public void addComponent() throws Exception {
-        long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        EntityTransaction transaction = entityManager.beginTransaction();
-        SecondComponent secondComponent = transaction.addComponent(entityId, SecondComponent.class);
-        secondComponent.setName(TEST_NAME);
-        transaction.commit();
+    public void createEmptyEntityAddsNullEntityRefOnCommit() throws Exception {
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        entityManager.commit();
 
-        Optional<SecondComponent> finalComp = entityManager.getComponent(entityId, SecondComponent.class);
-        assertTrue(finalComp.isPresent());
-        assertEquals(TEST_NAME, finalComp.get().getName());
+        assertTrue(entity instanceof NewEntityRef);
+        NewEntityRef newEntityRef = (NewEntityRef) entity;
+        assertTrue(newEntityRef.getInnerEntityRef().isPresent());
+        assertEquals(NullEntityRef.get(), newEntityRef.getInnerEntityRef().get());
     }
 
     @Test
-    public void getComponent() {
-        SampleComponent original = entityManager.createComponent(SampleComponent.class);
-        original.setName(TEST_NAME);
-        long entityId = entityManager.createEntity(original);
-        EntityTransaction transaction = entityManager.beginTransaction();
+    public void createEntityAddsInnerNullEntityRefOnRollback() throws Exception {
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        SampleComponent sampleComponent = entity.addComponent(SampleComponent.class);
+        sampleComponent.setName(TEST_NAME);
+        entityManager.rollback();
 
-        Optional<SampleComponent> finalComp = transaction.getComponent(entityId, SampleComponent.class);
-        assertTrue(finalComp.isPresent());
-        assertEquals(TEST_NAME, finalComp.get().getName());
+        assertTrue(entity instanceof NewEntityRef);
+        NewEntityRef newEntityRef = (NewEntityRef) entity;
+        assertTrue(newEntityRef.getInnerEntityRef().isPresent());
+        assertEquals(NullEntityRef.get(), newEntityRef.getInnerEntityRef().get());
     }
 
-    @Test
-    public void updateComponent() {
-        long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        EntityTransaction transaction = entityManager.beginTransaction();
-        Optional<SampleComponent> component = transaction.getComponent(entityId, SampleComponent.class);
-        component.get().setName(TEST_NAME);
-        transaction.commit();
+    @Test(expected = ConcurrentModificationException.class)
+    public void createEntityAddsInnerNullEntityRefOnFailedCommit() throws Exception {
+        entityManager.beginTransaction();
+        EntityRef initialEntity = entityManager.createEntity();
+        initialEntity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
-        Optional<SampleComponent> finalComp = entityManager.getComponent(entityId, SampleComponent.class);
-        assertTrue(finalComp.isPresent());
-        assertEquals(TEST_NAME, finalComp.get().getName());
-    }
-
-    @Test
-    public void removeComponent() throws Exception {
-        long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        EntityTransaction transaction = entityManager.beginTransaction();
-        transaction.removeComponent(entityId, SampleComponent.class);
-        transaction.commit();
-
-        Optional<SampleComponent> finalComp = entityManager.getComponent(entityId, SampleComponent.class);
-        assertFalse(finalComp.isPresent());
+        entityManager.beginTransaction();
+        initialEntity.delete();
+        EntityRef entity = entityManager.createEntity();
+        SampleComponent sampleComponent = entity.addComponent(SampleComponent.class);
+        sampleComponent.setName(TEST_NAME);
+        entityManager.beginTransaction();
+        initialEntity.addComponent(SecondComponent.class);
+        entityManager.commit();
+        try {
+            entityManager.commit();
+        } finally {
+            assertTrue(entity instanceof NewEntityRef);
+            NewEntityRef newEntityRef = (NewEntityRef) entity;
+            assertTrue(newEntityRef.getInnerEntityRef().isPresent());
+            assertEquals(NullEntityRef.get(), newEntityRef.getInnerEntityRef().get());
+        }
     }
 
     @Test
     public void addThenRemoveComponent() throws Exception {
-        long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        EntityTransaction transaction = entityManager.beginTransaction();
-        transaction.addComponent(entityId, SecondComponent.class);
-        transaction.removeComponent(entityId, SecondComponent.class);
-        transaction.commit();
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
-        Optional<SecondComponent> finalComp = entityManager.getComponent(entityId, SecondComponent.class);
+        entityManager.beginTransaction();
+        entity.addComponent(SecondComponent.class);
+        entity.removeComponent(SecondComponent.class);
+        entityManager.commit();
+
+        entityManager.beginTransaction();
+        Optional<SecondComponent> finalComp = entity.getComponent(SecondComponent.class);
         assertFalse(finalComp.isPresent());
     }
 
     @Test
     public void removeThenAddComponent() throws Exception {
-        long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        EntityTransaction transaction = entityManager.beginTransaction();
-        transaction.removeComponent(entityId, SampleComponent.class);
-        SampleComponent comp = transaction.addComponent(entityId, SampleComponent.class);
-        comp.setName(TEST_NAME);
-        transaction.commit();
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
-        Optional<SampleComponent> finalComp = entityManager.getComponent(entityId, SampleComponent.class);
+        entityManager.beginTransaction();
+        entity.removeComponent(SampleComponent.class);
+        SampleComponent comp = entity.addComponent(SampleComponent.class);
+        comp.setName(TEST_NAME);
+        entityManager.commit();
+
+        entityManager.beginTransaction();
+        Optional<SampleComponent> finalComp = entity.getComponent(SampleComponent.class);
         assertTrue(finalComp.isPresent());
         assertEquals(TEST_NAME, finalComp.get().getName());
     }
 
     @Test
     public void rollback() throws Exception {
-        long entityId = entityManager.createEntity(entityManager.createComponent(SampleComponent.class));
-        EntityTransaction transaction = entityManager.beginTransaction();
-        transaction.removeComponent(entityId, SampleComponent.class);
-        SecondComponent comp = transaction.addComponent(entityId, SecondComponent.class);
-        comp.setName(TEST_NAME);
-        transaction.rollback();
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
-        Optional<SampleComponent> finalSampleComp = entityManager.getComponent(entityId, SampleComponent.class);
+        entityManager.beginTransaction();
+        entity.removeComponent(SampleComponent.class);
+        SecondComponent comp = entity.addComponent(SecondComponent.class);
+        comp.setName(TEST_NAME);
+        entityManager.rollback();
+
+        entityManager.beginTransaction();
+        Optional<SampleComponent> finalSampleComp = entity.getComponent(SampleComponent.class);
         assertTrue(finalSampleComp.isPresent());
-        Optional<SecondComponent> finalSecondComp = entityManager.getComponent(entityId, SecondComponent.class);
+        Optional<SecondComponent> finalSecondComp = entity.getComponent(SecondComponent.class);
         assertFalse(finalSecondComp.isPresent());
     }
 
     @Test(expected = ConcurrentModificationException.class)
     public void concurrentModificationTriggersException() {
-        SampleComponent originalComponent = entityManager.createComponent(SampleComponent.class);
-        long entityId = entityManager.createEntity(originalComponent);
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
-        EntityTransaction transaction = entityManager.beginTransaction();
-        SampleComponent transactionComponent = transaction.getComponent(entityId, SampleComponent.class).get();
+        entityManager.beginTransaction();
+        SampleComponent transactionComponent = entity.getComponent(SampleComponent.class).get();
         transactionComponent.setName(TEST_NAME);
 
-        originalComponent.setName(TEST_NAME_2);
-        entityManager.updateComponent(entityId, originalComponent);
+        entityManager.beginTransaction();
+        entity.getComponent(SampleComponent.class).get().setName(TEST_NAME_2);
+        entityManager.commit();
 
-        transaction.commit();
+        entityManager.commit();
     }
 
-    @Test
+    @Test(expected = ConcurrentModificationException.class)
     public void failedCommitIsRolledBack() throws Exception {
-        SampleComponent originalComponent = entityManager.createComponent(SampleComponent.class);
-        long entityId = entityManager.createEntity(originalComponent);
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
-        EntityTransaction transaction = entityManager.beginTransaction();
-        SampleComponent transactionComponent = transaction.getComponent(entityId, SampleComponent.class).get();
+        entityManager.beginTransaction();
+        SampleComponent transactionComponent = entity.getComponent(SampleComponent.class).get();
         transactionComponent.setName(TEST_NAME);
-        transaction.addComponent(entityId, SecondComponent.class);
+        entity.addComponent(SecondComponent.class);
 
-        originalComponent.setName(TEST_NAME_2);
-        entityManager.updateComponent(entityId, originalComponent);
+        entityManager.beginTransaction();
+        entity.getComponent(SampleComponent.class).get().setName(TEST_NAME_2);
+        entityManager.commit();
 
         try {
-            transaction.commit();
-        } catch (ConcurrentModificationException e) {
-            assertEquals(TEST_NAME_2, entityManager.getComponent(entityId, SampleComponent.class).get().getName());
-            assertFalse(entityManager.getComponent(entityId, SecondComponent.class).isPresent());
+            entityManager.commit();
+        } finally {
+            entityManager.beginTransaction();
+            assertEquals(TEST_NAME_2, entity.getComponent(SampleComponent.class).get().getName());
+            assertFalse(entity.getComponent(SecondComponent.class).isPresent());
         }
 
     }
 
     @Test
     public void getCompositionOfEntity() throws Exception {
-        SampleComponent originalComponent = entityManager.createComponent(SampleComponent.class);
-        long entityId = entityManager.createEntity(originalComponent);
-        entityManager.addComponent(entityId, entityManager.createComponent(SecondComponent.class));
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SampleComponent.class);
+        entity.addComponent(SecondComponent.class);
+        entityManager.commit();
 
-        EntityTransaction transaction = entityManager.beginTransaction();
-        assertEquals(Sets.newHashSet(SampleComponent.class, SecondComponent.class), transaction.getEntityComposition(entityId));
+        entityManager.beginTransaction();
+        assertEquals(Sets.newHashSet(SampleComponent.class, SecondComponent.class), entity.getComponentTypes());
     }
 
     @Test
-    public void getCompositionOfEntityAccountsForModification() throws Exception {
-        SampleComponent originalComponent = entityManager.createComponent(SampleComponent.class);
-        long entityId = entityManager.createEntity(originalComponent);
-        entityManager.addComponent(entityId, entityManager.createComponent(SecondComponent.class));
+    public void getCompositionOfEntityAccountsForLocalModification() throws Exception {
+        entityManager.beginTransaction();
+        EntityRef entity = entityManager.createEntity();
+        entity.addComponent(SecondComponent.class);
+        entity.addComponent(SampleComponent.class);
+        entityManager.commit();
 
-        EntityTransaction transaction = entityManager.beginTransaction();
-        transaction.removeComponent(entityId, SampleComponent.class);
-        assertEquals(Sets.newHashSet(SecondComponent.class), transaction.getEntityComposition(entityId));
+        entityManager.beginTransaction();
+        entity.removeComponent(SampleComponent.class);
+        assertEquals(Sets.newHashSet(SecondComponent.class), entity.getComponentTypes());
     }
 
+    @Test
+    public void transactionInactiveIfNotStartted() {
+        assertFalse(entityManager.isTransactionActive());
+    }
 
 }

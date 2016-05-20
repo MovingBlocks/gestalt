@@ -16,8 +16,9 @@
 
 package org.terasology.entitysystem.event;
 
-import org.terasology.entitysystem.Transaction;
 import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.event.impl.EventProcessor;
 
 import java.util.Collections;
 import java.util.Set;
@@ -34,12 +35,8 @@ import java.util.Set;
 public interface EventSystem {
 
     /**
-     * @return A new transaction with event sending support
-     */
-    Transaction beginTransaction();
-
-    /**
      * Updates the event processor. All events processed after the call is complete will use the new {@link EventProcessor}
+     *
      * @param processor The new EventProcessor for the EventSystem to use to process events.
      */
     void setEventProcessor(EventProcessor processor);
@@ -47,51 +44,35 @@ public interface EventSystem {
     /**
      * Sends an event against an entity. This event will be processed immediately if annotated as {@link Synchronous}, otherwise it will be processed at some future point.
      * A new transaction will be created to process the event.
-     * @param event The event to send
-     * @param entityId The entity to send the event against.
+     *
+     * @param event  The event to send
+     * @param entity The entity to send the event against.
      */
-    default void send(Event event, long entityId) {
-        send(event, entityId, Collections.emptySet());
-    }
-
-    /**
-     * Sends an event against an entity. This event will be processed immediately using the transaction of origin if annotated as {@link Synchronous}.
-     * Otherwise it will be processed at some future point with a new transaction.
-     * @param event The event to send.
-     * @param entityId The entity to send the event against.
-     * @param origin The transaction sending the event.
-     */
-    default void send(Event event, long entityId, Transaction origin) {
-        send(event, entityId, origin, Collections.emptySet());
+    default void send(Event event, EntityRef entity) {
+        send(event, entity, Collections.emptySet());
     }
 
     /**
      * Sends an event against an entity. This event will be processed immediately if annotated as {@link Synchronous}, otherwise it will be processed at some future point.
      * A new transaction will be created to process the event.
-     * @param event The event to send.
-     * @param entityId The entity to send the event against.
+     *
+     * @param event                The event to send.
+     * @param entity               The entity to send the event against.
      * @param triggeringComponents The components triggering the event if any - only event handlers interested in these components will be notified.
      */
-    void send(Event event, long entityId, Set<Class<? extends Component>> triggeringComponents);
+    void send(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents);
 
-    /**
-     * Sends an event against an entity. This event will be processed immediately using the transaction of origin if annotated as {@link Synchronous}.
-     * Otherwise it will be processed at some future point with a new transaction.
-     * @param event The event to send.
-     * @param entityId The entity to send the event against.
-     * @param origin The transaction sending the event.
-     * @param triggeringComponents The components triggering the event if any - only event handlers interested in these components will be notified.
-     */
-    void send(Event event, long entityId, Transaction origin, Set<Class<? extends Component>> triggeringComponents);
 
     /**
      * Blocks until all pending events and events sent by those events have been processed.
+     *
      * @throws InterruptedException
      */
     void processEvents() throws InterruptedException;
 
     /**
      * Clears all pending events and blocks for currently processing events to finish.
+     *
      * @throws InterruptedException
      */
     void clearPendingEvents() throws InterruptedException;

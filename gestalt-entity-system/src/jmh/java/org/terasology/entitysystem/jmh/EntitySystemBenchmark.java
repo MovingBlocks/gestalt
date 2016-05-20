@@ -50,7 +50,6 @@ public class EntitySystemBenchmark {
             typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
             tempLoader = new URLClassLoader(new URL[0]);
             entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
-            sampleComponent = entityManager.createComponent(SampleComponent.class);
         }
 
         @TearDown
@@ -59,24 +58,7 @@ public class EntitySystemBenchmark {
         }
     }
 
-    @Benchmark
-    public SampleComponent testCreateComponent(EntitySystem entitySystem) {
-        return entitySystem.entityManager.createComponent(SampleComponent.class);
-    }
 
-    @Benchmark
-    public DirectComponent testCreateDirectComponent(EntitySystem entitySystem) {
-        return new DirectComponent();
-    }
 
-    @Benchmark
-    public boolean addComponent(EntitySystem entitySystem) {
-        return entitySystem.entityManager.addComponent(entitySystem.entityId, entitySystem.sampleComponent);
-    }
-
-    @Benchmark
-    public void removeComponent(EntitySystem entitySystem) {
-        assert entitySystem.entityManager.removeComponent(entitySystem.entityId, SampleComponent.class);
-    }
 
 }

@@ -16,9 +16,9 @@
 
 package org.terasology.entitysystem.stubs;
 
-import org.terasology.entitysystem.Transaction;
-import org.terasology.entitysystem.event.ReceiveEvent;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.EventResult;
+import org.terasology.entitysystem.event.ReceiveEvent;
 
 /**
  *
@@ -29,7 +29,7 @@ public class TestEventReceiver {
     public SampleComponent component;
 
     @ReceiveEvent
-    public EventResult testEventListener(TestEvent event, long entityId, Transaction transaction, SampleComponent sample) {
+    public EventResult testEventListener(TestEvent event, EntityRef entity, SampleComponent sample) {
         called = true;
         component = sample;
         return EventResult.COMPLETE;

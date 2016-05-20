@@ -17,94 +17,87 @@
 package org.terasology.entitysystem.entity;
 
 import gnu.trove.iterator.TLongIterator;
-import org.terasology.entitysystem.Transaction;
 
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * EntityManager is the core of the entity system. It provides atomic operations on the entity system, or to start a transaction.
-  */
+ * EntityManager is the core of the entity system.
+ */
 public interface EntityManager {
 
     /**
-     * Provides a new instance of the desired component type. After use this instance should be released to allow
-     * @param componentClass The type of component to create
-     * @param <T> The type of component to create
-     * @return A new component of the given class
+     * Registers a listener to receive transaction events
+     * @param listener The listener to register
      */
-    <T extends Component> T createComponent(Class<T> componentClass);
+    void registerTransactionListener(TransactionEventListener listener);
 
     /**
-     * Creates an entity with the given components
-     * @param first The first component
-     * @param additional Any additional components
-     * @return The id of the newly created entity
+     * Unregisters a listener from receiving transaction events
+     * @param listener The listener to unregister
      */
-    long createEntity(Component first, Component... additional);
+    void unregisterTransactionListener(TransactionEventListener listener);
 
     /**
-     * Creates an entity with the given components
-     * @param components The component to create the entity with
-     * @return The id of the newly created entity
+     * Whether there is currently an active transaction. A transaction is active if at least one transaction is started without being committed or rolled back.
+     * @return Whether a transaction is active
      */
-    long createEntity(Collection<Component> components);
+    boolean isTransactionActive();
 
     /**
-     * Adds a component to an entity by id. This will fail if the entity already has that component
-     * @param entityId The id of the entity
-     * @param component The component to add
-     * @return Whether adding the component succeeded.
+     * Begins a new transaction. If the transaction is already active, then the current state suspended. When the new transaction is committed or rolled back then the
+     * previous transaction state is restored.
      */
-    boolean addComponent(long entityId, Component component);
+    void beginTransaction();
 
     /**
-     * Retrieves a component from an entity
-     * @param entityId The id of the entity
-     * @param componentClass The type of component to retrieve
-     * @param <T> The type of component to retrieve
-     * @return An Optional containing the requested component, or Optional.empty() if the entity does not have that component
+     * Commits the current transaction. This also clears the transaction, whether the commit succeeds for fails.
+     * <p>
+     * If a conflicting change has occurred to the entity system outside of the transaction, then no change will occur.
+     * @throws IllegalStateException If no transaction is active
+     * @throws ConcurrentModificationException If a change has happened to the entity system that conflicts with this transaction.
      */
-    <T extends Component> Optional<T> getComponent(long entityId, Class<T> componentClass);
+    void commit() throws ConcurrentModificationException;
 
     /**
-     * Updates a component on the given entity. This will fail if the entity does not have that component to update.
-     * @param entityId The id of the entity
-     * @param component The updated component
-     * @return Whether the update succeeded.
+     * Rolls back the current transaction, dropping all changes and clearing the transaction.
+     * @throws IllegalStateException If no transaction is active
      */
-    boolean updateComponent(long entityId, Component component);
+    void rollback();
 
     /**
-     * Removes a component from the given entity. This will fail if the entity
-     * @param entityId The id of the entity
-     * @param componentClass The type of the component to remove.
-     * @return Whether removing the component succeeded.
+     * This is intended for use by EntityRef implementations, providing access to methods working on specific entity ids.
+     * @return A raw transaction.
      */
-    boolean removeComponent(long entityId, Class<? extends Component> componentClass);
+    EntityTransaction getRawTransaction();
 
     /**
-     * Starts a transaction
-     * @return A new transaction
+     * Creates a new entity.
+     * @return The id of the new entity.
+     * @throws IllegalStateException If no transaction is active
      */
-    EntityTransaction beginTransaction();
+    EntityRef createEntity();
 
     /**
      * Find entities with the desired components. Note that the components could potentially be removed from the entities between when they are found and when the components
      * are requested.
-     * @param first A component all the found entities should have.
+     *
+     * @param first      A component all the found entities should have.
      * @param additional Additional components the entities should have.
      * @return An iterator over the entities with the desired component(s)
      */
-    TLongIterator findEntitiesWithComponents(Class<? extends Component> first, Class<? extends Component> ... additional);
+    Iterator<EntityRef> findEntitiesWithComponents(Class<? extends Component> first, Class<? extends Component>... additional);
 
     /**
      * Find entities with the desired components. Note that the components could potentially be removed from the entities between when they are found and when the components
      * are requested.
+     *
      * @param componentTypes The desired components. Must contain at least one component
      * @return An iterator over the entities with the desired component(s)
      */
-    TLongIterator findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes);
+    Iterator<EntityRef> findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes);
 
 }
