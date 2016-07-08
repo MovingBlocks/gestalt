@@ -1,0 +1,12 @@
+{
+  "entities": {
+    "root": {
+      "sample": {
+        "name": "Composition Name"
+      },
+      "reference": {
+        "reference" : "test:single"
+      }
+    }
+  }
+}

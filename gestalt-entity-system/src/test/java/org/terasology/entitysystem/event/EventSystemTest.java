@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
  */
 public abstract class EventSystemTest {
 
-    public static final String EVENT_VALUE = "Test";
+    private static final String EVENT_VALUE = "Test";
 
     private EntityRef entity = mock(EntityRef.class);
     private EntityManager entityManager = mock(EntityManager.class);

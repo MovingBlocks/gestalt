@@ -19,6 +19,7 @@ package org.terasology.entitysystem.entity.inmemory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
@@ -26,17 +27,26 @@ import gnu.trove.iterator.TLongIterator;
 import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.hash.TLongIntHashMap;
 import gnu.trove.set.hash.TLongHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.component.ComponentType;
+import org.terasology.entitysystem.component.PropertyAccessor;
 import org.terasology.entitysystem.entity.Component;
-import org.terasology.entitysystem.entity.references.CoreEntityRef;
 import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.entity.EntityTransaction;
-import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.entity.TransactionEventListener;
 import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
 import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
+import org.terasology.entitysystem.entity.references.CoreEntityRef;
+import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.entity.references.NullEntityRef;
+import org.terasology.entitysystem.prefab.EntityRecipe;
+import org.terasology.entitysystem.prefab.Prefab;
+import org.terasology.entitysystem.prefab.PrefabRef;
+import org.terasology.naming.Name;
+import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.ConcurrentModificationException;
 import java.util.Deque;
@@ -49,6 +59,8 @@ import java.util.Set;
  * Transaction handling for a single thread.
  */
 public class InMemoryTransaction implements EntityTransaction {
+
+    private static final Logger logger = LoggerFactory.getLogger(InMemoryTransaction.class);
 
     private final EntityManager entityManager;
     private final EntityStore entityStore;
@@ -91,24 +103,32 @@ public class InMemoryTransaction implements EntityTransaction {
                 Set<Class<? extends Component>> componentTypes = newEntity.getComponentTypes();
                 if (!componentTypes.isEmpty()) {
                     long entityId = entityStore.createEntityId();
-
-                    ClosableLock lock = entityStore.lock(new TLongHashSet(new long[]{entityId}));
-                    for (Class componentType : componentTypes) {
-                        Component comp = (Component) newEntity.getComponent(componentType).get();
-                        entityStore.add(entityId, componentType, comp);
-                    }
-                    lock.close();
-
                     newEntity.setInnerEntityRef(new CoreEntityRef(entityManager, entityId));
                 } else {
                     newEntity.setInnerEntityRef(NullEntityRef.get());
                 }
             }
 
+            for (NewEntityRef newEntity : state.createdEntities) {
+                Set<Class<? extends Component>> componentTypes = newEntity.getComponentTypes();
+                if (!componentTypes.isEmpty()) {
+                    long entityId = ((CoreEntityRef) newEntity.getInnerEntityRef().get()).getId();
+                    ClosableLock lock = entityStore.lock(new TLongHashSet(new long[]{entityId}));
+                    for (Class componentType : componentTypes) {
+                        Component comp = (Component) newEntity.getComponent(componentType).get();
+                        cleanUpEntityRefs(componentType, comp);
+                        entityStore.add(entityId, componentType, comp);
+                    }
+                    lock.close();
+                }
+                newEntity.activateInnerRef();
+            }
+
             // Apply changes
             for (CacheEntry comp : state.entityCache.values()) {
                 switch (comp.getAction()) {
                     case ADD:
+                        cleanUpEntityRefs(comp.componentType, comp.component);
                         if (!entityStore.add(comp.getEntityId(), comp.getComponentType(), comp.getComponent())) {
                             throw new RuntimeException("Entity state does not match expected.");
                         }
@@ -119,6 +139,7 @@ public class InMemoryTransaction implements EntityTransaction {
                         }
                         break;
                     case UPDATE:
+                        cleanUpEntityRefs(comp.componentType, comp.component);
                         if (!entityStore.update(comp.getEntityId(), comp.getComponentType(), comp.getComponent())) {
                             throw new RuntimeException("Entity state does not match expected.");
                         }
@@ -127,6 +148,17 @@ public class InMemoryTransaction implements EntityTransaction {
             }
 
             eventListeners.forEach(TransactionEventListener::onCommit);
+        }
+    }
+
+    private void cleanUpEntityRefs(Class<? extends Component> componentType, Component component) {
+        ComponentType<?> type = componentManager.getType(componentType);
+        for (PropertyAccessor property : type.getPropertyInfo().getPropertiesOfType(EntityRef.class)) {
+            Object o = property.get(component);
+            if (o instanceof NewEntityRef) {
+                NewEntityRef entityRef = (NewEntityRef) o;
+                entityRef.getInnerEntityRef().ifPresent((x) -> property.set(component, x));
+            }
         }
     }
 
@@ -215,6 +247,45 @@ public class InMemoryTransaction implements EntityTransaction {
                 cacheEntry.setAction(Action.REMOVE);
                 break;
         }
+    }
+
+    @Override
+    public EntityRef createEntity(Prefab prefab) {
+        Map<Name, EntityRef> entities = createEntities(prefab);
+        return entities.get(prefab.getRootEntityUrn().getFragmentName());
+    }
+
+    @Override
+    public Map<Name, EntityRef> createEntities(Prefab prefab) {
+        Map<Name, EntityRef> result = Maps.newLinkedHashMap();
+        for (EntityRecipe entityRecipe : prefab.getEntityRecipes().values()) {
+            result.put(entityRecipe.getIdentifier().getFragmentName(), createEntity());
+        }
+        for (EntityRecipe entityRecipe : prefab.getEntityRecipes().values()) {
+            EntityRef entity = result.get(entityRecipe.getIdentifier().getFragmentName());
+            for (TypeKeyedMap.Entry<? extends Component> entry : entityRecipe.getComponents().entrySet()) {
+                Component component = entity.addComponent(entry.getKey());
+                componentManager.copy(entry.getValue(), component);
+                for (PropertyAccessor property : componentManager.getType(entry.getKey()).getPropertyInfo().getPropertiesOfType(EntityRef.class)) {
+                    EntityRef existing = (EntityRef) property.get(component);
+                    EntityRef newRef;
+                    if (existing instanceof EntityRecipe) {
+                        newRef = result.get(((EntityRecipe) existing).getIdentifier().getFragmentName());
+                        if (newRef == null) {
+                            logger.error("{} references external or unknown entity prefab {}",  entityRecipe.getIdentifier(), existing);
+                            newRef = NullEntityRef.get();
+                        }
+                    } else if (existing instanceof PrefabRef) {
+                        newRef = createEntity(((PrefabRef) existing).getPrefab());
+                    } else {
+                        logger.error("{} contains unsupported entity ref {}", entityRecipe.getIdentifier(), existing);
+                        newRef = NullEntityRef.get();
+                    }
+                    property.set(component, newRef);
+                }
+            }
+        }
+        return result;
     }
 
     private boolean isActive() {

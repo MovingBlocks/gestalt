@@ -1,0 +1,11 @@
+// Test example showing lenient parsing behavior
+{
+  entities : {
+    root: {
+      sample: {
+        name = "Test Name",
+        description = "Test Description"
+      }
+    }
+  }
+}

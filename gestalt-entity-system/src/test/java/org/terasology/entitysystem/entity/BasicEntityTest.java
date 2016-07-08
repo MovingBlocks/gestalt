@@ -47,18 +47,15 @@ import static org.junit.Assert.assertTrue;
  */
 public class BasicEntityTest {
 
-    public static final String TEST_NAME = "Fred";
-    public static final String TEST_NAME_2 = "Jill";
+    private static final String TEST_NAME = "Fred";
+    private static final String TEST_NAME_2 = "Jill";
 
     private EntityManager entityManager;
-    private URLClassLoader tempLoader;
-
 
     public BasicEntityTest() {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
-        tempLoader = new URLClassLoader(new URL[0]);
-        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
+        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
     }
 
     @org.junit.Before
@@ -71,7 +68,6 @@ public class BasicEntityTest {
         while (entityManager.isTransactionActive()) {
             entityManager.rollback();
         }
-        tempLoader.close();
     }
 
     @Test

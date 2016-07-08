@@ -70,11 +70,11 @@ public class PropertyAccessor<T, U> {
     }
 
     /**
-     * @return The class of the property
+     * @return The class of the property - if the type is a class and not some other type.
      */
     @SuppressWarnings("unchecked")
     public Class<U> getPropertyClass() {
-        return (Class<U>) propertyType.getClass();
+        return (Class<U>) propertyType;
     }
 
     /**

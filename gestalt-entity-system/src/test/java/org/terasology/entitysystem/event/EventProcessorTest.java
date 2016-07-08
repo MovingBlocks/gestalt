@@ -52,7 +52,6 @@ public class EventProcessorTest {
     private static TestEvent childEvent = new TestChildEvent(TEST_NAME);
 
     private EventProcessor eventProcessor;
-    private URLClassLoader tempLoader;
     private EntityRef testEntity;
 
     private EntityManager entityManager;
@@ -60,8 +59,7 @@ public class EventProcessorTest {
     public EventProcessorTest() {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
-        tempLoader = new URLClassLoader(new URL[0]);
-        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
+        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
     }
 
     @org.junit.Before
@@ -80,7 +78,6 @@ public class EventProcessorTest {
         while (entityManager.isTransactionActive()) {
             entityManager.rollback();
         }
-        tempLoader.close();
     }
 
     @Test

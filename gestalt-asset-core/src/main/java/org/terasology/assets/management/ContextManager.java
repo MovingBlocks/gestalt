@@ -65,8 +65,12 @@ public final class ContextManager {
 
             @Override
             public void close() {
-                if (!moduleId.equals(CONTEXT_STACK.get().pop())) {
+                Deque<Name> stack = CONTEXT_STACK.get();
+                if (!moduleId.equals(stack.pop())) {
                     logger.error("Module context ended out of sequence");
+                }
+                if (stack.isEmpty()) {
+                    CONTEXT_STACK.remove();
                 }
             }
         };

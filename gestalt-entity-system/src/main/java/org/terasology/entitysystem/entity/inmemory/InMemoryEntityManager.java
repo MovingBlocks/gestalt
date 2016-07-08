@@ -25,10 +25,13 @@ import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.entity.EntityTransaction;
 import org.terasology.entitysystem.entity.TransactionEventListener;
+import org.terasology.entitysystem.prefab.Prefab;
+import org.terasology.naming.Name;
 import org.terasology.util.Varargs;
 
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -83,6 +86,11 @@ public class InMemoryEntityManager implements EntityManager {
     @Override
     public EntityRef createEntity() {
         return transactionManager.getCurrentTransaction().createEntity();
+    }
+
+    @Override
+    public EntityRef createEntity(Prefab prefab) {
+        return transactionManager.getCurrentTransaction().createEntity(prefab);
     }
 
     @Override

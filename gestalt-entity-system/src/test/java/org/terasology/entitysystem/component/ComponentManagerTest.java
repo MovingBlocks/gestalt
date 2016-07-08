@@ -31,7 +31,7 @@ public class ComponentManagerTest {
     @Test
     public void constructComponent() {
         TypeLibrary typeLibrary = new TypeLibrary();
-        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary, getClass().getClassLoader());
+        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
         ComponentInterface instance = library.create(ComponentInterface.class);
         assertNotNull(instance);
         instance.setName("World");

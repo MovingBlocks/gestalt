@@ -24,6 +24,7 @@ import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.references.CoreEntityRef;
 import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.entity.references.NullEntityRef;
+import org.terasology.entitysystem.stubs.ReferenceComponent;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.valuetype.ImmutableCopy;
@@ -44,21 +45,14 @@ import static org.junit.Assert.assertTrue;
  *
  */
 public class EntityTransactionTest {
-    public static final String TEST_NAME = "Fred";
-    public static final String TEST_NAME_2 = "Jill";
+    private static final String TEST_NAME = "Fred";
+    private static final String TEST_NAME_2 = "Jill";
     private EntityManager entityManager;
-    private URLClassLoader tempLoader;
 
     public EntityTransactionTest() {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
-        tempLoader = new URLClassLoader(new URL[0]);
-        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
-    }
-
-    @After
-    public void teardown() throws IOException {
-        tempLoader.close();
+        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
     }
 
     @Test
@@ -124,6 +118,22 @@ public class EntityTransactionTest {
             assertTrue(newEntityRef.getInnerEntityRef().isPresent());
             assertEquals(NullEntityRef.get(), newEntityRef.getInnerEntityRef().get());
         }
+    }
+
+    @Test
+    public void createEntityChangesEntityRefToCoreEntityRefOnCommit() throws Exception {
+//        entityManager.beginTransaction();
+//        EntityRef initialEntity = entityManager.createEntity();
+//        EntityRef referencedEntity = entityManager.createEntity();
+//        ReferenceComponent comp = initialEntity.addComponent(ReferenceComponent.class);
+//        comp.setReference(referencedEntity);
+//        entityManager.commit();
+//
+//        entityManager.beginTransaction();
+//        EntityRef reference = initialEntity.getComponent(ReferenceComponent.class).get().getReference();
+//        assertTrue(reference instanceof CoreEntityRef);
+//        assertEquals(reference, ((NewEntityRef)referencedEntity).getInnerEntityRef().get());
+//        entityManager.rollback();
     }
 
     @Test

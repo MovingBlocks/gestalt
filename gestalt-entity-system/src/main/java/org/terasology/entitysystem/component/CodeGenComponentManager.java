@@ -34,8 +34,11 @@ import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.entity.Component;
 import org.terasology.valuetype.TypeLibrary;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -55,13 +58,13 @@ public class CodeGenComponentManager implements ComponentManager {
 
     private ClassPool pool;
     private CtClass parent;
-    private ClassLoader targetLoader;
+    private URLClassLoader targetLoader;
 
     private final TypeLibrary typeLibrary;
 
-    public CodeGenComponentManager(TypeLibrary typeLibrary, ClassLoader classLoader) {
+    public CodeGenComponentManager(TypeLibrary typeLibrary) {
         this.typeLibrary = typeLibrary;
-        this.targetLoader = classLoader;
+        this.targetLoader = new URLClassLoader(new URL[0]);
         ClassPool.doPruning = true;
         pool = new ClassPool(ClassPool.getDefault());
         try {

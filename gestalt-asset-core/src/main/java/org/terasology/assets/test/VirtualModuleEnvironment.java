@@ -39,6 +39,12 @@ import java.security.Permission;
 import java.util.Collections;
 
 /**
+ * This environment loads multiple modules off of the classpath, discovered within a 'virtualModules' package.
+ * This can be used to test more complex asset loading scenarios involving multiple modules.
+ * <p>
+ * Each virtual module should be in a directory under the virtualModules package, with the same name as the module's id. The directory should include a module.info file.
+ * The internal structure of each virtual module is otherwise the standard module structure.
+ *
  * @author Immortius
  */
 public class VirtualModuleEnvironment {
@@ -46,11 +52,15 @@ public class VirtualModuleEnvironment {
     protected ModuleRegistry moduleRegistry;
 
     public VirtualModuleEnvironment() throws Exception {
+        this(VirtualModuleEnvironment.class);
+    }
+
+    public VirtualModuleEnvironment(Class classpathClass) throws Exception {
         moduleRegistry = new TableModuleRegistry();
         ModuleMetadata testModuleMetadata = new ModuleMetadata();
         testModuleMetadata.setId(new Name("test"));
         testModuleMetadata.setVersion(new Version("1.0.0"));
-        Module testModule = ClasspathModule.create(testModuleMetadata, true, getClass());
+        Module testModule = ClasspathModule.create(testModuleMetadata, true, classpathClass);
         moduleRegistry.add(testModule);
 
         ModulePathScanner scanner = new ModulePathScanner();

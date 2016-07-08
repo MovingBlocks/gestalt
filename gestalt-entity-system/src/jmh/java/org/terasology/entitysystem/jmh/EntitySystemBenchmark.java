@@ -40,7 +40,6 @@ public class EntitySystemBenchmark {
     public static class EntitySystem {
         public EntityManager entityManager;
         public URLClassLoader tempLoader;
-        public SampleComponent sampleComponent;
         public TypeLibrary typeLibrary;
 
         public long entityId = 1;
@@ -49,12 +48,12 @@ public class EntitySystemBenchmark {
             typeLibrary = new TypeLibrary();
             typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
             tempLoader = new URLClassLoader(new URL[0]);
-            entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
+            entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
         }
 
         @TearDown
         public void teardown() {
-            entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary, tempLoader));
+            entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
         }
     }
 

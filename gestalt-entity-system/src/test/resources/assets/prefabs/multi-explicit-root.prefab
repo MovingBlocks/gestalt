@@ -1,0 +1,18 @@
+{
+  "root" : "first",
+  "entities" : {
+    "second": {
+      "sample": {
+        "name": "Second Entity"
+      }
+    },
+    "first": {
+      "sample": {
+        "name": "Test Name"
+      },
+      "reference": {
+        "reference": "second"
+      }
+    }
+  }
+}

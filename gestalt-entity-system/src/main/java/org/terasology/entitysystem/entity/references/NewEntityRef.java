@@ -34,6 +34,7 @@ import java.util.Set;
 public class NewEntityRef implements EntityRef {
 
     private EntityRef innerEntityRef = null;
+    private boolean useInnerRef = false;
 
     private ComponentManager componentManager;
     private Map<Class<? extends Component>, Component> components = Maps.newLinkedHashMap();
@@ -45,9 +46,13 @@ public class NewEntityRef implements EntityRef {
     public void setInnerEntityRef(EntityRef entityRef) {
         if (innerEntityRef == null) {
             innerEntityRef = entityRef;
-            components = null;
-            componentManager = null;
         }
+    }
+
+    public void activateInnerRef() {
+        useInnerRef = true;
+        components = null;
+        componentManager = null;
     }
 
     public Optional<EntityRef> getInnerEntityRef() {
@@ -61,7 +66,7 @@ public class NewEntityRef implements EntityRef {
 
     @Override
     public <T extends Component> Optional<T> getComponent(Class<T> componentType) {
-        if (innerEntityRef != null) {
+        if (useInnerRef) {
             return innerEntityRef.getComponent(componentType);
         }
         return Optional.ofNullable((T) components.get(componentType));
@@ -69,7 +74,7 @@ public class NewEntityRef implements EntityRef {
 
     @Override
     public Set<Class<? extends Component>> getComponentTypes() {
-        if (innerEntityRef != null) {
+        if (useInnerRef) {
             return innerEntityRef.getComponentTypes();
         }
         return Collections.unmodifiableSet(components.keySet());
@@ -77,7 +82,7 @@ public class NewEntityRef implements EntityRef {
 
     @Override
     public <T extends Component> T addComponent(Class<T> componentType) {
-        if (innerEntityRef != null) {
+        if (useInnerRef) {
             return innerEntityRef.addComponent(componentType);
         }
         if (components.get(componentType) != null) {
@@ -90,7 +95,7 @@ public class NewEntityRef implements EntityRef {
 
     @Override
     public <T extends Component> void removeComponent(Class<T> componentType) {
-        if (innerEntityRef != null) {
+        if (useInnerRef) {
             innerEntityRef.removeComponent(componentType);
         } else if (components.remove(componentType) == null) {
             throw new ComponentDoesNotExistException("Entity does not have a component of type " + componentType.getSimpleName());
@@ -99,7 +104,7 @@ public class NewEntityRef implements EntityRef {
 
     @Override
     public void delete() {
-        if (innerEntityRef != null) {
+        if (useInnerRef) {
             innerEntityRef.delete();
         } else {
             components.clear();
@@ -108,7 +113,7 @@ public class NewEntityRef implements EntityRef {
 
     @Override
     public String toString() {
-        if (innerEntityRef != null) {
+        if (useInnerRef) {
             return "New" + innerEntityRef.toString();
         }
         return "EntityRef( new )";

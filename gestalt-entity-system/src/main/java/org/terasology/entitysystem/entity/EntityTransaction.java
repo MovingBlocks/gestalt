@@ -18,8 +18,11 @@ package org.terasology.entitysystem.entity;
 
 import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
 import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
+import org.terasology.entitysystem.prefab.Prefab;
+import org.terasology.naming.Name;
 
 import java.util.ConcurrentModificationException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -93,4 +96,17 @@ public interface EntityTransaction {
      */
     <T extends Component> void removeComponent(long entityId, Class<T> componentType);
 
+    /**
+     * Creates entities based on a prefab
+     * @param prefab The prefab to create entities from
+     * @return The EntityRef of the root EntityPrefab from the prefab
+     */
+    EntityRef createEntity(Prefab prefab);
+
+    /**
+     * Creates entities based on a prefab
+     * @param prefab The prefab to create entities from
+     * @return A map of EntityRefs created, by the name of the entity prefab.
+     */
+    Map<Name,EntityRef> createEntities(Prefab prefab);
 }

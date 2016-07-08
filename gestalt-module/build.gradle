@@ -9,7 +9,7 @@
 dependencies {
     compile project(":gestalt-util")
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
-    compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.7'
     compile group: 'dom4j', name : 'dom4j', version: '1.6.1'
     compile group: 'org.apache.commons', name : 'commons-vfs2', version: '2.0'
 	testCompile project(":gestalt-module:testpack-api")

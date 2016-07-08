@@ -1,0 +1,10 @@
+{
+  "inherit" : "test:single",
+  "entities" : {
+    "root": {
+      "sample": {
+        "description" : "New Description"
+      }
+    }
+  }
+}

@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.jmh;
+package org.terasology.entitysystem.stubs;
 
 import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 
-public interface SampleComponent extends Component {
-    String getName();
-    void setName(String value);
+/**
+ *
+ */
+public interface ReferenceComponent extends Component {
 
-    String getDescription();
-    void setDescription(String description);
+    EntityRef getReference();
+
+    void setReference(EntityRef ref);
 }

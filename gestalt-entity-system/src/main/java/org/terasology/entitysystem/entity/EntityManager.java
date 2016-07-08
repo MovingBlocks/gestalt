@@ -16,12 +16,12 @@
 
 package org.terasology.entitysystem.entity;
 
-import gnu.trove.iterator.TLongIterator;
+import org.terasology.entitysystem.prefab.Prefab;
+import org.terasology.naming.Name;
 
-import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,18 +31,21 @@ public interface EntityManager {
 
     /**
      * Registers a listener to receive transaction events
+     *
      * @param listener The listener to register
      */
     void registerTransactionListener(TransactionEventListener listener);
 
     /**
      * Unregisters a listener from receiving transaction events
+     *
      * @param listener The listener to unregister
      */
     void unregisterTransactionListener(TransactionEventListener listener);
 
     /**
      * Whether there is currently an active transaction. A transaction is active if at least one transaction is started without being committed or rolled back.
+     *
      * @return Whether a transaction is active
      */
     boolean isTransactionActive();
@@ -57,29 +60,41 @@ public interface EntityManager {
      * Commits the current transaction. This also clears the transaction, whether the commit succeeds for fails.
      * <p>
      * If a conflicting change has occurred to the entity system outside of the transaction, then no change will occur.
-     * @throws IllegalStateException If no transaction is active
+     *
+     * @throws IllegalStateException           If no transaction is active
      * @throws ConcurrentModificationException If a change has happened to the entity system that conflicts with this transaction.
      */
     void commit() throws ConcurrentModificationException;
 
     /**
      * Rolls back the current transaction, dropping all changes and clearing the transaction.
+     *
      * @throws IllegalStateException If no transaction is active
      */
     void rollback();
 
     /**
      * This is intended for use by EntityRef implementations, providing access to methods working on specific entity ids.
+     *
      * @return A raw transaction.
      */
     EntityTransaction getRawTransaction();
 
     /**
      * Creates a new entity.
-     * @return The id of the new entity.
+     *
+     * @return The new entity.
      * @throws IllegalStateException If no transaction is active
      */
     EntityRef createEntity();
+
+    /**
+     * Creates an instance of each entity in a prefab, and returns the root entity
+     *
+     * @param prefab The prefab to create entities from
+     * @return The new entity
+     */
+    EntityRef createEntity(Prefab prefab);
 
     /**
      * Find entities with the desired components. Note that the components could potentially be removed from the entities between when they are found and when the components

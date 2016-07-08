@@ -1,0 +1,10 @@
+{
+  "entities" : {
+    "root": {
+      "sample": {
+        "name": "Test Name",
+        "description" : "Test Description"
+      }
+    }
+  }
+}
