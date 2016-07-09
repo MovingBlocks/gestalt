@@ -36,6 +36,7 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -116,7 +117,6 @@ public class CodeGenComponentManager implements ComponentManager {
         ComponentType<T> metadata = getType(componentClass);
         return metadata.copy(from, to);
     }
-
     /**
      * Generates a component type, constructing an implementation class for the component.
      * <p>
@@ -137,7 +137,11 @@ public class CodeGenComponentManager implements ComponentManager {
             Collection<PropertyAccessor<T, ?>> accessorList = discoverProperties(type);
 
             for (PropertyAccessor<T, ?> accessor : accessorList) {
-                CtField ctField = CtField.make("private " + accessor.getPropertyType().getTypeName() + " " + accessor.getName() + ";", componentClass);
+                String typeName = accessor.getPropertyClass().getCanonicalName();
+                if (accessor.getPropertyType() instanceof ParameterizedType) {
+                    typeName = ((ParameterizedType) accessor.getPropertyType()).getRawType().getTypeName();
+                }
+                CtField ctField = CtField.make("private " + typeName + " " + accessor.getName() + ";", componentClass);
                 componentClass.addField(ctField);
 
                 String getterName;
@@ -147,9 +151,9 @@ public class CodeGenComponentManager implements ComponentManager {
                     getterName = "get" + TO_UPPER_CAMEL.convert(accessor.getName());
                 }
 
-                CtMethod getter = CtNewMethod.make("public " + accessor.getPropertyType().getTypeName() + " " + getterName + "() { return " + accessor.getName() + "; }", componentClass);
+                CtMethod getter = CtNewMethod.make("public " + typeName + " " + getterName + "() { return " + accessor.getName() + "; }", componentClass);
                 componentClass.addMethod(getter);
-                CtMethod setter = CtNewMethod.make("public void set" + TO_UPPER_CAMEL.convert(accessor.getName()) + "(" + accessor.getPropertyType().getTypeName() + " value) { this." + accessor.getName() + " = value; }", componentClass);
+                CtMethod setter = CtNewMethod.make("public void set" + TO_UPPER_CAMEL.convert(accessor.getName()) + "(" + typeName + " value) { this." + accessor.getName() + " = value; }", componentClass);
                 componentClass.addMethod(setter);
             }
 
@@ -197,7 +201,7 @@ public class CodeGenComponentManager implements ComponentManager {
                     // TODO: Exception
                     continue;
                 }
-                if (!getter.getReturnType().equals(propertyType)) {
+                if (!getter.getGenericReturnType().equals(propertyType)) {
                     logger.error("Property type mismatch for '{}' between getter and setter", TO_LOWER_CAMEL.convert(propertyName));
                     // TODO: Exception
                     continue;

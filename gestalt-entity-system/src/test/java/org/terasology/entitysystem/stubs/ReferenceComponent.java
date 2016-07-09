@@ -19,6 +19,8 @@ package org.terasology.entitysystem.stubs;
 import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.entity.EntityRef;
 
+import java.util.List;
+
 /**
  *
  */
@@ -26,5 +28,9 @@ public interface ReferenceComponent extends Component {
 
     EntityRef getReference();
 
+    List<EntityRef> getReferences();
+
     void setReference(EntityRef ref);
+
+    void setReferences(List<EntityRef> references);
 }

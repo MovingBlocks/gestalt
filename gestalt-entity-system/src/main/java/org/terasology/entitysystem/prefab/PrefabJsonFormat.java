@@ -16,10 +16,15 @@
 
 package org.terasology.entitysystem.prefab;
 
+import com.google.common.collect.Queues;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.stream.JsonReader;
@@ -45,6 +50,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,13 +67,20 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
     private final ComponentManager componentManager;
     private final AssetManager assetManager;
     private final Gson gson;
+    private final ThreadLocal<Deque<PrefabLoader>> loaderStack = new ThreadLocal<Deque<PrefabLoader>>() {
+        @Override
+        protected Deque<PrefabLoader> initialValue() {
+            return Queues.newArrayDeque();
+        }
+    };
 
-    public PrefabJsonFormat(ModuleEnvironment moduleEnvironment, ComponentManager componentManager, AssetManager assetManager, Gson gson) {
+    public PrefabJsonFormat(ModuleEnvironment moduleEnvironment, ComponentManager componentManager, AssetManager assetManager, GsonBuilder gsonBuilder) {
         super("json", "prefab");
         this.componentIndex = new ComponentTypeIndex(moduleEnvironment);
         this.componentManager = componentManager;
         this.assetManager = assetManager;
-        this.gson = gson;
+        gsonBuilder.registerTypeAdapter(EntityRef.class, new EntityRefTypeHandler());
+        this.gson = gsonBuilder.create();
     }
 
     @Override
@@ -77,7 +90,49 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
                 reader.setLenient(true);
                 JsonParser parser = new JsonParser();
                 JsonElement assetRoot = parser.parse(reader);
-                return new PrefabLoader().load(assetRoot.getAsJsonObject(), urn);
+                PrefabLoader loader = new PrefabLoader();
+                loaderStack.get().push(loader);
+                try {
+                    return loader.load(assetRoot.getAsJsonObject(), urn);
+                } finally {
+                    loaderStack.get().pop();
+                    if (loaderStack.get().isEmpty()) {
+                        loaderStack.remove();
+                    }
+                }
+            }
+        }
+    }
+
+    private class EntityRefTypeHandler implements JsonDeserializer<EntityRef> {
+
+        @Override
+        public EntityRef deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            String refString = json.getAsJsonPrimitive().getAsString();
+            if (ResourceUrn.isValid(refString)) {
+                return readPrefabRef(refString);
+            } else {
+                return readEntityRecipeRef(refString);
+            }
+        }
+
+        private EntityRef readEntityRecipeRef(String refString) {
+            PrefabLoader loader = loaderStack.get().peek();
+            EntityRef ref = loader.prefabData.getRecipes().get(new ResourceUrn(loader.prefabUrn, refString));
+            if (ref == null) {
+                logger.error("Unable to resolve internal reference {}", refString);
+                return NullEntityRef.get();
+            } else {
+                return ref;
+            }
+        }
+
+        private EntityRef readPrefabRef(String refString) {
+            Optional<Prefab> refPrefab = assetManager.getAsset(refString, Prefab.class);
+            if (refPrefab.isPresent()) {
+                return new PrefabRef(refPrefab.get());
+            } else {
+                return NullEntityRef.get();
             }
         }
     }
@@ -172,41 +227,9 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
         }
 
         private <T extends Component, U> void readProperty(String name, JsonObject value, T component, PropertyAccessor<T, U> propertyAccessor) {
-            if (propertyAccessor.getPropertyType().equals(EntityRef.class)) {
-                EntityRef ref = readEntityRef(name, value);
-                propertyAccessor.set(component, propertyAccessor.getPropertyClass().cast(ref));
-            } else {
-                propertyAccessor.set(component, gson.fromJson(value.get(name), propertyAccessor.getPropertyType()));
-            }
+            propertyAccessor.set(component, gson.fromJson(value.get(name), propertyAccessor.getPropertyType()));
         }
 
-        private EntityRef readEntityRef(String name, JsonObject value) {
-            String refString = value.get(name).getAsString();
-            if (ResourceUrn.isValid(refString)) {
-                return readPrefabRef(refString);
-            } else {
-                return readEntityRecipeRef(name, value);
-            }
-        }
-
-        private EntityRef readEntityRecipeRef(String name, JsonObject value) {
-            EntityRef ref = prefabData.getRecipes().get(new ResourceUrn(prefabUrn, value.get(name).getAsString()));
-            if (ref == null) {
-                logger.error("Unable to resolve internal reference {}", value.get(name));
-                return NullEntityRef.get();
-            } else {
-                return ref;
-            }
-        }
-
-        private EntityRef readPrefabRef(String refString) {
-            Optional<Prefab> refPrefab = assetManager.getAsset(refString, Prefab.class);
-            if (refPrefab.isPresent()) {
-                return new PrefabRef(refPrefab.get());
-            } else {
-                return NullEntityRef.get();
-            }
-        }
     }
 
     /**
@@ -270,7 +293,7 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
          * @return The new PrefabJsonFormat.
          */
         public PrefabJsonFormat create() {
-            return new PrefabJsonFormat(moduleEnvironment, componentManager, assetManager, gsonBuilder.create());
+            return new PrefabJsonFormat(moduleEnvironment, componentManager, assetManager, gsonBuilder);
         }
     }
 }

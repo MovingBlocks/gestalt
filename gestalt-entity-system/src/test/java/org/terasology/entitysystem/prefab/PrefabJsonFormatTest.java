@@ -51,6 +51,7 @@ public class PrefabJsonFormatTest {
     private static final ResourceUrn MULTI_EXPLICT_ROOT_URN = new ResourceUrn("test:multi-explicit-root");
     private static final ResourceUrn EXTERNAL_COMPOSITION_URN = new ResourceUrn("test:external-composition");
     private static final ResourceUrn INHERITANCE_URN = new ResourceUrn("test:inheritance");
+    private static final ResourceUrn REFERENCE_LIST_URN = new ResourceUrn("test:reference-list");
 
     private static final String ROOT_FRAGMENT = "root";
     private static final String SECOND_FRAGMENT = "second";
@@ -180,11 +181,20 @@ public class PrefabJsonFormatTest {
         Optional<Prefab> result = assetManager.getAsset(INHERITANCE_URN, Prefab.class);
         assertTrue(result.isPresent());
         Prefab prefab = result.get();
-        ResourceUrn rootUrn = new ResourceUrn(INHERITANCE_URN, ROOT_FRAGMENT);
         EntityRecipe recipe = prefab.getRootEntity();
         SampleComponent sample = recipe.getComponent(SampleComponent.class).orElseThrow(() -> new RuntimeException("Expected SampleComponent"));
         assertEquals(TEST_NAME, sample.getName());
         assertEquals("New Description", sample.getDescription());
+    }
+
+    @Test
+    public void loadEntityWithReferenceList() {
+        Optional<Prefab> result = assetManager.getAsset(REFERENCE_LIST_URN, Prefab.class);
+        assertTrue(result.isPresent());
+        Prefab prefab = result.get();
+        EntityRecipe rootEntity = prefab.getRootEntity();
+        ReferenceComponent component = rootEntity.getComponent(ReferenceComponent.class).orElseThrow(() -> new RuntimeException("Expected ReferenceComponent"));
+        assertEquals(3, component.getReferences().size());
     }
 
 

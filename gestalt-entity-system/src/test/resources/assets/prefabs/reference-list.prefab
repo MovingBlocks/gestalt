@@ -1,0 +1,11 @@
+{
+  "entity": {
+    "reference": {
+      "references": [
+        "test:single",
+        "test:single",
+        "test:multi"
+      ]
+    }
+  }
+}
