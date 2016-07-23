@@ -19,7 +19,6 @@ package org.terasology.entitysystem.prefab;
 import com.google.common.collect.Queues;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.InstanceCreator;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -44,6 +43,7 @@ import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.entity.references.NullEntityRef;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.naming.Name;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.io.BufferedReader;
@@ -62,6 +62,7 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
 
     public static final String DEFAULT_ROOT_ENTITY_NAME = "root";
     private static final Logger logger = LoggerFactory.getLogger(PrefabJsonFormat.class);
+    private static final Name THIS = new Name("this");
 
     private final ComponentTypeIndex componentIndex;
     private final ComponentManager componentManager;
@@ -110,9 +111,9 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
         public EntityRef deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             String refString = json.getAsJsonPrimitive().getAsString();
             if (ResourceUrn.isValid(refString)) {
-                return readPrefabRef(refString);
+                return readUrnRef(refString);
             } else {
-                return readEntityRecipeRef(refString);
+                return readSimpleRef(refString);
             }
         }
 
@@ -120,18 +121,39 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
             PrefabLoader loader = loaderStack.get().peek();
             EntityRef ref = loader.prefabData.getRecipes().get(new ResourceUrn(loader.prefabUrn, refString));
             if (ref == null) {
-                logger.error("Unable to resolve internal reference {}", refString);
+                logger.error("Unable to resolve entity reference {}", refString);
                 return NullEntityRef.get();
             } else {
                 return ref;
             }
         }
 
-        private EntityRef readPrefabRef(String refString) {
+        private EntityRef readSimpleRef(String refString) {
+            PrefabLoader loader = loaderStack.get().peek();
+            EntityRef ref = loader.prefabData.getRecipes().get(new ResourceUrn(loader.prefabUrn, refString));
+            if (ref == null) {
+                Optional<Prefab> refPrefab = assetManager.getAsset(refString, Prefab.class);
+                if (refPrefab.isPresent()) {
+                    ref = new PrefabRef(refPrefab.get());
+                }
+            }
+            if (ref == null) {
+                logger.error("Unable to resolve entity or prefab reference {}", refString);
+                return NullEntityRef.get();
+            }
+            return ref;
+        }
+
+        private EntityRef readUrnRef(String refString) {
+            ResourceUrn refUrn = new ResourceUrn(refString);
+            if (THIS.equals(refUrn.getModuleName())) {
+                return readEntityRecipeRef(refUrn.getResourceName().toString());
+            }
             Optional<Prefab> refPrefab = assetManager.getAsset(refString, Prefab.class);
             if (refPrefab.isPresent()) {
                 return new PrefabRef(refPrefab.get());
             } else {
+                logger.error("Unable to resolve prefab reference {}", refString);
                 return NullEntityRef.get();
             }
         }

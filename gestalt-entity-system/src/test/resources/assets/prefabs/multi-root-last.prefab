@@ -10,7 +10,7 @@
         "name": "Test Name"
       },
       "reference": {
-        "reference": "second"
+        "reference": "this:second"
       }
     }
   }

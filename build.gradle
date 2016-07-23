@@ -135,7 +135,7 @@ configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.starts
 
 // gradle wrapper version
 wrapper {
-    gradleVersion '2.11'
+    gradleVersion '2.14'
 }
 
 ext {

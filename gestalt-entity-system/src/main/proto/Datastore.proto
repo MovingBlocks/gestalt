@@ -1,0 +1,77 @@
+syntax = "proto2";
+option java_package = "org.terasology.entitysystem.persistence.protodata";
+option java_outer_classname = "ProtoDatastore";
+option optimize_for = SPEED;
+
+message Value {
+    repeated double double = 1 [packed=true];
+    repeated float float = 2 [packed=true];
+    repeated sint32 integer = 3 [packed=true];
+    repeated sint64 long = 4 [packed=true];
+    repeated bool boolean = 5 [packed=true];
+    repeated string string = 6;
+    optional bytes bytes = 7;
+    repeated Value value = 8; // Combine with index-key, value-key or string for maps.
+    repeated int32 index_key = 9 [packed=true];
+    repeated Value value_key = 10;
+
+    extensions 5000 to max;
+}
+
+message Component {
+    optional int32 type_index = 1; // Index of the type, if contained in a world with component_classes table
+    repeated int32 field_id = 2; // The field ids for this component
+    repeated Value field_values = 3; // The field values for this component
+
+    extensions 5000 to max;
+}
+
+message Entity {
+    optional int64 id = 1;
+    optional int32 recipe = 2;
+    repeated Component component = 3;
+    repeated int32 removed_component_index = 4 [packed=true];
+
+    extensions 5000 to max;
+}
+
+message EntityRecipe {
+    optional int32 id = 1;
+    optional string name = 2;
+    optional int32 parent = 3;
+    repeated Component component = 4;
+
+    extensions 5000 to max;
+}
+
+message FieldInfo {
+    optional int32 id = 1;
+    optional string name = 2;
+
+    extensions 5000 to max;
+}
+
+message ComponentInfo {
+    optional int32 id = 1;
+    optional string name = 2;
+    repeated FieldInfo field = 3;
+
+    extensions 5000 to max;
+}
+
+message IndexMap {
+    optional string map_name = 1;
+    repeated int32 index = 2;
+    repeated string name = 3;
+
+    extensions 5000 to max;
+}
+
+message Manifest {
+    optional int64 nextId = 1;
+    repeated EntityRecipe recipes = 2;
+    repeated ComponentInfo components = 3;
+    repeated IndexMap indexMap = 4;
+
+    extensions 5000 to max;
+}
