@@ -126,8 +126,8 @@ public abstract class Asset<T extends AssetData> {
     public final synchronized void dispose() {
         if (!disposed) {
             disposed = true;
-            disposalHook.dispose();
             assetType.onAssetDisposed(this);
+            disposalHook.dispose();
         }
     }
 
