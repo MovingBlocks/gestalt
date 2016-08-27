@@ -21,6 +21,8 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
@@ -37,6 +39,8 @@ import java.util.Set;
  */
 public class TableModuleRegistry implements ModuleRegistry {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TableModuleRegistry.class);
+
     private final Table<Name, Version, Module> modules = HashBasedTable.create();
     private final Map<Name, Module> latestModules = Maps.newHashMap();
 
@@ -50,6 +54,12 @@ public class TableModuleRegistry implements ModuleRegistry {
                 latestModules.put(module.getId(), module);
             }
             return true;
+        } else {
+            LOG.error("Module {}-{} already registered from {}, cannot register same module from {}",
+                    module.getId(),
+                    module.getVersion(),
+                    modules.get(module.getId(), module.getVersion()).getLocations(),
+                    module.getLocations());
         }
         return false;
     }
