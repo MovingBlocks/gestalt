@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public class TableModuleRegistry implements ModuleRegistry {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TableModuleRegistry.class);
+    private static final Logger logger = LoggerFactory.getLogger(TableModuleRegistry.class);
 
     private final Table<Name, Version, Module> modules = HashBasedTable.create();
     private final Map<Name, Module> latestModules = Maps.newHashMap();
@@ -55,7 +55,7 @@ public class TableModuleRegistry implements ModuleRegistry {
             }
             return true;
         } else {
-            LOG.error("Module {}-{} already registered from {}, cannot register same module from {}",
+            logger.error("Module {}-{} already registered from {}, cannot register same module from {}",
                     module.getId(),
                     module.getVersion(),
                     modules.get(module.getId(), module.getVersion()).getLocations(),
@@ -168,7 +168,7 @@ public class TableModuleRegistry implements ModuleRegistry {
                 Module result = null;
                 for (Map.Entry<Version, Module> item : modules.row(id).entrySet()) {
                     if (item.getKey().compareTo(minVersion) >= 0 && item.getKey().compareTo(maxVersion) < 0
-                            && (result == null || item.getKey().compareTo(result.getVersion()) > 0)) {
+                        && (result == null || item.getKey().compareTo(result.getVersion()) > 0)) {
                         result = item.getValue();
                     }
                 }
