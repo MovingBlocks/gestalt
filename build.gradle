@@ -37,12 +37,12 @@ configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.starts
 
     // Primary dependencies definition
     dependencies {
-        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.12'
-        compile group: 'com.google.guava', name: 'guava', version: '18.0'
+        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
+        compile group: 'com.google.guava', name: 'guava', version: '19.0'
 
         // These dependencies are only needed for running tests
         testCompile group: 'junit', name: 'junit', version: '4.12'
-        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.5'
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
         testCompile group: 'org.mockito', name: 'mockito-core', version: '1.10.19'
     }
 
