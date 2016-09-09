@@ -56,4 +56,12 @@ public interface ComponentManager {
      * @return The ComponentType for the given type of component.
      */
     <T extends Component> ComponentType<T> getType(Class<T> type);
+
+    /**
+     * Provides a ComponentType, allowing for reflection like operations.
+     * @param instance An instance of component
+     * @param <T> The type of component
+     * @return The ComponentType for the given type of component.
+     */
+    <T extends Component> ComponentType<T> getType(T instance);
 }

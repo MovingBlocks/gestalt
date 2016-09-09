@@ -30,13 +30,11 @@ import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.entity.references.NullEntityRef;
 import org.terasology.entitysystem.stubs.ReferenceComponent;
 import org.terasology.entitysystem.stubs.SampleComponent;
-import org.terasology.naming.Name;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -87,12 +85,12 @@ public class PrefabInstantiationTest {
         SampleComponent sampleComponent = componentManager.create(SampleComponent.class);
         sampleComponent.setName(TEST_NAME);
         secondEntityRecipe.add(SampleComponent.class, sampleComponent);
-        prefabData.addEntityPrefab(secondEntityRecipe);
+        prefabData.addEntityRecipe(secondEntityRecipe);
         EntityRecipe rootEntityRecipe = new EntityRecipe(MULTI_PREFAB_ROOT_ENTITY_URN);
         ReferenceComponent referenceComponent = componentManager.create(ReferenceComponent.class);
         referenceComponent.setReference(secondEntityRecipe);
         rootEntityRecipe.add(ReferenceComponent.class, referenceComponent);
-        prefabData.addEntityPrefab(rootEntityRecipe);
+        prefabData.addEntityRecipe(rootEntityRecipe);
         prefabData.setRootEntityId(MULTI_PREFAB_ROOT_ENTITY_URN);
 
         multiPrefab = assetManager.loadAsset(MULTI_PREFAB_URN, prefabData, Prefab.class);
@@ -104,7 +102,7 @@ public class PrefabInstantiationTest {
         ReferenceComponent referenceComponent = componentManager.create(ReferenceComponent.class);
         referenceComponent.setReference(new PrefabRef(singlePrefab));
         rootEntityRecipe.add(ReferenceComponent.class, referenceComponent);
-        prefabData.addEntityPrefab(rootEntityRecipe);
+        prefabData.addEntityRecipe(rootEntityRecipe);
         prefabData.setRootEntityId(COMPOSITE_PREFAB_ROOT_ENTITY_URN);
 
         compositePrefab = assetManager.loadAsset(COMPOSITE_PREFAB_URN, prefabData, Prefab.class);
@@ -116,7 +114,7 @@ public class PrefabInstantiationTest {
         SampleComponent sampleComponent = componentManager.create(SampleComponent.class);
         sampleComponent.setName(TEST_NAME);
         entityRecipe.add(SampleComponent.class, sampleComponent);
-        prefabData.addEntityPrefab(entityRecipe);
+        prefabData.addEntityRecipe(entityRecipe);
         prefabData.setRootEntityId(SINGLE_PREFAB_ROOT_ENTITY_URN);
 
         singlePrefab = assetManager.loadAsset(SINGLE_PREFAB_URN, prefabData, Prefab.class);
@@ -159,7 +157,7 @@ public class PrefabInstantiationTest {
         ReferenceComponent referenceComponent = componentManager.create(ReferenceComponent.class);
         referenceComponent.setReference(secondEntityRecipe);
         entityRecipe.add(ReferenceComponent.class, referenceComponent);
-        prefabData.addEntityPrefab(entityRecipe);
+        prefabData.addEntityRecipe(entityRecipe);
         prefabData.setRootEntityId(SINGLE_PREFAB_ROOT_ENTITY_URN);
 
         singlePrefab = assetManager.loadAsset(SINGLE_PREFAB_URN, prefabData, Prefab.class);

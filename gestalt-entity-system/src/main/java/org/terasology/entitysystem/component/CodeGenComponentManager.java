@@ -92,6 +92,12 @@ public class CodeGenComponentManager implements ComponentManager {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Component> ComponentType<T> getType(T instance) {
+        return (ComponentType<T>) getType(instance.getClass());
+    }
+
+    @Override
     public <T extends Component> T create(Class<T> type) {
         ComponentType<T> typeInfo = getType(type);
         return typeInfo.create();

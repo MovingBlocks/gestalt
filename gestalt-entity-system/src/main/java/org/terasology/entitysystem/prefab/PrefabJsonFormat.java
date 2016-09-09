@@ -209,7 +209,7 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
 
         private void addEntityRecipeIfMissing(ResourceUrn entityUrn) {
             if (!prefabData.getRecipes().containsKey(entityUrn)) {
-                prefabData.addEntityPrefab(new EntityRecipe(entityUrn));
+                prefabData.addEntityRecipe(new EntityRecipe(entityUrn));
             }
         }
 
@@ -223,7 +223,7 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
                         copy.add(type, componentManager.copy(value));
                     }
                 });
-                prefabData.addEntityPrefab(copy);
+                prefabData.addEntityRecipe(copy);
             }
         }
 

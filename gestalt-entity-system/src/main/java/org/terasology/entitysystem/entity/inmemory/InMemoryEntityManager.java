@@ -44,8 +44,16 @@ public class InMemoryEntityManager implements EntityManager {
     private final InMemoryTransactionManager transactionManager;
 
     public InMemoryEntityManager(ComponentManager library) {
-        entityStore = new ComponentTable(library);
+        this(library, 1);
+    }
+
+    public InMemoryEntityManager(ComponentManager library, long nextEntityId) {
+        entityStore = new ComponentTable(library, nextEntityId);
         transactionManager = new InMemoryTransactionManager(this, entityStore, library);
+    }
+
+    public long getEntityId() {
+        return entityStore.getNextEntityId();
     }
 
     @Override
@@ -102,6 +110,16 @@ public class InMemoryEntityManager implements EntityManager {
     public Iterator<EntityRef> findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes) {
         Preconditions.checkArgument(!componentTypes.isEmpty());
         return new EntityRefIterator(entityStore.findWithComponents(componentTypes), this);
+    }
+
+    @Override
+    public Iterator<EntityRef> allEntities() {
+        return new EntityRefIterator(entityStore.entityIdIterator(), this);
+    }
+
+    @Override
+    public long getNextId() {
+        return entityStore.getNextEntityId();
     }
 
     private static class EntityRefIterator implements Iterator<EntityRef> {

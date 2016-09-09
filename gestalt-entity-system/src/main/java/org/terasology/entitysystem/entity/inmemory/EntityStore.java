@@ -31,6 +31,8 @@ public interface EntityStore {
 
     long createEntityId();
 
+    long getNextEntityId();
+
     int getEntityRevision(long entityId);
 
     boolean exists(long entityId);

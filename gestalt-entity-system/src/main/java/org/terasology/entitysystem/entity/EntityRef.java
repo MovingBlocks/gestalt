@@ -18,6 +18,7 @@ package org.terasology.entitysystem.entity;
 
 import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
 import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
+import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +30,11 @@ import java.util.Set;
  * EntityRef provides some simple methods for manipulating the entity that is being referenced.
  */
 public interface EntityRef {
+
+    /**
+     * @return The id of this entity ref. This will be 0 for null entity refs or new entities that have not yet been created.
+     */
+    long getId();
 
     /**
      * An entity exists if it is new this transaction, or if it was created in a previous transaction and still has components. Once all components are removed from an entity
@@ -47,9 +53,14 @@ public interface EntityRef {
     <T extends Component> Optional<T> getComponent(Class<T> componentType);
 
     /**
-     * Retrieves a set of the types of components that the EntityRef has.
+     * @return Types of components that the EntityRef has.
      */
     Set<Class<? extends Component>> getComponentTypes();
+
+    /**
+     * @return The components composing this entity
+     */
+    TypeKeyedMap<Component> getComponents();
 
     /**
      * Adds a component to an EntityRef, returning it
@@ -69,7 +80,6 @@ public interface EntityRef {
      * @throws ComponentDoesNotExistException if the entity does not have this component
      */
     <T extends Component> void removeComponent(Class<T> componentType);
-
 
     /**
      * Removes all the components from the EntityRef and deletes it

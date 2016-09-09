@@ -57,7 +57,7 @@ public class PrefabData implements AssetData {
     /**
      * @param recipe The recipe to add to the PrefabData
      */
-    public void addEntityPrefab(EntityRecipe recipe) {
+    public void addEntityRecipe(EntityRecipe recipe) {
         recipes.put(recipe.getIdentifier(), recipe);
         if (rootEntityId == null) {
             rootEntityId = recipe.getIdentifier();

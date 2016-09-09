@@ -53,6 +53,11 @@ public class EntityRecipe implements EntityRef {
     }
 
     @Override
+    public long getId() {
+        return 0;
+    }
+
+    @Override
     public boolean isPresent() {
         return true;
     }
@@ -121,6 +126,7 @@ public class EntityRecipe implements EntityRef {
     /**
      * @return A map of all the components of the in the recipe
      */
+    @Override
     public TypeKeyedMap<Component> getComponents() {
         return componentMap;
     }

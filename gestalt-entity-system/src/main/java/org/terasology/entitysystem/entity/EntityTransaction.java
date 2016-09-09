@@ -20,6 +20,7 @@ import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsExcept
 import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.naming.Name;
+import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.ConcurrentModificationException;
 import java.util.Map;
@@ -65,10 +66,19 @@ public interface EntityTransaction {
     <T extends Component> Optional<T> getComponent(long entityId, Class<T> componentType);
 
     /**
-     * Retrieves a set of the types of components that the given entity has.
+     * @param entityId The id of the entity to retrieve the component from.
+     * @return Retrieves a set of the types of components that the given entity has.
      * @throws IllegalStateException If no transaction is active
      */
     Set<Class<? extends Component>> getEntityComposition(long entityId);
+
+    /**
+
+     * @param entityId The id of the entity to retrieve the component from.
+     * @return A map of the components that the entity has
+     * @throws IllegalStateException If no transaction is active
+     */
+    TypeKeyedMap<Component> getEntityComponents(long entityId);
 
     /**
      * Adds a component to an entity, returning it.
@@ -109,4 +119,6 @@ public interface EntityTransaction {
      * @return A map of EntityRefs created, by the name of the entity prefab.
      */
     Map<Name,EntityRef> createEntities(Prefab prefab);
+
+
 }

@@ -58,16 +58,17 @@ public class ComponentTable implements EntityStore {
     private final ReentrantLock[] locks;
 
     private final ComponentManager componentManager;
-    private final AtomicLong idSource = new AtomicLong(1);
+    private final AtomicLong idSource;
 
-    public ComponentTable(ComponentManager componentManager) {
-        this(componentManager, DEFAULT_CONCURRENCY_LEVEL);
+    public ComponentTable(ComponentManager componentManager, long nextEntityId) {
+        this(componentManager, nextEntityId, DEFAULT_CONCURRENCY_LEVEL);
     }
 
-    public ComponentTable(ComponentManager componentManager, int concurrencyLevel) {
+    public ComponentTable(ComponentManager componentManager, long nextEntityId, int concurrencyLevel) {
         Preconditions.checkArgument(concurrencyLevel > 0, "Concurrency level must be > 0");
         this.componentManager = componentManager;
         this.concurrencyLevel = concurrencyLevel;
+        this.idSource = new AtomicLong(nextEntityId);
         this.locks = new ReentrantLock[concurrencyLevel];
         for (int i = 0; i < concurrencyLevel; i++) {
             locks[i] = new ReentrantLock();
@@ -77,6 +78,11 @@ public class ComponentTable implements EntityStore {
     @Override
     public long createEntityId() {
         return idSource.getAndIncrement();
+    }
+
+    @Override
+    public long getNextEntityId() {
+        return idSource.get();
     }
 
     @Override

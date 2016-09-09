@@ -113,6 +113,17 @@ public interface EntityManager {
      * @param componentTypes The desired components. Must contain at least one component
      * @return An iterator over the entities with the desired component(s)
      */
+
     Iterator<EntityRef> findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes);
 
+    /**
+     * @return An iterator over all entities. Note that entities could be deleted between when they are fetched and when they are accessed. This iterator is otherwise
+     * safe in the presence of entity changes. Can be used outside of a transaction.
+     */
+    Iterator<EntityRef> allEntities();
+
+    /**
+     * @return The value of the next entity id
+     */
+    long getNextId();
 }

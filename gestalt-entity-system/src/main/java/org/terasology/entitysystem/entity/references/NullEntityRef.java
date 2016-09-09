@@ -18,6 +18,7 @@ package org.terasology.entitysystem.entity.references;
 
 import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -40,6 +41,11 @@ public final class NullEntityRef implements EntityRef {
     }
 
     @Override
+    public long getId() {
+        return 0;
+    }
+
+    @Override
     public boolean isPresent() {
         return false;
     }
@@ -52,6 +58,11 @@ public final class NullEntityRef implements EntityRef {
     @Override
     public Set<Class<? extends Component>> getComponentTypes() {
         return Collections.emptySet();
+    }
+
+    @Override
+    public TypeKeyedMap<Component> getComponents() {
+        return new TypeKeyedMap<>();
     }
 
     @Override

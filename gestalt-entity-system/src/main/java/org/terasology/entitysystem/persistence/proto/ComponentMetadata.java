@@ -21,25 +21,35 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.PropertyAccessor;
+import org.terasology.naming.Name;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  *
  */
 public class ComponentMetadata {
 
-    private int id;
-    private ComponentType<?> componentType;
-    private BiMap<Integer, String> fieldIds;
+    private final int id;
+    private final Name module;
+    private final Name name;
+    private final ComponentType<?> componentType;
+    private final BiMap<Integer, String> fieldIds;
 
-    public ComponentMetadata(int id, ComponentType<?> type) {
-        this(id, type, Collections.emptyMap());
+    public ComponentMetadata(int id, String module, String name, ComponentType<?> type) {
+        this(id, new Name(module), new Name(name), type, Collections.emptyMap());
     }
 
-    public ComponentMetadata(int id, ComponentType<?> type, Map<Integer, String> existingFieldIds) {
+    public ComponentMetadata(int id, Name module, Name name, ComponentType<?> type) {
+        this(id, module, name, type, Collections.emptyMap());
+    }
+
+    public ComponentMetadata(int id, Name module, Name name, ComponentType<?> type, Map<Integer, String> existingFieldIds) {
         this.id = id;
+        this.name = name;
+        this.module = module;
         this.componentType = type;
         fieldIds = HashBiMap.create(existingFieldIds);
         int nextId = 1;
@@ -59,8 +69,16 @@ public class ComponentMetadata {
         return id;
     }
 
-    public ComponentType<?> getComponentType() {
-        return componentType;
+    public Name getName() {
+        return name;
+    }
+
+    public Name getModule() {
+        return module;
+    }
+
+    public Optional<ComponentType<?>> getComponentType() {
+        return Optional.ofNullable(componentType);
     }
 
     public int getFieldId(String field) {
@@ -72,4 +90,7 @@ public class ComponentMetadata {
         return componentType.getPropertyInfo().getProperty(fieldIds.get(fieldId)).orElseThrow(IllegalArgumentException::new);
     }
 
+    public Iterable<Map.Entry<Integer, String>> allFields() {
+        return fieldIds.entrySet();
+    }
 }

@@ -37,7 +37,7 @@ import java.util.Set;
  */
 public class ComponentTypeIndex {
 
-    private static final String COMPONENT_SUFFIX = "Component";
+    public static final String COMPONENT_SUFFIX = "Component";
 
     private final Map<ResourceUrn, Class<? extends Component>> componentIndexByUrn;
     private final SetMultimap<Name, Name> modulesProvidingComponentsIndex;

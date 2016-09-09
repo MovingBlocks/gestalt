@@ -211,6 +211,18 @@ public class InMemoryTransaction implements EntityTransaction {
         return result;
     }
 
+    public TypeKeyedMap<Component> getEntityComponents(long entityId) {
+        TransactionState state = getState();
+        TypeKeyedMap<Component> result = new TypeKeyedMap<>();
+        state.cacheEntity(entityId);
+        for (Map.Entry<Class<? extends Component>, CacheEntry> entry : state.entityCache.row(entityId).entrySet()) {
+            if (entry.getValue().getComponent() != null) {
+                result.put(entry.getValue().getComponentType(), entry.getValue().getComponent());
+            }
+        }
+        return result;
+    }
+
     @Override
     public <T extends Component> T addComponent(long entityId, Class<T> componentType) {
         TransactionState state = getState();
@@ -292,6 +304,7 @@ public class InMemoryTransaction implements EntityTransaction {
         return !transactionState.isEmpty();
     }
 
+    // TODO: rework this to have a map of entity state rather than a table
     private class TransactionState {
         private Table<Long, Class<? extends Component>, CacheEntry> entityCache = HashBasedTable.create();
         private TLongIntMap expectedEntityRevisions = new TLongIntHashMap();

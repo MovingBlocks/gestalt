@@ -18,6 +18,7 @@ package org.terasology.entitysystem.prefab;
 
 import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -41,6 +42,11 @@ public class PrefabRef implements EntityRef {
     }
 
     @Override
+    public long getId() {
+        return 0;
+    }
+
+    @Override
     public boolean isPresent() {
         return true;
     }
@@ -53,6 +59,11 @@ public class PrefabRef implements EntityRef {
     @Override
     public Set<Class<? extends Component>> getComponentTypes() {
         return Collections.unmodifiableSet(prefab.getRootEntity().getComponents().keySet());
+    }
+
+    @Override
+    public TypeKeyedMap<Component> getComponents() {
+        return new TypeKeyedMap<>(Collections.unmodifiableMap(prefab.getRootEntity().getComponents().getInner()));
     }
 
     @Override

@@ -22,6 +22,7 @@ import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
 import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
+import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collections;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class NewEntityRef implements EntityRef {
     private boolean useInnerRef = false;
 
     private ComponentManager componentManager;
-    private Map<Class<? extends Component>, Component> components = Maps.newLinkedHashMap();
+    private TypeKeyedMap<Component> components = new TypeKeyedMap<>();
 
     public NewEntityRef(ComponentManager componentManager) {
         this.componentManager = componentManager;
@@ -60,6 +61,14 @@ public class NewEntityRef implements EntityRef {
     }
 
     @Override
+    public long getId() {
+        if (useInnerRef) {
+            return innerEntityRef.getId();
+        }
+        return 0;
+    }
+
+    @Override
     public boolean isPresent() {
         return innerEntityRef == null || innerEntityRef.isPresent();
     }
@@ -78,6 +87,14 @@ public class NewEntityRef implements EntityRef {
             return innerEntityRef.getComponentTypes();
         }
         return Collections.unmodifiableSet(components.keySet());
+    }
+
+    @Override
+    public TypeKeyedMap<Component> getComponents() {
+        if (useInnerRef) {
+            return innerEntityRef.getComponents();
+        }
+        return new TypeKeyedMap<>(Collections.unmodifiableMap(components.getInner()));
     }
 
     @Override

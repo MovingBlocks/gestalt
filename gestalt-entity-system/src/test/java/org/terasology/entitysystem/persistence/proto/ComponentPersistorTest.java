@@ -17,12 +17,13 @@
 package org.terasology.entitysystem.persistence.proto;
 
 import org.junit.Test;
+import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.entity.Component;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.stubs.SampleComponent;
+import org.terasology.module.ModuleEnvironment;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -37,11 +38,17 @@ public class ComponentPersistorTest {
 
     private ComponentManager componentManager;
     private ComponentPersistor persistor;
+    private ProtoPersistence context = new ProtoPersistence();
 
-    public ComponentPersistorTest() {
+    public ComponentPersistorTest() throws Exception {
+        ModuleEnvironment moduleEnvironment;
+        VirtualModuleEnvironment virtualModuleEnvironment = new VirtualModuleEnvironment(getClass());
+        moduleEnvironment = virtualModuleEnvironment.createEnvironment();
+
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         componentManager = new CodeGenComponentManager(typeLibrary);
+        persistor = new ComponentPersistor(componentManager, context, new ComponentManifest(moduleEnvironment));
     }
 
     @Test
@@ -50,12 +57,48 @@ public class ComponentPersistorTest {
         component.setName("Test Name");
         component.setDescription("Test Description");
 
-        ProtoDatastore.Component componentData = persistor.serialize(component);
-        Component deserialized = persistor.deserialize(componentData);
+        ProtoDatastore.Component componentData = persistor.serialize(component).build();
+        Component deserialized = persistor.deserialize(componentData).orElseThrow(RuntimeException::new);
         assertTrue(deserialized instanceof SampleComponent);
         SampleComponent deserializedSampleComp = (SampleComponent) deserialized;
         assertEquals(component.getName(), deserializedSampleComp.getName());
         assertEquals(component.getDescription(), deserializedSampleComp.getDescription());
+    }
 
+    @Test
+    public void persistComponentDelta() {
+        SampleComponent baseComponent = componentManager.create(SampleComponent.class);
+        baseComponent.setName("Test Name");
+        baseComponent.setDescription("Test Description");
+
+        SampleComponent component = componentManager.create(SampleComponent.class);
+        component.setName("New Name");
+        component.setDescription("Test Description");
+
+        ProtoDatastore.Component componentData = persistor.serializeDelta(baseComponent, component).build();
+        Component deserialized = persistor.deserializeOnto(componentData, componentManager.copy(baseComponent));
+        assertTrue(deserialized instanceof SampleComponent);
+        SampleComponent deserializedSampleComp = (SampleComponent) deserialized;
+        assertEquals(component.getName(), deserializedSampleComp.getName());
+        assertEquals(component.getDescription(), deserializedSampleComp.getDescription());
+    }
+
+    @Test
+    public void persistComponentDeltaWithChangedBase() {
+        SampleComponent baseComponent = componentManager.create(SampleComponent.class);
+        baseComponent.setName("Test Name");
+        baseComponent.setDescription("Test Description");
+
+        SampleComponent component = componentManager.create(SampleComponent.class);
+        component.setName("New Name");
+        component.setDescription("Test Description");
+
+        ProtoDatastore.Component componentData = persistor.serializeDelta(baseComponent, component).build();
+        baseComponent.setDescription("Meow");
+        Component deserialized = persistor.deserializeOnto(componentData, componentManager.copy(baseComponent));
+        assertTrue(deserialized instanceof SampleComponent);
+        SampleComponent deserializedSampleComp = (SampleComponent) deserialized;
+        assertEquals(component.getName(), deserializedSampleComp.getName());
+        assertEquals("Meow", deserializedSampleComp.getDescription());
     }
 }

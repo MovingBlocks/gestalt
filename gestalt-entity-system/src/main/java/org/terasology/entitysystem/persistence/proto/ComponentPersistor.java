@@ -16,19 +16,16 @@
 
 package org.terasology.entitysystem.persistence.proto;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import gnu.trove.iterator.TIntObjectIterator;
-import gnu.trove.map.TIntObjectMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.PropertyAccessor;
-import org.terasology.entitysystem.component.module.ComponentTypeIndex;
 import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.persistence.proto.exception.PersistenceException;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -38,49 +35,70 @@ public class ComponentPersistor {
 
     private static final Logger logger = LoggerFactory.getLogger(ComponentPersistor.class);
 
-//    message Component {
-//        optional int32 type_index = 1; // Index of the type, if contained in a world with component_classes table
-//        repeated int32 field_id = 2; // The field ids for this component
-//        repeated Value field_values = 3; // The field values for this component
-//
-//        extensions 5000 to max;
-//    }
-
-    private final ComponentTypeIndex componentTypeIndex;
     private final ComponentManager componentManager;
-    private final BiMap<Integer, ComponentType<?>> componentIdMap;
+    private final ComponentManifest manifest;
+    private final ProtoPersistence context;
 
 
-    public ComponentPersistor(ComponentTypeIndex componentTypeIndex, ComponentManager componentManager, TIntObjectMap<String> componentIdMap) {
-        this.componentTypeIndex = componentTypeIndex;
+    public ComponentPersistor(ComponentManager componentManager, ProtoPersistence context, ComponentManifest manifest) {
         this.componentManager = componentManager;
-        this.componentIdMap = HashBiMap.create();
-        TIntObjectIterator<String> entryIterator = componentIdMap.iterator();
-        while (entryIterator.hasNext()) {
-            entryIterator.advance();
-            Optional<Class<? extends Component>> componentType = componentTypeIndex.find(entryIterator.value());
-            if (componentType.isPresent()) {
-                this.componentIdMap.put(entryIterator.key(), componentManager.getType(componentType.get()));
-            } else {
-                logger.error("Failed to resolve component '{}', instances will not be deserialized", entryIterator.value());
+        this.manifest = manifest;
+        this.context = context;
+    }
+
+
+    public <T extends Component> ProtoDatastore.Component.Builder serialize(T component) {
+        ComponentType<T> componentType = componentManager.getType(component);
+        ComponentMetadata componentMetadata = manifest.getComponentMetadata(componentType);
+        ProtoDatastore.Component.Builder builder = ProtoDatastore.Component.newBuilder();
+        builder.setTypeIndex(componentMetadata.getId());
+        for (PropertyAccessor<T, ?> property : componentType.getPropertyInfo().getProperties().values()) {
+            builder.addFieldId(componentMetadata.getFieldId(property.getName()));
+            builder.addFieldValues(context.serialize(property.get(component), property.getPropertyType()));
+        }
+        return builder;
+    }
+
+    public <T extends Component> ProtoDatastore.Component.Builder serializeDelta(T baseComponent, T component) {
+        ComponentType<T> componentType = componentManager.getType(component);
+        ComponentMetadata componentMetadata = manifest.getComponentMetadata(componentType);
+        ProtoDatastore.Component.Builder builder = ProtoDatastore.Component.newBuilder();
+        builder.setTypeIndex(componentMetadata.getId());
+        for (PropertyAccessor<T, ?> property : componentType.getPropertyInfo().getProperties().values()) {
+            if (!Objects.equals(property.get(component), property.get(baseComponent))) {
+                builder.addFieldId(componentMetadata.getFieldId(property.getName()));
+                builder.addFieldValues(context.serialize(property.get(component), property.getPropertyType()));
             }
         }
+        return builder;
     }
-
-
-    public ProtoDatastore.Component serialize(Component component) {
-        ComponentType<? extends Component> componentType = componentManager.getType(component.getClass());
-        ProtoDatastore.Component.Builder builder = ProtoDatastore.Component.newBuilder();
-        builder.setTypeIndex(componentIdMap.inverse().get(componentType));
-        for (PropertyAccessor<? extends Component, ?> property : componentType.getPropertyInfo().getProperties().values()) {
-
-        }
-
-
-    }
-
 
     public Optional<Component> deserialize(ProtoDatastore.Component componentData) {
-        return null;
+        ComponentMetadata componentMetadata = manifest.getComponentMetadata(componentData.getTypeIndex());
+        if (componentMetadata.getComponentType().isPresent()) {
+            ComponentType<?> componentType = componentMetadata.getComponentType().get();
+            Component comp = componentType.create();
+            for (int i = 0; i < componentData.getFieldIdCount(); ++i) {
+                PropertyAccessor fieldAccessor = componentMetadata.getFieldAccessor(componentData.getFieldId(i));
+                fieldAccessor.set(comp, context.deserialize(componentData.getFieldValues(i), fieldAccessor.getPropertyType()));
+            }
+            return Optional.of(comp);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public <T extends Component> T deserializeOnto(ProtoDatastore.Component data, T target) {
+        ComponentType<T> componentType = componentManager.getType(target);
+        ComponentMetadata componentMetadata = manifest.getComponentMetadata(data.getTypeIndex());
+        if (componentMetadata.getComponentType().isPresent() && componentMetadata.getComponentType().get().equals(componentType)) {
+            for (int i = 0; i < data.getFieldIdCount(); ++i) {
+                PropertyAccessor fieldAccessor = componentMetadata.getFieldAccessor(data.getFieldId(i));
+                fieldAccessor.set(target, context.deserialize(data.getFieldValues(i), fieldAccessor.getPropertyType()));
+            }
+            return target;
+        } else {
+            throw new PersistenceException("Incorrect component data for expected type: Expected '" + target.getClass().getSimpleName() + "', found '" + componentMetadata.getName());
+        }
     }
 }

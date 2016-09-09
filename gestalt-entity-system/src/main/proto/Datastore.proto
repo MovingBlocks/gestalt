@@ -12,8 +12,6 @@ message Value {
     repeated string string = 6;
     optional bytes bytes = 7;
     repeated Value value = 8; // Combine with index-key, value-key or string for maps.
-    repeated int32 index_key = 9 [packed=true];
-    repeated Value value_key = 10;
 
     extensions 5000 to max;
 }
@@ -53,8 +51,9 @@ message FieldInfo {
 
 message ComponentInfo {
     optional int32 id = 1;
-    optional string name = 2;
-    repeated FieldInfo field = 3;
+    optional string module = 2;
+    optional string name = 3;
+    repeated FieldInfo field = 4;
 
     extensions 5000 to max;
 }
@@ -67,11 +66,31 @@ message IndexMap {
     extensions 5000 to max;
 }
 
-message Manifest {
-    optional int64 nextId = 1;
-    repeated EntityRecipe recipes = 2;
-    repeated ComponentInfo components = 3;
-    repeated IndexMap indexMap = 4;
+message ComponentManifest {
+    repeated ComponentInfo components = 1;
+
+    extensions 5000 to max;
+}
+
+message PrefabManifest {
+    repeated EntityRecipe recipes = 1;
+
+    extensions 5000 to max;
+}
+
+message IndexMapManifest {
+    repeated IndexMap indexMap = 1;
+
+    extensions 5000 to max;
+}
+
+message Store {
+    repeated Entity entity = 1;
+    optional ComponentManifest componentManifest = 2;
+    optional PrefabManifest prefabManifest = 3;
+    optional IndexMapManifest indexMapManifest = 4;
+
+    optional int64 nextEntityId = 16;
 
     extensions 5000 to max;
 }

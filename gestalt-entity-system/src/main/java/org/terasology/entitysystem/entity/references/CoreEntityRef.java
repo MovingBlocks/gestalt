@@ -19,6 +19,7 @@ package org.terasology.entitysystem.entity.references;
 import org.terasology.entitysystem.entity.Component;
 import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -48,6 +49,7 @@ public class CoreEntityRef implements EntityRef {
     /**
      * @return The id of the entity referenced by this EntityRef
      */
+    @Override
     public long getId() {
         return id;
     }
@@ -72,6 +74,11 @@ public class CoreEntityRef implements EntityRef {
     @Override
     public Set<Class<? extends Component>> getComponentTypes() {
         return entityManager.getRawTransaction().getEntityComposition(id);
+    }
+
+    @Override
+    public TypeKeyedMap<Component> getComponents() {
+        return entityManager.getRawTransaction().getEntityComponents(id);
     }
 
     @Override
