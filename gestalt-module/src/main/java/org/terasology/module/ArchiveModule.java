@@ -25,6 +25,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * A module that is a archive (zip or jar) file that exists on the file system, but outside the classpath.
@@ -39,7 +40,7 @@ public class ArchiveModule extends BaseModule {
      * @param metadata The metadata describing this module
      */
     public ArchiveModule(Path path, ModuleMetadata metadata) {
-        super(Arrays.asList(path), metadata);
+        super(Collections.singletonList(path), metadata);
         Preconditions.checkArgument(Files.isRegularFile(path));
         try {
             classpath = ImmutableList.of(path.toUri().toURL());

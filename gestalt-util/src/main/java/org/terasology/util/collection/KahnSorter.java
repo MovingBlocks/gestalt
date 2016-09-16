@@ -29,7 +29,7 @@ import java.util.Set;
 
 /**
  * An implementation of TopologicalSorter that uses the Kahn algorithm.
-  */
+ */
 public class KahnSorter<T> implements TopologicalSorter<T> {
 
     private Set<T> openNodes = Sets.newLinkedHashSet();

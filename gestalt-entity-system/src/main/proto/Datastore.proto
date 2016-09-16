@@ -35,9 +35,8 @@ message Entity {
 
 message EntityRecipe {
     optional int32 id = 1;
-    optional string name = 2;
-    optional int32 parent = 3;
-    repeated Component component = 4;
+    optional string urn = 2;
+    repeated Component component = 3;
 
     extensions 5000 to max;
 }
@@ -72,7 +71,7 @@ message ComponentManifest {
     extensions 5000 to max;
 }
 
-message PrefabManifest {
+message EntityRecipeManifest {
     repeated EntityRecipe recipes = 1;
 
     extensions 5000 to max;
@@ -87,7 +86,7 @@ message IndexMapManifest {
 message Store {
     repeated Entity entity = 1;
     optional ComponentManifest componentManifest = 2;
-    optional PrefabManifest prefabManifest = 3;
+    optional EntityRecipeManifest entityRecipeManifest = 3;
     optional IndexMapManifest indexMapManifest = 4;
 
     optional int64 nextEntityId = 16;

@@ -48,8 +48,8 @@ public abstract class BaseModule implements Module {
     private static final String REFLECTIONS_CACHE_FILE = "reflections.cache";
     private static final Logger logger = LoggerFactory.getLogger(BaseModule.class);
 
-    protected ImmutableList<Path> paths;
-    protected ModuleMetadata metadata;
+    private ImmutableList<Path> paths;
+    private ModuleMetadata metadata;
 
     private Reflections reflectionsFragment;
 

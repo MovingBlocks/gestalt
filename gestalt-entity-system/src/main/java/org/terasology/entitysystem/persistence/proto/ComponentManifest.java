@@ -19,6 +19,8 @@ package org.terasology.entitysystem.persistence.proto;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
 import org.terasology.module.ModuleEnvironment;
@@ -38,13 +40,13 @@ public class ComponentManifest {
     private int nextComponentId;
     private final List<ComponentMetadata> componentInfo;
     private final Map<ComponentType<?>, ComponentMetadata> componentInfoByType;
-    private final Map<Integer, ComponentMetadata> componentInfoById;
+    private final TIntObjectMap<ComponentMetadata> componentInfoById;
 
     public ComponentManifest(ModuleEnvironment moduleEnvironment) {
         this.moduleEnvironment = moduleEnvironment;
         componentInfo = Lists.newArrayList();
         componentInfoByType = Maps.newHashMap();
-        componentInfoById = Maps.newHashMap();
+        componentInfoById = new TIntObjectHashMap<>();
     }
 
     public void addComponentMetadata(ComponentMetadata metadata) {

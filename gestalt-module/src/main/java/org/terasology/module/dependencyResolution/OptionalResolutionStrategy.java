@@ -40,7 +40,7 @@ public enum OptionalResolutionStrategy {
     private final boolean required;
     private final boolean desired;
 
-    private OptionalResolutionStrategy(boolean required, boolean desired) {
+    OptionalResolutionStrategy(boolean required, boolean desired) {
         this.required = required;
         this.desired = desired;
     }
