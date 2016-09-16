@@ -19,6 +19,7 @@ package org.terasology.entitysystem.component;
 import com.esotericsoftware.reflectasm.MethodAccess;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Converter;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
@@ -43,6 +44,8 @@ import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * A ComponentManager that generates component implementation classes. This expect component interfaces to define properties with getter and setter methods -
@@ -53,6 +56,9 @@ public class CodeGenComponentManager implements ComponentManager {
 
     private static final Converter<String, String> TO_LOWER_CAMEL = CaseFormat.UPPER_CAMEL.converterTo(CaseFormat.LOWER_CAMEL);
     private static final Converter<String, String> TO_UPPER_CAMEL = CaseFormat.LOWER_CAMEL.converterTo(CaseFormat.UPPER_CAMEL);
+
+    private static final Joiner BOOLEAN_AND_JOINER = Joiner.on(" && ");
+    private static final Joiner COMMA_JOINER = Joiner.on(", ");
 
     private Map<Class<? extends Component>, ComponentType> componentMetadataLookup = new MapMaker().concurrencyLevel(4).makeMap();
     private Map<Class<? extends Component>, ComponentType> componentImplMetadataLookup = new MapMaker().concurrencyLevel(4).makeMap();
@@ -143,25 +149,11 @@ public class CodeGenComponentManager implements ComponentManager {
             Collection<PropertyAccessor<T, ?>> accessorList = discoverProperties(type);
 
             for (PropertyAccessor<T, ?> accessor : accessorList) {
-                String typeName = accessor.getPropertyClass().getCanonicalName();
-                if (accessor.getPropertyType() instanceof ParameterizedType) {
-                    typeName = ((ParameterizedType) accessor.getPropertyType()).getRawType().getTypeName();
-                }
-                CtField ctField = CtField.make("private " + typeName + " " + accessor.getName() + ";", componentClass);
-                componentClass.addField(ctField);
-
-                String getterName;
-                if (Boolean.TYPE.equals(accessor.getPropertyType())) {
-                    getterName = "is" + TO_UPPER_CAMEL.convert(accessor.getName());
-                } else {
-                    getterName = "get" + TO_UPPER_CAMEL.convert(accessor.getName());
-                }
-
-                CtMethod getter = CtNewMethod.make("public " + typeName + " " + getterName + "() { return " + accessor.getName() + "; }", componentClass);
-                componentClass.addMethod(getter);
-                CtMethod setter = CtNewMethod.make("public void set" + TO_UPPER_CAMEL.convert(accessor.getName()) + "(" + typeName + " value) { this." + accessor.getName() + " = value; }", componentClass);
-                componentClass.addMethod(setter);
+                generateGettersAndSetters(componentClass, accessor);
             }
+
+            generateEquals(componentClass, accessorList);
+            generateHashCode(componentClass, accessorList);
 
             Class<? extends T> implementationClass = componentClass.toClass(targetLoader, type.getProtectionDomain());
             ComponentPropertyInfo<T> propertyInfo = new ComponentPropertyInfo<>(accessorList);
@@ -177,6 +169,50 @@ public class CodeGenComponentManager implements ComponentManager {
         } catch (NotFoundException e) {
             throw new RuntimeException("Error resolving component interface '" + type.getName() + "'", e);
         }
+    }
+
+    private <T extends Component> void generateEquals(CtClass componentClass, Collection<PropertyAccessor<T, ?>> accessorList) throws CannotCompileException {
+        StringBuilder builder = new StringBuilder();
+        builder.append("public boolean equals(Object obj) {")
+                .append("if (obj == this) { return true; }")
+                .append("if (obj instanceof ").append(componentClass.getName()).append(") {")
+                .append(componentClass.getName()).append(" other = (").append(componentClass.getName()).append(") obj;")
+                .append("return ");
+        BOOLEAN_AND_JOINER.appendTo(builder, accessorList.stream().map((t) -> Objects.class.getCanonicalName() + ".equals(" + t.getName() + ", other." + t.getName() + ")").collect(Collectors.toList()));
+        builder.append("; } return false; }");
+        CtMethod equals = CtNewMethod.make(builder.toString(), componentClass);
+        componentClass.addMethod(equals);
+    }
+
+    private <T extends Component> void generateHashCode(CtClass componentClass, Collection<PropertyAccessor<T, ?>> accessorList) throws CannotCompileException {
+        StringBuilder builder = new StringBuilder();
+        builder.append("public int hashCode() {")
+               .append("return ").append(Objects.class.getCanonicalName()).append(".hash(new Object[]{");
+        COMMA_JOINER.appendTo(builder, accessorList.stream().map(PropertyAccessor::getName).collect(Collectors.toList()));
+        builder.append("}); }");
+        CtMethod equals = CtNewMethod.make(builder.toString(), componentClass);
+        componentClass.addMethod(equals);
+    }
+
+    private <T extends Component> void generateGettersAndSetters(CtClass componentClass, PropertyAccessor<T, ?> accessor) throws CannotCompileException {
+        String typeName = accessor.getPropertyClass().getCanonicalName();
+        if (accessor.getPropertyType() instanceof ParameterizedType) {
+            typeName = ((ParameterizedType) accessor.getPropertyType()).getRawType().getTypeName();
+        }
+        CtField ctField = CtField.make("private " + typeName + " " + accessor.getName() + ";", componentClass);
+        componentClass.addField(ctField);
+
+        String getterName;
+        if (Boolean.TYPE.equals(accessor.getPropertyType())) {
+            getterName = "is" + TO_UPPER_CAMEL.convert(accessor.getName());
+        } else {
+            getterName = "get" + TO_UPPER_CAMEL.convert(accessor.getName());
+        }
+
+        CtMethod getter = CtNewMethod.make("public " + typeName + " " + getterName + "() { return " + accessor.getName() + "; }", componentClass);
+        componentClass.addMethod(getter);
+        CtMethod setter = CtNewMethod.make("public void set" + TO_UPPER_CAMEL.convert(accessor.getName()) + "(" + typeName + " value) { this." + accessor.getName() + " = value; }", componentClass);
+        componentClass.addMethod(setter);
     }
 
     /**

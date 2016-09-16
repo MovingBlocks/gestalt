@@ -40,6 +40,33 @@ public class ComponentManagerTest {
         PropertyAccessor<ComponentInterface, String> property = (PropertyAccessor<ComponentInterface, String>) typeInfo.getPropertyInfo().getProperty("name").get();
         property.set(instance, "Blue");
         assertEquals("Blue", property.get(instance));
+    }
 
+    @Test
+    public void constructComponentEquals() {
+        TypeLibrary typeLibrary = new TypeLibrary();
+        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
+        ComponentInterface instance = library.create(ComponentInterface.class);
+        assertNotNull(instance);
+        instance.setName("World");
+
+        ComponentInterface instance2 = library.create(ComponentInterface.class);
+        instance2.setName("World");
+
+        assertEquals(instance, instance2);
+    }
+
+    @Test
+    public void constructComponentHashCode() {
+        TypeLibrary typeLibrary = new TypeLibrary();
+        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
+        ComponentInterface instance = library.create(ComponentInterface.class);
+        assertNotNull(instance);
+        instance.setName("World");
+
+        ComponentInterface instance2 = library.create(ComponentInterface.class);
+        instance2.setName("World");
+
+        assertEquals(instance.hashCode(), instance2.hashCode());
     }
 }
