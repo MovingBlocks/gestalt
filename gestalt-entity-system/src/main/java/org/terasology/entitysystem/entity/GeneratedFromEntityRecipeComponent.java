@@ -16,12 +16,18 @@
 
 package org.terasology.entitysystem.entity;
 
-/**
- * A component is an element that can be added to an entity. A component holds data, and implies a feature or behavior of the entity.
- * <p>
- * This is the base interface for all components. To define a component, create a new interface extending this interface and add properties (getter and setters) for any data
- * the component should contain.
- */
-public interface Component {
+import org.terasology.assets.ResourceUrn;
+import org.terasology.entitysystem.core.Component;
 
+/**
+ * Component indicating an entity was generated from an entity recipe
+ */
+public interface GeneratedFromEntityRecipeComponent extends Component {
+
+    /**
+     * @return The Urn of the EntityRecipe that this entity was generated from
+     */
+    ResourceUrn getEntityRecipe();
+
+    void setEntityRecipe(ResourceUrn entityRecipeUrn);
 }

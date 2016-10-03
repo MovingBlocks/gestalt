@@ -19,19 +19,17 @@ package org.terasology.entitysystem.entity.inmemory;
 import com.google.common.base.Preconditions;
 import gnu.trove.iterator.TLongIterator;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.entity.references.CoreEntityRef;
-import org.terasology.entitysystem.entity.EntityManager;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.EntityTransaction;
 import org.terasology.entitysystem.entity.TransactionEventListener;
 import org.terasology.entitysystem.prefab.Prefab;
-import org.terasology.naming.Name;
 import org.terasology.util.Varargs;
 
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 /**

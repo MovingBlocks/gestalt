@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.persistence.proto;
+package org.terasology.entitysystem.persistence.proto.persistors;
 
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.assets.ResolutionStrategy;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.module.ModuleDependencyResolutionStrategy;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.persistence.proto.ComponentManifest;
+import org.terasology.entitysystem.persistence.proto.ComponentMetadata;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- *
+ * Handles serialization and deserialization of a component manifest
  */
 public class ComponentManifestPersistor {
 
@@ -50,9 +50,9 @@ public class ComponentManifestPersistor {
         index = new ComponentTypeIndex(moduleEnvironment, new ModuleDependencyResolutionStrategy(moduleEnvironment));
     }
 
-    public ProtoDatastore.ComponentManifest.Builder serialize(ComponentManifest manifest) {
-        ProtoDatastore.ComponentManifest.Builder builder = ProtoDatastore.ComponentManifest.newBuilder();
-        for (ComponentMetadata metadata : manifest.allComponentMetadata()) {
+    public ProtoDatastore.ComponentManifestData.Builder serialize(ComponentManifest manifest) {
+        ProtoDatastore.ComponentManifestData.Builder builder = ProtoDatastore.ComponentManifestData.newBuilder();
+        for (ComponentMetadata<?> metadata : manifest.allComponentMetadata()) {
             ProtoDatastore.ComponentInfo.Builder componentInfoBuilder = ProtoDatastore.ComponentInfo.newBuilder();
             componentInfoBuilder.setId(metadata.getId());
             componentInfoBuilder.setName(metadata.getName().toString());
@@ -69,8 +69,8 @@ public class ComponentManifestPersistor {
         return builder;
     }
 
-    public ComponentManifest deserialize(ProtoDatastore.ComponentManifest manifestData) {
-        ComponentManifest manifest = new ComponentManifest(moduleEnvironment);
+    public ComponentManifest deserialize(ProtoDatastore.ComponentManifestData manifestData) {
+        ComponentManifest manifest = new ComponentManifest(moduleEnvironment, componentManager);
         for (ProtoDatastore.ComponentInfo componentInfo : manifestData.getComponentsList()) {
             Map<Integer, String> fieldMappings = Maps.newLinkedHashMap();
             for (ProtoDatastore.FieldInfo fieldInfo : componentInfo.getFieldList()) {

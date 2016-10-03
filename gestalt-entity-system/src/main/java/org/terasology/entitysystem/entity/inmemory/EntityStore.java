@@ -19,7 +19,7 @@ package org.terasology.entitysystem.entity.inmemory;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.iterator.TLongObjectIterator;
 import gnu.trove.set.TLongSet;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
 
 import java.util.Collection;
 import java.util.Set;

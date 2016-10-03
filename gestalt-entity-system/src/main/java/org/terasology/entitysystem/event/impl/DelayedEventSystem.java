@@ -21,12 +21,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.entity.Component;
-import org.terasology.entitysystem.entity.EntityManager;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventResult;
-import org.terasology.entitysystem.event.EventSystem;
 import org.terasology.entitysystem.event.Synchronous;
 
 import javax.annotation.concurrent.ThreadSafe;

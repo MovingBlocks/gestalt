@@ -20,6 +20,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.stubs.SampleComponent;
@@ -29,8 +31,6 @@ import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;

@@ -16,8 +16,8 @@
 
 package org.terasology.entitysystem.stubs;
 
-import org.terasology.entitysystem.entity.Component;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.EntityRef;
 
 import java.util.List;
 

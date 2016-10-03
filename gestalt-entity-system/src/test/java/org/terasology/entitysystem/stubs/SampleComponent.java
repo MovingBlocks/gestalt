@@ -16,7 +16,7 @@
 
 package org.terasology.entitysystem.stubs;
 
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
 
 public interface SampleComponent extends Component {
     String getName();

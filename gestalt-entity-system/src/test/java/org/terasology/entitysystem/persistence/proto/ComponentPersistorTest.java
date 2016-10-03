@@ -20,7 +20,8 @@ import org.junit.Test;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.module.ModuleEnvironment;
@@ -38,7 +39,7 @@ public class ComponentPersistorTest {
 
     private ComponentManager componentManager;
     private ComponentPersistor persistor;
-    private ProtoPersistence context = new ProtoPersistence();
+    private ProtoPersistence context = ProtoPersistence.create();
 
     public ComponentPersistorTest() throws Exception {
         ModuleEnvironment moduleEnvironment;
@@ -48,7 +49,7 @@ public class ComponentPersistorTest {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         componentManager = new CodeGenComponentManager(typeLibrary);
-        persistor = new ComponentPersistor(componentManager, context, new ComponentManifest(moduleEnvironment));
+        persistor = new ComponentPersistor(context, new ComponentManifest(moduleEnvironment, componentManager));
     }
 
     @Test
@@ -57,7 +58,7 @@ public class ComponentPersistorTest {
         component.setName("Test Name");
         component.setDescription("Test Description");
 
-        ProtoDatastore.Component componentData = persistor.serialize(component).build();
+        ProtoDatastore.ComponentData componentData = persistor.serialize(component).build();
         Component deserialized = persistor.deserialize(componentData).orElseThrow(RuntimeException::new);
         assertTrue(deserialized instanceof SampleComponent);
         SampleComponent deserializedSampleComp = (SampleComponent) deserialized;
@@ -75,7 +76,7 @@ public class ComponentPersistorTest {
         component.setName("New Name");
         component.setDescription("Test Description");
 
-        ProtoDatastore.Component componentData = persistor.serializeDelta(baseComponent, component).build();
+        ProtoDatastore.ComponentData componentData = persistor.serializeDelta(baseComponent, component).build();
         Component deserialized = persistor.deserializeOnto(componentData, componentManager.copy(baseComponent));
         assertTrue(deserialized instanceof SampleComponent);
         SampleComponent deserializedSampleComp = (SampleComponent) deserialized;
@@ -93,7 +94,7 @@ public class ComponentPersistorTest {
         component.setName("New Name");
         component.setDescription("Test Description");
 
-        ProtoDatastore.Component componentData = persistor.serializeDelta(baseComponent, component).build();
+        ProtoDatastore.ComponentData componentData = persistor.serializeDelta(baseComponent, component).build();
         baseComponent.setDescription("Meow");
         Component deserialized = persistor.deserializeOnto(componentData, componentManager.copy(baseComponent));
         assertTrue(deserialized instanceof SampleComponent);

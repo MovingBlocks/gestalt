@@ -16,12 +16,11 @@
 
 package org.terasology.entitysystem.jmh;
 
-import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
-import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;

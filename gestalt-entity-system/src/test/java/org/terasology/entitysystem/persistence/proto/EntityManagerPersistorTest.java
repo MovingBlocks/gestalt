@@ -20,10 +20,11 @@ import org.junit.Test;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.EntityManager;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.references.CoreEntityRef;
+import org.terasology.entitysystem.persistence.proto.persistors.EntityManagerPersistor;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.valuetype.ImmutableCopy;
@@ -53,7 +54,7 @@ public class EntityManagerPersistorTest {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         componentManager = new CodeGenComponentManager(typeLibrary);
-        ProtoPersistence context = new ProtoPersistence();
+        ProtoPersistence context = ProtoPersistence.create();
         persistor = new EntityManagerPersistor(moduleEnvironment, componentManager, context);
     }
 

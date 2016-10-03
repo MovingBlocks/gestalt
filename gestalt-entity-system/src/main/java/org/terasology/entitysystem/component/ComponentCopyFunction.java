@@ -19,7 +19,7 @@ package org.terasology.entitysystem.component;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 

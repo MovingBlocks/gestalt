@@ -16,13 +16,14 @@
 
 package org.terasology.entitysystem.entity;
 
+import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
 import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.naming.Name;
 import org.terasology.util.collection.TypeKeyedMap;
 
-import java.util.ConcurrentModificationException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;

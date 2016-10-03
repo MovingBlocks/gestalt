@@ -27,7 +27,7 @@ import static org.junit.Assert.assertArrayEquals;
  */
 public class ArrayHandlerFactoryTest {
 
-    private ProtoPersistence context = new ProtoPersistence();
+    private ProtoPersistence context = ProtoPersistence.create();
 
     public ArrayHandlerFactoryTest() {
         context.addTypeHandler(new StringHandler(), String.class);

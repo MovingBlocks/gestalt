@@ -17,8 +17,8 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers;
 
 import com.google.common.collect.Lists;
-import org.terasology.entitysystem.entity.EntityManager;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.references.CoreEntityRef;
 import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.entity.references.NullEntityRef;
@@ -50,12 +50,14 @@ public class EntityRefHandler implements ProtoTypeHandler<EntityRef> {
     }
 
     private long getId(EntityRef ref) {
-        if (ref instanceof CoreEntityRef) {
-            return ((CoreEntityRef) ref).getId();
+        if (ref == null) {
+            return 0;
+        } else if (ref instanceof CoreEntityRef) {
+            return ref.getId();
         } else if (ref instanceof NewEntityRef) {
             Optional<EntityRef> innerEntityRef = ((NewEntityRef) ref).getInnerEntityRef();
             if (innerEntityRef.isPresent() && innerEntityRef.get() instanceof CoreEntityRef) {
-                return ((CoreEntityRef) innerEntityRef.get()).getId();
+                return innerEntityRef.get().getId();
             }
         }
         return 0;

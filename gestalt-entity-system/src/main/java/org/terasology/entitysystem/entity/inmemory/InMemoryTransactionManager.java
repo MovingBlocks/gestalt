@@ -18,7 +18,7 @@ package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.collect.Lists;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.entity.EntityTransaction;
 import org.terasology.entitysystem.entity.TransactionEventListener;
 

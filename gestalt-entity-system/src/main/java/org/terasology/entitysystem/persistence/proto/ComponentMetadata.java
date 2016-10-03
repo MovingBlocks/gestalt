@@ -21,6 +21,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.PropertyAccessor;
+import org.terasology.entitysystem.core.Component;
 import org.terasology.naming.Name;
 
 import java.util.Collections;
@@ -28,25 +29,35 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- *
+ * Metadata describing a component, used during persistence. This includes the id used to persist the component, and the ids used to persist each field.
  */
-public class ComponentMetadata {
+public class ComponentMetadata<T extends Component> {
 
     private final int id;
     private final Name module;
     private final Name name;
-    private final ComponentType<?> componentType;
+    private final ComponentType<T> componentType;
     private final BiMap<Integer, String> fieldIds;
 
-    public ComponentMetadata(int id, String module, String name, ComponentType<?> type) {
-        this(id, new Name(module), new Name(name), type, Collections.emptyMap());
-    }
-
-    public ComponentMetadata(int id, Name module, Name name, ComponentType<?> type) {
+    /**
+     * Constructs the metadata for a component. The field id mapping will be generated for all fields, if the component type is available.
+     * @param id The id of the component
+     * @param module The module providing the component
+     * @param name The name of the component
+     * @param type The type of the component (or null if not available)
+     */
+    public ComponentMetadata(int id, Name module, Name name, ComponentType<T> type) {
         this(id, module, name, type, Collections.emptyMap());
     }
 
-    public ComponentMetadata(int id, Name module, Name name, ComponentType<?> type, Map<Integer, String> existingFieldIds) {
+    /**
+     * @param id The id of the component
+     * @param module The module providing the component
+     * @param name The name of the component
+     * @param type The type of the component (or null if not available)
+     * @param existingFieldIds Any existing field id mappings. Id mappings will be generated for any fields not part of this map.
+     */
+    public ComponentMetadata(int id, Name module, Name name, ComponentType<T> type, Map<Integer, String> existingFieldIds) {
         this.id = id;
         this.name = name;
         this.module = module;
@@ -65,32 +76,60 @@ public class ComponentMetadata {
         }
     }
 
+    /**
+     * @return The id for the component
+     */
     public int getId() {
         return id;
     }
 
+    /**
+     * This is the shortened name for the component, which will be used when looking up the component type.
+     * @return The name of the component.
+     */
     public Name getName() {
         return name;
     }
 
+    /**
+     * This is the module providing the component. This will be used when looking up the component type.
+     * @return The module providing the component.
+     */
     public Name getModule() {
         return module;
     }
 
-    public Optional<ComponentType<?>> getComponentType() {
+    /**
+     * @return The type of the component, or Optional::absent if not available.
+     */
+    public Optional<ComponentType<T>> getComponentType() {
         return Optional.ofNullable(componentType);
     }
 
+    /**
+     *
+     * @param field The field to get the id for
+     * @return The id for the field.
+     * @throws IllegalArgumentException If the component doesn't have a field with the given name.
+     */
     public int getFieldId(String field) {
         Preconditions.checkArgument(componentType.getPropertyInfo().getProperty(field).isPresent());
         return fieldIds.inverse().get(field);
     }
 
-    public PropertyAccessor<?, ?> getFieldAccessor(int fieldId) {
+    /**
+     * @param fieldId The id of a field
+     * @return The property accessor for getting or setting the field with the given id.
+     * @throws IllegalArgumentException If there is no field with the given id.
+     */
+    public PropertyAccessor<T, ?> getFieldAccessor(int fieldId) {
         return componentType.getPropertyInfo().getProperty(fieldIds.get(fieldId)).orElseThrow(IllegalArgumentException::new);
     }
 
+    /**
+     * @return an unmodifiable set of the field mappings
+     */
     public Iterable<Map.Entry<Integer, String>> allFields() {
-        return fieldIds.entrySet();
+        return Collections.unmodifiableSet(fieldIds.entrySet());
     }
 }

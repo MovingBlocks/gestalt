@@ -50,7 +50,7 @@ public class ProtoPersistenceTest {
     private ProtoPersistence protoPersistence;
 
     public ProtoPersistenceTest() {
-        protoPersistence = new ProtoPersistence();
+        protoPersistence = ProtoPersistence.create();
     }
 
     @Test(expected = PersistenceException.class)

@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- *
+ * Holds information on Entity Recipes for use during serialization and deserialization. Primarily this includes the mapping between recipe ids and the recipes themselves.
  */
 public class EntityRecipeManifest {
     private final AssetManager assetManager;
@@ -46,10 +46,18 @@ public class EntityRecipeManifest {
     private final TIntObjectMap<EntityRecipeMetadata> metadataById = new TIntObjectHashMap<>();
     private final Map<ResourceUrn, EntityRecipeMetadata> metadataByUrn = new LinkedHashMap<>();
 
+    /**
+     * @param assetManager The asset manager to resolve EntityRecipes from
+     */
     public EntityRecipeManifest(AssetManager assetManager) {
         this.assetManager = assetManager;
     }
 
+    /**
+     * Registers the metadata for an EntityRecipe
+     * @param metadata The metadata on an entity recipe to add.
+     * @throws IllegalArgumentException If the id or urn of the metadata have previously been registered
+     */
     public void addEntityRecipeMetadata(EntityRecipeMetadata metadata) {
         Preconditions.checkArgument(!metadataById.containsKey(metadata.getId()), "EntityRecipeMetadata with id " + metadata.getId() + " already registered");
         Preconditions.checkArgument(!metadataByUrn.containsKey(metadata.getUrn()), "EntityRecipeMetadata with urn " + metadata.getUrn() + " already registered");
@@ -62,6 +70,12 @@ public class EntityRecipeManifest {
         }
     }
 
+    /**
+     * Gets the metadata for an entity recipe with a specific urn. If the entity recipe is not in the manifest but is available in the asset manager then the metadata
+     * is created and assigned an id.
+     * @param urn The urn of the entity recipe
+     * @return The metadata for the entity recipe, or Optional::absent if it is not available.
+     */
     public Optional<EntityRecipeMetadata> getEntityRecipeMetadata(ResourceUrn urn) {
         EntityRecipeMetadata metadata = metadataByUrn.get(urn);
         if (metadata == null) {
@@ -77,10 +91,17 @@ public class EntityRecipeManifest {
         return Optional.ofNullable(metadata);
     }
 
-    public EntityRecipeMetadata getEntityRecipeMetadata(int id) {
-        return metadataById.get(id);
+    /**
+     * @param id The id of the entity recipe metadata to return
+     * @return The associated entity recipe metadata, or Optional::absent if it is not available.
+     */
+    public Optional<EntityRecipeMetadata> getEntityRecipeMetadata(int id) {
+        return Optional.ofNullable(metadataById.get(id));
     }
 
+    /**
+     * @return An unmodifiable collection of all the entity recipe metadata
+     */
     public Iterable<EntityRecipeMetadata> allEntityRecipeMetadata() {
         return Collections.unmodifiableCollection(metadataByUrn.values());
     }

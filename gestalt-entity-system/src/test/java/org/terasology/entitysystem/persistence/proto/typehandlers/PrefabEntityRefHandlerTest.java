@@ -19,8 +19,8 @@ package org.terasology.entitysystem.persistence.proto.typehandlers;
 import org.junit.Test;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.EntityManager;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.entity.references.NullEntityRef;
@@ -38,7 +38,7 @@ public class PrefabEntityRefHandlerTest {
 
     private EntityManager entityManager;
     private ComponentManager componentManager;
-    private ProtoPersistence context = new ProtoPersistence();
+    private ProtoPersistence context = ProtoPersistence.create();
 
     public PrefabEntityRefHandlerTest() {
         TypeLibrary typeLibrary = new TypeLibrary();

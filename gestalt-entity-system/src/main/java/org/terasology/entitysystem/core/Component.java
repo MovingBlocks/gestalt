@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.component;
-
-import org.terasology.entitysystem.entity.Component;
+package org.terasology.entitysystem.core;
 
 /**
- * Any shared implementation for all components
+ * A component is an element that can be added to an entity. A component holds data, and implies a feature or behavior of the entity.
+ * <p>
+ * This is the base interface for all components. To define a component, create a new interface extending this interface and add properties (getter and setters) for any data
+ * the component should contain.
  */
-public class SharedComponentImpl implements Component {
+public interface Component {
+
+    /**
+     * @return The interface type of the component
+     */
+    Class<? extends Component> getType();
 
 }

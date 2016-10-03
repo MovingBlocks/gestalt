@@ -17,23 +17,20 @@
 package org.terasology.entitysystem.entity;
 
 import com.google.common.collect.Sets;
-import org.junit.After;
 import org.junit.Test;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.references.CoreEntityRef;
 import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.entity.references.NullEntityRef;
-import org.terasology.entitysystem.stubs.ReferenceComponent;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ConcurrentModificationException;
 import java.util.Optional;
 
@@ -118,22 +115,6 @@ public class EntityTransactionTest {
             assertTrue(newEntityRef.getInnerEntityRef().isPresent());
             assertEquals(NullEntityRef.get(), newEntityRef.getInnerEntityRef().get());
         }
-    }
-
-    @Test
-    public void createEntityChangesEntityRefToCoreEntityRefOnCommit() throws Exception {
-//        entityManager.beginTransaction();
-//        EntityRef initialEntity = entityManager.createEntity();
-//        EntityRef referencedEntity = entityManager.createEntity();
-//        ReferenceComponent comp = initialEntity.addComponent(ReferenceComponent.class);
-//        comp.setReference(referencedEntity);
-//        entityManager.commit();
-//
-//        entityManager.beginTransaction();
-//        EntityRef reference = initialEntity.getComponent(ReferenceComponent.class).get().getReference();
-//        assertTrue(reference instanceof CoreEntityRef);
-//        assertEquals(reference, ((NewEntityRef)referencedEntity).getInnerEntityRef().get());
-//        entityManager.rollback();
     }
 
     @Test
@@ -265,5 +246,6 @@ public class EntityTransactionTest {
     public void transactionInactiveIfNotStartted() {
         assertFalse(entityManager.isTransactionActive());
     }
+
 
 }

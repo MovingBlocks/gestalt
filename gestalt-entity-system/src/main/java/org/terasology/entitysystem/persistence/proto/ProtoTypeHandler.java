@@ -16,7 +16,6 @@
 
 package org.terasology.entitysystem.persistence.proto;
 
-import com.google.common.collect.Lists;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 
 import java.lang.reflect.Type;
@@ -25,15 +24,37 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *
+ * A ProtoTypeHandler handles the conversion of a type to and froim a ProtoDatastore.Value. Default handling for collections of the values is provided, but can be overridden
+ * if a more compact handling is desired.
  */
 public interface ProtoTypeHandler<T> {
 
+    /**
+     * @param instance The object instance to serialize
+     * @param type     The type of the object
+     * @param context  The ProtoContext to use for serializing subvalues.
+     * @return The serialized value
+     */
     ProtoDatastore.Value.Builder serialize(T instance, Type type, ProtoContext context);
 
+    /**
+     * @param value   The serialized value to deserialize
+     * @param type    The type to deserialize it to
+     * @param context The ProtoContext to use for deserializing subvalues
+     * @return The deserialized value
+     */
     T deserialize(ProtoDatastore.Value value, Type type, ProtoContext context);
 
-    default ProtoDatastore.Value.Builder serializeCollection(Collection<T> instance, Type type, ProtoContext context)  {
+    /**
+     * This method is implemented to serialize collections of the value. By default each is serialized individually, and then a value created that contains the collection
+     * of serialized values. This behavior can be overridden to produce a more condensed serialization structure.
+     *
+     * @param instance The collection to serialize
+     * @param type     The type of the object
+     * @param context  The ProtoContext to use for serializing subvalues.
+     * @return The serialized collection
+     */
+    default ProtoDatastore.Value.Builder serializeCollection(Collection<T> instance, Type type, ProtoContext context) {
         ProtoDatastore.Value.Builder builder = ProtoDatastore.Value.newBuilder();
         if (instance != null) {
             for (T item : instance) {
@@ -43,6 +64,14 @@ public interface ProtoTypeHandler<T> {
         return builder;
     }
 
+    /**
+     * This method is implemented to deserialize collections of the value. It should be overridden when serializeCollection is overridden, to match its behavior.
+     *
+     * @param value   The serialized value to deserialize
+     * @param type    The type to deserialize it to
+     * @param context The ProtoContext to use for deserializing subvalues
+     * @return A list of deserialized values.
+     */
     default List<T> deserializeCollection(ProtoDatastore.Value value, Type type, ProtoContext context) {
         return value.getValueList().stream().map(item -> deserialize(item, type, context)).collect(Collectors.toList());
     }

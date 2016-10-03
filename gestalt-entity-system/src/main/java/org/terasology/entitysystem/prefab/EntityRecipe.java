@@ -19,11 +19,10 @@ package org.terasology.entitysystem.prefab;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.entitysystem.entity.Component;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.util.collection.TypeKeyedMap;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 

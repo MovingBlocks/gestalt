@@ -23,7 +23,7 @@ import org.terasology.assets.ResolutionStrategy;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.ContextManager;
 import org.terasology.assets.module.ModuleDependencyResolutionStrategy;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 

@@ -16,7 +16,7 @@
 
 package org.terasology.entitysystem.event;
 
-import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.event.impl.DelayedEventSystem;
 import org.terasology.entitysystem.event.impl.EventProcessor;
 

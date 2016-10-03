@@ -29,12 +29,14 @@ import gnu.trove.map.hash.TLongIntHashMap;
 import gnu.trove.set.hash.TLongHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.assets.ResourceUrn;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.PropertyAccessor;
-import org.terasology.entitysystem.entity.Component;
-import org.terasology.entitysystem.entity.EntityManager;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.entity.GeneratedFromEntityRecipeComponent;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.EntityTransaction;
 import org.terasology.entitysystem.entity.TransactionEventListener;
 import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
@@ -112,7 +114,7 @@ public class InMemoryTransaction implements EntityTransaction {
             for (NewEntityRef newEntity : state.createdEntities) {
                 Set<Class<? extends Component>> componentTypes = newEntity.getComponentTypes();
                 if (!componentTypes.isEmpty()) {
-                    long entityId = ((CoreEntityRef) newEntity.getInnerEntityRef().get()).getId();
+                    long entityId = newEntity.getInnerEntityRef().get().getId();
                     ClosableLock lock = entityStore.lock(new TLongHashSet(new long[]{entityId}));
                     for (Class componentType : componentTypes) {
                         Component comp = (Component) newEntity.getComponent(componentType).get();
@@ -269,33 +271,52 @@ public class InMemoryTransaction implements EntityTransaction {
 
     @Override
     public Map<Name, EntityRef> createEntities(Prefab prefab) {
-        Map<Name, EntityRef> result = Maps.newLinkedHashMap();
-        for (EntityRecipe entityRecipe : prefab.getEntityRecipes().values()) {
-            result.put(entityRecipe.getIdentifier().getFragmentName(), createEntity());
-        }
+        Map<Name, EntityRef> result = createEntityStubs(prefab);
+        populatePrefabEntities(prefab, result);
+        return result;
+    }
+
+    private void populatePrefabEntities(Prefab prefab, Map<Name, EntityRef> result) {
         for (EntityRecipe entityRecipe : prefab.getEntityRecipes().values()) {
             EntityRef entity = result.get(entityRecipe.getIdentifier().getFragmentName());
+            GeneratedFromEntityRecipeComponent entityMetadata = entity.addComponent(GeneratedFromEntityRecipeComponent.class);
+            entityMetadata.setEntityRecipe(entityRecipe.getIdentifier());
+
             for (TypeKeyedMap.Entry<? extends Component> entry : entityRecipe.getComponents().entrySet()) {
                 Component component = entity.addComponent(entry.getKey());
                 componentManager.copy(entry.getValue(), component);
-                for (PropertyAccessor property : componentManager.getType(entry.getKey()).getPropertyInfo().getPropertiesOfType(EntityRef.class)) {
-                    EntityRef existing = (EntityRef) property.get(component);
-                    EntityRef newRef;
-                    if (existing instanceof EntityRecipe) {
-                        newRef = result.get(((EntityRecipe) existing).getIdentifier().getFragmentName());
-                        if (newRef == null) {
-                            logger.error("{} references external or unknown entity prefab {}",  entityRecipe.getIdentifier(), existing);
-                            newRef = NullEntityRef.get();
-                        }
-                    } else if (existing instanceof PrefabRef) {
-                        newRef = createEntity(((PrefabRef) existing).getPrefab());
-                    } else {
-                        logger.error("{} contains unsupported entity ref {}", entityRecipe.getIdentifier(), existing);
-                        newRef = NullEntityRef.get();
-                    }
-                    property.set(component, newRef);
-                }
+                processReferences(componentManager.getType(entry.getKey()), component, entityRecipe.getIdentifier(), result);
             }
+        }
+    }
+
+    private void processReferences(ComponentType<?> componentType, Component component, ResourceUrn entityRecipeUrn, Map<Name, EntityRef> entityMap) {
+        for (PropertyAccessor property : componentType.getPropertyInfo().getPropertiesOfType(EntityRef.class)) {
+            EntityRef existing = (EntityRef) property.get(component);
+            EntityRef newRef;
+            if (existing instanceof EntityRecipe) {
+                newRef = entityMap.get(((EntityRecipe) existing).getIdentifier().getFragmentName());
+                if (newRef == null) {
+                    logger.error("{} references external or unknown entity prefab {}",  entityRecipeUrn, existing);
+                    newRef = NullEntityRef.get();
+                }
+            } else if (existing instanceof PrefabRef) {
+                newRef = createEntity(((PrefabRef) existing).getPrefab());
+            } else {
+                logger.error("{} contains unsupported entity ref {}", entityRecipeUrn, existing);
+                newRef = NullEntityRef.get();
+            }
+            property.set(component, newRef);
+        }
+    }
+
+    /**
+     * Create all the entities described by a prefab.
+     */
+    private Map<Name, EntityRef> createEntityStubs(Prefab prefab) {
+        Map<Name, EntityRef> result = Maps.newLinkedHashMap();
+        for (EntityRecipe entityRecipe : prefab.getEntityRecipes().values()) {
+            result.put(entityRecipe.getIdentifier().getFragmentName(), createEntity());
         }
         return result;
     }
@@ -329,8 +350,7 @@ public class InMemoryTransaction implements EntityTransaction {
             if (!expectedEntityRevisions.containsKey(entityId)) {
                 expectedEntityRevisions.put(entityId, entityStore.getEntityRevision(entityId));
                 for (Component component : entityStore.getComponents(entityId)) {
-                    Class interfaceType = componentManager.getType(component.getClass()).getInterfaceType();
-                    entityCache.put(entityId, interfaceType, new CacheEntry(entityId, interfaceType, component, Action.UPDATE));
+                    entityCache.put(entityId, component.getType(), new CacheEntry(entityId, component.getType(), component, Action.UPDATE));
                 }
             }
         }

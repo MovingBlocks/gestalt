@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.persistence.proto;
+package org.terasology.entitysystem.persistence.proto.persistors;
 
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.persistence.proto.ComponentManifest;
+import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.module.ModuleEnvironment;
 
@@ -27,9 +30,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 
 /**
- *
+ * Serializes and Deserializes EntityManagers.
  */
 public class EntityManagerPersistor {
 
@@ -58,10 +62,10 @@ public class EntityManagerPersistor {
     }
 
     public ProtoDatastore.Store serialize(EntityManager entityManager) {
-        ComponentManifest componentManifest = new ComponentManifest(moduleEnvironment);
+        ComponentManifest componentManifest = new ComponentManifest(moduleEnvironment, componentManager);
 
-        EntityPersistor entityPersistor = new EntityPersistor(componentManager, context, componentManifest);
-        ProtoDatastore.Store.Builder builder = entityPersistor.serializeEntities(entityManager);
+        EntityPersistor entityPersistor = new SimpleEntityPersistor(context, componentManifest);
+        ProtoDatastore.Store.Builder builder = serializeEntities(entityManager, entityPersistor);
         builder.setComponentManifest(componentManifestPersistor.serialize(componentManifest));
         builder.setNextEntityId(entityManager.getNextId());
 
@@ -72,8 +76,31 @@ public class EntityManagerPersistor {
         EntityManager entityManager = new InMemoryEntityManager(componentManager, entityManagerData.getNextEntityId());
 
         ComponentManifest componentManifest = componentManifestPersistor.deserialize(entityManagerData.getComponentManifest());
-        EntityPersistor entityPersistor = new EntityPersistor(componentManager, context, componentManifest);
-        entityPersistor.deserializeEntities(entityManagerData, entityManager);
+        EntityPersistor entityPersistor = new SimpleEntityPersistor(context, componentManifest);
+        deserializeEntities(entityManagerData, entityManager, entityPersistor);
         return entityManager;
+    }
+
+    private ProtoDatastore.Store.Builder serializeEntities(EntityManager entityManager, EntityPersistor entityPersistor) {
+        ProtoDatastore.Store.Builder builder = ProtoDatastore.Store.newBuilder();
+        Iterator<EntityRef> i = entityManager.allEntities();
+        while (i.hasNext()) {
+            EntityRef entity = i.next();
+            entityManager.beginTransaction();
+            if (entity.isPresent()) {
+                builder.addEntity(entityPersistor.serialize(entity));
+            }
+            entityManager.rollback();
+        }
+
+        return builder;
+    }
+
+    private void deserializeEntities(ProtoDatastore.Store data, EntityManager manager, EntityPersistor entityPersistor) {
+        for (ProtoDatastore.EntityData entityData : data.getEntityList()) {
+            manager.beginTransaction();
+            entityPersistor.deserialize(entityData, manager);
+            manager.commit();
+        }
     }
 }

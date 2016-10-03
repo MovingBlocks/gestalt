@@ -23,8 +23,9 @@ import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.MapAssetTypeManager;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.EntityManager;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.entity.GeneratedFromEntityRecipeComponent;
+import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.references.NewEntityRef;
 import org.terasology.entitysystem.entity.references.NullEntityRef;
@@ -172,6 +173,13 @@ public class PrefabInstantiationTest {
         EntityRef entityRef = entityManager.createEntity(compositePrefab);
         EntityRef otherEntity = entityRef.getComponent(ReferenceComponent.class).orElseThrow(() -> new RuntimeException("No reference component")).getReference();
         assertEquals(NewEntityRef.class, otherEntity.getClass());
+    }
+
+    @Test
+    public void entitiesCreatedByPrefabHaveEntityRecipeUrnTracked() {
+        EntityRef entityRef = entityManager.createEntity(singlePrefab);
+        GeneratedFromEntityRecipeComponent comp = entityRef.getComponent(GeneratedFromEntityRecipeComponent.class).orElseThrow(AssertionError::new);
+        assertEquals(comp.getEntityRecipe(), singlePrefab.getRootEntityUrn());
     }
 
 

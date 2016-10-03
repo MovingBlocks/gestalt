@@ -16,24 +16,30 @@
 
 package org.terasology.entitysystem.persistence.proto;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.prefab.EntityRecipe;
 import org.terasology.util.collection.TypeKeyedMap;
 
-import java.util.List;
+import java.util.Collections;
 
 /**
- *
+ * Metadata describing Entity Recipes. This includes the id and urn of the recipe, and the components of the recipe. These components should be serialized with the metadata,
+ * so if the entity recipe is not available during deserialization the last known settings can be used.
  */
 public class EntityRecipeMetadata {
     private final int id;
     private final ResourceUrn urn;
     private final EntityRecipe recipe;
-    private final List<Component> components;
+    private final TypeKeyedMap<Component> components;
 
+    /**
+     * Constructs EntityRecipeMetadata for an available recipe.
+     * @param id The id of the EntityRecipe
+     * @param urn The urn of the EntityRecipe
+     * @param recipe The EntityRecipe
+     */
     public EntityRecipeMetadata(int id, ResourceUrn urn, EntityRecipe recipe) {
         this.id = id;
         this.urn = urn;
@@ -41,24 +47,39 @@ public class EntityRecipeMetadata {
         this.components = null;
     }
 
-    public EntityRecipeMetadata(int id, ResourceUrn urn, Iterable<Component> components) {
+    /**
+     * Constructs EntityRecipeMetadata for an unavailable recipe, with a map of components.
+     * @param id The id of the EntityRecipe
+     * @param urn The urn of the EntityRecipe
+     * @param components The last known components of the recipe
+     */
+    public EntityRecipeMetadata(int id, ResourceUrn urn, TypeKeyedMap<Component> components) {
         this.id = id;
         this.urn = urn;
         this.recipe = null;
-        this.components = ImmutableList.copyOf(components);
+        this.components = new TypeKeyedMap<>(ImmutableMap.copyOf(components.getInner()));
     }
 
+    /**
+     * @return The id of the EntityRecipe
+     */
     public int getId() {
         return id;
     }
 
+    /**
+     * @return The urn of the EntityRecipe
+     */
     public ResourceUrn getUrn() {
         return urn;
     }
 
-    public Iterable<Component> getComponents() {
+    /**
+     * @return A map of the components of the entity recipe
+     */
+    public TypeKeyedMap<Component> getComponents() {
         if (recipe != null) {
-            return recipe.getComponents().values();
+            return new TypeKeyedMap<>(Collections.unmodifiableMap(recipe.getComponents().getInner()));
         }
         return components;
     }

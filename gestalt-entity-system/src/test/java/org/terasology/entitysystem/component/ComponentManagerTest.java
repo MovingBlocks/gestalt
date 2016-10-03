@@ -69,4 +69,13 @@ public class ComponentManagerTest {
 
         assertEquals(instance.hashCode(), instance2.hashCode());
     }
+
+    @Test
+    public void constructComponentGetType() {
+        TypeLibrary typeLibrary = new TypeLibrary();
+        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
+        ComponentInterface instance = library.create(ComponentInterface.class);
+        assertNotNull(instance);
+        assertEquals(ComponentInterface.class, instance.getType());
+    }
 }

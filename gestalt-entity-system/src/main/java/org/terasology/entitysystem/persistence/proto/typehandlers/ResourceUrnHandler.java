@@ -16,8 +16,7 @@
 
 package org.terasology.entitysystem.persistence.proto.typehandlers;
 
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.references.NullEntityRef;
+import org.terasology.assets.ResourceUrn;
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
@@ -25,17 +24,24 @@ import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import java.lang.reflect.Type;
 
 /**
- * When serializing/deserializing prefabs, ignore the entity refs. The prefabs are only stored in case of deserializing entities later without the prefabs present, to provide
- * the base the entity should deserialize on. EntityRefs will always be serialized though, since they are always different from the prefab's values.
+ *
  */
-public class PrefabEntityRefHandler implements ProtoTypeHandler<EntityRef> {
+public class ResourceUrnHandler implements ProtoTypeHandler<ResourceUrn> {
+
     @Override
-    public ProtoDatastore.Value.Builder serialize(EntityRef instance, Type type, ProtoContext context) {
-        return ProtoDatastore.Value.newBuilder();
+    public ProtoDatastore.Value.Builder serialize(ResourceUrn instance, Type type, ProtoContext context) {
+        if (instance == null) {
+            return context.serialize("", String.class);
+        }
+        return context.serialize(instance.toString(), String.class);
     }
 
     @Override
-    public EntityRef deserialize(ProtoDatastore.Value value, Type type, ProtoContext context) {
-        return NullEntityRef.get();
+    public ResourceUrn deserialize(ProtoDatastore.Value value, Type type, ProtoContext context) {
+        String stringUrn = context.deserialize(value, String.class);
+        if (stringUrn.isEmpty()) {
+           return null;
+        }
+        return new ResourceUrn(stringUrn);
     }
 }

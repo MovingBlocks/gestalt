@@ -17,7 +17,6 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers.collections;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.junit.Test;
@@ -26,7 +25,6 @@ import org.terasology.entitysystem.persistence.proto.typehandlers.StringHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -43,7 +41,7 @@ public class SetHandlerTest {
     private static Set<String> TEST = ImmutableSet.of("Value1", "Value2", "Value3");
 
     private SetHandler handler = new SetHandler();
-    private ProtoPersistence context = new ProtoPersistence();
+    private ProtoPersistence context = ProtoPersistence.create();
 
     public SetHandlerTest() {
         context.addTypeHandler(handler, Set.class);

@@ -24,6 +24,8 @@ import org.terasology.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
+import org.terasology.entitysystem.persistence.proto.persistors.EntityRecipeManifestPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.prefab.EntityRecipe;
 import org.terasology.entitysystem.prefab.Prefab;
@@ -49,7 +51,7 @@ public class EntityRecipeManifestPersistorTest {
 
     private ComponentManager componentManager;
     private EntityRecipeManifestPersistor persistor;
-    private ProtoPersistence context = new ProtoPersistence();
+    private ProtoPersistence context = ProtoPersistence.create();
 
     private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManager();
     private AssetManager assetManager = new AssetManager(assetTypeManager);
@@ -70,7 +72,7 @@ public class EntityRecipeManifestPersistorTest {
         assetTypeManager.registerCoreFormat(Prefab.class, new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
         assetTypeManager.switchEnvironment(moduleEnvironment);
 
-        ComponentPersistor componentPersistor = new ComponentPersistor(componentManager, context, new ComponentManifest(moduleEnvironment));
+        ComponentPersistor componentPersistor = new ComponentPersistor(context, new ComponentManifest(moduleEnvironment, componentManager));
         persistor = new EntityRecipeManifestPersistor(assetManager, componentPersistor);
 
         entityRecipeFromPrefab = assetManager.getAsset(PREFAB_URN, Prefab.class).get().getEntityRecipes().get(ENTITY_RECIPE_URN);
@@ -85,45 +87,45 @@ public class EntityRecipeManifestPersistorTest {
     public void persistEntityRecipeWhenResolvable() {
         manifest.addEntityRecipeMetadata(new EntityRecipeMetadata(ID, ENTITY_RECIPE_URN, entityRecipeFromPrefab));
         EntityRecipeManifest finalManifest = persistor.deserialize(persistor.serialize(manifest).build());
-        EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID);
+        EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID).orElseThrow(AssertionError::new);
 
         assertNotNull(entityRecipeMetadata);
-        assertEquals(Sets.newHashSet(entityRecipeFromPrefab.getComponents().values()), Sets.newHashSet(entityRecipeMetadata.getComponents()));
+        assertEquals(Sets.newHashSet(entityRecipeFromPrefab.getComponents().values()), Sets.newHashSet(entityRecipeMetadata.getComponents().values()));
     }
 
     @Test
     public void persistEntityRecipeWhenResolvableAndChanged() {
         EntityRecipe entityRecipeFromPrefab = assetManager.getAsset(PREFAB_URN, Prefab.class).get().getEntityRecipes().get(ENTITY_RECIPE_URN);
         manifest.addEntityRecipeMetadata(new EntityRecipeMetadata(ID, ENTITY_RECIPE_URN, entityRecipeFromPrefab));
-        ProtoDatastore.EntityRecipeManifest serializedManifest = persistor.serialize(manifest).build();
+        ProtoDatastore.EntityRecipeManifestData serializedManifest = persistor.serialize(manifest).build();
         entityRecipeFromPrefab.getComponent(SampleComponent.class).get().setName("Altered Name");
         EntityRecipeManifest finalManifest = persistor.deserialize(serializedManifest);
-        EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID);
+        EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID).orElseThrow(AssertionError::new);
 
         assertNotNull(entityRecipeMetadata);
-        assertEquals(Sets.newHashSet(entityRecipeFromPrefab.getComponents().values()), Sets.newHashSet(entityRecipeMetadata.getComponents()));
+        assertEquals(Sets.newHashSet(entityRecipeFromPrefab.getComponents().values()), Sets.newHashSet(entityRecipeMetadata.getComponents().values()));
     }
 
     @Test
     public void persistEntityRecipeWhenEntityRecipeNotResolvable() {
         manifest.addEntityRecipeMetadata(new EntityRecipeMetadata(ID, UNRESOLVABLE_RECIPE_URN, entityRecipeUnresolvable));
-        ProtoDatastore.EntityRecipeManifest serializedManifest = persistor.serialize(manifest).build();
+        ProtoDatastore.EntityRecipeManifestData serializedManifest = persistor.serialize(manifest).build();
         EntityRecipeManifest finalManifest = persistor.deserialize(serializedManifest);
-        EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID);
+        EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID).orElseThrow(AssertionError::new);
 
         assertNotNull(entityRecipeMetadata);
-        assertEquals(Sets.newHashSet(entityRecipeUnresolvable.getComponents().values()), Sets.newHashSet(entityRecipeMetadata.getComponents()));
+        assertEquals(Sets.newHashSet(entityRecipeUnresolvable.getComponents().values()), Sets.newHashSet(entityRecipeMetadata.getComponents().values()));
     }
 
     @Test
     public void persistEntityRecipeWhenPrefabNotResolvable() {
         manifest.addEntityRecipeMetadata(new EntityRecipeMetadata(ID, entityRecipeUnresolvable.getIdentifier(), entityRecipeUnresolvable));
-        ProtoDatastore.EntityRecipeManifest serializedManifest = persistor.serialize(manifest).build();
+        ProtoDatastore.EntityRecipeManifestData serializedManifest = persistor.serialize(manifest).build();
         EntityRecipeManifest finalManifest = persistor.deserialize(serializedManifest);
-        EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID);
+        EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID).orElseThrow(AssertionError::new);
 
         assertNotNull(entityRecipeMetadata);
-        assertEquals(Sets.newHashSet(entityRecipeUnresolvable.getComponents().values()), Sets.newHashSet(entityRecipeMetadata.getComponents()));
+        assertEquals(Sets.newHashSet(entityRecipeUnresolvable.getComponents().values()), Sets.newHashSet(entityRecipeMetadata.getComponents().values()));
     }
 
 }

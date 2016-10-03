@@ -17,20 +17,15 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers.collections;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.junit.Test;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.proto.typehandlers.StringHandler;
 import org.terasology.entitysystem.persistence.proto.typehandlers.primitives.IntegerHandler;
-import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -47,7 +42,7 @@ public class MapHandlerTest {
     private static Map<String, Integer> TEST = ImmutableMap.of("Test", 1, "Green", 2);
 
     private MapHandler handler = new MapHandler();
-    private ProtoPersistence context = new ProtoPersistence();
+    private ProtoPersistence context = ProtoPersistence.create();
 
     public MapHandlerTest() {
         context.addTypeHandler(handler, Map.class);

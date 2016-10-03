@@ -45,7 +45,7 @@ public class SimpleHandlerTest {
     private final Object output;
     private final Type type;
     private final ProtoTypeHandler handler;
-    private final ProtoPersistence context = new ProtoPersistence();
+    private final ProtoPersistence context = ProtoPersistence.create();
 
 
     @Parameterized.Parameters(name = "{0} - {2}")

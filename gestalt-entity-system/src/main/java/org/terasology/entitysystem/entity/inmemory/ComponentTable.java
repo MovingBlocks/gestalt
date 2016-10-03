@@ -32,9 +32,8 @@ import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TIntHashSet;
-import gnu.trove.set.hash.TLongHashSet;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
 
 import java.util.Collection;
 import java.util.List;

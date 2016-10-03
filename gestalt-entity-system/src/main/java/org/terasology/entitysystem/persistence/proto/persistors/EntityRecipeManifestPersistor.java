@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.persistence.proto;
+package org.terasology.entitysystem.persistence.proto.persistors;
 
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
-import org.terasology.entitysystem.entity.Component;
+import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.persistence.proto.EntityRecipeManifest;
+import org.terasology.entitysystem.persistence.proto.EntityRecipeMetadata;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.prefab.Prefab;
+import org.terasology.util.collection.TypeKeyedMap;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
- *
+ * Serializes and Deserializes EntityRecipeManifests.
  */
 public class EntityRecipeManifestPersistor {
 
@@ -43,33 +44,33 @@ public class EntityRecipeManifestPersistor {
         this.componentPersistor = componentPersistor;
     }
 
-    public ProtoDatastore.EntityRecipeManifest.Builder serialize(EntityRecipeManifest manifest) {
-        ProtoDatastore.EntityRecipeManifest.Builder builder = ProtoDatastore.EntityRecipeManifest.newBuilder();
+    public ProtoDatastore.EntityRecipeManifestData.Builder serialize(EntityRecipeManifest manifest) {
+        ProtoDatastore.EntityRecipeManifestData.Builder builder = ProtoDatastore.EntityRecipeManifestData.newBuilder();
         for (EntityRecipeMetadata entityRecipeMetadata : manifest.allEntityRecipeMetadata()) {
             builder.addRecipes(serialize(entityRecipeMetadata));
         }
         return builder;
     }
 
-    public ProtoDatastore.EntityRecipe.Builder serialize(EntityRecipeMetadata entityRecipeMetadata) {
-        ProtoDatastore.EntityRecipe.Builder entityRecipeBuilder = ProtoDatastore.EntityRecipe.newBuilder();
+    public ProtoDatastore.EntityRecipeData.Builder serialize(EntityRecipeMetadata entityRecipeMetadata) {
+        ProtoDatastore.EntityRecipeData.Builder entityRecipeBuilder = ProtoDatastore.EntityRecipeData.newBuilder();
         entityRecipeBuilder.setId(entityRecipeMetadata.getId());
         entityRecipeBuilder.setUrn(entityRecipeMetadata.getUrn().toString());
-        for (Component component : entityRecipeMetadata.getComponents()) {
+        for (Component component : entityRecipeMetadata.getComponents().values()) {
             entityRecipeBuilder.addComponent(componentPersistor.serialize(component));
         }
         return entityRecipeBuilder;
     }
 
-    public EntityRecipeManifest deserialize(ProtoDatastore.EntityRecipeManifest data) {
+    public EntityRecipeManifest deserialize(ProtoDatastore.EntityRecipeManifestData data) {
         EntityRecipeManifest manifest = new EntityRecipeManifest(assetManager);
-        for (ProtoDatastore.EntityRecipe entityRecipe : data.getRecipesList()) {
+        for (ProtoDatastore.EntityRecipeData entityRecipe : data.getRecipesList()) {
             manifest.addEntityRecipeMetadata(deserialize(entityRecipe));
         }
         return manifest;
     }
 
-    public EntityRecipeMetadata deserialize(ProtoDatastore.EntityRecipe entityRecipe) {
+    public EntityRecipeMetadata deserialize(ProtoDatastore.EntityRecipeData entityRecipe) {
         int id = entityRecipe.getId();
         ResourceUrn urn = new ResourceUrn(entityRecipe.getUrn());
         Optional<Prefab> prefab = assetManager.getAsset(urn.getRootUrn(), Prefab.class);
@@ -77,9 +78,9 @@ public class EntityRecipeManifestPersistor {
             return new EntityRecipeMetadata(id, urn, prefab.get().getEntityRecipes().get(urn));
         } else {
             logger.info("Failed to resolve entity recipe '{}', loading preserved components instead.", urn);
-            List<Component> components = Lists.newArrayListWithCapacity(entityRecipe.getComponentCount());
-            for (ProtoDatastore.Component componentData : entityRecipe.getComponentList()) {
-                componentPersistor.deserialize(componentData).ifPresent(components::add);
+            TypeKeyedMap<Component> components = new TypeKeyedMap<>();
+            for (ProtoDatastore.ComponentData componentData : entityRecipe.getComponentList()) {
+                componentPersistor.deserialize(componentData).ifPresent(component -> components.put((Class) component.getType(), component));
             }
 
             return new EntityRecipeMetadata(id, urn, components);

@@ -21,7 +21,8 @@ import org.junit.Test;
 import org.terasology.assets.test.VirtualModuleEnvironment;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.persistence.proto.persistors.ComponentManifestPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.module.ModuleEnvironment;
@@ -51,19 +52,19 @@ public class ComponentManifestPersistorTest {
 
         ComponentManifestPersistor persistor = new ComponentManifestPersistor(moduleEnvironment, componentManager);
 
-        ComponentManifest manifest = new ComponentManifest(moduleEnvironment);
-        ComponentMetadata metadata = new ComponentMetadata(1, new Name("Test"), new Name("Sample"), componentManager.getType(SampleComponent.class));
+        ComponentManifest manifest = new ComponentManifest(moduleEnvironment, componentManager);
+        ComponentMetadata<SampleComponent> metadata = new ComponentMetadata<>(1, new Name("Test"), new Name("Sample"), componentManager.getType(SampleComponent.class));
         manifest.addComponentMetadata(metadata);
-        ProtoDatastore.ComponentManifest manifestData = persistor.serialize(manifest).build();
+        ProtoDatastore.ComponentManifestData manifestData = persistor.serialize(manifest).build();
         ComponentManifest finalManifest = persistor.deserialize(manifestData);
 
         assertNotNull(finalManifest);
         assertNotNull(finalManifest.getComponentMetadata(1));
-        ComponentMetadata componentMetadata = finalManifest.getComponentMetadata(1);
+        ComponentMetadata<?> componentMetadata = finalManifest.getComponentMetadata(1).orElseThrow(AssertionError::new);
         assertEquals(new Name("Sample"), componentMetadata.getName());
         assertEquals(componentManager.getType(SampleComponent.class), componentMetadata.getComponentType().orElseThrow(IllegalStateException::new));
 
-        assertEquals(Sets.newLinkedHashSet(manifest.getComponentMetadata(1).allFields()), Sets.newLinkedHashSet(componentMetadata.allFields()));
+        assertEquals(Sets.newLinkedHashSet(manifest.getComponentMetadata(1).get().allFields()), Sets.newLinkedHashSet(componentMetadata.allFields()));
 
     }
 }

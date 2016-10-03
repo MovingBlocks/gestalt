@@ -24,7 +24,9 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.assets.ResourceUrn;
 import org.terasology.entitysystem.persistence.proto.exception.PersistenceException;
+import org.terasology.entitysystem.persistence.proto.typehandlers.ResourceUrnHandler;
 import org.terasology.entitysystem.persistence.proto.typehandlers.StringHandler;
 import org.terasology.entitysystem.persistence.proto.typehandlers.collections.ListHandler;
 import org.terasology.entitysystem.persistence.proto.typehandlers.collections.MapHandler;
@@ -48,8 +50,9 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- *
- */
+ * The central class for persisting to protobuf. Allows the registration of type handlers, which will then be used when persisting objects. Implements ProtoContext, which
+ * it passes itself to type handlers as.
+  */
 public class ProtoPersistence implements ProtoContext {
 
     private static final Logger logger = LoggerFactory.getLogger(ProtoPersistence.class);
@@ -59,35 +62,69 @@ public class ProtoPersistence implements ProtoContext {
     private List<ProtoTypeHandlerFactory> typeHandlerFactories = Lists.newArrayList();
     private Map<String, BiMap<Integer, String>> lookupTables = Maps.newLinkedHashMap();
 
-    public ProtoPersistence() {
-        addTypeHandlerFactory(new ArrayHandlerFactory());
-        addTypeHandler(new StringHandler(), String.class);
-        addTypeHandler(new ListHandler(), List.class);
-        addTypeHandler(new MapHandler(), Map.class);
-        addTypeHandler(new SetHandler(), Set.class);
-        ProtoTypeHandler booleanTypeHandler = new BooleanHandler();
-        addTypeHandler(booleanTypeHandler, Boolean.class);
-        addTypeHandler(booleanTypeHandler, Boolean.TYPE);
-        ProtoTypeHandler byteTypeHandler = new ByteHandler();
-        addTypeHandler(byteTypeHandler, Byte.class);
-        addTypeHandler(byteTypeHandler, Byte.TYPE);
-        ProtoTypeHandler charHandler = new CharHandler();
-        addTypeHandler(charHandler, Character.class);
-        addTypeHandler(charHandler, Character.TYPE);
-        ProtoTypeHandler doubleHandler = new DoubleHandler();
-        addTypeHandler(doubleHandler, Double.class);
-        addTypeHandler(doubleHandler, Double.TYPE);
-        ProtoTypeHandler floatHandler = new FloatHandler();
-        addTypeHandler(floatHandler, Float.class);
-        addTypeHandler(floatHandler, Float.TYPE);
-        ProtoTypeHandler intHandler = new IntegerHandler();
-        addTypeHandler(intHandler, Integer.class);
-        addTypeHandler(intHandler, Integer.TYPE);
-        ProtoTypeHandler longHandler = new LongHandler();
-        addTypeHandler(longHandler, Long.class);
-        addTypeHandler(longHandler, Long.TYPE);
+    private ProtoPersistence() {
+
     }
 
+    /**
+     * @return Creates a new ProtoPersistence without any type handlers.
+     */
+    public static ProtoPersistence createRaw() {
+        return new ProtoPersistence();
+    }
+
+    /**
+     * Creates a ProtoPersistence pre-registered with handlers for
+     * <ul>
+     *     <li>Primitives</li>
+     *     <li>Primitve boxed types</li>
+     *     <li>String</li>
+     *     <li>Arrays</li>
+     *     <li>Lists</li>
+     *     <li>Maps</li>
+     *     <li>Sets</li>
+     *     <li>ResourceUrns</li>
+     * </ul>
+     * @return A ProtoPersistence with handlers set up for common types
+     */
+    public static ProtoPersistence create() {
+        ProtoPersistence protoPersistence = new ProtoPersistence();
+        protoPersistence.addTypeHandlerFactory(new ArrayHandlerFactory());
+        protoPersistence.addTypeHandler(new StringHandler(), String.class);
+        protoPersistence.addTypeHandler(new ListHandler(), List.class);
+        protoPersistence.addTypeHandler(new MapHandler(), Map.class);
+        protoPersistence.addTypeHandler(new SetHandler(), Set.class);
+        ProtoTypeHandler booleanTypeHandler = new BooleanHandler();
+        protoPersistence.addTypeHandler(booleanTypeHandler, Boolean.class);
+        protoPersistence.addTypeHandler(booleanTypeHandler, Boolean.TYPE);
+        ProtoTypeHandler byteTypeHandler = new ByteHandler();
+        protoPersistence.addTypeHandler(byteTypeHandler, Byte.class);
+        protoPersistence.addTypeHandler(byteTypeHandler, Byte.TYPE);
+        ProtoTypeHandler charHandler = new CharHandler();
+        protoPersistence.addTypeHandler(charHandler, Character.class);
+        protoPersistence.addTypeHandler(charHandler, Character.TYPE);
+        ProtoTypeHandler doubleHandler = new DoubleHandler();
+        protoPersistence.addTypeHandler(doubleHandler, Double.class);
+        protoPersistence.addTypeHandler(doubleHandler, Double.TYPE);
+        ProtoTypeHandler floatHandler = new FloatHandler();
+        protoPersistence.addTypeHandler(floatHandler, Float.class);
+        protoPersistence.addTypeHandler(floatHandler, Float.TYPE);
+        ProtoTypeHandler intHandler = new IntegerHandler();
+        protoPersistence.addTypeHandler(intHandler, Integer.class);
+        protoPersistence.addTypeHandler(intHandler, Integer.TYPE);
+        ProtoTypeHandler longHandler = new LongHandler();
+        protoPersistence.addTypeHandler(longHandler, Long.class);
+        protoPersistence.addTypeHandler(longHandler, Long.TYPE);
+        protoPersistence.addTypeHandler(new ResourceUrnHandler(), ResourceUrn.class);
+        return protoPersistence;
+    }
+
+    /**
+     * Registers a type handler for use when persisting a specified type
+     * @param handler The handler to register
+     * @param type The type the handler should be used for
+     * @param <T>
+     */
     public <T> void addTypeHandler(ProtoTypeHandler<T> handler, Type type) {
         if (type instanceof Class) {
             classTypeHandlerLookup.put((Class) type, handler);
@@ -96,10 +133,21 @@ public class ProtoPersistence implements ProtoContext {
         }
     }
 
+    /**
+     * Registers a type handler for use when persisting a specified class
+     * @param handler The handler to register
+     * @param type The type the handler should be used for
+     * @param <T>
+     */
     public <T> void addTypeHandler(ProtoTypeHandler<T> handler, Class type) {
         classTypeHandlerLookup.put(type, handler);
     }
 
+    /**
+     * Adds a type handler factory. When a type is encountered with no existing handler, each type handler factory is asked (in order of registration) to provide a handler
+     * for the type
+     * @param factory The factory to register
+     */
     public void addTypeHandlerFactory(ProtoTypeHandlerFactory factory) {
         typeHandlerFactories.add(factory);
     }
@@ -213,9 +261,9 @@ public class ProtoPersistence implements ProtoContext {
     }
 
     /**
-     * Sets a lookup table
-     * @param tableId
-     * @param table
+     * Sets a table of id->string value mappings, for use during persistence
+     * @param tableId The id of the table to set
+     * @param table The values for the table
      */
     public void setLookupTable(String tableId, BiMap<Integer, String> table) {
         lookupTables.put(tableId, HashBiMap.create(table));

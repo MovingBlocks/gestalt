@@ -20,10 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.junit.Test;
-import org.junit.Ignore;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.proto.typehandlers.StringHandler;
-import org.terasology.entitysystem.persistence.proto.typehandlers.collections.ListHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 
 import java.lang.reflect.Type;
@@ -43,7 +41,7 @@ public class ListHandlerTest {
     private static List<String> TEST = ImmutableList.of("Value1", "Value2", "Value3");
 
     private ListHandler handler = new ListHandler();
-    private ProtoPersistence context = new ProtoPersistence();
+    private ProtoPersistence context = ProtoPersistence.create();
 
     public ListHandlerTest() {
         context.addTypeHandler(handler, List.class);
