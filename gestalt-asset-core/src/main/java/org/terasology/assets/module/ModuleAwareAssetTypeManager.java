@@ -344,6 +344,18 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     }
 
     /**
+     * Dispose all assets of a certain type
+     * @param <T>       The type of asset
+     * @param assetType The type of asset to dispose
+     */
+    public synchronized <T extends Asset<U>, U extends AssetData> void disposeAll(Class<T> assetType) {
+        AssetType<?, ?> type = assetTypes.get(assetType);
+        if (type != null) {
+            type.disposeAll();
+        }
+    }
+
+    /**
      * Switches the module environment. This triggers:
      * <ul>
      * <li>Removal of all extension types, producers and formats</li>
