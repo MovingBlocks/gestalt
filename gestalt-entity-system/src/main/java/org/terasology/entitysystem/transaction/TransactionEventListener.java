@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity;
+package org.terasology.entitysystem.transaction;
 
 /**
  * An interface for listeners on transaction events. This allows additional behaviors to be hooked into transactions.

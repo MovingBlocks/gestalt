@@ -14,31 +14,29 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.exception;
-
-import org.terasology.entitysystem.entity.exception.EntitySystemException;
+package org.terasology.entitysystem.transaction.exception;
 
 /**
- * This exception is thrown if an attempt is made to add a component to an entity that already has a component of that type.
+ * This exception is thrown if an attempt is made to remove a component from an entity that does not have a component of that type.
  */
-public class ComponentAlreadyExistsException extends EntitySystemException {
+public class ComponentDoesNotExistException extends EntitySystemException {
 
-    public ComponentAlreadyExistsException() {
+    public ComponentDoesNotExistException() {
     }
 
-    public ComponentAlreadyExistsException(String message) {
+    public ComponentDoesNotExistException(String message) {
         super(message);
     }
 
-    public ComponentAlreadyExistsException(String message, Throwable cause) {
+    public ComponentDoesNotExistException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ComponentAlreadyExistsException(Throwable cause) {
+    public ComponentDoesNotExistException(Throwable cause) {
         super(cause);
     }
 
-    public ComponentAlreadyExistsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ComponentDoesNotExistException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

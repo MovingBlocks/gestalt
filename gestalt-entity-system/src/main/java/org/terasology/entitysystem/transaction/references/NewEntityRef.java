@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.references;
+package org.terasology.entitysystem.transaction.references;
 
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
-import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
+import org.terasology.entitysystem.transaction.exception.ComponentAlreadyExistsException;
+import org.terasology.entitysystem.transaction.exception.ComponentDoesNotExistException;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collections;

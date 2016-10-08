@@ -14,20 +14,30 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity;
+package org.terasology.entitysystem.transaction.pipeline;
 
-import org.terasology.assets.ResourceUrn;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.util.collection.TypeKeyedMap;
+
+import java.util.Optional;
 
 /**
- * Component indicating an entity was generated from an entity recipe
+ *
  */
-public interface GeneratedFromEntityRecipeComponent extends Component {
+public class TransactionContext {
 
-    /**
-     * @return The Urn of the EntityRecipe that this entity was generated from
-     */
-    ResourceUrn getEntityRecipe();
+    private TransactionState state = new TransactionState();
+    private TypeKeyedMap<Object> attachments = new TypeKeyedMap<>();
 
-    void setEntityRecipe(ResourceUrn entityRecipeUrn);
+    public TransactionState getState() {
+        return state;
+    }
+
+    public <T> Optional<T> getAttachment(Class<T> type) {
+        return Optional.ofNullable(attachments.get(type));
+    }
+
+    public <T> void attach(Class<T> type, T data) {
+        attachments.put(type, data);
+    }
+
 }

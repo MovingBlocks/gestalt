@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.transaction.inmemory;
 
 import com.google.common.collect.Lists;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.entity.EntityTransaction;
-import org.terasology.entitysystem.entity.TransactionEventListener;
+import org.terasology.entitysystem.transaction.EntityTransaction;
+import org.terasology.entitysystem.transaction.TransactionEventListener;
 
 import java.util.List;
 

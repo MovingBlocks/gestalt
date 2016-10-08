@@ -19,7 +19,7 @@ package org.terasology.entitysystem.persistence.proto.persistors;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.references.CoreEntityRef;
+import org.terasology.entitysystem.transaction.references.CoreEntityRef;
 import org.terasology.entitysystem.persistence.proto.ComponentManifest;
 import org.terasology.entitysystem.persistence.proto.ComponentMetadata;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;

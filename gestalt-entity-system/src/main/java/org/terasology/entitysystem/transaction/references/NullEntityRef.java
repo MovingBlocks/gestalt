@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.references;
+package org.terasology.entitysystem.transaction.references;
 
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityRef;

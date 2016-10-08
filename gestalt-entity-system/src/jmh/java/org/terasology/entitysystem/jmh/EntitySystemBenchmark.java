@@ -21,7 +21,7 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;

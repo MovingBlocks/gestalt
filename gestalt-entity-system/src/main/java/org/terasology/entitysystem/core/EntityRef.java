@@ -16,9 +16,8 @@
 
 package org.terasology.entitysystem.core;
 
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
-import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
+import org.terasology.entitysystem.transaction.exception.ComponentAlreadyExistsException;
+import org.terasology.entitysystem.transaction.exception.ComponentDoesNotExistException;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Optional;

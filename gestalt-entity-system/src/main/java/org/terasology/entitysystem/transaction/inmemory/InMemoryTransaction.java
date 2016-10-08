@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.transaction.inmemory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
@@ -35,15 +35,15 @@ import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.PropertyAccessor;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.entity.GeneratedFromEntityRecipeComponent;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.EntityTransaction;
-import org.terasology.entitysystem.entity.TransactionEventListener;
-import org.terasology.entitysystem.entity.exception.ComponentAlreadyExistsException;
-import org.terasology.entitysystem.entity.exception.ComponentDoesNotExistException;
-import org.terasology.entitysystem.entity.references.CoreEntityRef;
-import org.terasology.entitysystem.entity.references.NewEntityRef;
-import org.terasology.entitysystem.entity.references.NullEntityRef;
+import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
+import org.terasology.entitysystem.transaction.EntityTransaction;
+import org.terasology.entitysystem.transaction.TransactionEventListener;
+import org.terasology.entitysystem.transaction.exception.ComponentAlreadyExistsException;
+import org.terasology.entitysystem.transaction.exception.ComponentDoesNotExistException;
+import org.terasology.entitysystem.transaction.references.CoreEntityRef;
+import org.terasology.entitysystem.transaction.references.NewEntityRef;
+import org.terasology.entitysystem.transaction.references.NullEntityRef;
 import org.terasology.entitysystem.prefab.EntityRecipe;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.entitysystem.prefab.PrefabRef;
@@ -79,7 +79,7 @@ public class InMemoryTransaction implements EntityTransaction {
     }
 
     public void begin() {
-        transactionState.push(new TransactionState());
+        transactionState.push(new TransactionState(entityStore));
         eventListeners.forEach(TransactionEventListener::onBegin);
     }
 
@@ -89,9 +89,7 @@ public class InMemoryTransaction implements EntityTransaction {
         TransactionState state = transactionState.pop();
         try (ClosableLock ignored = entityStore.lock(state.expectedEntityRevisions.keySet())) {
             // Check entity revisions
-            TLongIterator iterator = state.expectedEntityRevisions.keySet().iterator();
-            while (iterator.hasNext()) {
-                long entityId = iterator.next();
+            for (long entityId : state.expectedEntityRevisions.keySet()) {
                 if (state.expectedEntityRevisions.get(entityId) != entityStore.getEntityRevision(entityId)) {
                     for (NewEntityRef ref : state.createdEntities) {
                         ref.setInnerEntityRef(NullEntityRef.get());
@@ -115,7 +113,7 @@ public class InMemoryTransaction implements EntityTransaction {
                 Set<Class<? extends Component>> componentTypes = newEntity.getComponentTypes();
                 if (!componentTypes.isEmpty()) {
                     long entityId = newEntity.getInnerEntityRef().get().getId();
-                    ClosableLock lock = entityStore.lock(new TLongHashSet(new long[]{entityId}));
+                    ClosableLock lock = entityStore.lock(Sets.newHashSet(entityId));
                     for (Class componentType : componentTypes) {
                         Component comp = (Component) newEntity.getComponent(componentType).get();
                         cleanUpEntityRefs(componentType, comp);
@@ -297,7 +295,7 @@ public class InMemoryTransaction implements EntityTransaction {
             if (existing instanceof EntityRecipe) {
                 newRef = entityMap.get(((EntityRecipe) existing).getIdentifier().getFragmentName());
                 if (newRef == null) {
-                    logger.error("{} references external or unknown entity prefab {}",  entityRecipeUrn, existing);
+                    logger.error("{} references external or unknown entity prefab {}", entityRecipeUrn, existing);
                     newRef = NullEntityRef.get();
                 }
             } else if (existing instanceof PrefabRef) {
@@ -326,10 +324,15 @@ public class InMemoryTransaction implements EntityTransaction {
     }
 
     // TODO: rework this to have a map of entity state rather than a table
-    private class TransactionState {
+    private static class TransactionState {
         private Table<Long, Class<? extends Component>, CacheEntry> entityCache = HashBasedTable.create();
-        private TLongIntMap expectedEntityRevisions = new TLongIntHashMap();
+        private Map<Long, Integer> expectedEntityRevisions = Maps.newHashMap();
         private List<NewEntityRef> createdEntities = Lists.newArrayList();
+        private EntityStore entityStore;
+
+        public TransactionState(EntityStore entityStore) {
+            this.entityStore = entityStore;
+        }
 
         @SuppressWarnings("unchecked")
         public <T extends Component> CacheEntry<T> getCacheEntry(long entityId, Class<T> componentType) {

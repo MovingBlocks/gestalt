@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.event.impl.EventProcessor;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;

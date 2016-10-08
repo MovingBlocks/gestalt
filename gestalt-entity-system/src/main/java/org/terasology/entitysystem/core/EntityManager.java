@@ -16,10 +16,8 @@
 
 package org.terasology.entitysystem.core;
 
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.EntityTransaction;
-import org.terasology.entitysystem.entity.TransactionEventListener;
+import org.terasology.entitysystem.transaction.EntityTransaction;
+import org.terasology.entitysystem.transaction.TransactionEventListener;
 import org.terasology.entitysystem.prefab.Prefab;
 
 import java.util.ConcurrentModificationException;
@@ -115,7 +113,6 @@ public interface EntityManager {
      * @param componentTypes The desired components. Must contain at least one component
      * @return An iterator over the entities with the desired component(s)
      */
-
     Iterator<EntityRef> findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes);
 
     /**

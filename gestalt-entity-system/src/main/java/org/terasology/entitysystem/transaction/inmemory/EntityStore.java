@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.transaction.inmemory;
 
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.iterator.TLongObjectIterator;
@@ -37,7 +37,7 @@ public interface EntityStore {
 
     boolean exists(long entityId);
 
-    ClosableLock lock(TLongSet entityIds);
+    ClosableLock lock(Set<Long> entityIds);
 
     <T extends Component> T get(long entityId, Class<T> componentClass);
 

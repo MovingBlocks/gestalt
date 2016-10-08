@@ -41,7 +41,7 @@ import org.terasology.entitysystem.component.PropertyAccessor;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.references.NullEntityRef;
+import org.terasology.entitysystem.transaction.references.NullEntityRef;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 import org.terasology.util.collection.TypeKeyedMap;

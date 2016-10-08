@@ -19,7 +19,7 @@ package org.terasology.entitysystem.persistence.proto.persistors;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.ComponentManifest;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;

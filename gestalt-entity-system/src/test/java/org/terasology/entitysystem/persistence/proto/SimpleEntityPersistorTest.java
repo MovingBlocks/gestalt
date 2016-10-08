@@ -22,7 +22,7 @@ import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.persistors.EntityPersistor;
 import org.terasology.entitysystem.persistence.proto.persistors.SimpleEntityPersistor;
 import org.terasology.entitysystem.stubs.SampleComponent;

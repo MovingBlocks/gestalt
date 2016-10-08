@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.transaction.inmemory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -95,7 +95,7 @@ public class ComponentTable implements EntityStore {
     }
 
     @Override
-    public ClosableLock lock(TLongSet entityIds) {
+    public ClosableLock lock(Set<Long> entityIds) {
         return new CompositeLock(entityIds);
     }
 
@@ -309,11 +309,10 @@ public class ComponentTable implements EntityStore {
 
         private TIntList lockList;
 
-        public CompositeLock(TLongSet entityIds) {
+        public CompositeLock(Set<Long> entityIds) {
             TIntSet lockIds = new TIntHashSet(entityIds.size());
-            TLongIterator entityIterator = entityIds.iterator();
-            while (entityIterator.hasNext()) {
-                lockIds.add(selectLock(entityIterator.next()));
+            for (long id : entityIds) {
+                lockIds.add(selectLock(id));
             }
 
             lockList = new TIntArrayList(lockIds);

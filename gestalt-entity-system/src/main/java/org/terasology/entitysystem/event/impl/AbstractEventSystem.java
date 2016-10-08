@@ -22,7 +22,7 @@ import com.google.common.collect.Queues;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.TransactionEventListener;
+import org.terasology.entitysystem.transaction.TransactionEventListener;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventSystem;
 import org.terasology.entitysystem.event.Synchronous;

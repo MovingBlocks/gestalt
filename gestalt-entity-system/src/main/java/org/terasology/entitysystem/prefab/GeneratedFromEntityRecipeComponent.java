@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.prefab;
+
+import org.terasology.assets.ResourceUrn;
+import org.terasology.entitysystem.core.Component;
 
 /**
- * Interface for a lock that is AutoClosable - so can be used in a try-with-resources statement.
+ * Component indicating an entity was generated from an entity recipe
  */
-public interface ClosableLock extends AutoCloseable {
+public interface GeneratedFromEntityRecipeComponent extends Component {
 
     /**
-     * Unlocks the lock
+     * @return The Urn of the EntityRecipe that this entity was generated from
      */
-    void close();
+    ResourceUrn getEntityRecipe();
+
+    void setEntityRecipe(ResourceUrn entityRecipeUrn);
 }

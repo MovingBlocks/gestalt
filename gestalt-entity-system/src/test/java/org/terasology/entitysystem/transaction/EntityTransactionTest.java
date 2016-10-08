@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity;
+package org.terasology.entitysystem.transaction;
 
 import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
-import org.terasology.entitysystem.entity.references.CoreEntityRef;
-import org.terasology.entitysystem.entity.references.NewEntityRef;
-import org.terasology.entitysystem.entity.references.NullEntityRef;
+import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.transaction.references.CoreEntityRef;
+import org.terasology.entitysystem.transaction.references.NewEntityRef;
+import org.terasology.entitysystem.transaction.references.NullEntityRef;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.valuetype.ImmutableCopy;
