@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.transaction.inmemory;
+package org.terasology.entitysystem.event.impl;
+
+import com.google.common.collect.Lists;
+import org.terasology.entitysystem.event.Event;
+
+import java.util.List;
 
 /**
  *
  */
-public class ComponentState {
+public class EventState {
+    private List<PendingEventInfo> pendingEvents = Lists.newArrayList();
+
+    public List<PendingEventInfo> getPendingEvents() {
+        return pendingEvents;
+    }
 }

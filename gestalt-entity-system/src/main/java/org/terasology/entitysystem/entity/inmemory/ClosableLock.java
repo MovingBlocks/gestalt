@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.transaction.inmemory;
+package org.terasology.entitysystem.entity.inmemory;
 
 /**
  * Interface for a lock that is AutoClosable - so can be used in a try-with-resources statement.

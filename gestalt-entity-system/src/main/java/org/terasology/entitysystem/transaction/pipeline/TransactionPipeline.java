@@ -34,23 +34,19 @@ public class TransactionPipeline {
         this.handlers.put(stage, interceptor);
     }
 
+    public void begin(TransactionContext context) {
+        processStage(context, TransactionStage.PRE_TRANSACTION);
+    }
+
     public void commit(TransactionContext context) {
-        boolean rollback;
         try {
-            rollback = processStage(context, TransactionStage.PRE_COMMIT, true);
-            if (!rollback) {
-                rollback = processStage(context, TransactionStage.COMMIT, true);
-            }
+            processStage(context, TransactionStage.PRE_COMMIT);
+            processStage(context, TransactionStage.COMMIT);
         } catch (RuntimeException e) {
             rollback(context);
             throw new EntitySystemException("Transaction rolled back due to exception", e);
         }
-
-        if (rollback) {
-            rollback(context);
-        } else {
-            postCommit(context);
-        }
+        postCommit(context);
     }
 
     public void rollback(TransactionContext context) {
@@ -65,23 +61,16 @@ public class TransactionPipeline {
 
     private void processStageConsumeExceptions(TransactionContext context, TransactionStage stage) {
         try {
-            processStage(context, stage, false);
+            processStage(context, stage);
         } catch (RuntimeException e) {
             logger.error("Error during {}", stage, e);
         }
     }
 
-    private boolean processStage(TransactionContext context, TransactionStage stage, boolean stopOnRollback) {
-        boolean result = true;
+    private void processStage(TransactionContext context, TransactionStage stage) {
         for (TransactionInterceptor interceptor : handlers.get(stage)) {
-            if (!interceptor.handle(context)) {
-                result = false;
-                if (stopOnRollback) {
-                    break;
-                }
-            }
+            interceptor.handle(context);
         }
-        return result;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.transaction;
+package org.terasology.entitysystem.entity.inmemory;
 
 import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.transaction.exception.ComponentAlreadyExistsException;
 import org.terasology.entitysystem.transaction.exception.ComponentDoesNotExistException;
@@ -38,12 +39,7 @@ import java.util.Set;
  * <p>
  * A transaction is not threadsafe - it should be used only in its thread of origin.
  */
-public interface EntityTransaction {
-
-    /**
-     * @return A reference to a new entity within the current transaction
-     */
-    EntityRef createEntity();
+interface ReferenceAdaptor {
 
     /**
      * @param id The id of the entity
@@ -68,18 +64,10 @@ public interface EntityTransaction {
 
     /**
      * @param entityId The id of the entity to retrieve the component from.
-     * @return Retrieves a set of the types of components that the given entity has.
+     * @return Retrieves a type keyed map of the components composing this entity
      * @throws IllegalStateException If no transaction is active
      */
-    Set<Class<? extends Component>> getEntityComposition(long entityId);
-
-    /**
-
-     * @param entityId The id of the entity to retrieve the component from.
-     * @return A map of the components that the entity has
-     * @throws IllegalStateException If no transaction is active
-     */
-    TypeKeyedMap<Component> getEntityComponents(long entityId);
+    TypeKeyedMap<Component> getEntityComposition(long entityId);
 
     /**
      * Adds a component to an entity, returning it.
@@ -106,20 +94,6 @@ public interface EntityTransaction {
      * @throws IllegalStateException If no transaction is active
      */
     <T extends Component> void removeComponent(long entityId, Class<T> componentType);
-
-    /**
-     * Creates entities based on a prefab
-     * @param prefab The prefab to create entities from
-     * @return The EntityRef of the root EntityPrefab from the prefab
-     */
-    EntityRef createEntity(Prefab prefab);
-
-    /**
-     * Creates entities based on a prefab
-     * @param prefab The prefab to create entities from
-     * @return A map of EntityRefs created, by the name of the entity prefab.
-     */
-    Map<Name,EntityRef> createEntities(Prefab prefab);
 
 
 }

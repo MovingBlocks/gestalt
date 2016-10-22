@@ -19,7 +19,6 @@ package org.terasology.entitysystem.persistence.proto.persistors;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.references.CoreEntityRef;
 import org.terasology.entitysystem.persistence.proto.ComponentManifest;
 import org.terasology.entitysystem.persistence.proto.ComponentMetadata;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
@@ -51,7 +50,7 @@ public class SimpleEntityPersistor implements EntityPersistor {
 
     @Override
     public EntityRef deserialize(ProtoDatastore.EntityData data, EntityManager entityManager) {
-        EntityRef entity = new CoreEntityRef(entityManager, data.getId());
+        EntityRef entity = entityManager.getEntity(data.getId());
         for (ProtoDatastore.ComponentData componentData : data.getComponentList()) {
             ComponentMetadata<?> componentMetadata = componentManifest.getComponentMetadata(componentData.getTypeIndex()).orElseThrow(() -> new PersistenceException("No information found for component with index '" + componentData.getTypeIndex() + "'"));
             if (componentMetadata.getComponentType().isPresent()) {

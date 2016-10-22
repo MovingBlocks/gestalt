@@ -25,11 +25,12 @@ import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
-import org.terasology.entitysystem.transaction.references.NewEntityRef;
-import org.terasology.entitysystem.transaction.references.NullEntityRef;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
+import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.stubs.ReferenceComponent;
 import org.terasology.entitysystem.stubs.SampleComponent;
+import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -57,6 +58,7 @@ public class PrefabInstantiationTest {
     public static final ResourceUrn COMPOSITE_PREFAB_ROOT_ENTITY_URN = new ResourceUrn(COMPOSITE_PREFAB_URN, "root");
     public static final ResourceUrn SECOND_ENTITY_URN = new ResourceUrn(MULTI_PREFAB_URN, "second");
 
+    private TransactionManager transactionManager = new TransactionManager();
     private EntityManager entityManager;
     private ComponentManager componentManager;
 
@@ -72,7 +74,7 @@ public class PrefabInstantiationTest {
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         typeLibrary.addHandler(new TypeHandler<>(EntityRef.class, ImmutableCopy.create()));
         componentManager = new CodeGenComponentManager(typeLibrary);
-        entityManager = new InMemoryEntityManager(componentManager);
+        entityManager = new InMemoryEntityManager(componentManager, transactionManager);
 
         createSinglePrefab();
         createMultiPrefab();
@@ -122,13 +124,13 @@ public class PrefabInstantiationTest {
 
     @org.junit.Before
     public void setup() {
-        entityManager.beginTransaction();
+        transactionManager.begin();
     }
 
     @org.junit.After
     public void teardown() throws IOException {
-        while (entityManager.isTransactionActive()) {
-            entityManager.rollback();
+        while (transactionManager.isActive()) {
+            transactionManager.rollback();
         }
     }
 

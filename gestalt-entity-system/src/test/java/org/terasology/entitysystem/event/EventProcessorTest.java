@@ -22,12 +22,13 @@ import org.junit.Test;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.event.impl.EventProcessor;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.entitysystem.stubs.TestChildEvent;
 import org.terasology.entitysystem.stubs.TestEvent;
+import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -52,29 +53,31 @@ public class EventProcessorTest {
     private EventProcessor eventProcessor;
     private EntityRef testEntity;
 
+    private TransactionManager transactionManager;
     private EntityManager entityManager;
 
     public EventProcessorTest() {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
-        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
+        transactionManager = new TransactionManager();
+        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary), transactionManager);
     }
 
     @org.junit.Before
     public void startup() {
-        entityManager.beginTransaction();
+        transactionManager.begin();
         testEntity = entityManager.createEntity();
         SampleComponent comp = testEntity.addComponent(SampleComponent.class);
         comp.setName(TEST_NAME);
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
     }
 
     @After
     public void teardown() throws IOException {
-        while (entityManager.isTransactionActive()) {
-            entityManager.rollback();
+        while (transactionManager.isActive()) {
+            transactionManager.rollback();
         }
     }
 

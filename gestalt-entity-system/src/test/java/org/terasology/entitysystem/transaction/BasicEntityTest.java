@@ -16,14 +16,11 @@
 
 package org.terasology.entitysystem.transaction;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
-import org.terasology.entitysystem.transaction.references.NewEntityRef;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.valuetype.ImmutableCopy;
@@ -31,10 +28,7 @@ import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -50,23 +44,25 @@ public class BasicEntityTest {
     private static final String TEST_NAME = "Fred";
     private static final String TEST_NAME_2 = "Jill";
 
+    private TransactionManager transactionManager = new TransactionManager();
     private EntityManager entityManager;
+
 
     public BasicEntityTest() {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
-        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
+        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary), transactionManager);
     }
 
     @org.junit.Before
     public void setup() {
-        entityManager.beginTransaction();
+        transactionManager.begin();
     }
 
     @org.junit.After
     public void teardown() throws IOException {
-        while (entityManager.isTransactionActive()) {
-            entityManager.rollback();
+        while (transactionManager.isActive()) {
+            transactionManager.rollback();
         }
     }
 
@@ -75,8 +71,8 @@ public class BasicEntityTest {
         EntityRef entity = entityManager.createEntity();
         assertNotNull(entity);
         entity.addComponent(SampleComponent.class);
-        entityManager.commit();
-        entityManager.beginTransaction();
+        transactionManager.commit();
+        transactionManager.begin();
         assertTrue(entity.isPresent());
     }
 
@@ -84,8 +80,8 @@ public class BasicEntityTest {
     public void createEntityWithoutComponentsFails() {
         EntityRef entity = entityManager.createEntity();
         assertNotNull(entity);
-        entityManager.commit();
-        entityManager.beginTransaction();
+        transactionManager.commit();
+        transactionManager.begin();
         assertFalse(entity.isPresent());
     }
 
@@ -101,9 +97,9 @@ public class BasicEntityTest {
         SampleComponent component = entity.addComponent(SampleComponent.class);
         component.setName("Name");
         component.setDescription("Description");
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         Optional<SampleComponent> retrievedComponent = entity.getComponent(SampleComponent.class);
         assertTrue(retrievedComponent.isPresent());
         assertEquals(component.getName(), retrievedComponent.get().getName());
@@ -115,14 +111,14 @@ public class BasicEntityTest {
         EntityRef entity = entityManager.createEntity();
         SampleComponent sampleComponent = entity.addComponent(SampleComponent.class);
         sampleComponent.setName(TEST_NAME);
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         Optional<SampleComponent> component = entity.getComponent(SampleComponent.class);
         component.get().setName(TEST_NAME_2);
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         Optional<SampleComponent> finalComp = entity.getComponent(SampleComponent.class);
         assertTrue(finalComp.isPresent());
         assertEquals(TEST_NAME_2, finalComp.get().getName());
@@ -132,9 +128,9 @@ public class BasicEntityTest {
     public void changesInOriginalComponentDoesNotChangeStoredComponent() {
         EntityRef entity = entityManager.createEntity();
         SampleComponent component = entity.addComponent(SampleComponent.class);
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         component.setName("New Name");
         assertNotEquals(component.getName(), entity.getComponent(SampleComponent.class).get().getName());
     }
@@ -143,13 +139,13 @@ public class BasicEntityTest {
     public void changesInRetrievedComponentDoesNotChangeStoredComponent() {
         EntityRef entity = entityManager.createEntity();
         SampleComponent component = entity.addComponent(SampleComponent.class);
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         SampleComponent retrievedComponent = entity.getComponent(SampleComponent.class).get();
         retrievedComponent.setName("New Name");
         assertNotEquals(component.getName(), retrievedComponent.getName());
-        entityManager.commit();
+        transactionManager.commit();
         assertNotEquals(component.getName(), retrievedComponent.getName());
     }
 
@@ -159,9 +155,9 @@ public class BasicEntityTest {
         entity.addComponent(SampleComponent.class);
         SecondComponent secondComponent = entity.addComponent(SecondComponent.class);
         secondComponent.setName(TEST_NAME);
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         Optional<SecondComponent> finalComp = entity.getComponent(SecondComponent.class);
         assertTrue(finalComp.isPresent());
         assertEquals(TEST_NAME, finalComp.get().getName());
@@ -172,13 +168,13 @@ public class BasicEntityTest {
         EntityRef entity = entityManager.createEntity();
         entity.addComponent(SampleComponent.class);
         entity.addComponent(SecondComponent.class);
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         entity.removeComponent(SecondComponent.class);
         assertFalse(entity.getComponent(SecondComponent.class).isPresent());
-        entityManager.commit();
-        entityManager.beginTransaction();
+        transactionManager.commit();
+        transactionManager.begin();
         assertFalse(entity.getComponent(SecondComponent.class).isPresent());
     }
 
@@ -189,83 +185,24 @@ public class BasicEntityTest {
         entity.addComponent(SecondComponent.class);
         entity.removeComponent(SecondComponent.class);
         assertFalse(entity.getComponent(SecondComponent.class).isPresent());
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         assertFalse(entity.getComponent(SecondComponent.class).isPresent());
     }
 
     @Test
     public void deleteEntity() {
         EntityRef entity = entityManager.createEntity();
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         entity.delete();
         assertFalse(entity.isPresent());
-        entityManager.commit();
+        transactionManager.commit();
 
-        entityManager.beginTransaction();
+        transactionManager.begin();
         assertFalse(entity.isPresent());
-    }
-
-    @Test
-    public void findEntitiesWithSingleComponent() {
-        List<EntityRef> sampleEntities = Lists.newArrayList();
-        EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
-        sampleEntities.add(entity);
-
-        entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
-        entity.addComponent(SecondComponent.class);
-        sampleEntities.add(entity);
-
-        entity = entityManager.createEntity();
-        entity.addComponent(SecondComponent.class);
-        entityManager.commit();
-
-        Iterator<EntityRef> iterator = entityManager.findEntitiesWithComponents(SampleComponent.class);
-        Set<EntityRef> actualEntities = Sets.newHashSet();
-        while (iterator.hasNext()) {
-            actualEntities.add(iterator.next());
-        }
-
-        assertEquals(listActualEntities(sampleEntities), actualEntities);
-    }
-
-    @Test
-    public void findEntitiesWithMultipleComponent() {
-        List<EntityRef> sampleAndSecondEntities = Lists.newArrayList();
-        EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
-        entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
-        entity.addComponent(SecondComponent.class);
-        sampleAndSecondEntities.add(entity);
-        entity = entityManager.createEntity();
-        entity.addComponent(SecondComponent.class);
-        entityManager.commit();
-
-        Iterator<EntityRef> iterator = entityManager.findEntitiesWithComponents(SampleComponent.class, SecondComponent.class);
-        Set<EntityRef> actualEntities = Sets.newHashSet();
-        while (iterator.hasNext()) {
-            actualEntities.add(iterator.next());
-        }
-
-        assertEquals(listActualEntities(sampleAndSecondEntities), actualEntities);
-    }
-
-    private Set<EntityRef> listActualEntities(List<EntityRef> newEntities) {
-        Set<EntityRef> result = Sets.newLinkedHashSet();
-        for (EntityRef entity : newEntities) {
-            if (entity instanceof NewEntityRef) {
-                result.add(((NewEntityRef) entity).getInnerEntityRef().get());
-            } else {
-                result.add(entity);
-            }
-        }
-        return result;
     }
 
 }

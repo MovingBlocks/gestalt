@@ -19,10 +19,11 @@ package org.terasology.entitysystem.persistence.proto.persistors;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.ComponentManifest;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
+import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.module.ModuleEnvironment;
 
 import java.io.IOException;
@@ -49,58 +50,58 @@ public class EntityManagerPersistor {
         this.componentManifestPersistor = new ComponentManifestPersistor(moduleEnvironment, componentManager);
     }
 
-    public void serialize(EntityManager entityManager, Path file) throws IOException {
+    public void serialize(EntityManager entityManager, TransactionManager transactionManager, Path file) throws IOException {
         try (OutputStream stream = Files.newOutputStream(file)) {
-            serialize(entityManager).writeTo(stream);
+            serialize(entityManager, transactionManager).writeTo(stream);
         }
     }
 
-    public EntityManager deserialize(Path file) throws IOException {
+    public EntityManager deserialize(Path file, TransactionManager transactionManager) throws IOException {
         try (InputStream stream = Files.newInputStream(file)) {
-            return deserialize(ProtoDatastore.Store.parseFrom(stream));
+            return deserialize(ProtoDatastore.Store.parseFrom(stream), transactionManager);
         }
     }
 
-    public ProtoDatastore.Store serialize(EntityManager entityManager) {
+    public ProtoDatastore.Store serialize(EntityManager entityManager, TransactionManager transactionManager) {
         ComponentManifest componentManifest = new ComponentManifest(moduleEnvironment, componentManager);
 
         EntityPersistor entityPersistor = new SimpleEntityPersistor(context, componentManifest);
-        ProtoDatastore.Store.Builder builder = serializeEntities(entityManager, entityPersistor);
+        ProtoDatastore.Store.Builder builder = serializeEntities(entityManager, transactionManager, entityPersistor);
         builder.setComponentManifest(componentManifestPersistor.serialize(componentManifest));
         builder.setNextEntityId(entityManager.getNextId());
 
         return builder.build();
     }
 
-    public EntityManager deserialize(ProtoDatastore.Store entityManagerData) {
-        EntityManager entityManager = new InMemoryEntityManager(componentManager, entityManagerData.getNextEntityId());
+    public EntityManager deserialize(ProtoDatastore.Store entityManagerData, TransactionManager transactionManager) {
+        EntityManager entityManager = new InMemoryEntityManager(componentManager, transactionManager, entityManagerData.getNextEntityId());
 
         ComponentManifest componentManifest = componentManifestPersistor.deserialize(entityManagerData.getComponentManifest());
         EntityPersistor entityPersistor = new SimpleEntityPersistor(context, componentManifest);
-        deserializeEntities(entityManagerData, entityManager, entityPersistor);
+        deserializeEntities(entityManagerData, entityManager, transactionManager, entityPersistor);
         return entityManager;
     }
 
-    private ProtoDatastore.Store.Builder serializeEntities(EntityManager entityManager, EntityPersistor entityPersistor) {
+    private ProtoDatastore.Store.Builder serializeEntities(EntityManager entityManager, TransactionManager transactionManager, EntityPersistor entityPersistor) {
         ProtoDatastore.Store.Builder builder = ProtoDatastore.Store.newBuilder();
         Iterator<EntityRef> i = entityManager.allEntities();
         while (i.hasNext()) {
             EntityRef entity = i.next();
-            entityManager.beginTransaction();
+            transactionManager.begin();
             if (entity.isPresent()) {
                 builder.addEntity(entityPersistor.serialize(entity));
             }
-            entityManager.rollback();
+            transactionManager.rollback();
         }
 
         return builder;
     }
 
-    private void deserializeEntities(ProtoDatastore.Store data, EntityManager manager, EntityPersistor entityPersistor) {
+    private void deserializeEntities(ProtoDatastore.Store data, EntityManager entityManager, TransactionManager transactionManager, EntityPersistor entityPersistor) {
         for (ProtoDatastore.EntityData entityData : data.getEntityList()) {
-            manager.beginTransaction();
-            entityPersistor.deserialize(entityData, manager);
-            manager.commit();
+            transactionManager.begin();
+            entityPersistor.deserialize(entityData, entityManager);
+            transactionManager.commit();
         }
     }
 }

@@ -24,9 +24,7 @@ public interface TransactionInterceptor {
     /**
      * Called during a transaction when a stage this interceptor is registered for occurs.
      *
-     * This method returns whether the transaction should continue. This is only respected during the PRE_COMMIT and COMMIT stages.
      * @param context The context of the transaction occurring.
-     * @return Whether processing of the transaction should continue.
      */
-    boolean handle(TransactionContext context) ;
+    void handle(TransactionContext context) ;
 }

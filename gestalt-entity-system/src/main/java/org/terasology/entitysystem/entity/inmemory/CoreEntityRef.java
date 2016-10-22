@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.transaction.references;
+package org.terasology.entitysystem.entity.inmemory;
 
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
@@ -33,16 +33,16 @@ import java.util.Set;
  */
 public class CoreEntityRef implements EntityRef {
 
-    private EntityManager entityManager;
+    private ReferenceAdaptor referenceAdaptor;
     private long id;
 
     /**
      * Constructs an entity ref
-     * @param entityManager The entityManager the referenced entity exists within
+     * @param referenceAdaptor The entityIdAccessor the referenced entity exists within
      * @param id The id of the entity
      */
-    public CoreEntityRef(EntityManager entityManager, long id) {
-        this.entityManager = entityManager;
+    public CoreEntityRef(ReferenceAdaptor referenceAdaptor, long id) {
+        this.referenceAdaptor = referenceAdaptor;
         this.id = id;
     }
 
@@ -54,41 +54,34 @@ public class CoreEntityRef implements EntityRef {
         return id;
     }
 
-    /**
-     * @return The entity manager the entity referenced lives within
-     */
-    public EntityManager getEntityManager() {
-        return entityManager;
-    }
-
     @Override
     public boolean isPresent() {
-        return entityManager.getRawTransaction().exists(id);
+        return referenceAdaptor.exists(id);
     }
 
     @Override
     public <T extends Component> Optional<T> getComponent(Class<T> componentType) {
-        return entityManager.getRawTransaction().getComponent(id, componentType);
+        return referenceAdaptor.getComponent(id, componentType);
     }
 
     @Override
     public Set<Class<? extends Component>> getComponentTypes() {
-        return entityManager.getRawTransaction().getEntityComposition(id);
+        return referenceAdaptor.getEntityComposition(id).keySet();
     }
 
     @Override
     public TypeKeyedMap<Component> getComponents() {
-        return entityManager.getRawTransaction().getEntityComponents(id);
+        return referenceAdaptor.getEntityComposition(id);
     }
 
     @Override
     public <T extends Component> T addComponent(Class<T> componentType) {
-        return entityManager.getRawTransaction().addComponent(id, componentType);
+        return referenceAdaptor.addComponent(id, componentType);
     }
 
     @Override
     public <T extends Component> void removeComponent(Class<T> componentType) {
-        entityManager.getRawTransaction().removeComponent(id, componentType);
+        referenceAdaptor.removeComponent(id, componentType);
     }
 
     @Override
@@ -108,7 +101,7 @@ public class CoreEntityRef implements EntityRef {
         }
         if (obj instanceof CoreEntityRef) {
             CoreEntityRef other = (CoreEntityRef) obj;
-            return id == other.id && Objects.equals(entityManager, other.entityManager);
+            return id == other.id && Objects.equals(referenceAdaptor, other.referenceAdaptor);
         }
         return false;
     }

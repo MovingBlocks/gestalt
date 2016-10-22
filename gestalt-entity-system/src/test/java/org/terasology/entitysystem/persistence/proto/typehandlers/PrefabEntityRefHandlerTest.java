@@ -21,11 +21,12 @@ import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
-import org.terasology.entitysystem.transaction.references.NewEntityRef;
-import org.terasology.entitysystem.transaction.references.NullEntityRef;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
+import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.stubs.SampleComponent;
+import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.valuetype.TypeLibrary;
 
 import static org.junit.Assert.assertEquals;
@@ -35,15 +36,16 @@ import static org.junit.Assert.assertEquals;
  */
 public class PrefabEntityRefHandlerTest {
 
-
+    private TransactionManager transactionManager;
     private EntityManager entityManager;
     private ComponentManager componentManager;
     private ProtoPersistence context = ProtoPersistence.create();
 
     public PrefabEntityRefHandlerTest() {
+        transactionManager = new TransactionManager();
         TypeLibrary typeLibrary = new TypeLibrary();
         componentManager = new CodeGenComponentManager(typeLibrary);
-        entityManager = new InMemoryEntityManager(componentManager);
+        entityManager = new InMemoryEntityManager(componentManager, transactionManager);
         context.addTypeHandler(new EntityRefHandler(entityManager), EntityRef.class);
     }
 
@@ -55,10 +57,10 @@ public class PrefabEntityRefHandlerTest {
 
     @Test
     public void handleCoreEntityRef() {
-        entityManager.beginTransaction();
+        transactionManager.begin();
         EntityRef ref = entityManager.createEntity();
         ref.addComponent(SampleComponent.class);
-        entityManager.commit();
+        transactionManager.commit();
 
         ref = ((NewEntityRef) ref).getInnerEntityRef().get();
 
@@ -67,10 +69,10 @@ public class PrefabEntityRefHandlerTest {
 
     @Test
     public void handleNewEntityRef() {
-        entityManager.beginTransaction();
+        transactionManager.begin();
         EntityRef ref = entityManager.createEntity();
         ref.addComponent(SampleComponent.class);
-        entityManager.commit();
+        transactionManager.commit();
 
         assertEquals(((NewEntityRef) ref).getInnerEntityRef().get(), context.deserialize(context.serialize(ref, EntityRef.class).build(), EntityRef.class));
     }

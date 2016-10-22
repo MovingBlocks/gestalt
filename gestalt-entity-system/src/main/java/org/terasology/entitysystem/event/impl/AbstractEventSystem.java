@@ -17,52 +17,31 @@
 package org.terasology.entitysystem.event.impl;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Queues;
 import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.TransactionEventListener;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventSystem;
 import org.terasology.entitysystem.event.Synchronous;
+import org.terasology.entitysystem.transaction.TransactionManager;
+import org.terasology.entitysystem.transaction.pipeline.TransactionStage;
 
-import java.util.Deque;
-import java.util.List;
 import java.util.Set;
 
 /**
  *
  */
-public abstract class AbstractEventSystem implements EventSystem, TransactionEventListener {
+public abstract class AbstractEventSystem implements EventSystem {
 
-    private ThreadLocal<TransactionState> transactionState = new ThreadLocal<TransactionState>() {
-        @Override
-        protected TransactionState initialValue() {
-            return new TransactionState();
-        }
-    };
+    private TransactionManager transactionManager;
 
-    public AbstractEventSystem(EntityManager entityManager) {
-        entityManager.registerTransactionListener(this);
+    public AbstractEventSystem(TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.PRE_TRANSACTION, new InitialiseEventState());
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.POST_COMMIT, new CommitEvents(this));
     }
 
-    @Override
-    public final void onBegin() {
-        transactionState.get().pendingEvents.push(Lists.newArrayList());
-    }
-
-    @Override
-    public final void onCommit() {
-        List<PendingEventInfo> pendingEvents = transactionState.get().pendingEvents.pop();
-        for (PendingEventInfo pendingEvent : pendingEvents) {
-            processEvent(pendingEvent.event, pendingEvent.entity, pendingEvent.triggeringComponents);
-        }
-    }
-
-    @Override
-    public final void onRollback() {
-        transactionState.get().pendingEvents.pop();
+    protected TransactionManager getTransactionManager() {
+        return transactionManager;
     }
 
     @Override
@@ -72,33 +51,15 @@ public abstract class AbstractEventSystem implements EventSystem, TransactionEve
 
     @Override
     public final void send(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
-        if (event.getClass().isAnnotationPresent(Synchronous.class)) {
+        if (event.getClass().isAnnotationPresent(Synchronous.class) || !transactionManager.isActive()) {
             processEvent(event, entity, triggeringComponents);
         } else {
-            TransactionState state = this.transactionState.get();
-            if (!state.pendingEvents.isEmpty()) {
-                state.pendingEvents.peek().add(new PendingEventInfo(event, entity, triggeringComponents));
-            } else {
-                processEvent(event, entity, triggeringComponents);
-            }
+            transactionManager.getContext().getAttachment(EventState.class).ifPresent((state) -> {
+                state.getPendingEvents().add(new PendingEventInfo(event, entity, triggeringComponents));
+            });
         }
     }
 
     protected abstract void processEvent(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents);
 
-    private static class TransactionState {
-        private Deque<List<PendingEventInfo>> pendingEvents = Queues.newArrayDeque();
-    }
-
-    private static class PendingEventInfo {
-        private Event event;
-        private EntityRef entity;
-        private Set<Class<? extends Component>> triggeringComponents;
-
-        public PendingEventInfo(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
-            this.event = event;
-            this.entity = entity;
-            this.triggeringComponents = ImmutableSet.copyOf(triggeringComponents);
-        }
-    }
 }

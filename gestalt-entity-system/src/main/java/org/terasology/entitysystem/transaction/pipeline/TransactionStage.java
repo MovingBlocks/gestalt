@@ -21,6 +21,10 @@ package org.terasology.entitysystem.transaction.pipeline;
  */
 public enum TransactionStage {
     /**
+     * This stage occurs when a transaction begins.
+     */
+    PRE_TRANSACTION,
+    /**
      * This stage occurs before commit is attempted. At this stage the transactional state can be freely modified.
      */
     PRE_COMMIT,

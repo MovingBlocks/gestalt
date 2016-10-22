@@ -19,9 +19,9 @@ package org.terasology.entitysystem.persistence.proto.typehandlers;
 import com.google.common.collect.Lists;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.references.CoreEntityRef;
-import org.terasology.entitysystem.transaction.references.NewEntityRef;
-import org.terasology.entitysystem.transaction.references.NullEntityRef;
+import org.terasology.entitysystem.entity.inmemory.CoreEntityRef;
+import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
+import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
@@ -65,7 +65,7 @@ public class EntityRefHandler implements ProtoTypeHandler<EntityRef> {
 
     private EntityRef getEntityRef(long id) {
         if (id != 0) {
-            return new CoreEntityRef(entityManager, id);
+            return entityManager.getEntity(id);
         }
         return NullEntityRef.get();
     }

@@ -21,8 +21,6 @@ import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
-import org.terasology.entitysystem.transaction.references.CoreEntityRef;
 import org.terasology.entitysystem.persistence.proto.ComponentManifest;
 import org.terasology.entitysystem.persistence.proto.ComponentMetadata;
 import org.terasology.entitysystem.persistence.proto.EntityRecipeManifest;
@@ -30,6 +28,7 @@ import org.terasology.entitysystem.persistence.proto.EntityRecipeMetadata;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.proto.exception.PersistenceException;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
+import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Optional;
@@ -100,7 +99,7 @@ public class PrefabAwareEntityPersistor implements EntityPersistor {
     @Override
     public EntityRef deserialize(ProtoDatastore.EntityData data, EntityManager entityManager) {
         if (data.hasRecipe()) {
-            EntityRecipeMetadata recipe = recipeManifest.getEntityRecipeMetadata(data.getRecipe()).orElseThrow(() ->  new PersistenceException("Missing entity recipe with id '" + data.getRecipe() + "'"));
+            EntityRecipeMetadata recipe = recipeManifest.getEntityRecipeMetadata(data.getRecipe()).orElseThrow(() -> new PersistenceException("Missing entity recipe with id '" + data.getRecipe() + "'"));
             return deserializeWithEntityDelta(recipe, data, entityManager);
         } else {
             return defaultPersistor.deserialize(data, entityManager);
@@ -109,7 +108,7 @@ public class PrefabAwareEntityPersistor implements EntityPersistor {
     }
 
     private EntityRef deserializeWithEntityDelta(EntityRecipeMetadata base, ProtoDatastore.EntityData data, EntityManager entityManager) {
-        EntityRef entity = new CoreEntityRef(entityManager, data.getId());
+        EntityRef entity = entityManager.getEntity(data.getId());
         copyBaseComponents(base, entity);
         applyComponentChanges(data, entity);
         dropRemovedComponents(data, entity);

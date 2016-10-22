@@ -27,6 +27,7 @@ import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventResult;
 import org.terasology.entitysystem.event.Synchronous;
+import org.terasology.entitysystem.transaction.TransactionManager;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.ConcurrentModificationException;
@@ -41,19 +42,12 @@ import java.util.concurrent.BlockingDeque;
 public class DelayedEventSystem extends AbstractEventSystem {
     private static final Logger logger = LoggerFactory.getLogger(ImmediateEventSystem.class);
 
-    private transient EventProcessor eventProcessor;
-    private final EntityManager entityManager;
+    private final EventProcessor eventProcessor;
     private final BlockingDeque<PendingEventInfo> pendingEvents = Queues.newLinkedBlockingDeque();
 
-    public DelayedEventSystem(EventProcessor eventProcessor, EntityManager entityManager) {
-        super(entityManager);
+    public DelayedEventSystem(TransactionManager transactionManager, EventProcessor eventProcessor) {
+        super(transactionManager);
         this.eventProcessor = eventProcessor;
-        this.entityManager = entityManager;
-    }
-
-    @Override
-    public void setEventProcessor(EventProcessor processor) {
-        this.eventProcessor = processor;
     }
 
     @Override
@@ -77,18 +71,18 @@ public class DelayedEventSystem extends AbstractEventSystem {
     }
 
     private void doEvent(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
-        if (event.getClass().isAnnotationPresent(Synchronous.class) && entityManager.isTransactionActive()) {
+        if (event.getClass().isAnnotationPresent(Synchronous.class) && getTransactionManager().isActive()) {
             eventProcessor.send(event, entity, triggeringComponents);
         } else {
 
             boolean completed = false;
             while (!completed) {
                 try {
-                    entityManager.beginTransaction();
+                    getTransactionManager().begin();
                     if (eventProcessor.send(event, entity, triggeringComponents) == EventResult.CANCEL) {
-                        entityManager.rollback();
+                        getTransactionManager().rollback();
                     } else {
-                        entityManager.commit();
+                        getTransactionManager().commit();
                     }
                     completed = true;
                 } catch (ConcurrentModificationException e) {

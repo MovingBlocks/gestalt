@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.transaction.pipeline;
+package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.terasology.entitysystem.transaction.references.NewEntityRef;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -30,19 +29,19 @@ import java.util.Set;
 /**
  *
  */
-public class TransactionState {
-    private Map<Long, TransactionalEntityState> existingEntityState = Maps.newLinkedHashMap();
+public class EntitySystemState {
+    private Map<Long, EntityState> existingEntityState = Maps.newLinkedHashMap();
     private List<NewEntityRef> newEntities = Lists.newArrayList();
 
-    public Collection<TransactionalEntityState> getEntityStates() {
+    public Collection<EntityState> getEntityStates() {
         return Collections.unmodifiableCollection(existingEntityState.values());
     }
 
-    public Optional<TransactionalEntityState> getStateFor(long entityId) {
+    public Optional<EntityState> getStateFor(long entityId) {
         return Optional.ofNullable(existingEntityState.get(entityId));
     }
 
-    public void addState(TransactionalEntityState state) {
+    public void addState(EntityState state) {
         existingEntityState.put(state.getId(), state);
     }
 

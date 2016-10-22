@@ -14,24 +14,18 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.transaction.pipeline;
+package org.terasology.entitysystem.event.impl;
 
-import org.terasology.util.collection.TypeKeyedMap;
-
-import java.util.Optional;
+import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
+import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
 
 /**
  *
  */
-public class TransactionContext {
+public class InitialiseEventState implements TransactionInterceptor {
 
-    private TypeKeyedMap<Object> attachments = new TypeKeyedMap<>();
-
-    public <T> Optional<T> getAttachment(Class<T> type) {
-        return Optional.ofNullable(attachments.get(type));
+    @Override
+    public void handle(TransactionContext context) {
+        context.attach(EventState.class, new EventState());
     }
-    public <T> void attach(Class<T> type, T data) {
-        attachments.put(type, data);
-    }
-
 }

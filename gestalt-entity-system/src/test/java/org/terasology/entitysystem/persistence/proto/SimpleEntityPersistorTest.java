@@ -22,10 +22,11 @@ import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.persistors.EntityPersistor;
 import org.terasology.entitysystem.persistence.proto.persistors.SimpleEntityPersistor;
 import org.terasology.entitysystem.stubs.SampleComponent;
+import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
@@ -41,9 +42,11 @@ public class SimpleEntityPersistorTest {
     private static final String NAME = "Name";
     private static final String DESCRIPTION = "Description";
 
+    private TransactionManager originalTransaction = new TransactionManager();
+    private TransactionManager finalTransaction = new TransactionManager();
     private EntityPersistor persistor;
-    private EntityManager originalEntityManager;
-    private EntityManager finalEntityManager;
+    private InMemoryEntityManager originalEntityManager;
+    private InMemoryEntityManager finalEntityManager;
 
     public SimpleEntityPersistorTest() throws Exception {
         ModuleEnvironment moduleEnvironment;
@@ -56,26 +59,26 @@ public class SimpleEntityPersistorTest {
         ProtoPersistence context = ProtoPersistence.create();
         persistor = new SimpleEntityPersistor(context, new ComponentManifest(moduleEnvironment, componentManager));
 
-        originalEntityManager = new InMemoryEntityManager(componentManager);
-        finalEntityManager = new InMemoryEntityManager(componentManager, 5);
+        originalEntityManager = new InMemoryEntityManager(componentManager, originalTransaction);
+        finalEntityManager = new InMemoryEntityManager(componentManager, finalTransaction, 5);
     }
 
     @Test
     public void serializeTrivialEntity() {
-        originalEntityManager.beginTransaction();
+        originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity();
         SampleComponent component = entity.addComponent(SampleComponent.class);
         component.setName(NAME);
         component.setDescription(DESCRIPTION);
-        originalEntityManager.commit();
+        originalTransaction.commit();
 
-        originalEntityManager.beginTransaction();
-        finalEntityManager.beginTransaction();
+        originalTransaction.begin();
+        finalTransaction.begin();
         EntityRef finalEntity = persistor.deserialize(persistor.serialize(entity).build(), finalEntityManager);
-        originalEntityManager.rollback();
-        finalEntityManager.commit();
+        finalTransaction.commit();
+        originalTransaction.rollback();
 
-        finalEntityManager.beginTransaction();
+        finalTransaction.begin();
         assertEquals(entity.getId(), finalEntity.getId());
 
         SampleComponent comp = finalEntity.getComponent(SampleComponent.class).orElseThrow(RuntimeException::new);

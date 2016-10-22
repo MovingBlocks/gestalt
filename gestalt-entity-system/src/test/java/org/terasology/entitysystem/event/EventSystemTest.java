@@ -18,21 +18,24 @@ package org.terasology.entitysystem.event;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
+import org.mockito.internal.verification.api.VerificationData;
+import org.mockito.verification.VerificationMode;
 import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.TransactionEventListener;
 import org.terasology.entitysystem.event.impl.EventProcessor;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.entitysystem.stubs.TestEvent;
 import org.terasology.entitysystem.stubs.TestSynchEvent;
+import org.terasology.entitysystem.transaction.TransactionManager;
+import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
+import org.terasology.entitysystem.transaction.pipeline.TransactionPipeline;
 
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Set;
 
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -48,29 +51,28 @@ public abstract class EventSystemTest {
     private static final String EVENT_VALUE = "Test";
 
     private EntityRef entity = mock(EntityRef.class);
-    private EntityManager entityManager = mock(EntityManager.class);
+    private TransactionManager transactionManager = mock(TransactionManager.class);
     private EventProcessor eventProcessor = mock(EventProcessor.class);
     private EventSystem eventSystem;
-    private TransactionEventListener transactionEventListener;
+    private TransactionPipeline pipeline = new TransactionPipeline();
 
     private Set<Class<? extends Component>> triggeringComponents = ImmutableSet.of(SampleComponent.class, SecondComponent.class);
     TestSynchEvent synchEvent = new TestSynchEvent(EVENT_VALUE);
     TestEvent asynchEvent = new TestEvent(EVENT_VALUE);
 
     public EventSystemTest() {
-        final ArgumentCaptor<TransactionEventListener> captor = ArgumentCaptor.forClass(TransactionEventListener.class);
-        eventSystem = createEventSystem(entityManager, eventProcessor);
-        verify(entityManager).registerTransactionListener(captor.capture());
-        transactionEventListener = captor.getValue();
+        when(transactionManager.getPipeline()).thenReturn(pipeline);
+        eventSystem = createEventSystem(transactionManager, eventProcessor);
+        verify(transactionManager, atLeastOnce()).getPipeline();
     }
 
     @Test
-    public void sendAsynchEvent() throws Exception {
+    public void sendAsynchEventOutsideTransaction() throws Exception {
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
-        verify(entityManager).beginTransaction();
+        verify(transactionManager).begin();
         verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
-        verify(entityManager).commit();
+        verify(transactionManager).commit();
     }
 
     @Test
@@ -78,20 +80,20 @@ public abstract class EventSystemTest {
         when(eventProcessor.send(asynchEvent, entity, Collections.emptySet())).thenReturn(EventResult.CANCEL);
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
-        verify(entityManager).beginTransaction();
+        verify(transactionManager).begin();
         verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
-        verify(entityManager).rollback();
+        verify(transactionManager).rollback();
     }
 
     @Test
     public void sendAsynchEventHandleCommitFailure() throws Exception {
-        doThrow(new ConcurrentModificationException()).doNothing().when(entityManager).commit();
+        doThrow(new ConcurrentModificationException()).doNothing().when(transactionManager).commit();
 
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
 
         verify(eventProcessor, times(2)).send(asynchEvent, entity, Collections.emptySet());
-        verify(entityManager, times(2)).commit();
+        verify(transactionManager, times(2)).commit();
     }
 
     @Test
@@ -99,126 +101,149 @@ public abstract class EventSystemTest {
         eventSystem.send(asynchEvent, entity, triggeringComponents);
         eventSystem.processEvents();
         verify(eventProcessor).send(asynchEvent, entity, triggeringComponents);
-        verify(entityManager).commit();
+        verify(transactionManager).commit();
     }
 
     @Test
     public void sendSynchEventWithNoRunningTransaction() throws Exception {
-        when(entityManager.isTransactionActive()).thenReturn(false);
+        when(transactionManager.isActive()).thenReturn(false);
         eventSystem.send(synchEvent, entity);
 
-        verify(entityManager).isTransactionActive();
-        verify(entityManager).beginTransaction();
+        verify(transactionManager).isActive();
+        verify(transactionManager).begin();
         verify(eventProcessor).send(synchEvent, entity, Collections.emptySet());
-        verify(entityManager).commit();
-        verifyNoMoreInteractions(entityManager);
+        verify(transactionManager).commit();
+        verifyNoMoreInteractions(transactionManager);
     }
 
     @Test
     public void sendSynchEventNoRunningTransactionCommitFailure() throws Exception {
-        doThrow(new ConcurrentModificationException()).doNothing().when(entityManager).commit();
+        doThrow(new ConcurrentModificationException()).doNothing().when(transactionManager).commit();
 
         eventSystem.send(synchEvent, entity);
         eventSystem.processEvents();
 
         verify(eventProcessor, times(2)).send(synchEvent, entity, Collections.emptySet());
-        verify(entityManager, times(2)).commit();
+        verify(transactionManager, times(2)).commit();
     }
 
     @Test
     public void sendSynchEventNoRunningTransactionWithTriggeringComponents() throws Exception {
         eventSystem.send(synchEvent, entity, triggeringComponents);
 
-        verify(entityManager).isTransactionActive();
-        verify(entityManager).beginTransaction();
+        verify(transactionManager).isActive();
+        verify(transactionManager).begin();
         verify(eventProcessor).send(synchEvent, entity, triggeringComponents);
-        verify(entityManager).commit();
-        verifyNoMoreInteractions(entityManager);
+        verify(transactionManager).commit();
+        verifyNoMoreInteractions(transactionManager);
     }
 
     @Test
     public void sendSynchEventWithRunningTransaction() throws Exception {
-        when(entityManager.isTransactionActive()).thenReturn(true);
-        transactionEventListener.onBegin();
+        // Should be processed within current transaction
+        when(transactionManager.isActive()).thenReturn(true);
+        pipeline.begin(new TransactionContext());
         eventSystem.send(synchEvent, entity);
-        verify(entityManager).isTransactionActive();
+        verify(transactionManager).isActive();
         verify(eventProcessor).send(synchEvent, entity, Collections.emptySet());
-        verifyNoMoreInteractions(entityManager);
+        verifyNoMoreInteractions(transactionManager);
     }
 
     @Test
     public void sendSynchEventWithRunningTransactionAndTriggeringComponents() throws Exception {
-        when(entityManager.isTransactionActive()).thenReturn(true);
-        transactionEventListener.onBegin();
+        when(transactionManager.isActive()).thenReturn(true);
+        pipeline.begin(new TransactionContext());
         eventSystem.send(synchEvent, entity, triggeringComponents);
 
-        verify(entityManager).isTransactionActive();
+        verify(transactionManager).isActive();
         verify(eventProcessor).send(synchEvent, entity, triggeringComponents);
-        verifyNoMoreInteractions(entityManager);
+        verifyNoMoreInteractions(transactionManager);
     }
 
     @Test
     public void sendAsyncEventHeldUntilCurrentTransactionCommitted() throws Exception {
-        transactionEventListener.onBegin();
+        when (transactionManager.isActive()).thenReturn(true);
+
+        TransactionContext context = new TransactionContext();
+        when(transactionManager.getContext()).thenReturn(context);
+        pipeline.begin(context);
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
 
-        verifyNoMoreInteractions(entityManager);
+
+        verify(transactionManager, atLeastOnce()).isActive();
+        verify(transactionManager, atLeastOnce()).getContext();
+        verifyNoMoreInteractions(transactionManager);
         verifyNoMoreInteractions(eventProcessor);
 
-        transactionEventListener.onCommit();
+        pipeline.commit(context);
         eventSystem.processEvents();
 
-        verify(entityManager).beginTransaction();
+        verify(transactionManager).begin();
         verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
-        verify(entityManager).commit();
-        verifyNoMoreInteractions(entityManager);
+        verify(transactionManager).commit();
+        verifyNoMoreInteractions(transactionManager);
     }
 
     @Test
     public void sendAsyncEventDiscardedIfTransactionRolledBack() throws Exception {
-        transactionEventListener.onBegin();
+        when (transactionManager.isActive()).thenReturn(true);
+        TransactionContext context = new TransactionContext();
+        when(transactionManager.getContext()).thenReturn(context);
+        pipeline.begin(context);
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
 
-        verifyNoMoreInteractions(entityManager);
+        verify(transactionManager, atLeastOnce()).isActive();
+        verify(transactionManager, atLeastOnce()).getContext();
+        verifyNoMoreInteractions(transactionManager);
         verifyNoMoreInteractions(eventProcessor);
 
-        transactionEventListener.onRollback();
-        transactionEventListener.onBegin();
-        transactionEventListener.onCommit();
+        pipeline.rollback(context);
+        context = new TransactionContext();
+        when(transactionManager.getContext()).thenReturn(context);
+        pipeline.begin(context);
+        pipeline.commit(context);
         eventSystem.processEvents();
 
-        verifyNoMoreInteractions(entityManager);
+        verifyNoMoreInteractions(transactionManager);
         verifyNoMoreInteractions(eventProcessor);
     }
 
     @Test
     public void sendAsyncEventPreservedButNotSentOverDurationOfInnerTransaction() throws Exception {
-        transactionEventListener.onBegin();
+        when (transactionManager.isActive()).thenReturn(true);
+        TransactionContext outerContext = new TransactionContext();
+        when(transactionManager.getContext()).thenReturn(outerContext);
+        pipeline.begin(outerContext);
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
 
-        verifyNoMoreInteractions(entityManager);
+        verify(transactionManager, atLeastOnce()).isActive();
+        verify(transactionManager, atLeastOnce()).getContext();
+        verifyNoMoreInteractions(transactionManager);
         verifyNoMoreInteractions(eventProcessor);
 
-        transactionEventListener.onBegin();
-        transactionEventListener.onCommit();
+        TransactionContext innerContext = new TransactionContext();
+        when(transactionManager.getContext()).thenReturn(innerContext);
+        pipeline.begin(innerContext);
+        pipeline.commit(innerContext);
         eventSystem.processEvents();
 
-        verifyNoMoreInteractions(entityManager);
+        verify(transactionManager, atLeastOnce()).isActive();
+        verify(transactionManager, atLeastOnce()).getContext();
+        verifyNoMoreInteractions(transactionManager);
         verifyNoMoreInteractions(eventProcessor);
 
-        transactionEventListener.onCommit();
+        pipeline.commit(outerContext);
         eventSystem.processEvents();
 
-        verify(entityManager).beginTransaction();
+        verify(transactionManager).begin();
         verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
-        verify(entityManager).commit();
-        verifyNoMoreInteractions(entityManager);
+        verify(transactionManager).commit();
+        verifyNoMoreInteractions(transactionManager);
     }
 
 
-
-    protected abstract EventSystem createEventSystem(EntityManager entityManager, EventProcessor eventProcessor);
+    protected abstract EventSystem createEventSystem(TransactionManager transactionManager, EventProcessor eventProcessor);
 }

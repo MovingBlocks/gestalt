@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.transaction.pipeline;
+package org.terasology.entitysystem.transaction;
 
-import org.terasology.util.collection.TypeKeyedMap;
+import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 
-import java.util.Optional;
+import java.util.ConcurrentModificationException;
 
 /**
  *
  */
-public class TransactionContext {
+public interface Transaction {
 
-    private TypeKeyedMap<Object> attachments = new TypeKeyedMap<>();
+    boolean isActive();
 
-    public <T> Optional<T> getAttachment(Class<T> type) {
-        return Optional.ofNullable(attachments.get(type));
-    }
-    public <T> void attach(Class<T> type, T data) {
-        attachments.put(type, data);
-    }
+    TransactionContext getContext();
 
+    void begin();
+
+    void rollback();
+
+    void commit();
 }

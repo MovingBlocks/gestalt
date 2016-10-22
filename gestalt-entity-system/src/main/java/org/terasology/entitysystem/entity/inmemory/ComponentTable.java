@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.entitysystem.transaction.inmemory;
+package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -30,7 +30,6 @@ import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongIntHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.TIntSet;
-import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.Component;
@@ -55,6 +54,7 @@ public class ComponentTable implements EntityStore {
 
     private final int concurrencyLevel;
     private final ReentrantLock[] locks;
+    private final ReentrantLock creationLock;
 
     private final ComponentManager componentManager;
     private final AtomicLong idSource;
@@ -72,12 +72,14 @@ public class ComponentTable implements EntityStore {
         for (int i = 0; i < concurrencyLevel; i++) {
             locks[i] = new ReentrantLock();
         }
+        this.creationLock = new ReentrantLock();
     }
 
     @Override
     public long createEntityId() {
         return idSource.getAndIncrement();
     }
+
 
     @Override
     public long getNextEntityId() {
@@ -100,6 +102,12 @@ public class ComponentTable implements EntityStore {
     }
 
     @Override
+    public ClosableLock lockEntityCreation() {
+        creationLock.lock();
+        return creationLock::unlock;
+    }
+
+    @Override
     public <T extends Component> T get(long entityId, Class<T> componentClass) {
         TLongObjectMap<Component> entityMap = store.get(componentClass);
         if (entityMap != null) {
@@ -109,14 +117,14 @@ public class ComponentTable implements EntityStore {
     }
 
     @Override
-    public synchronized <T extends Component> boolean add(long entityId, Class<T> componentType, T component) {
+    public synchronized <T extends Component> boolean add(long entityId, T component) {
         ReentrantLock lock = locks[selectLock(entityId)];
         lock.lock();
         try {
-            TLongObjectMap<Component> entityMap = store.get(componentType);
+            TLongObjectMap<Component> entityMap = store.get(component.getType());
             if (entityMap == null) {
                 entityMap = TCollections.synchronizedMap(new TLongObjectHashMap<>());
-                store.put(componentType, entityMap);
+                store.put(component.getType(), entityMap);
             }
             revisions.adjustOrPutValue(entityId, 1, 1);
             boolean added = entityMap.putIfAbsent(entityId, componentManager.copy(component)) == null;
@@ -130,11 +138,11 @@ public class ComponentTable implements EntityStore {
     }
 
     @Override
-    public synchronized <T extends Component> boolean update(long entityId, Class<T> componentType, T component) {
+    public synchronized <T extends Component> boolean update(long entityId, T component) {
         ReentrantLock lock = locks[selectLock(entityId)];
         lock.lock();
         try {
-            TLongObjectMap<Component> entityMap = store.get(componentType);
+            TLongObjectMap<Component> entityMap = store.get(component.getType());
             if (entityMap == null) {
                 return false;
             }
@@ -243,8 +251,10 @@ public class ComponentTable implements EntityStore {
     }
 
     @Override
-    public TLongIterator findWithComponents(Set<Class<? extends Component>> componentTypes) {
-        return new EntityWithComponentsIterator(componentTypes);
+    public EntityState getEntityState(long id) {
+        int entityRevision = getEntityRevision(id);
+        EntityState state = new EntityState(id, entityRevision, getComponents(id), getComponents(id));
+        return state;
     }
 
     private int selectLock(long id) {

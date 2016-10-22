@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.transaction.pipeline;
+package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.collect.Sets;
 import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.transaction.pipeline.UpdateAction;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collection;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
 /**
  *
  */
-public class TransactionalEntityState {
+public class EntityState {
 
     private long id;
     private int revision;
@@ -38,7 +39,7 @@ public class TransactionalEntityState {
     private TypeKeyedMap<Component> originalComponents;
     private TypeKeyedMap<Component> workingComponents;
 
-    public TransactionalEntityState(long id, int revision, Collection<Component> originalComponents, Collection<Component> workingComponents) {
+    public EntityState(long id, int revision, Collection<Component> originalComponents, Collection<Component> workingComponents) {
         this.id = id;
         this.revision = revision;
         this.originalComponents = new TypeKeyedMap<>(originalComponents.stream().collect(Collectors.toMap(Component::getType, (x) -> x)));
@@ -63,12 +64,17 @@ public class TransactionalEntityState {
         return Optional.ofNullable(workingComponents.get(type));
     }
 
+    public TypeKeyedMap<Component> getComponents() {
+        return new TypeKeyedMap<>(Collections.unmodifiableMap(workingComponents.getInner()));
+    }
+
     public Iterable<Class<? extends Component>> getInvolvedComponents() {
         return Collections.unmodifiableCollection(involvedComponents);
     }
 
     public void addComponent(Component component) {
         workingComponents.getInner().put(component.getType(), component);
+        involvedComponents.add(component.getType());
     }
 
     public <T extends Component> T removeComponent(Class<T> type) {
@@ -95,7 +101,6 @@ public class TransactionalEntityState {
         } else {
             return UpdateAction.UPDATE;
         }
-
     }
 
 }

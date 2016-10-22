@@ -16,16 +16,16 @@
 
 package org.terasology.entitysystem.event;
 
-import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.event.impl.EventProcessor;
 import org.terasology.entitysystem.event.impl.ImmediateEventSystem;
+import org.terasology.entitysystem.transaction.TransactionManager;
 
 /**
  *
  */
 public class ImmediateEventSystemTest extends EventSystemTest {
     @Override
-    protected EventSystem createEventSystem(EntityManager entityManager, EventProcessor eventProcessor) {
-        return new ImmediateEventSystem(eventProcessor, entityManager);
+    protected EventSystem createEventSystem(TransactionManager transactionManager, EventProcessor eventProcessor) {
+        return new ImmediateEventSystem(transactionManager, eventProcessor);
     }
 }

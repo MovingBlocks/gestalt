@@ -26,7 +26,7 @@ import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
-import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.persistors.EntityPersistor;
 import org.terasology.entitysystem.persistence.proto.persistors.PrefabAwareEntityPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
@@ -36,6 +36,7 @@ import org.terasology.entitysystem.prefab.PrefabData;
 import org.terasology.entitysystem.prefab.PrefabJsonFormat;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
+import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
@@ -64,6 +65,8 @@ public class PrefabAwareEntityPersistorTest {
     private AssetManager assetManager = new AssetManager(assetTypeManager);
     private ComponentManager componentManager;
     private ProtoPersistence context = ProtoPersistence.create();
+    private TransactionManager originalTransaction = new TransactionManager();
+    private TransactionManager finalTransaction = new TransactionManager();
 
     private EntityPersistor persistor;
     private EntityManager originalEntityManager;
@@ -83,31 +86,31 @@ public class PrefabAwareEntityPersistorTest {
         assetTypeManager.switchEnvironment(moduleEnvironment);
         persistor = new PrefabAwareEntityPersistor(componentManager, context, new ComponentManifest(moduleEnvironment, componentManager), new EntityRecipeManifest(assetManager));
 
-        originalEntityManager = new InMemoryEntityManager(componentManager);
-        finalEntityManager = new InMemoryEntityManager(componentManager, 5);
+        originalEntityManager = new InMemoryEntityManager(componentManager, originalTransaction);
+        finalEntityManager = new InMemoryEntityManager(componentManager, finalTransaction, 5);
     }
 
     private EntityRef persist(EntityRef entity) {
-        originalEntityManager.beginTransaction();
-        finalEntityManager.beginTransaction();
+        originalTransaction.begin();
+        finalTransaction.begin();
         EntityRef finalEntity = persistor.deserialize(persistor.serialize(entity).build(), finalEntityManager);
-        originalEntityManager.rollback();
-        finalEntityManager.commit();
+        originalTransaction.rollback();
+        finalTransaction.commit();
         return finalEntity;
     }
 
     @Test
     public void persistTrivialEntity() {
-        originalEntityManager.beginTransaction();
+        originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity();
         SampleComponent component = entity.addComponent(SampleComponent.class);
         component.setName(NAME);
         component.setDescription(DESCRIPTION);
-        originalEntityManager.commit();
+        originalTransaction.commit();
 
         EntityRef finalEntity = persist(entity);
 
-        finalEntityManager.beginTransaction();
+        finalTransaction.begin();
         assertEquals(entity.getId(), finalEntity.getId());
 
         SampleComponent comp = finalEntity.getComponent(SampleComponent.class).orElseThrow(RuntimeException::new);
@@ -117,13 +120,13 @@ public class PrefabAwareEntityPersistorTest {
 
     @Test
     public void persistEntityFromPrefab() {
-        originalEntityManager.beginTransaction();
+        originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity(assetManager.getAsset(EXISTING_PREFAB_URN, Prefab.class).orElseThrow(AssertionError::new));
-        originalEntityManager.commit();
+        originalTransaction.commit();
 
         EntityRef finalEntity = persist(entity);
 
-        finalEntityManager.beginTransaction();
+        finalTransaction.begin();
         assertEquals(entity.getId(), finalEntity.getId());
 
         SampleComponent comp = finalEntity.getComponent(SampleComponent.class).orElseThrow(RuntimeException::new);
@@ -134,17 +137,17 @@ public class PrefabAwareEntityPersistorTest {
     @Test
     public void persistEntityFromChangedPrefab() {
         Prefab prefab = assetManager.getAsset(EXISTING_PREFAB_URN, Prefab.class).orElseThrow(AssertionError::new);
-        originalEntityManager.beginTransaction();
+        originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity(prefab);
-        originalEntityManager.commit();
+        originalTransaction.commit();
 
-        originalEntityManager.beginTransaction();
+        originalTransaction.begin();
         ProtoDatastore.EntityData data = persistor.serialize(entity).build();
-        originalEntityManager.rollback();
+        originalTransaction.rollback();
 
         prefab.getRootEntity().getComponent(SampleComponent.class).orElseThrow(AssertionError::new).setName(ALTERED_NAME);
 
-        finalEntityManager.beginTransaction();
+        finalTransaction.begin();
         EntityRef finalEntity = persistor.deserialize(data, finalEntityManager);
         assertEquals(entity.getId(), finalEntity.getId());
 
@@ -164,16 +167,16 @@ public class PrefabAwareEntityPersistorTest {
         prefabData.addEntityRecipe(recipe);
         Prefab prefab = assetManager.loadAsset(TEMP_PREFAB_URN, prefabData, Prefab.class);
 
-        originalEntityManager.beginTransaction();
+        originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity(prefab);
-        originalEntityManager.commit();
-        originalEntityManager.beginTransaction();
+        originalTransaction.commit();
+        originalTransaction.begin();
         ProtoDatastore.EntityData data = persistor.serialize(entity).build();
-        originalEntityManager.rollback();
+        originalTransaction.rollback();
 
         prefab.dispose();
 
-        finalEntityManager.beginTransaction();
+        finalTransaction.begin();
         EntityRef finalEntity = persistor.deserialize(data, finalEntityManager);
         assertEquals(entity.getId(), finalEntity.getId());
 
@@ -183,15 +186,15 @@ public class PrefabAwareEntityPersistorTest {
 
     @Test
     public void persistRemovedComponents() {
-        originalEntityManager.beginTransaction();
+        originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity(assetManager.getAsset(EXISTING_PREFAB_URN, Prefab.class).orElseThrow(AssertionError::new));
         entity.addComponent(SecondComponent.class);
         entity.removeComponent(SampleComponent.class);
-        originalEntityManager.commit();
+        originalTransaction.commit();
 
         EntityRef finalEntity = persist(entity);
 
-        finalEntityManager.beginTransaction();
+        finalTransaction.begin();
         assertFalse(finalEntity.getComponent(SampleComponent.class).isPresent());
         assertTrue(finalEntity.getComponent(SecondComponent.class).isPresent());
     }
@@ -199,13 +202,13 @@ public class PrefabAwareEntityPersistorTest {
     // persist restores / drops CreatedFromPrefabComponent as needed
     @Test
     public void persistProducesPrefabCreatedComponentIfPrefabPresent() {
-        originalEntityManager.beginTransaction();
+        originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity(assetManager.getAsset(EXISTING_PREFAB_URN, Prefab.class).orElseThrow(AssertionError::new));
-        originalEntityManager.commit();
+        originalTransaction.commit();
 
         EntityRef finalEntity = persist(entity);
 
-        finalEntityManager.beginTransaction();
+        finalTransaction.begin();
         Optional<GeneratedFromEntityRecipeComponent> component = finalEntity.getComponent(GeneratedFromEntityRecipeComponent.class);
         assertTrue(component.isPresent());
         assertEquals(EXISTING_ENTITY_RECIPE_URN, component.get().getEntityRecipe());

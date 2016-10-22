@@ -19,13 +19,15 @@ package org.terasology.entitysystem.event;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.event.impl.DelayedEventSystem;
 import org.terasology.entitysystem.event.impl.EventProcessor;
+import org.terasology.entitysystem.transaction.TransactionManager;
 
 /**
  *
  */
 public class DelayedEventSystemTest extends EventSystemTest {
+
     @Override
-    protected EventSystem createEventSystem(EntityManager entityManager, EventProcessor eventProcessor) {
-        return new DelayedEventSystem(eventProcessor, entityManager);
+    protected EventSystem createEventSystem(TransactionManager transactionManager, EventProcessor eventProcessor) {
+        return new DelayedEventSystem(transactionManager, eventProcessor);
     }
 }

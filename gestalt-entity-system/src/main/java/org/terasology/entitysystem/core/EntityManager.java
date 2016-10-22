@@ -16,69 +16,16 @@
 
 package org.terasology.entitysystem.core;
 
-import org.terasology.entitysystem.transaction.EntityTransaction;
-import org.terasology.entitysystem.transaction.TransactionEventListener;
 import org.terasology.entitysystem.prefab.Prefab;
+import org.terasology.naming.Name;
 
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * EntityManager is the core of the entity system.
  */
 public interface EntityManager {
-
-    /**
-     * Registers a listener to receive transaction events
-     *
-     * @param listener The listener to register
-     */
-    void registerTransactionListener(TransactionEventListener listener);
-
-    /**
-     * Unregisters a listener from receiving transaction events
-     *
-     * @param listener The listener to unregister
-     */
-    void unregisterTransactionListener(TransactionEventListener listener);
-
-    /**
-     * Whether there is currently an active transaction. A transaction is active if at least one transaction is started without being committed or rolled back.
-     *
-     * @return Whether a transaction is active
-     */
-    boolean isTransactionActive();
-
-    /**
-     * Begins a new transaction. If the transaction is already active, then the current state suspended. When the new transaction is committed or rolled back then the
-     * previous transaction state is restored.
-     */
-    void beginTransaction();
-
-    /**
-     * Commits the current transaction. This also clears the transaction, whether the commit succeeds for fails.
-     * <p>
-     * If a conflicting change has occurred to the entity system outside of the transaction, then no change will occur.
-     *
-     * @throws IllegalStateException           If no transaction is active
-     * @throws ConcurrentModificationException If a change has happened to the entity system that conflicts with this transaction.
-     */
-    void commit() throws ConcurrentModificationException;
-
-    /**
-     * Rolls back the current transaction, dropping all changes and clearing the transaction.
-     *
-     * @throws IllegalStateException If no transaction is active
-     */
-    void rollback();
-
-    /**
-     * This is intended for use by EntityRef implementations, providing access to methods working on specific entity ids.
-     *
-     * @return A raw transaction.
-     */
-    EntityTransaction getRawTransaction();
 
     /**
      * Creates a new entity.
@@ -89,31 +36,25 @@ public interface EntityManager {
     EntityRef createEntity();
 
     /**
+     * @param id The id of the entity to return
+     * @return The entity ref for the given id. If the entity doesn't exist, this may be a null entity ref
+     */
+    EntityRef getEntity(long id);
+
+    /**
      * Creates an instance of each entity in a prefab, and returns the root entity
      *
      * @param prefab The prefab to create entities from
-     * @return The new entity
+     * @return The new entity based on the root entity recipe
      */
     EntityRef createEntity(Prefab prefab);
 
     /**
-     * Find entities with the desired components. Note that the components could potentially be removed from the entities between when they are found and when the components
-     * are requested.
-     *
-     * @param first      A component all the found entities should have.
-     * @param additional Additional components the entities should have.
-     * @return An iterator over the entities with the desired component(s)
+     * Creates entities based on a prefab
+     * @param prefab The prefab to create entities from
+     * @return A map of EntityRefs created, by the name of the entity prefab.
      */
-    Iterator<EntityRef> findEntitiesWithComponents(Class<? extends Component> first, Class<? extends Component>... additional);
-
-    /**
-     * Find entities with the desired components. Note that the components could potentially be removed from the entities between when they are found and when the components
-     * are requested.
-     *
-     * @param componentTypes The desired components. Must contain at least one component
-     * @return An iterator over the entities with the desired component(s)
-     */
-    Iterator<EntityRef> findEntitiesWithComponents(Set<Class<? extends Component>> componentTypes);
+    Map<Name,EntityRef> createEntities(Prefab prefab);
 
     /**
      * @return An iterator over all entities. Note that entities could be deleted between when they are fetched and when they are accessed. This iterator is otherwise
@@ -121,6 +62,7 @@ public interface EntityManager {
      */
     Iterator<EntityRef> allEntities();
 
+    // TODO: Remove?
     /**
      * @return The value of the next entity id
      */

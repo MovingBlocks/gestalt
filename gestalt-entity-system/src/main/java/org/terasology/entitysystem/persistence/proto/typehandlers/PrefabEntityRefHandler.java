@@ -17,7 +17,7 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers;
 
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.transaction.references.NullEntityRef;
+import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;

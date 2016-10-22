@@ -21,7 +21,8 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.transaction.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -37,6 +38,7 @@ public class EntitySystemBenchmark {
 
     @State(Scope.Benchmark)
     public static class EntitySystem {
+        public TransactionManager transactionManager;
         public EntityManager entityManager;
         public URLClassLoader tempLoader;
         public TypeLibrary typeLibrary;
@@ -44,15 +46,16 @@ public class EntitySystemBenchmark {
         public long entityId = 1;
 
         public EntitySystem() {
+            transactionManager = new TransactionManager();
             typeLibrary = new TypeLibrary();
             typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
             tempLoader = new URLClassLoader(new URL[0]);
-            entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
+            entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary), transactionManager);
         }
 
         @TearDown
         public void teardown() {
-            entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary));
+            entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary), transactionManager);
         }
     }
 
