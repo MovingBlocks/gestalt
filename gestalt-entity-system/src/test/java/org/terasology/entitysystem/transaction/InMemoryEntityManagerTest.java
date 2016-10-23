@@ -28,6 +28,7 @@ import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
+import org.terasology.entitysystem.transaction.exception.RollbackException;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
@@ -176,7 +177,7 @@ public class InMemoryEntityManagerTest {
         assertFalse(finalSecondComp.isPresent());
     }
 
-    @Test(expected = EntitySystemException.class)
+    @Test(expected = RollbackException.class)
     public void concurrentModificationTriggersException() {
         transactionManager.begin();
         EntityRef entity = entityManager.createEntity();
@@ -194,7 +195,7 @@ public class InMemoryEntityManagerTest {
         transactionManager.commit();
     }
 
-    @Test(expected = EntitySystemException.class)
+    @Test(expected = RollbackException.class)
     public void failedCommitIsRolledBack() throws Exception {
         transactionManager.begin();
         EntityRef entity = entityManager.createEntity();

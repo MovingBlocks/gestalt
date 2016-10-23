@@ -21,6 +21,7 @@ import com.google.common.collect.ListMultimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.transaction.exception.EntitySystemException;
+import org.terasology.entitysystem.transaction.exception.RollbackException;
 
 /**
  *
@@ -41,10 +42,16 @@ public class TransactionPipeline {
     public void commit(TransactionContext context) {
         try {
             processStage(context, TransactionStage.PRE_COMMIT);
-            processStage(context, TransactionStage.COMMIT);
+            try {
+                processStage(context, TransactionStage.OBTAIN_LOCKS);
+                processStage(context, TransactionStage.VERIFY_COMMIT);
+                processStage(context, TransactionStage.PROCESS_COMMIT);
+            } finally {
+                processStageConsumeExceptions(context, TransactionStage.RELEASE_LOCKS);
+            }
         } catch (RuntimeException e) {
             rollback(context);
-            throw new EntitySystemException("Transaction rolled back due to exception", e);
+            throw new RollbackException("Transaction rolled back due to exception", e);
         }
         postCommit(context);
     }

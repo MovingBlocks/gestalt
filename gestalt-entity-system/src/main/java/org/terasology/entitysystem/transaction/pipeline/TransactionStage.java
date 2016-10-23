@@ -21,25 +21,38 @@ package org.terasology.entitysystem.transaction.pipeline;
  */
 public enum TransactionStage {
     /**
-     * This stage occurs when a transaction begins.
+     * This stage occurs when a transaction begins. It should be used to initialise state in the transaction context.
      */
     PRE_TRANSACTION,
     /**
-     * This stage occurs before commit is attempted. At this stage the transactional state can be freely modified.
+     * This stage occurs prior to the commit being attempted. At this stage the transactional state can be freely modified.
      */
     PRE_COMMIT,
     /**
-     * This stage is where the commit is attempted. At this point the transactional state is merged into the entity system and becomes visible to future
-     * transactions.
+     * Start of the actual commit. Used to obtain locks on any resources that may be needed
      */
-    COMMIT,
+    OBTAIN_LOCKS,
     /**
-     * This stage occurs after the commit succeeds. At this stage changes to the transactional state will no longer be applied to the entity system. This can be used
+     * After locks are obtained, this is the ideal point to verify that the commit will succeed, and trigger a rollback if it won't.
+     */
+    VERIFY_COMMIT,
+    /**
+     * This stage for the main processing of a commit. At this point the transactional state is merged into the entity system and becomes visible to future
+     * transactions. While rollbacks can be triggered at this point, it should be noted that other systems involved in the transaction may have done their commit work already.
+     */
+    PROCESS_COMMIT,
+    /**
+     * Called at the end of a commit process, whether it succeeded or failed. Should be used to release locks on any resources involved in the commit. Note that it will be
+     * called if an error occurs during the processing of OBTAIN_LOCKS, so the lock state may be incomplete.
+     */
+    RELEASE_LOCKS,
+    /**
+     * This stage occurs after a commit succeeds. At this stage changes to the transactional state will no longer be applied to the entity system. This can be used
      * to run actions in response to the successful commit.
      */
     POST_COMMIT,
     /**
-     * This stage occurs after the commit fails. The transactional state reflects the intended changes, but they will not occurred. This can be used to run
+     * This stage occurs after a commit fails. The transactional state reflects the intended changes, but they will not occurred. This can be used to run
      * actions in response to the failed commit
      */
     POST_ROLLBACK,

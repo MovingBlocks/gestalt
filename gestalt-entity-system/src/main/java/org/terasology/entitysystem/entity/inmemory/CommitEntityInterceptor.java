@@ -20,37 +20,34 @@ import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.PropertyAccessor;
 import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
 
-import java.util.ConcurrentModificationException;
 import java.util.Set;
 
 /**
  *
  */
-public class EntityCommitInterceptor implements TransactionInterceptor {
+public class CommitEntityInterceptor implements TransactionInterceptor {
 
-    private ReferenceAdaptor referenceAdaptor;
     private ComponentManager componentManager;
+    private EntityManager entityManager;
     private EntityStore entityStore;
 
-    public EntityCommitInterceptor(EntityStore entityStore, ReferenceAdaptor referenceAdaptor, ComponentManager componentManager) {
+    public CommitEntityInterceptor(EntityStore entityStore, EntityManager entityManager, ComponentManager componentManager) {
         this.entityStore = entityStore;
-        this.referenceAdaptor = referenceAdaptor;
+        this.entityManager = entityManager;
         this.componentManager = componentManager;
     }
 
     @Override
     public void handle(TransactionContext context) {
         context.getAttachment(EntitySystemState.class).ifPresent((state) -> {
-            try (ClosableLock ignored = entityStore.lock(state.getInvolvedEntityIds())) {
-                checkRevisions(context);
-                createNewEntities(context);
-                applyEntityUpdates(context);
-            }
+            createNewEntities(context);
+            applyEntityUpdates(context);
         });
     }
 
@@ -114,17 +111,9 @@ public class EntityCommitInterceptor implements TransactionInterceptor {
             Set<Class<? extends Component>> componentTypes = newEntity.getComponentTypes();
             if (!componentTypes.isEmpty()) {
                 long entityId = entityStore.createEntityId();
-                newEntity.setInnerEntityRef(new CoreEntityRef(referenceAdaptor, entityId));
+                newEntity.setInnerEntityRef(entityManager.getEntity(entityId));
             } else {
                 newEntity.setInnerEntityRef(NullEntityRef.get());
-            }
-        }
-    }
-
-    private void checkRevisions(TransactionContext context) {
-        for (EntityState entityState : getState(context).getEntityStates()) {
-            if (entityState.getRevision() != entityStore.getEntityRevision(entityState.getId())) {
-                throw new ConcurrentModificationException("Entity " + entityState.getId() + " modified outside of transaction");
             }
         }
     }

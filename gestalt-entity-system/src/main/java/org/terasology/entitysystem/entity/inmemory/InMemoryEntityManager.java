@@ -66,7 +66,10 @@ public class InMemoryEntityManager implements EntityManager, ReferenceAdaptor {
         this.entityStore = new ComponentTable(library, nextEntityId);
         this.transactionManager = transactionManager;
         transactionManager.getPipeline().registerInterceptor(TransactionStage.PRE_TRANSACTION, context -> context.attach(EntitySystemState.class, new EntitySystemState()));
-        transactionManager.getPipeline().registerInterceptor(TransactionStage.COMMIT, new EntityCommitInterceptor(entityStore, this, componentManager));
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.OBTAIN_LOCKS, new LockEntitiesInterceptor(entityStore));
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.VERIFY_COMMIT, new VerifyCommitInterceptor(entityStore));
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.PROCESS_COMMIT, new CommitEntityInterceptor(entityStore, this, componentManager));
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.RELEASE_LOCKS, new UnlockEntitiesInterceptor());
         transactionManager.getPipeline().registerInterceptor(TransactionStage.POST_ROLLBACK, new WipeNewEntityInterceptor());
     }
 
