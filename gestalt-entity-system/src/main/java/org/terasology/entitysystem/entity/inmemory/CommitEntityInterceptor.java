@@ -85,6 +85,7 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
                         break;
                 }
             }
+            entityState.setRevision(entityStore.getEntityRevision(entityState.getId()));
         }
     }
 

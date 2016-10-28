@@ -55,6 +55,11 @@ public class CoreEntityRef implements EntityRef {
     }
 
     @Override
+    public long getRevision() {
+        return referenceAdaptor.getRevision(id);
+    }
+
+    @Override
     public boolean isPresent() {
         return referenceAdaptor.exists(id);
     }

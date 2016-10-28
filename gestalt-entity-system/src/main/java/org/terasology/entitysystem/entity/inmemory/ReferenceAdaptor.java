@@ -49,6 +49,13 @@ interface ReferenceAdaptor {
     boolean exists(long id);
 
     /**
+     * @param id The id of the entity
+     * @return The revision of the entity.
+     * @throws IllegalStateException If no transaction is active
+     */
+    int getRevision(long id);
+
+    /**
      * Retrieves a component from an entity.
      * <p>
      * This component is a "live view" - any changes to the component will be saved when the transaction is committed. Getting a component multiple times will

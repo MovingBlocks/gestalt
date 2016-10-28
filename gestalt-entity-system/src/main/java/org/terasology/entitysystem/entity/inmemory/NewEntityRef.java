@@ -67,6 +67,14 @@ public class NewEntityRef implements EntityRef {
     }
 
     @Override
+    public long getRevision() {
+        if (useInnerRef) {
+            return innerEntityRef.getRevision();
+        }
+        return 0;
+    }
+
+    @Override
     public boolean isPresent() {
         return innerEntityRef == null || innerEntityRef.isPresent();
     }

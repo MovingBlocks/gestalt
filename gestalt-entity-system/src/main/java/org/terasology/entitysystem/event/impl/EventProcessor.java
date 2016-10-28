@@ -115,7 +115,7 @@ public class EventProcessor {
 
     private boolean validToInvoke(EventHandlerRegistration handler, Set<Class<? extends Component>> targetComponents, Set<Class<? extends Component>> triggeringComponents) {
         for (Class<? extends Component> component : handler.getRequiredComponents()) {
-            if (!targetComponents.contains(component)) {
+            if (!targetComponents.contains(component) && !triggeringComponents.contains(component)) {
                 return false;
             }
         }

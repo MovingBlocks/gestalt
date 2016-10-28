@@ -57,6 +57,11 @@ public class EntityRecipe implements EntityRef {
     }
 
     @Override
+    public long getRevision() {
+        return 0;
+    }
+
+    @Override
     public boolean isPresent() {
         return true;
     }

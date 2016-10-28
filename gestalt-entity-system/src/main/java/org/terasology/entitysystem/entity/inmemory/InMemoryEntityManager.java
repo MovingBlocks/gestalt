@@ -110,6 +110,12 @@ public class InMemoryEntityManager implements EntityManager, ReferenceAdaptor {
     }
 
     @Override
+    public int getRevision(long id) {
+        EntityState entityState = getEntityState(id);
+        return entityState.getRevision();
+    }
+
+    @Override
     public <T extends Component> Optional<T> getComponent(long entityId, Class<T> componentType) {
         EntityState entityState = getEntityState(entityId);
         return entityState.getComponent(componentType);

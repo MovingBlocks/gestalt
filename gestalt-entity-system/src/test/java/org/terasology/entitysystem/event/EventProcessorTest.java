@@ -144,7 +144,7 @@ public class EventProcessorTest {
         when(sampleHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
 
         EventHandler<TestEvent> secondHandler = mock(EventHandler.class);
-        when(sampleHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
+        when(secondHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
                 .addHandler(sampleHandler, TestEvent.class, SampleComponent.class)
                 .addHandler(secondHandler, TestEvent.class, SecondComponent.class).build();
@@ -153,6 +153,24 @@ public class EventProcessorTest {
 
         verify(sampleHandler).onEvent(event, testEntity);
         verifyNoMoreInteractions(secondHandler);
+    }
+
+    @Test
+    public void triggeringComponentsCombineWithActualWhenFilteringReceivers() {
+        // This is needed for OnRemoved event - the triggering component(s) will not be on the entity
+        EventHandler<TestEvent> sampleHandler = mock(EventHandler.class);
+        when(sampleHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
+
+        EventHandler<TestEvent> secondHandler = mock(EventHandler.class);
+        when(secondHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
+        eventProcessor = EventProcessor.newBuilder()
+                .addHandler(sampleHandler, TestEvent.class, SampleComponent.class)
+                .addHandler(secondHandler, TestEvent.class, SecondComponent.class).build();
+
+        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity, Sets.newHashSet(SecondComponent.class)));
+
+        verifyNoMoreInteractions(sampleHandler);
+        verify(secondHandler).onEvent(event, testEntity);
     }
 
     @Test

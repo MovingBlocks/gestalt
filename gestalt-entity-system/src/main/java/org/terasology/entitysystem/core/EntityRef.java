@@ -37,6 +37,11 @@ public interface EntityRef {
     long getId();
 
     /**
+     * @return The revision of this entity.
+     */
+    long getRevision();
+
+    /**
      * An entity exists if it is new this transaction, or if it was created in a previous transaction and still has components. Once all components are removed from an entity
      * it ceases to exist.
      * @return Whether this EntityRef references an entity that exists.
