@@ -18,6 +18,7 @@ package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import gnu.trove.TLongCollection;
 import gnu.trove.iterator.TLongIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,14 +77,19 @@ public class InMemoryEntityManager implements EntityManager, ReferenceAdaptor {
     @Override
     public EntityRef createEntity() {
         EntitySystemState state = getState();
-        NewEntityRef newEntityRef = new NewEntityRef(componentManager);
-        state.getNewEntities().add(newEntityRef);
-        return newEntityRef;
+        NewEntityState newEntityState = new NewEntityState(componentManager);
+        state.getNewEntities().add(newEntityState);
+        return newEntityState.getProxyEntityRef();
     }
 
     @Override
     public EntityRef getEntity(long id) {
         return new CoreEntityRef(this, id);
+    }
+
+    @Override
+    public Iterable<EntityRef> getEntities(TLongCollection ids) {
+        return () -> new EntityRefIterator(ids.iterator(), InMemoryEntityManager.this);
     }
 
     // TODO: New home for prefab instantiation code?
@@ -236,4 +242,5 @@ public class InMemoryEntityManager implements EntityManager, ReferenceAdaptor {
             return new CoreEntityRef(detailsProvider, internal.next());
         }
     }
+
 }

@@ -25,6 +25,7 @@ import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
@@ -173,7 +174,7 @@ public class PrefabInstantiationTest {
     public void prefabReferencingAnotherPrefabInstantiatesBoth() {
         EntityRef entityRef = entityManager.createEntity(compositePrefab);
         EntityRef otherEntity = entityRef.getComponent(ReferenceComponent.class).orElseThrow(() -> new RuntimeException("No reference component")).getReference();
-        assertEquals(NewEntityRef.class, otherEntity.getClass());
+        assertEquals(ProxyEntityRef.class, otherEntity.getClass());
     }
 
     @Test

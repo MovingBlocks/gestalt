@@ -27,9 +27,8 @@ public class WipeNewEntityInterceptor implements TransactionInterceptor {
     @Override
     public void handle(TransactionContext context) {
         context.getAttachment(EntitySystemState.class).ifPresent((state) -> {
-            for (NewEntityRef entityRef : state.getNewEntities()) {
-                entityRef.setInnerEntityRef(NullEntityRef.get());
-                entityRef.activateInnerRef();
+            for (NewEntityState entityRef : state.getNewEntities()) {
+                entityRef.setActualEntity(NullEntityRef.get());
             }
             state.getNewEntities().clear();
         });

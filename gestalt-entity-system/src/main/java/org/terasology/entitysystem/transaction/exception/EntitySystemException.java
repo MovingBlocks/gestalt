@@ -36,7 +36,4 @@ public class EntitySystemException extends RuntimeException {
         super(cause);
     }
 
-    public EntitySystemException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class EntitySystemState {
     private Map<Long, EntityState> existingEntityState = Maps.newLinkedHashMap();
-    private List<NewEntityRef> newEntities = Lists.newArrayList();
+    private List<NewEntityState> newEntities = Lists.newArrayList();
     private ClosableLock lock;
 
     public Collection<EntityState> getEntityStates() {
@@ -50,7 +50,7 @@ public class EntitySystemState {
         return Collections.unmodifiableSet(existingEntityState.keySet());
     }
 
-    public List<NewEntityRef> getNewEntities() {
+    public List<NewEntityState> getNewEntities() {
         return newEntities;
     }
 

@@ -23,6 +23,7 @@ import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
+import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
 
@@ -97,24 +98,23 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
     }
 
     private void applyNewEntityComponents(TransactionContext context) {
-        for (NewEntityRef newEntity : getState(context).getNewEntities()) {
-            long id = newEntity.getInnerEntityRef().get().getId();
+        for (NewEntityState newEntity : getState(context).getNewEntities()) {
+            long id = newEntity.getId();
             for (Component component : newEntity.getComponents().values()) {
                 cleanUpEntityRefs(component);
                 entityStore.add(id, component);
             }
-            newEntity.activateInnerRef();
         }
     }
 
     private void generateNewEntityIds(TransactionContext context) {
-        for (NewEntityRef newEntity : getState(context).getNewEntities()) {
-            Set<Class<? extends Component>> componentTypes = newEntity.getComponentTypes();
-            if (!componentTypes.isEmpty()) {
+        for (NewEntityState newEntity : getState(context).getNewEntities()) {
+            if (!newEntity.getComponents().isEmpty()) {
                 long entityId = entityStore.createEntityId();
-                newEntity.setInnerEntityRef(entityManager.getEntity(entityId));
+                newEntity.setId(entityId);
+                newEntity.setActualEntity(entityManager.getEntity(entityId));
             } else {
-                newEntity.setInnerEntityRef(NullEntityRef.get());
+                newEntity.setActualEntity(NullEntityRef.get());
             }
         }
     }
@@ -124,9 +124,8 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
         ComponentType<?> type = componentManager.getType(component.getType());
         for (PropertyAccessor property : type.getPropertyInfo().getPropertiesOfType(EntityRef.class)) {
             Object o = property.get(component);
-            if (o instanceof NewEntityRef) {
-                NewEntityRef entityRef = (NewEntityRef) o;
-                entityRef.getInnerEntityRef().ifPresent((x) -> property.set(component, x));
+            if (o instanceof ProxyEntityRef) {
+                property.set(component, ((ProxyEntityRef) o).getActualRef());
             }
         }
     }

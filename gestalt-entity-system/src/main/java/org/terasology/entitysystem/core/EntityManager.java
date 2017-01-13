@@ -16,6 +16,7 @@
 
 package org.terasology.entitysystem.core;
 
+import gnu.trove.TLongCollection;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.naming.Name;
 
@@ -37,9 +38,15 @@ public interface EntityManager {
 
     /**
      * @param id The id of the entity to return
-     * @return The entity ref for the given id. If the entity doesn't exist, this may be a null entity ref
+     * @return The entity ref for the given id. If the entity doesn't exist, this may be a null entity ref .
      */
     EntityRef getEntity(long id);
+
+    /**
+     * @param ids A collection of entity ids
+     * @return The entity refs for the given ids. If an entity doesn't exist, it will be a null entity ref.
+     */
+    Iterable<EntityRef> getEntities(TLongCollection ids);
 
     /**
      * Creates an instance of each entity in a prefab, and returns the root entity

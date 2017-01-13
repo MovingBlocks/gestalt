@@ -21,6 +21,7 @@ import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
@@ -62,7 +63,7 @@ public class PrefabEntityRefHandlerTest {
         ref.addComponent(SampleComponent.class);
         transactionManager.commit();
 
-        ref = ((NewEntityRef) ref).getInnerEntityRef().get();
+        ref = ((ProxyEntityRef) ref).getActualRef();
 
         assertEquals(ref, context.deserialize(context.serialize(ref, EntityRef.class).build(), EntityRef.class));
     }
@@ -74,7 +75,7 @@ public class PrefabEntityRefHandlerTest {
         ref.addComponent(SampleComponent.class);
         transactionManager.commit();
 
-        assertEquals(((NewEntityRef) ref).getInnerEntityRef().get(), context.deserialize(context.serialize(ref, EntityRef.class).build(), EntityRef.class));
+        assertEquals(((ProxyEntityRef) ref).getActualRef(), context.deserialize(context.serialize(ref, EntityRef.class).build(), EntityRef.class));
     }
 
 

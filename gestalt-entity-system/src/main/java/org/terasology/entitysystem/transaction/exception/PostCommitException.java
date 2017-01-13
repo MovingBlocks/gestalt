@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2015 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,22 @@
 package org.terasology.entitysystem.transaction.exception;
 
 /**
- * This exception is thrown if an attempt is made to add a component to an entity that already has a component of that type.
+ * This exception is thrown if an error occurs during post commit processing. This means the commit has succeeded, but something went wrong in the subsequent processing.
  */
-public class ComponentAlreadyExistsException extends EntitySystemException {
+public class PostCommitException extends EntitySystemException {
 
-    public ComponentAlreadyExistsException() {
+    public PostCommitException() {
     }
 
-    public ComponentAlreadyExistsException(String message) {
+    public PostCommitException(String message) {
         super(message);
     }
 
-    public ComponentAlreadyExistsException(String message, Throwable cause) {
+    public PostCommitException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ComponentAlreadyExistsException(Throwable cause) {
+    public PostCommitException(Throwable cause) {
         super(cause);
     }
 

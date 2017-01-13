@@ -47,6 +47,11 @@ public enum TransactionStage {
      */
     RELEASE_LOCKS,
     /**
+     * This stage occurs after a commit succeeds, but before POST_COMMIT. This is the stage to to update any indexes or other information in response to the transaction, before
+     * doing further processing in response to the commit.
+     */
+    UPDATE_INDEXES,
+    /**
      * This stage occurs after a commit succeeds. At this stage changes to the transactional state will no longer be applied to the entity system. This can be used
      * to run actions in response to the successful commit.
      */

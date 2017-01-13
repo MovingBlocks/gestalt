@@ -21,7 +21,10 @@ import com.google.common.collect.ListMultimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.transaction.exception.EntitySystemException;
+import org.terasology.entitysystem.transaction.exception.PostCommitException;
 import org.terasology.entitysystem.transaction.exception.RollbackException;
+
+import java.util.Optional;
 
 /**
  *
@@ -62,15 +65,21 @@ public class TransactionPipeline {
     }
 
     private void postCommit(TransactionContext context) {
-        processStageConsumeExceptions(context, TransactionStage.POST_COMMIT);
-        processStageConsumeExceptions(context, TransactionStage.POST_TRANSACTION);
+        Optional<Exception> e1 = processStageConsumeExceptions(context, TransactionStage.UPDATE_INDEXES);
+        Optional<Exception> e2 = processStageConsumeExceptions(context, TransactionStage.POST_COMMIT);
+        Optional<Exception> e3 = processStageConsumeExceptions(context, TransactionStage.POST_TRANSACTION);
+        Exception e = e1.orElseGet(() -> e2.orElseGet(() -> e3.orElse(null)));
+        if (e != null) {
+            throw new PostCommitException("Error during UPDATE_INDEXES", e);
+        }
     }
 
-    private void processStageConsumeExceptions(TransactionContext context, TransactionStage stage) {
+    private Optional<Exception> processStageConsumeExceptions(TransactionContext context, TransactionStage stage) {
         try {
             processStage(context, stage);
+            return Optional.empty();
         } catch (RuntimeException e) {
-            logger.error("Error during {}", stage, e);
+            return Optional.of(e);
         }
     }
 

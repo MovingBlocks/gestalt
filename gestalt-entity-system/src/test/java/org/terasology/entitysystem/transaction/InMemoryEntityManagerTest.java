@@ -18,9 +18,11 @@ package org.terasology.entitysystem.transaction;
 
 import com.google.common.collect.Sets;
 import org.junit.Test;
+import org.mockito.internal.matchers.Null;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.transaction.exception.EntitySystemException;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.entity.inmemory.CoreEntityRef;
@@ -38,6 +40,7 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -64,10 +67,9 @@ public class InMemoryEntityManagerTest {
         sampleComponent.setName(TEST_NAME);
         transactionManager.commit();
 
-        assertTrue(entity instanceof NewEntityRef);
-        NewEntityRef newEntityRef = (NewEntityRef) entity;
-        assertTrue(newEntityRef.getInnerEntityRef().isPresent());
-        assertTrue(newEntityRef.getInnerEntityRef().get() instanceof CoreEntityRef);
+        assertTrue(entity instanceof ProxyEntityRef);
+        ProxyEntityRef newEntityRef = (ProxyEntityRef) entity;
+        assertTrue(newEntityRef.getActualRef() instanceof CoreEntityRef);
     }
 
     @Test
@@ -76,28 +78,26 @@ public class InMemoryEntityManagerTest {
         EntityRef entity = entityManager.createEntity();
         transactionManager.commit();
 
-        assertTrue(entity instanceof NewEntityRef);
-        NewEntityRef newEntityRef = (NewEntityRef) entity;
-        assertTrue(newEntityRef.getInnerEntityRef().isPresent());
-        assertEquals(NullEntityRef.get(), newEntityRef.getInnerEntityRef().get());
+        assertTrue(entity instanceof ProxyEntityRef);
+        ProxyEntityRef newEntityRef = (ProxyEntityRef) entity;
+        assertTrue(newEntityRef.getActualRef() instanceof NullEntityRef);
     }
 
     @Test
-    public void createEntityAddsInnerNullEntityRefOnRollback() throws Exception {
+    public void createEntitySwitchesToNullEntityRefOnRollback() throws Exception {
         transactionManager.begin();
         EntityRef entity = entityManager.createEntity();
         SampleComponent sampleComponent = entity.addComponent(SampleComponent.class);
         sampleComponent.setName(TEST_NAME);
         transactionManager.rollback();
 
-        assertTrue(entity instanceof NewEntityRef);
-        NewEntityRef newEntityRef = (NewEntityRef) entity;
-        assertTrue(newEntityRef.getInnerEntityRef().isPresent());
-        assertEquals(NullEntityRef.get(), newEntityRef.getInnerEntityRef().get());
+        assertTrue(entity instanceof ProxyEntityRef);
+        ProxyEntityRef newEntityRef = (ProxyEntityRef) entity;
+        assertEquals(NullEntityRef.get(), newEntityRef.getActualRef());
     }
 
     @Test(expected = ConcurrentModificationException.class)
-    public void createEntityAddsInnerNullEntityRefOnFailedCommit() throws Exception {
+    public void createEntitySwitchesToNullEntityRefOnFailedCommit() throws Exception {
         transactionManager.begin();
         EntityRef initialEntity = entityManager.createEntity();
         initialEntity.addComponent(SampleComponent.class);
@@ -114,10 +114,9 @@ public class InMemoryEntityManagerTest {
         try {
             transactionManager.commit();
         } finally {
-            assertTrue(entity instanceof NewEntityRef);
-            NewEntityRef newEntityRef = (NewEntityRef) entity;
-            assertTrue(newEntityRef.getInnerEntityRef().isPresent());
-            assertEquals(NullEntityRef.get(), newEntityRef.getInnerEntityRef().get());
+            assertTrue(entity instanceof ProxyEntityRef);
+            ProxyEntityRef newEntityRef = (ProxyEntityRef) entity;
+            assertEquals(NullEntityRef.get(), newEntityRef.getActualRef());
         }
     }
 

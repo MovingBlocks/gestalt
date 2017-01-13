@@ -32,113 +32,68 @@ import java.util.Set;
  */
 public class NewEntityRef implements EntityRef {
 
-    private EntityRef innerEntityRef = null;
-    private boolean useInnerRef = false;
-
     private ComponentManager componentManager;
-    private TypeKeyedMap<Component> components = new TypeKeyedMap<>();
+    private NewEntityState state;
 
-    public NewEntityRef(ComponentManager componentManager) {
+    public NewEntityRef(ComponentManager componentManager, NewEntityState state) {
         this.componentManager = componentManager;
-    }
-
-    public void setInnerEntityRef(EntityRef entityRef) {
-        if (innerEntityRef == null) {
-            innerEntityRef = entityRef;
-        }
-    }
-
-    public void activateInnerRef() {
-        useInnerRef = true;
-        components = null;
-        componentManager = null;
-    }
-
-    public Optional<EntityRef> getInnerEntityRef() {
-        return Optional.ofNullable(innerEntityRef);
+        this.state = state;
     }
 
     @Override
     public long getId() {
-        if (useInnerRef) {
-            return innerEntityRef.getId();
-        }
         return 0;
     }
 
     @Override
     public long getRevision() {
-        if (useInnerRef) {
-            return innerEntityRef.getRevision();
-        }
         return 0;
     }
 
     @Override
     public boolean isPresent() {
-        return innerEntityRef == null || innerEntityRef.isPresent();
+        return true;
     }
 
     @Override
     public <T extends Component> Optional<T> getComponent(Class<T> componentType) {
-        if (useInnerRef) {
-            return innerEntityRef.getComponent(componentType);
-        }
-        return Optional.ofNullable((T) components.get(componentType));
+        return Optional.ofNullable(state.getComponents().get(componentType));
     }
 
     @Override
     public Set<Class<? extends Component>> getComponentTypes() {
-        if (useInnerRef) {
-            return innerEntityRef.getComponentTypes();
-        }
-        return Collections.unmodifiableSet(components.keySet());
+        return Collections.unmodifiableSet(state.getComponents().keySet());
     }
 
     @Override
     public TypeKeyedMap<Component> getComponents() {
-        if (useInnerRef) {
-            return innerEntityRef.getComponents();
-        }
-        return new TypeKeyedMap<>(Collections.unmodifiableMap(components.getInner()));
+        return new TypeKeyedMap<>(Collections.unmodifiableMap(state.getComponents().getInner()));
     }
 
     @Override
     public <T extends Component> T addComponent(Class<T> componentType) {
-        if (useInnerRef) {
-            return innerEntityRef.addComponent(componentType);
-        }
-        if (components.get(componentType) != null) {
+        if (state.getComponents().get(componentType) != null) {
             throw new ComponentAlreadyExistsException("Entity already has a component of type " + componentType.getSimpleName());
         }
         T component = componentManager.create(componentType);
-        components.put(componentType, component);
+        state.getComponents().put(componentType, component);
         return component;
     }
 
     @Override
     public <T extends Component> void removeComponent(Class<T> componentType) {
-        if (useInnerRef) {
-            innerEntityRef.removeComponent(componentType);
-        } else if (components.remove(componentType) == null) {
+        if (state.getComponents().remove(componentType) == null) {
             throw new ComponentDoesNotExistException("Entity does not have a component of type " + componentType.getSimpleName());
         }
     }
 
     @Override
     public void delete() {
-        if (useInnerRef) {
-            innerEntityRef.delete();
-        } else {
-            components.clear();
-        }
+        state.getComponents().clear();
     }
 
     @Override
     public String toString() {
-        if (useInnerRef) {
-            return "New" + innerEntityRef.toString();
-        }
         return "EntityRef( new )";
     }
 }
