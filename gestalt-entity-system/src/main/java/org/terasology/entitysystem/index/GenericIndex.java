@@ -16,8 +16,7 @@
 
 package org.terasology.entitysystem.index;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
+import gnu.trove.TCollections;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 import org.terasology.entitysystem.core.Component;
@@ -30,33 +29,27 @@ import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
 import org.terasology.entitysystem.transaction.pipeline.TransactionStage;
-import org.terasology.util.Varargs;
+import org.terasology.util.collection.TypeKeyedMap;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  *
  */
-public class MulticomponentIndex implements TransactionInterceptor, Index {
+public class GenericIndex implements Index, TransactionInterceptor {
 
-    private EntityManager entityManager;
-    private Set<Class<? extends Component>> componentTypes;
-    private TLongSet entities = new TLongHashSet();
+    private final EntityManager entityManager;
+    private final TLongSet entities;
+    private final Predicate<TypeKeyedMap<Component>> filter;
 
-    @SafeVarargs
-    public MulticomponentIndex(TransactionManager transactionManager, EntityManager entityManager, Class<? extends Component> firstComponentType, Class<? extends Component> ... additionalComponentTypes) {
-        this(transactionManager, entityManager, Varargs.combineToSet(firstComponentType, additionalComponentTypes));
-    }
-
-    public MulticomponentIndex(TransactionManager transactionManager, EntityManager entityManager, Collection<Class<? extends Component>> componentTypes) {
-        Preconditions.checkArgument(!componentTypes.isEmpty());
-        transactionManager.getPipeline().registerInterceptor(TransactionStage.UPDATE_INDEXES, this);
-        this.componentTypes = ImmutableSet.copyOf(componentTypes);
+    public GenericIndex(TransactionManager transactionManager, EntityManager entityManager, Predicate<TypeKeyedMap<Component>> filter) {
         this.entityManager = entityManager;
+        this.entities = TCollections.synchronizedSet(new TLongHashSet());
+        this.filter = filter;
+
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.UPDATE_INDEXES, this);
     }
 
     @Override
@@ -64,12 +57,12 @@ public class MulticomponentIndex implements TransactionInterceptor, Index {
         Optional<EntitySystemState> entityState = context.getAttachment(EntitySystemState.class);
         if (entityState.isPresent()) {
             for (NewEntityState state : entityState.get().getNewEntities()) {
-                if (state.getComponents().keySet().containsAll(componentTypes)) {
+                if (filter.test(state.getComponents())) {
                     entities.add(state.getId());
                 }
             }
             for (EntityState state : entityState.get().getEntityStates()) {
-                if (state.getComponents().keySet().containsAll(componentTypes)) {
+                if (filter.test(state.getComponents())) {
                     entities.add(state.getId());
                 } else {
                     entities.remove(state.getId());

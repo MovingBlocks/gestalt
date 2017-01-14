@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
  *
  */
 public class ComponentIndexTest {
-    private ComponentIndex componentIndex;
+    private Index componentIndex;
 
     private TransactionManager transactionManager = new TransactionManager();
     private EntityManager entityManager;
@@ -49,7 +49,7 @@ public class ComponentIndexTest {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary), transactionManager);
-        componentIndex = new ComponentIndex(transactionManager, entityManager, SampleComponent.class);
+        componentIndex = ComponentIndexes.createComponentIndex(transactionManager, entityManager, SampleComponent.class);
     }
 
     @Before
