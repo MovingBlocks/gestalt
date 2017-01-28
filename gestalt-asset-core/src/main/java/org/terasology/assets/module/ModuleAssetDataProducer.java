@@ -130,6 +130,11 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private final SetMultimap<Name, Name> resolutionMap = Multimaps.synchronizedSetMultimap(HashMultimap.<Name, Name>create());
 
     /**
+     * Used as the key to access the right set of assets from cache.
+     */
+    private final int assetCacheKey;
+
+    /**
      * Creates a ModuleAssetDataProducer
      *
      * @param moduleEnvironment   The module environment to load asset data from
@@ -143,7 +148,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                                    Collection<AssetAlterationFileFormat<U>> supplementalFormats,
                                    Collection<AssetAlterationFileFormat<U>> deltaFormats,
                                    String... folderNames) {
-        this(moduleEnvironment, assetFormats, supplementalFormats, deltaFormats, Arrays.asList(folderNames));
+        this(moduleEnvironment, assetFormats, supplementalFormats, deltaFormats, Arrays.asList(folderNames), null);
     }
 
     /**
@@ -159,17 +164,25 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                                    Collection<AssetFileFormat<U>> assetFormats,
                                    Collection<AssetAlterationFileFormat<U>> supplementalFormats,
                                    Collection<AssetAlterationFileFormat<U>> deltaFormats,
-                                   Collection<String> folderNames) {
+                                   Collection<String> folderNames,
+                                   ModuleAssetPathCache cache) {
         this.folderNames = ImmutableList.copyOf(folderNames);
         this.moduleEnvironment = moduleEnvironment;
         this.assetFormats = ImmutableList.copyOf(assetFormats);
         this.supplementFormats = ImmutableList.copyOf(supplementalFormats);
         this.deltaFormats = ImmutableList.copyOf(deltaFormats);
 
-        scanForAssets();
-        scanForOverrides();
-        scanForDeltas();
+        // Create asset cache key (essentially a hashcode for this producer, taking into account asset types and folders)
+        StringBuilder s = new StringBuilder();
+        assetFormats.forEach(a -> s.append(a.getClass().getSimpleName()));
+        folderNames.forEach(s::append);
+        assetCacheKey = s.toString().hashCode();
+
+        scanForAssets(cache);
+        scanForOverrides(cache);
+        scanForDeltas(cache);
         redirectMap = buildRedirectMap(scanModulesForRedirects());
+
     }
 
     /**
@@ -231,18 +244,33 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         return Optional.empty();
     }
 
-    private void scanForAssets() {
+    private void scanForAssets(ModuleAssetPathCache cache) {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            for (String folderName : folderNames) {
-                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER, folderName);
-                if (Files.exists(rootPath)) {
-                    scanLocationForAssets(module, folderName, rootPath, path -> module.getId());
+            Collection<Path> cachedAssetPaths = cache != null ? cache.get(module.getId(), assetCacheKey) : null;
+
+            if (cachedAssetPaths != null && cachedAssetPaths.size() > 0) {
+                for (Path asset : cachedAssetPaths) {
+                    Optional<ResourceUrn> assetUrn = registerSource(module.getId(), asset, module.getId(), assetFormats, UnloadedAssetData::addSource);
+                    if (!assetUrn.isPresent()) {
+                        registerSource(module.getId(), asset, module.getId(), supplementFormats, UnloadedAssetData::addSupplementSource);
+                    }
+                }
+            } else {
+                for (String folderName : folderNames) {
+                    Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER, folderName);
+                    if (Files.exists(rootPath)) {
+                        scanLocationForAssets(module, folderName, rootPath, path -> module.getId(), cache);
+                    }
                 }
             }
         }
     }
 
-    private void scanForOverrides() {
+    private void scanForAssets() {
+        scanForAssets(null);
+    }
+
+    private void scanForOverrides(ModuleAssetPathCache cache) {
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
                 Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), OVERRIDE_FOLDER);
@@ -259,7 +287,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                                 if (dir.getNameCount() == rootPath.getNameCount() + 1) {
                                     Path overridePath = dir.resolve(folderName);
                                     if (Files.isDirectory(overridePath)) {
-                                        scanLocationForAssets(module, folderName, overridePath, path -> new Name(path.getName(2).toString()));
+                                        scanLocationForAssets(module, folderName, overridePath, path -> new Name(path.getName(2).toString()), null);
                                     }
                                     return FileVisitResult.SKIP_SUBTREE;
                                 }
@@ -276,7 +304,11 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
     }
 
-    private void scanLocationForAssets(final Module origin, String folderName, Path rootPath, Function<Path, Name> moduleNameProvider) {
+    private void scanForOverrides() {
+        scanForOverrides(null);
+    }
+
+    private void scanLocationForAssets(final Module origin, String folderName, Path rootPath, Function<Path, Name> moduleNameProvider, ModuleAssetPathCache cache) {
         try {
             Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
                 @Override
@@ -284,7 +316,10 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                     Name module = moduleNameProvider.apply(file);
                     Optional<ResourceUrn> assetUrn = registerSource(module, file, origin.getId(), assetFormats, UnloadedAssetData::addSource);
                     if (!assetUrn.isPresent()) {
-                        registerSource(moduleNameProvider.apply(file), file, origin.getId(), supplementFormats, UnloadedAssetData::addSupplementSource);
+                        registerSource(module, file, origin.getId(), supplementFormats, UnloadedAssetData::addSupplementSource);
+                    }
+                    if (cache != null) {
+                        cache.add(module, file, assetCacheKey);
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -294,7 +329,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
     }
 
-    private void scanForDeltas() {
+    private void scanForDeltas(ModuleAssetPathCache cache) {
         for (final Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
             for (String folderName : folderNames) {
                 Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), DELTA_FOLDER);
@@ -315,6 +350,9 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
     }
 
+    private void scanForDeltas() {
+        scanForDeltas(null);
+    }
 
     private Map<ResourceUrn, ResourceUrn> scanModulesForRedirects() {
         Map<ResourceUrn, ResourceUrn> rawRedirects = Maps.newLinkedHashMap();
