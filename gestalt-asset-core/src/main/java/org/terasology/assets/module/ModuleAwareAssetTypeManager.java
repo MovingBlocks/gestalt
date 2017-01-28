@@ -103,8 +103,12 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreSupplementalFormats = ArrayListMultimap.create();
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreDeltaFormats = ArrayListMultimap.create();
 
+    private final ModuleAssetPathCache moduleAssetPathCache = new ModuleAssetPathCache();
+
     private final ClassFactory classFactory;
     private volatile ModuleWatcher watcher;
+    private boolean autoReloadAssets = true;
+    private boolean useAssetCaching = true;
 
 
     public ModuleAwareAssetTypeManager() {
@@ -343,6 +347,22 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
         return assetManager;
     }
 
+    public boolean getAutoReloadAssets () {
+        return autoReloadAssets;
+    }
+
+    public void setAutoReloadAssets (boolean autoReloadAssets) {
+        this.autoReloadAssets = autoReloadAssets;
+    }
+
+    public boolean getUseAssetCaching () {
+        return useAssetCaching;
+    }
+
+    public void setUseAssetCaching (boolean useAssetCaching) {
+        this.useAssetCaching = useAssetCaching;
+    }
+
     /**
      * Switches the module environment. This triggers:
      * <ul>
@@ -366,10 +386,12 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
             }
         }
 
-        try {
-            watcher = new ModuleWatcher(newEnvironment);
-        } catch (IOException e) {
-            logger.warn("Failed to establish watch service, will not auto-reload changed assets", e);
+        if (getAutoReloadAssets()) {
+            try {
+                watcher = new ModuleWatcher(newEnvironment);
+            } catch (IOException e) {
+                logger.warn("Failed to establish watch service, will not auto-reload changed assets", e);
+            }
         }
 
         for (AssetType<?, ?> assetType : assetTypes.values()) {
@@ -495,7 +517,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
             List<AssetAlterationFileFormat<?>> deltaFormats = Lists.newArrayList(coreDeltaFormats.get(assetType.getAssetClass()));
             deltaFormats.addAll(extensionDeltaFormats.get(assetType.getAssetDataClass()));
 
-            ModuleAssetDataProducer moduleProducer = new ModuleAssetDataProducer(environment, assetFormats, supplementalFormats, deltaFormats, folderNames);
+            ModuleAssetDataProducer moduleProducer = new ModuleAssetDataProducer(environment, assetFormats, supplementalFormats, deltaFormats, folderNames, getUseAssetCaching() ? moduleAssetPathCache : null);
             assetType.addProducer(moduleProducer);
             subscribeToChanges(assetType, moduleProducer, folderNames);
         }
