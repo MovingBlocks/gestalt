@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.index;
 
-import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
-import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
+import com.google.common.collect.Sets;
+
+import java.util.Set;
 
 /**
  *
  */
-public class UnlockEntitiesInterceptor implements TransactionInterceptor {
+public class LockInfo {
+    private Set<Object> lockedObjects = Sets.newHashSet();
 
-    @Override
-    public void handle(TransactionContext context) {
-        context.getAttachment(EntitySystemState.class).ifPresent((state) -> {
-            if (state.getLock() != null) {
-                state.getLock().close();
-            }
-        });
+    public void addLocked(Object locked) {
+        this.lockedObjects.add(locked);
     }
 
+    public boolean isLocked(Object locked) {
+        return lockedObjects.contains(locked);
+    }
+
+    public boolean removeLocked(Object locked) {
+        return lockedObjects.remove(locked);
+    }
 }

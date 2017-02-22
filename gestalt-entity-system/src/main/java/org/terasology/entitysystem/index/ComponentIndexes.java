@@ -22,6 +22,7 @@ import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.util.Varargs;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -38,6 +39,6 @@ public final class ComponentIndexes {
 
     public static Index createComponentIndex(TransactionManager transactionManager, EntityManager entityManager, Set<Class<? extends Component>> componentTypes) {
         Preconditions.checkArgument(componentTypes != null && !componentTypes.isEmpty());
-        return new GenericIndex(transactionManager, entityManager, (x) -> x.keySet().containsAll(componentTypes));
+        return new GenericIndex(transactionManager, entityManager, (x) -> !Collections.disjoint(x, componentTypes), (x) -> x.keySet().containsAll(componentTypes));
     }
 }

@@ -30,7 +30,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- *
+ * Information on the state of an entity as part of a transaction.
+ * <p>When an entity is brought into a transaction, the current revision of the entity is noted and a copy is made of all its components. When the transaction
+ * is committed, the </p>
  */
 public class EntityState {
 
@@ -69,8 +71,8 @@ public class EntityState {
         return new TypeKeyedMap<>(Collections.unmodifiableMap(workingComponents.getInner()));
     }
 
-    public Iterable<Class<? extends Component>> getInvolvedComponents() {
-        return Collections.unmodifiableCollection(involvedComponents);
+    public Set<Class<? extends Component>> getInvolvedComponents() {
+        return Collections.unmodifiableSet(involvedComponents);
     }
 
     public void addComponent(Component component) {

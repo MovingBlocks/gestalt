@@ -33,42 +33,94 @@ import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 /**
  *
  */
-public class GenericIndex implements Index, TransactionInterceptor {
+public class GenericIndex implements Index {
 
     private final EntityManager entityManager;
     private final TLongSet entities;
-    private final Predicate<TypeKeyedMap<Component>> filter;
+    private final Predicate<Set<Class<? extends Component>>> relevantForUpdate;
+    private final Predicate<TypeKeyedMap<Component>> includeInIndex;
 
-    public GenericIndex(TransactionManager transactionManager, EntityManager entityManager, Predicate<TypeKeyedMap<Component>> filter) {
-        this.entityManager = entityManager;
-        this.entities = TCollections.synchronizedSet(new TLongHashSet());
-        this.filter = filter;
+    private ReentrantLock lock = new ReentrantLock();
 
-        transactionManager.getPipeline().registerInterceptor(TransactionStage.UPDATE_INDEXES, this);
-    }
-
-    @Override
-    public void handle(TransactionContext context) {
-        Optional<EntitySystemState> entityState = context.getAttachment(EntitySystemState.class);
-        if (entityState.isPresent()) {
-            for (NewEntityState state : entityState.get().getNewEntities()) {
-                if (filter.test(state.getComponents())) {
-                    entities.add(state.getId());
+    private TransactionInterceptor lockIndex = new TransactionInterceptor() {
+        @Override
+        public void handle(TransactionContext context) {
+            Optional<EntitySystemState> entityState = context.getAttachment(EntitySystemState.class);
+            if (entityState.isPresent()) {
+                for (NewEntityState state : entityState.get().getNewEntities()) {
+                    if (relevantForUpdate.test(state.getComponents().keySet())) {
+                        lock.lock();
+                        context.getOrAttach(LockInfo.class, LockInfo::new).addLocked(GenericIndex.this);
+                        return;
+                    }
+                }
+                for (EntityState state : entityState.get().getEntityStates()) {
+                    if (relevantForUpdate.test(state.getInvolvedComponents())) {
+                        lock.lock();
+                        context.getOrAttach(LockInfo.class, LockInfo::new).addLocked(GenericIndex.this);
+                        return;
+                    }
                 }
             }
-            for (EntityState state : entityState.get().getEntityStates()) {
-                if (filter.test(state.getComponents())) {
-                    entities.add(state.getId());
-                } else {
-                    entities.remove(state.getId());
+            lock.lock();
+
+            LockInfo lockInfo = context.getOrAttach(LockInfo.class, LockInfo::new);
+            lockInfo.addLocked(this);
+        }
+    };
+    private TransactionInterceptor unlockIndex = new TransactionInterceptor() {
+        @Override
+        public void handle(TransactionContext context) {
+            Optional<LockInfo> existingLockInfo = context.getAttachment(LockInfo.class);
+            if (existingLockInfo.isPresent()) {
+                if (existingLockInfo.get().removeLocked(GenericIndex.this)) {
+                    lock.unlock();
                 }
             }
         }
+    };
+    private TransactionInterceptor updateIndex = new TransactionInterceptor() {
+        @Override
+        public void handle(TransactionContext context) {
+            Optional<LockInfo> lockInfo = context.getAttachment(LockInfo.class);
+            if (lockInfo.isPresent() && lockInfo.get().isLocked(GenericIndex.this)) {
+                Optional<EntitySystemState> entityState = context.getAttachment(EntitySystemState.class);
+                if (entityState.isPresent()) {
+                    for (NewEntityState state : entityState.get().getNewEntities()) {
+                        if (relevantForUpdate.test(state.getComponents().keySet()) && includeInIndex.test(state.getComponents())) {
+                            entities.add(state.getId());
+                        }
+                    }
+                    for (EntityState state : entityState.get().getEntityStates()) {
+                        if (relevantForUpdate.test(state.getInvolvedComponents())) {
+                            if (includeInIndex.test(state.getComponents())) {
+                                entities.add(state.getId());
+                            } else {
+                                entities.remove(state.getId());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    public GenericIndex(TransactionManager transactionManager, EntityManager entityManager, Predicate<Set<Class<? extends Component>>> relevantForUpdate, Predicate<TypeKeyedMap<Component>> includeInIndex) {
+        this.entityManager = entityManager;
+        this.entities = TCollections.synchronizedSet(new TLongHashSet());
+        this.relevantForUpdate = relevantForUpdate;
+        this.includeInIndex = includeInIndex;
+
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.OBTAIN_LOCKS, lockIndex);
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.PROCESS_COMMIT, updateIndex);
+        transactionManager.getPipeline().registerInterceptor(TransactionStage.RELEASE_LOCKS, unlockIndex);
     }
 
     @Override

@@ -14,35 +14,23 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.entity.inmemory.pipeline;
 
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.component.ComponentType;
-import org.terasology.entitysystem.component.PropertyAccessor;
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.core.NullEntityRef;
+import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
 
-import java.util.ConcurrentModificationException;
-import java.util.Set;
-
 /**
- *
+ * This transaction interceptor unlocks all entities involved in a transaction
  */
-public class LockEntitiesInterceptor implements TransactionInterceptor {
-
-    private EntityStore entityStore;
-
-    public LockEntitiesInterceptor(EntityStore entityStore) {
-        this.entityStore = entityStore;
-    }
+public class UnlockEntitiesInterceptor implements TransactionInterceptor {
 
     @Override
     public void handle(TransactionContext context) {
         context.getAttachment(EntitySystemState.class).ifPresent((state) -> {
-            state.setLock(entityStore.lock(state.getInvolvedEntityIds()));
+            if (state.getLock() != null) {
+                state.getLock().close();
+            }
         });
     }
 

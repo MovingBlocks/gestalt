@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.entity.inmemory.pipeline;
 
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.component.ComponentType;
-import org.terasology.entitysystem.component.PropertyAccessor;
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.core.NullEntityRef;
+import org.terasology.entitysystem.entity.inmemory.EntityState;
+import org.terasology.entitysystem.entity.inmemory.EntityStore;
+import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
 
 import java.util.ConcurrentModificationException;
-import java.util.Set;
 
 /**
- *
+ * This TransactionIntercetor verifies the integrity of a commit. It checks that none of the entities involved in the transaction have been altered since the transaction
+ * began.
  */
 public class VerifyCommitInterceptor implements TransactionInterceptor {
 

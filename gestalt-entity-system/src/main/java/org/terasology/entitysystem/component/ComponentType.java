@@ -44,18 +44,33 @@ public final class ComponentType<T extends Component> {
         this.copyStrategy = copyStrategy;
     }
 
+    /**
+     * @return A new instance of this component
+     */
     public T create() {
         return constructor.get();
     }
 
+    /**
+     * Copies a component onto anothing component
+     * @param from The component to copy from
+     * @param to The component to copy to
+     * @return The updated to component
+     */
     public T copy(T from, T to) {
         return copyStrategy.apply(from, to);
     }
 
+    /**
+     * @return The type of component this the ComponentType is for
+     */
     public Class<T> getComponentClass() {
         return interfaceType;
     }
 
+    /**
+     * @return Information on the properties of the component type.
+     */
     public ComponentPropertyInfo<T> getPropertyInfo() {
         return type;
     }

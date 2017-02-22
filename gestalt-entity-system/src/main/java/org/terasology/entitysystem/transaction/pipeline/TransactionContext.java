@@ -19,6 +19,7 @@ package org.terasology.entitysystem.transaction.pipeline;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  *
@@ -27,9 +28,19 @@ public class TransactionContext {
 
     private TypeKeyedMap<Object> attachments = new TypeKeyedMap<>();
 
+    public <T> T getOrAttach(Class<T> type, Supplier<T> supplier) {
+        T result = attachments.get(type);
+        if (result == null) {
+            result = supplier.get();
+            attachments.put(type, result);
+        }
+        return result;
+    }
+    
     public <T> Optional<T> getAttachment(Class<T> type) {
         return Optional.ofNullable(attachments.get(type));
     }
+
     public <T> void attach(Class<T> type, T data) {
         attachments.put(type, data);
     }

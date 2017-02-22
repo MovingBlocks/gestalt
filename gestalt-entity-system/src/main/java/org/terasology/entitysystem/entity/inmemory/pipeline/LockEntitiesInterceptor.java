@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.entity.inmemory.pipeline;
 
+import org.terasology.entitysystem.entity.inmemory.EntityStore;
+import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
-import org.terasology.entitysystem.core.NullEntityRef;
 
 /**
- *
+ * This transaction interceptor locks all the entities involved in a transaction.
  */
-public class WipeNewEntityInterceptor implements TransactionInterceptor {
+public class LockEntitiesInterceptor implements TransactionInterceptor {
+
+    private EntityStore entityStore;
+
+    public LockEntitiesInterceptor(EntityStore entityStore) {
+        this.entityStore = entityStore;
+    }
+
     @Override
     public void handle(TransactionContext context) {
         context.getAttachment(EntitySystemState.class).ifPresent((state) -> {
-            for (NewEntityState entityRef : state.getNewEntities()) {
-                entityRef.setActualEntity(NullEntityRef.get());
-            }
-            state.getNewEntities().clear();
+            state.setLock(entityStore.lock(state.getInvolvedEntityIds()));
         });
     }
+
 }

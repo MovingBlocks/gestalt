@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * This annotation is used to mark up methods that can be registered to receive events through the EventSystem
  * <p>
  * These methods should have the form
- * <code>public EventResult handlerMethod(EventType event, long entityId, Transaction transaction, [, SomeComponent component...])</code>
+ * <code>public EventResult handlerMethod(EventType event, EntityRef ref, Transaction transaction, [, SomeComponent component...])</code>
  * <p>
  * That is the method's parameters are the event, the entityId, and optionally components to be provided to the method. If components are listed in the method, then they
  * are required on the entity and do not need to be listed in the annotation's components list.

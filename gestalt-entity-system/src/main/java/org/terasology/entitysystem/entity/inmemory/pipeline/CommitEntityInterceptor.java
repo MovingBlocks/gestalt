@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.entitysystem.entity.inmemory.pipeline;
 
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.component.ComponentType;
@@ -24,13 +24,16 @@ import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.core.ProxyEntityRef;
+import org.terasology.entitysystem.entity.inmemory.ClosableLock;
+import org.terasology.entitysystem.entity.inmemory.EntityState;
+import org.terasology.entitysystem.entity.inmemory.EntityStore;
+import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
+import org.terasology.entitysystem.entity.inmemory.NewEntityState;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
 
-import java.util.Set;
-
 /**
- *
+ * This TransactionInterceptor handles the committing of entity changes into an entity store.
  */
 public class CommitEntityInterceptor implements TransactionInterceptor {
 
@@ -38,6 +41,11 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
     private EntityManager entityManager;
     private EntityStore entityStore;
 
+    /**
+     * @param entityStore The entity store to commit changes to
+     * @param entityManager The entity manager
+     * @param componentManager The component manager
+     */
     public CommitEntityInterceptor(EntityStore entityStore, EntityManager entityManager, ComponentManager componentManager) {
         this.entityStore = entityStore;
         this.entityManager = entityManager;
@@ -56,6 +64,10 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
         return context.getAttachment(EntitySystemState.class).orElseThrow(IllegalStateException::new);
     }
 
+    /**
+     * Applies any changes to entities
+     * @param context
+     */
     private void applyEntityUpdates(TransactionContext context) {
         for (EntityState entityState : getState(context).getEntityStates()) {
             for (Class<? extends Component> componentType : entityState.getInvolvedComponents()) {
@@ -90,6 +102,10 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
         }
     }
 
+    /**
+     * Create and save new entities.
+     * @param context
+     */
     private void createNewEntities(TransactionContext context) {
         try (ClosableLock ignored = entityStore.lockEntityCreation()) {
             generateNewEntityIds(context);
@@ -119,6 +135,10 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
         }
     }
 
+    /**
+     * Replace {@link ProxyEntityRef}s in a component with the actual EntityRef that is proxied.
+     * @param component
+     */
     @SuppressWarnings("unchecked")
     private void cleanUpEntityRefs(Component component) {
         ComponentType<?> type = componentManager.getType(component.getType());

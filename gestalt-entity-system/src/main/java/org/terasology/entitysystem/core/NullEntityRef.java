@@ -23,8 +23,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * A NullEntityRef represents a reference to no entity. This can be used instead of a straight null to reduce NullPointerExceptions. Note that attempting to add a component
- * to a NullEntityRef will evoke an exception.
+ * A NullEntityRef represents a reference to no entity. This can be used instead of a straight null to avoid NullPointerExceptions (following the Null Object pattern).
+ * Note that attempting to add a component to a NullEntityRef will evoke an exception.
  */
 public final class NullEntityRef implements EntityRef {
 
