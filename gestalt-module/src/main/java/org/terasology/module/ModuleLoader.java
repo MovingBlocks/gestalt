@@ -38,6 +38,7 @@ public class ModuleLoader {
 
     private Path moduleInfoPath = Paths.get("module.info");
     private Path directoryCodeLocation = Paths.get("build", "classes");
+    private Path libsLocation = Paths.get("libs");
     private final ModuleMetadataJsonAdapter metadataReader;
 
     public ModuleLoader() {
@@ -80,6 +81,20 @@ public class ModuleLoader {
     }
 
     /**
+     * @return The location within a path module where embedded libraries can be found
+     */
+    public Path getLibsLocation() {
+        return libsLocation;
+    }
+
+    /**
+     * @param libsLocation The sub location within a path module where embedded libraries can be found
+     */
+    public void setLibsLocation(Path libsLocation) {
+        this.libsLocation = libsLocation;
+    }
+
+    /**
      * @param modulePath The path to the module to load
      * @return The loaded module, or null if the path is not a module (contains no module metadata)
      * @throws IOException If an error occurs loading the module
@@ -116,7 +131,7 @@ public class ModuleLoader {
         Path modInfoFile = modulePath.resolve(moduleInfoPath);
         if (Files.isRegularFile(modInfoFile)) {
             try (Reader reader = Files.newBufferedReader(modInfoFile, Charsets.UTF_8)) {
-                return new PathModule(modulePath, modulePath.resolve(directoryCodeLocation), metadataReader.read(reader));
+                return new PathModule(modulePath, modulePath.resolve(directoryCodeLocation), modulePath.resolve(libsLocation), metadataReader.read(reader));
             }
         }
         return null;

@@ -18,10 +18,13 @@ package org.terasology.module;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.terasology.module.exceptions.InvalidModulePathException;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -41,19 +44,32 @@ public class PathModule extends BaseModule {
      * @param codePath The location of code for the module
      * @param metadata Metadata describing this module
      */
-    public PathModule(Path path, Path codePath, ModuleMetadata metadata) {
+    public PathModule(Path path, Path codePath, Path libsPath, ModuleMetadata metadata) {
         super(Arrays.asList(path), metadata);
         Preconditions.checkArgument(Files.isDirectory(path));
 
+        ImmutableList.Builder<URL> classpathBuilder = ImmutableList.builder();
         if (Files.isDirectory(codePath)) {
             try {
-                classpaths = ImmutableList.of(codePath.toUri().toURL());
+                classpathBuilder.add(codePath.toUri().toURL());
             } catch (MalformedURLException e) {
                 throw new InvalidModulePathException("Unable to convert path to URL: " + codePath, e);
             }
-        } else {
-            classpaths = ImmutableList.<URL>builder().build();
         }
+        if (Files.isDirectory(libsPath)) {
+            try (DirectoryStream<Path> libs = Files.newDirectoryStream(libsPath)) {
+                for (Path lib : libs) {
+                    if (Files.isRegularFile(lib)) {
+                        classpathBuilder.add(lib.toUri().toURL());
+                    }
+                }
+            } catch (IOException e) {
+                throw new InvalidModulePathException("Error reading libs", e);
+            }
+
+        }
+
+        classpaths = classpathBuilder.build();
     }
 
     @Override
