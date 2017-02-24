@@ -156,6 +156,13 @@ public class ModuleFactory {
         }
     }
 
+    /**
+     * Creates a module from a path, determining whether it is an archive (jar or zip) or directory and handling it appropriately. A module metadata file will be loaded and
+     * to determine the module's id, version and other details.
+     * @param path
+     * @return The loaded module
+     * @throws IOException If the module fails to load, including if the module metadata file cannot be found or loaded.
+     */
     public Module createModule(Path path) throws IOException {
         if (Files.isDirectory(path)) {
             return createPathModule(path);
@@ -164,6 +171,12 @@ public class ModuleFactory {
         }
     }
 
+    /**
+     * Creates a path module from a directory, loading metadata from an available metadata file.
+     * @param path
+     * @return The created module
+     * @throws IOException If the module fails to load, including if the module metadata file cannot be found or loaded.
+     */
     public Module createPathModule(Path path) throws IOException {
         for (Map.Entry<Path, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
             Path modInfoFile = path.resolve(entry.getKey());
@@ -176,7 +189,13 @@ public class ModuleFactory {
         throw new IOException("Could not resolve module metadata for module at " + path);
     }
 
-    private Module createArchiveModule(Path modulePath) throws IOException {
+    /**
+     * Creates an archive module from a file, loading metadata from an available metadata file inside the archive.
+     * @param modulePath
+     * @return The created module
+     * @throws IOException If the module fails to load, including if the module metadata file cannot be found or loaded.
+     */
+    public Module createArchiveModule(Path modulePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(modulePath.toFile())) {
             for (Map.Entry<Path, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
                 ZipEntry modInfoEntry = zipFile.getEntry(entry.getKey().toString());
