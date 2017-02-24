@@ -17,8 +17,8 @@
 package org.terasology.module.sandbox;
 
 import org.junit.Test;
-import org.terasology.module.ClasspathModule;
 import org.terasology.module.Module;
+import org.terasology.module.ModuleFactory;
 import org.terasology.module.ModuleMetadata;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
@@ -39,7 +39,7 @@ public class APIScannerTest {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name("test"));
         metadata.setVersion(new Version("1.0.0"));
-        Module module = ClasspathModule.create(metadata, true, getClass());
+        Module module = new ModuleFactory().createClasspathModule(metadata, true, getClass());
 
         StandardPermissionProviderFactory permissionProviderFactory = mock(StandardPermissionProviderFactory.class);
         PermissionSet permSet = new PermissionSet();

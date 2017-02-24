@@ -19,6 +19,7 @@ package org.terasology.module;
 import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
+import org.terasology.module.dependencyresolution.DependencyResolver;
 import org.terasology.module.sandbox.ModuleSecurityManager;
 import org.terasology.module.sandbox.ModuleSecurityPolicy;
 import org.terasology.module.sandbox.PermissionSet;

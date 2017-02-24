@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.module.dependencyResolution;
+package org.terasology.module.dependencyresolution;
 
 /**
  * OptionalResolutionStrategy determines how optional dependencies are resolved by the dependency resolver.

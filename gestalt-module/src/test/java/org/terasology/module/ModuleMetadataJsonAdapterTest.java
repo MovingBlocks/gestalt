@@ -24,6 +24,7 @@ import java.util.Locale;
 import org.junit.Assert;
 import org.junit.Test;
 import org.terasology.i18n.I18nMap;
+import org.terasology.module.dependencyresolution.DependencyInfo;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 

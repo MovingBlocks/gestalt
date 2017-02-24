@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.module;
+package org.terasology.module.dependencyresolution;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,7 +27,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.terasology.module.dependencyResolution.OptionalResolutionStrategy;
+import org.terasology.module.Module;
+import org.terasology.module.ModuleRegistry;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.naming.VersionRange;

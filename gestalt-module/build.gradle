@@ -34,7 +34,7 @@ copyModuleELibs {
 copyModuleEInfo {
 	from 'testpack/moduleE'
 	into 'test-modules/moduleE'
-	include('*.info')
+	include('*.json')
 }
 
 gatherJarModules {

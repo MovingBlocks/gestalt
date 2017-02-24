@@ -17,7 +17,7 @@
 package org.terasology.assets.test;
 
 import com.google.common.collect.Lists;
-import org.terasology.module.ClasspathModule;
+import org.terasology.module.*;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleMetadata;
@@ -56,11 +56,12 @@ public class VirtualModuleEnvironment {
     }
 
     public VirtualModuleEnvironment(Class classpathClass) throws Exception {
+        ModuleFactory moduleFactory = new ModuleFactory();
         moduleRegistry = new TableModuleRegistry();
         ModuleMetadata testModuleMetadata = new ModuleMetadata();
         testModuleMetadata.setId(new Name("test"));
         testModuleMetadata.setVersion(new Version("1.0.0"));
-        Module testModule = ClasspathModule.create(testModuleMetadata, true, classpathClass);
+        Module testModule = moduleFactory.createClasspathModule(testModuleMetadata, true, classpathClass);
         moduleRegistry.add(testModule);
 
         ModulePathScanner scanner = new ModulePathScanner();

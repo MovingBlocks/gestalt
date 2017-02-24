@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.terasology.module;
+package org.terasology.module.dependencyresolution;
 
 import com.google.common.base.Preconditions;
+import org.terasology.module.Module;
 
 import java.util.Set;
 

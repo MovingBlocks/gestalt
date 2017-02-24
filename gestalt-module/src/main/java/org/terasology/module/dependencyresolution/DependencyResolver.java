@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.terasology.module;
+package org.terasology.module.dependencyresolution;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-import org.terasology.module.dependencyResolution.OptionalResolutionStrategy;
+import org.terasology.module.ModuleRegistry;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.naming.VersionRange;
@@ -41,7 +41,7 @@ public class DependencyResolver {
     private final ModuleRegistry registry;
 
     /**
-     * Creates a DependencyResolver using the {@link org.terasology.module.dependencyResolution.OptionalResolutionStrategy#INCLUDE_IF_REQUIRED}.
+     * Creates a DependencyResolver using the {@link org.terasology.module.dependencyresolution.OptionalResolutionStrategy#INCLUDE_IF_REQUIRED}.
      *
      * @param registry The registry to resolve modules from
      */

@@ -36,18 +36,18 @@ import java.util.Set;
  */
 public class ModulePathScanner {
     private static final Logger logger = LoggerFactory.getLogger(ModulePathScanner.class);
-    private final ModuleLoader moduleLoader;
+    private final ModuleFactory moduleFactory;
 
     public ModulePathScanner() {
-        this.moduleLoader = new ModuleLoader();
+        this.moduleFactory = new ModuleFactory();
     }
 
-    public ModulePathScanner(ModuleLoader loader) {
-        this.moduleLoader = loader;
+    public ModulePathScanner(ModuleFactory loader) {
+        this.moduleFactory = loader;
     }
 
-    public ModuleLoader getModuleLoader() {
-        return moduleLoader;
+    public ModuleFactory getModuleFactory() {
+        return moduleFactory;
     }
 
     /**
@@ -110,15 +110,11 @@ public class ModulePathScanner {
 
     private void loadModule(ModuleRegistry registry, Path modulePath) {
         try {
-            Module module = moduleLoader.load(modulePath);
-            if (module != null) {
-                if (registry.add(module)) {
-                    logger.info("Discovered module: {}", module);
-                } else {
-                    logger.info("Discovered duplicate module: {}-{}, skipping", module.getId(), module.getVersion());
-                }
+            Module module = moduleFactory.createModule(modulePath);
+            if (registry.add(module)) {
+                logger.info("Discovered module: {}", module);
             } else {
-                logger.warn("Not a module: {}", modulePath);
+                logger.info("Discovered duplicate module: {}-{}, skipping", module.getId(), module.getVersion());
             }
         } catch (IOException e) {
             logger.warn("Failed to load module at '{}'", modulePath, e);

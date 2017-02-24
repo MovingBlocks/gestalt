@@ -28,11 +28,10 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 
 import org.terasology.i18n.I18nMap;
 import org.terasology.i18n.gson.I18nMapTypeAdapter;
+import org.terasology.module.dependencyresolution.DependencyInfo;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.naming.gson.NameTypeAdapter;
@@ -71,7 +70,7 @@ import java.util.Set;
  *
  * @author Immortius
  */
-public class ModuleMetadataJsonAdapter {
+public class ModuleMetadataJsonAdapter implements ModuleMetadataLoader {
 
     private static final Type DEPENDENCY_LIST_TYPE = new TypeToken<List<DependencyInfo>>() {
     }.getType();
@@ -136,20 +135,8 @@ public class ModuleMetadataJsonAdapter {
      * @throws com.google.gson.JsonIOException     if there was a problem reading from the Reader
      * @throws com.google.gson.JsonSyntaxException if json is not valid
      */
+    @Override
     public ModuleMetadata read(Reader reader) {
-        if (cachedGson == null) {
-            cachedGson = builder.create();
-        }
-        return cachedGson.fromJson(reader, ModuleMetadata.class);
-    }
-
-    /**
-     * @param reader A reader providing the json metadata
-     * @return The ModuleMetadata represented by the JSON
-     * @throws com.google.gson.JsonIOException     if there was a problem reading from the Reader
-     * @throws com.google.gson.JsonSyntaxException if json is not valid
-     */
-    public ModuleMetadata read(JsonReader reader) {
         if (cachedGson == null) {
             cachedGson = builder.create();
         }
@@ -167,19 +154,7 @@ public class ModuleMetadataJsonAdapter {
         }
         cachedGson.toJson(data, writer);
     }
-
-    /**
-     * @param writer A writer that receives the json metadata
-     * @param data the module metadata that should be written
-     * @throws com.google.gson.JsonIOException     if there was a problem writing to the Writer
-     */
-    public void write(ModuleMetadata data, JsonWriter writer) {
-        if (cachedGson == null) {
-            cachedGson = builder.create();
-        }
-        cachedGson.toJson(data, ModuleMetadata.class, writer);
-    }
-
+    
     private class ModuleMetadataTypeAdapter implements JsonDeserializer<ModuleMetadata>, JsonSerializer<ModuleMetadata> {
 
         @SuppressWarnings("unchecked")

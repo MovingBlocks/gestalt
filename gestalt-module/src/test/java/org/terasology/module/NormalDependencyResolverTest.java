@@ -19,6 +19,8 @@ package org.terasology.module;
 import com.google.common.collect.Sets;
 
 import org.junit.Test;
+import org.terasology.module.dependencyresolution.DependencyResolver;
+import org.terasology.module.dependencyresolution.ResolutionResult;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.naming.VersionRange;

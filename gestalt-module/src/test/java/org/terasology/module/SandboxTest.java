@@ -18,7 +18,7 @@ package org.terasology.module;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.reflections.ReflectionsException;
+import org.terasology.module.dependencyresolution.DependencyResolver;
 import org.terasology.module.sandbox.ModuleSecurityManager;
 import org.terasology.module.sandbox.ModuleSecurityPolicy;
 import org.terasology.module.sandbox.PermissionSet;

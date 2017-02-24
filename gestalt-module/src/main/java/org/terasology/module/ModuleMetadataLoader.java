@@ -16,12 +16,19 @@
 
 package org.terasology.module;
 
+import java.io.IOException;
+import java.io.Reader;
 
 /**
- * @deprecated use {@link ModuleMetadataJsonAdapter} instead.
+ * A module metadata loader reads module metadata from a file.
  */
-@Deprecated
-public class ModuleMetadataReader extends ModuleMetadataJsonAdapter {
+public interface ModuleMetadataLoader {
 
-    // to be removed
+    /**
+     * @param reader
+     * @return The loaded module metadata.
+     * @throws IOException If there was an error reading the ModuleMetadata
+     */
+    ModuleMetadata read(Reader reader) throws IOException;
+    
 }
