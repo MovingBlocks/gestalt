@@ -1,0 +1,14 @@
+{
+    "id" : "ModuleB",
+    "version" : "1.0.0",
+    "displayName" : "Module B",
+    "description" : "This module has a dependency on A, and requires IO permissions",
+    "dependencies": [
+        {
+            "id": "ModuleA",
+            "minVersion": "1.0.0",
+            "maxVersion": "2.0.0"
+        }
+    ],
+    "requiredPermissions" : ["io"]
+}
