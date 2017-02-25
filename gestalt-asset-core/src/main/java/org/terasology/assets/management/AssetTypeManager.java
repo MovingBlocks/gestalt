@@ -53,7 +53,6 @@ public interface AssetTypeManager {
      */
     <T extends Asset<?>> List<AssetType<? extends T, ?>> getAssetTypes(Class<T> type);
 
-
     /**
      * Disposes any assets that are unused (not referenced)
      */

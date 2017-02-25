@@ -37,7 +37,6 @@ import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResolutionStrategy;
-import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.management.AssetManager;
@@ -104,8 +103,6 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreDeltaFormats = ArrayListMultimap.create();
 
     private final ClassFactory classFactory;
-    private volatile ModuleWatcher watcher;
-
 
     public ModuleAwareAssetTypeManager() {
         this.assetManager = new AssetManager(this);
@@ -131,10 +128,6 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
         for (AssetType assetType : assetTypes.values()) {
             assetType.close();
         }
-        if (watcher != null) {
-            watcher.shutdown();
-            watcher = null;
-        }
     }
 
     @Override
@@ -156,26 +149,13 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
         return result;
     }
 
+    public Collection<AssetType<?, ?>> getAssetTypes() {
+        return assetTypes.values();
+    }
+
     @Override
     public void disposedUnusedAssets() {
         assetTypes.values().forEach(type -> type.processDisposal());
-    }
-
-    /**
-     * Triggers the reload of any assets that have been altered in directory modules.
-     */
-    public void reloadChangedOnDisk() {
-        if (watcher != null) {
-            SetMultimap<AssetType<?, ?>, ResourceUrn> changes = watcher.checkForChanges();
-            for (Map.Entry<AssetType<?, ?>, ResourceUrn> entry : changes.entries()) {
-                if (entry.getKey().isLoaded(entry.getValue())) {
-                    AssetType<?, ?> assetType = entry.getKey();
-                    ResourceUrn changedUrn = entry.getValue();
-                    logger.info("Reloading changed asset '{}'", changedUrn);
-                    assetType.reload(changedUrn);
-                }
-            }
-        }
     }
 
     /**
@@ -358,20 +338,6 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     public synchronized void switchEnvironment(ModuleEnvironment newEnvironment) {
         Preconditions.checkNotNull(newEnvironment);
 
-        if (watcher != null) {
-            try {
-                watcher.shutdown();
-            } catch (IOException e) {
-                logger.error("Failed to shut down watch service", e);
-            }
-        }
-
-        try {
-            watcher = new ModuleWatcher(newEnvironment);
-        } catch (IOException e) {
-            logger.warn("Failed to establish watch service, will not auto-reload changed assets", e);
-        }
-
         for (AssetType<?, ?> assetType : assetTypes.values()) {
             assetType.clearProducers();
         }
@@ -423,14 +389,6 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
             }
         }
         subtypes = ImmutableListMultimap.copyOf(subtypesBuilder);
-    }
-
-    private void subscribeToChanges(AssetType<?, ?> assetType, ModuleAssetDataProducer<?> producer, Collection<String> folderNames) {
-        if (watcher != null) {
-            for (String folder : folderNames) {
-                watcher.register(folder, producer, assetType);
-            }
-        }
     }
 
     private void setupCoreAssetTypes(ModuleEnvironment environment, ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFileFormats,
@@ -497,7 +455,6 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
 
             ModuleAssetDataProducer moduleProducer = new ModuleAssetDataProducer(environment, assetFormats, supplementalFormats, deltaFormats, folderNames);
             assetType.addProducer(moduleProducer);
-            subscribeToChanges(assetType, moduleProducer, folderNames);
         }
     }
 

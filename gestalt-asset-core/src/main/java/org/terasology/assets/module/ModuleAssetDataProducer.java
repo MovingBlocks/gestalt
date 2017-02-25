@@ -35,6 +35,7 @@ import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
+import org.terasology.assets.module.autoreload.AssetFileChangeSubscriber;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.filesystem.ModuleFileSystemProvider;
@@ -315,7 +316,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         }
     }
 
-
     private Map<ResourceUrn, ResourceUrn> scanModulesForRedirects() {
         Map<ResourceUrn, ResourceUrn> rawRedirects = Maps.newLinkedHashMap();
         for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
@@ -565,6 +565,9 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         return Optional.empty();
     }
 
+    public List<String> getFolderNames() {
+        return folderNames;
+    }
 
     /**
      * Interface for registering a source. Allows the same outer logic to be used for registering different types of asset sources.

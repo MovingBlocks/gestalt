@@ -383,14 +383,17 @@ public class ModuleFactory {
     }
 
     private Reflections readReflectionsCacheFromPath(Path path, Reflections reflectionsCache) {
-        try (InputStream stream = new BufferedInputStream(Files.newInputStream(path))) {
-            if (reflectionsCache == null) {
-                reflectionsCache = new ConfigurationBuilder().getSerializer().read(stream);
-            } else {
-                reflectionsCache.collect(stream);
+        Path reflectionsCacheFile = path.resolve(reflectionsCachePath);
+        if (Files.isRegularFile(reflectionsCacheFile)) {
+            try (InputStream stream = new BufferedInputStream(Files.newInputStream(path.resolve(reflectionsCachePath)))) {
+                if (reflectionsCache == null) {
+                    reflectionsCache = new ConfigurationBuilder().getSerializer().read(stream);
+                } else {
+                    reflectionsCache.collect(stream);
+                }
+            } catch (IOException e) {
+                logger.error("Failure attempting to read reflections cache from {}", path, e);
             }
-        } catch (IOException e) {
-            logger.error("Failure attempting to read reflections cache from {}", path, e);
         }
         return reflectionsCache;
     }

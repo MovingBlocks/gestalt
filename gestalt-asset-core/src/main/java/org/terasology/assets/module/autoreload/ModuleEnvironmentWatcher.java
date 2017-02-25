@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.module;
+package org.terasology.assets.module.autoreload;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.module.ModuleAssetDataProducer;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
@@ -60,9 +61,9 @@ import java.util.concurrent.BlockingDeque;
  *
  * @author Immortius
  */
-class ModuleWatcher {
+class ModuleEnvironmentWatcher {
 
-    private static final Logger logger = LoggerFactory.getLogger(ModuleWatcher.class);
+    private static final Logger logger = LoggerFactory.getLogger(ModuleEnvironmentWatcher.class);
 
     private final WatchService service;
 
@@ -79,7 +80,7 @@ class ModuleWatcher {
      * @param environment The environment to watch.
      * @throws IOException If there is an issue establishing the watch service
      */
-    public ModuleWatcher(ModuleEnvironment environment) throws IOException {
+    public ModuleEnvironmentWatcher(ModuleEnvironment environment) throws IOException {
         this.service = environment.getFileSystem().newWatchService();
 
         for (Path rootPath : environment.getFileSystem().getRootDirectories()) {
