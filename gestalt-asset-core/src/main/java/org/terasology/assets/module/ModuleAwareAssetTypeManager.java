@@ -102,6 +102,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreSupplementalFormats = ArrayListMultimap.create();
     private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreDeltaFormats = ArrayListMultimap.create();
 
+    private final ModuleAssetScanner scanner = new ModuleAssetScanner();
     private final ClassFactory classFactory;
 
     public ModuleAwareAssetTypeManager() {
@@ -454,6 +455,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
             deltaFormats.addAll(extensionDeltaFormats.get(assetType.getAssetDataClass()));
 
             ModuleAssetDataProducer moduleProducer = new ModuleAssetDataProducer(environment, assetFormats, supplementalFormats, deltaFormats, folderNames);
+            scanner.scan(environment, moduleProducer);
             assetType.addProducer(moduleProducer);
         }
     }

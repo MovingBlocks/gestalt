@@ -17,9 +17,10 @@
 package org.terasology.assets.module;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
@@ -36,28 +37,20 @@ import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
 import org.terasology.assets.module.autoreload.AssetFileChangeSubscriber;
-import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
-import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.naming.Name;
-import org.terasology.util.io.FileExtensionPathMatcher;
-import org.terasology.util.io.FileScanning;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * ModuleAssetDataProducer produces asset data from files within modules. In addition to files defining assets, it supports
@@ -127,7 +120,8 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     private final ImmutableList<AssetAlterationFileFormat<U>> supplementFormats;
 
     private final Map<ResourceUrn, UnloadedAssetData<U>> unloadedAssetLookup = new MapMaker().concurrencyLevel(1).makeMap();
-    private final ImmutableMap<ResourceUrn, ResourceUrn> redirectMap;
+    private final Map<ResourceUrn, ResourceUrn> redirectMap = new MapMaker().concurrencyLevel(1).makeMap();
+    private final SetMultimap<ResourceUrn, ResourceUrn> redirectSourceMap = Multimaps.synchronizedSetMultimap(HashMultimap.create());
     private final SetMultimap<Name, Name> resolutionMap = Multimaps.synchronizedSetMultimap(HashMultimap.<Name, Name>create());
 
     /**
@@ -166,11 +160,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
         this.assetFormats = ImmutableList.copyOf(assetFormats);
         this.supplementFormats = ImmutableList.copyOf(supplementalFormats);
         this.deltaFormats = ImmutableList.copyOf(deltaFormats);
-
-        scanForAssets();
-        scanForOverrides();
-        scanForDeltas();
-        redirectMap = buildRedirectMap(scanModulesForRedirects());
     }
 
     /**
@@ -230,145 +219,6 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             }
         }
         return Optional.empty();
-    }
-
-    private void scanForAssets() {
-        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            for (String folderName : folderNames) {
-                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER, folderName);
-                if (Files.exists(rootPath)) {
-                    scanLocationForAssets(module, folderName, rootPath, path -> module.getId());
-                }
-            }
-        }
-    }
-
-    private void scanForOverrides() {
-        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            for (String folderName : folderNames) {
-                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), OVERRIDE_FOLDER);
-                if (Files.exists(rootPath)) {
-                    try {
-                        Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-                            @Override
-                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                return FileVisitResult.SKIP_SIBLINGS;
-                            }
-
-                            @Override
-                            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                                if (dir.getNameCount() == rootPath.getNameCount() + 1) {
-                                    Path overridePath = dir.resolve(folderName);
-                                    if (Files.isDirectory(overridePath)) {
-                                        scanLocationForAssets(module, folderName, overridePath, path -> new Name(path.getName(2).toString()));
-                                    }
-                                    return FileVisitResult.SKIP_SUBTREE;
-                                }
-                                return FileVisitResult.CONTINUE;
-                            }
-
-                        });
-                    } catch (IOException e) {
-                        logger.error("Failed to scan for override assets of '{}' in 'module://{}:{}", folderName, module.getId(), rootPath, e);
-                    }
-
-                }
-            }
-        }
-    }
-
-    private void scanLocationForAssets(final Module origin, String folderName, Path rootPath, Function<Path, Name> moduleNameProvider) {
-        try {
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Name module = moduleNameProvider.apply(file);
-                    Optional<ResourceUrn> assetUrn = registerSource(module, file, origin.getId(), assetFormats, UnloadedAssetData::addSource);
-                    if (!assetUrn.isPresent()) {
-                        registerSource(moduleNameProvider.apply(file), file, origin.getId(), supplementFormats, UnloadedAssetData::addSupplementSource);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            logger.error("Failed to scan for assets of '{}' in 'module://{}:{}", folderName, origin.getId(), rootPath, e);
-        }
-    }
-
-    private void scanForDeltas() {
-        for (final Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            for (String folderName : folderNames) {
-                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), DELTA_FOLDER);
-                if (Files.exists(rootPath)) {
-                    try {
-                        Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-                            @Override
-                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                registerAssetDelta(new Name(file.getName(2).toString()), file, module.getId());
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
-                    } catch (IOException e) {
-                        logger.error("Failed to scan for asset deltas of '{}' in 'module://{}:{}", folderName, module.getId(), rootPath, e);
-                    }
-                }
-            }
-        }
-    }
-
-    private Map<ResourceUrn, ResourceUrn> scanModulesForRedirects() {
-        Map<ResourceUrn, ResourceUrn> rawRedirects = Maps.newLinkedHashMap();
-        for (Module module : moduleEnvironment.getModulesOrderedByDependencies()) {
-            for (String folderName : folderNames) {
-                Path rootPath = moduleEnvironment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER, folderName);
-                if (Files.exists(rootPath)) {
-                    try {
-                        for (Path file : FileScanning.findFilesInPath(rootPath, FileScanning.acceptAll(), new FileExtensionPathMatcher(REDIRECT_EXTENSION))) {
-                            processRedirectFile(file, module.getId(), rawRedirects);
-                        }
-                    } catch (IOException e) {
-                        logger.error("Failed to scan module '{}' for assets", module.getId(), e);
-                    }
-                }
-            }
-        }
-        return rawRedirects;
-    }
-
-    private ImmutableMap<ResourceUrn, ResourceUrn> buildRedirectMap(Map<ResourceUrn, ResourceUrn> rawRedirects) {
-        ImmutableMap.Builder<ResourceUrn, ResourceUrn> builder = ImmutableMap.builder();
-        for (Map.Entry<ResourceUrn, ResourceUrn> entry : rawRedirects.entrySet()) {
-            ResourceUrn currentTarget = entry.getKey();
-            ResourceUrn redirect = entry.getValue();
-            while (redirect != null) {
-                currentTarget = redirect;
-                redirect = rawRedirects.get(currentTarget);
-            }
-            builder.put(entry.getKey(), currentTarget);
-        }
-        return builder.build();
-    }
-
-    private void processRedirectFile(Path file, Name moduleId, Map<ResourceUrn, ResourceUrn> rawRedirects) {
-        Path filename = file.getFileName();
-        if (filename != null) {
-            Name assetName = new Name(com.google.common.io.Files.getNameWithoutExtension(filename.toString()));
-            try (BufferedReader reader = Files.newBufferedReader(file, Charsets.UTF_8)) {
-                List<String> contents = CharStreams.readLines(reader);
-                if (contents.isEmpty()) {
-                    logger.error("Failed to read redirect '{}:{}' - empty", moduleId, assetName);
-                } else if (!ResourceUrn.isValid(contents.get(0))) {
-                    logger.error("Failed to read redirect '{}:{}' - '{}' is not a valid urn", moduleId, assetName, contents.get(0));
-                } else {
-                    rawRedirects.put(new ResourceUrn(moduleId, assetName), new ResourceUrn(contents.get(0)));
-                    resolutionMap.put(assetName, moduleId);
-                }
-            } catch (IOException e) {
-                logger.error("Failed to read redirect '{}:{}'", moduleId, assetName, e);
-            }
-        } else {
-            logger.error("Missing file name for redirect");
-        }
     }
 
     private <V extends FileFormat> Optional<ResourceUrn> registerSource(Name module, Path target, Name providingModule,
@@ -434,14 +284,54 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
     @Override
     public Optional<ResourceUrn> assetFileAdded(Path path, Name module, Name providingModule) {
-        Optional<ResourceUrn> urn = registerSource(module, path, providingModule, assetFormats, UnloadedAssetData::addSource);
-        if (!urn.isPresent()) {
-            urn = registerSource(module, path, providingModule, supplementFormats, UnloadedAssetData::addSupplementSource);
-        }
-        if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
-            return urn;
+        if (path.getFileName().toString().endsWith("." + REDIRECT_EXTENSION)) {
+            processRedirectFile(path, module);
+        } else {
+            Optional<ResourceUrn> urn = registerSource(module, path, providingModule, assetFormats, UnloadedAssetData::addSource);
+            if (!urn.isPresent()) {
+                urn = registerSource(module, path, providingModule, supplementFormats, UnloadedAssetData::addSupplementSource);
+            }
+            if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
+                return urn;
+            }
         }
         return Optional.empty();
+    }
+
+    private synchronized void processRedirectFile(Path file, Name moduleId) {
+        Path filename = file.getFileName();
+        if (filename != null) {
+            Name assetName = new Name(com.google.common.io.Files.getNameWithoutExtension(filename.toString()));
+            try (BufferedReader reader = Files.newBufferedReader(file, Charsets.UTF_8)) {
+                List<String> contents = CharStreams.readLines(reader);
+                if (contents.isEmpty()) {
+                    logger.error("Failed to read redirect '{}:{}' - empty", moduleId, assetName);
+                } else if (!ResourceUrn.isValid(contents.get(0))) {
+                    logger.error("Failed to read redirect '{}:{}' - '{}' is not a valid urn", moduleId, assetName, contents.get(0));
+                } else {
+
+                    ResourceUrn fromUrn = new ResourceUrn(moduleId, assetName);
+                    ResourceUrn toUrn = new ResourceUrn(contents.get(0));
+                    if (redirectMap.containsKey(toUrn)) {
+                        toUrn = redirectMap.get(toUrn);
+                    }
+
+                    redirectMap.put(fromUrn, toUrn);
+                    redirectSourceMap.put(toUrn, fromUrn);
+                    for (ResourceUrn furtherFromUrn : redirectSourceMap.get(fromUrn)) {
+                        redirectMap.put(furtherFromUrn, toUrn);
+                        redirectSourceMap.put(toUrn, furtherFromUrn);
+                    }
+                    redirectSourceMap.removeAll(fromUrn);
+
+                    resolutionMap.put(assetName, moduleId);
+                }
+            } catch (IOException e) {
+                logger.error("Failed to read redirect '{}:{}'", moduleId, assetName, e);
+            }
+        } else {
+            logger.error("Missing file name for redirect");
+        }
     }
 
     private Optional<ResourceUrn> getResourceUrn(Path target, Name module, Collection<? extends FileFormat> formats) {

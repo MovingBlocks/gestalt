@@ -44,14 +44,18 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
     public static final String FOLDER_NAME = "text";
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
+    private ModuleAssetScanner scanner = new ModuleAssetScanner();
+
     public ModuleAssetDataProducerTest() throws Exception {
     }
 
 
     private ModuleAssetDataProducer<TextData> createProducer(ModuleEnvironment environment) {
-        return new ModuleAssetDataProducer<>(environment,
+        ModuleAssetDataProducer<TextData> textDataModuleAssetDataProducer = new ModuleAssetDataProducer<>(environment,
                 Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(),
                 Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME);
+        scanner.scan(environment, textDataModuleAssetDataProducer);
+        return textDataModuleAssetDataProducer;
     }
 
     @Test
@@ -137,6 +141,7 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
                 createEnvironment(moduleRegistry.getLatestModuleVersion(new Name("test")), moduleRegistry.getLatestModuleVersion(new Name("deltaA"))),
                 Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()), Collections.<AssetAlterationFileFormat<TextData>>emptyList(),
                 Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME);
+        scanner.scan(moduleProducer.getModuleEnvironment(), moduleProducer);
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -150,6 +155,7 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
                         moduleRegistry.getLatestModuleVersion(new Name("overrideA")),
                         moduleRegistry.getLatestModuleVersion(new Name("deltaA"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
                 Collections.<AssetAlterationFileFormat<TextData>>emptyList(), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME);
+        scanner.scan(moduleProducer.getModuleEnvironment(), moduleProducer);
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -164,6 +170,7 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
                         moduleRegistry.getLatestModuleVersion(new Name("overrideD"))), Lists.<AssetFileFormat<TextData>>newArrayList(new TextFileFormat()),
                 Collections.<AssetAlterationFileFormat<TextData>>emptyList(), Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextDeltaFileFormat()), FOLDER_NAME
         );
+        scanner.scan(moduleProducer.getModuleEnvironment(), moduleProducer);
 
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
@@ -199,6 +206,7 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
                 Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextMetadataFileFormat()),
                 Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME
         );
+        scanner.scan(moduleProducer.getModuleEnvironment(), moduleProducer);
 
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
         assertTrue(data.isPresent());
@@ -213,6 +221,7 @@ public class ModuleAssetDataProducerTest extends VirtualModuleEnvironment {
                 Lists.<AssetAlterationFileFormat<TextData>>newArrayList(new TextMetadataFileFormat()),
                 Collections.<AssetAlterationFileFormat<TextData>>emptyList(), FOLDER_NAME
         );
+        scanner.scan(moduleProducer.getModuleEnvironment(), moduleProducer);
 
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("supplementA:example"));
         assertTrue(data.isPresent());
