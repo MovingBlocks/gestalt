@@ -260,7 +260,7 @@ class UnloadedAssetData<T extends AssetData> {
         public AssetSourceResolver() {
             final List<Name> moduleOrdering = environment.getModuleIdsOrderedByDependencies();
             synchronized (sources) {
-                Collections.sort(sources, new SourceComparator<AssetFileFormat<T>>(moduleOrdering));
+                sources.sort(new SourceComparator<>(moduleOrdering));
                 for (Source<AssetFileFormat<T>> source : sources) {
                     if (providingModule == null) {
                         providingModule = source.providingModule;

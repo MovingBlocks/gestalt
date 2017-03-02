@@ -107,7 +107,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     /**
      * The extension for redirects.
      */
-    public static final String REDIRECT_EXTENSION = "redirect";
+    public static final String REDIRECT_EXTENSION = ".redirect";
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAssetDataProducer.class);
 
@@ -284,7 +284,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
 
     @Override
     public Optional<ResourceUrn> assetFileAdded(Path path, Name module, Name providingModule) {
-        if (path.getFileName().toString().endsWith("." + REDIRECT_EXTENSION)) {
+        if (path.getFileName().toString().endsWith(REDIRECT_EXTENSION)) {
             processRedirectFile(path, module);
         } else {
             Optional<ResourceUrn> urn = registerSource(module, path, providingModule, assetFormats, UnloadedAssetData::addSource);

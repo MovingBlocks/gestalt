@@ -54,24 +54,11 @@ public class ModuleAssetScanner {
      */
     public static final String DELTA_FOLDER = "deltas";
 
-    /**
-     * The extension for redirects.
-     */
-    public static final String REDIRECT_EXTENSION = "redirect";
-
     private static final Logger logger = LoggerFactory.getLogger(ModuleAssetScanner.class);
 
     private Cache<Module, PathCache> assetPathCache;
     private Cache<Module, PathCache> overridePathCache;
     private Cache<Module, PathCache> deltaPathCache;
-
-    private static class PathCache {
-        private ListMultimap<Name, String> pathsByFolder = ArrayListMultimap.create();
-
-        public ListMultimap<Name, String> getPathsByRootFolder() {
-            return pathsByFolder;
-        }
-    }
 
     public ModuleAssetScanner() {
         this(128);
@@ -186,6 +173,14 @@ public class ModuleAssetScanner {
             } catch (IOException e) {
                 logger.error("Failed to scan module path {}", rootPath, e);
             }
+        }
+    }
+
+    private static class PathCache {
+        private ListMultimap<Name, String> pathsByFolder = ArrayListMultimap.create();
+
+        ListMultimap<Name, String> getPathsByRootFolder() {
+            return pathsByFolder;
         }
     }
 
