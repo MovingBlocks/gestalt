@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.module;
+package org.terasology.assets.format.producer;
 
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -25,7 +25,6 @@ import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
-import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -47,19 +46,19 @@ import java.util.Optional;
 class UnloadedAssetData<T extends AssetData> {
     private static final Logger logger = LoggerFactory.getLogger(UnloadedAssetData.class);
 
+    private final ModuleDependencyProvider moduleDependencies;
     private final ResourceUrn urn;
-    private final ModuleEnvironment environment;
     private final List<Source<AssetFileFormat<T>>> sources = Collections.synchronizedList(Lists.<Source<AssetFileFormat<T>>>newArrayList());
     private final List<Source<AssetAlterationFileFormat<T>>> supplementSources = Collections.synchronizedList(Lists.<Source<AssetAlterationFileFormat<T>>>newArrayList());
     private final List<Source<AssetAlterationFileFormat<T>>> deltaSources = Collections.synchronizedList(Lists.<Source<AssetAlterationFileFormat<T>>>newArrayList());
 
     /**
-     * @param urn         The urn of the asset this unloaded asset data corresponds to.
-     * @param environment The module environment
+     * @param urn                The urn of the asset this unloaded asset data corresponds to.
+     * @param moduleDependencies A provider of information on how modules depend on each other.
      */
-    public UnloadedAssetData(ResourceUrn urn, ModuleEnvironment environment) {
+    public UnloadedAssetData(ResourceUrn urn, ModuleDependencyProvider moduleDependencies) {
         this.urn = urn;
-        this.environment = environment;
+        this.moduleDependencies = moduleDependencies;
     }
 
     /**
@@ -87,7 +86,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @return Whether the source was added successfully.
      */
     public boolean addSource(Name providingModule, AssetFileFormat<T> format, Path input) {
-        if (!providingModule.equals(urn.getModuleName()) && !environment.getDependencyNamesOf(providingModule).contains(urn.getModuleName())) {
+        if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides override for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
         } else {
@@ -117,7 +116,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @return Whether the source was added successfully.
      */
     public boolean addDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
-        if (!providingModule.equals(urn.getModuleName()) && !environment.getDependencyNamesOf(providingModule).contains(urn.getModuleName())) {
+        if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides delta for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
         } else {
@@ -147,7 +146,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @return Whether the source was added successfully.
      */
     public boolean addSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
-        if (!providingModule.equals(urn.getModuleName()) && !environment.getDependencyNamesOf(providingModule).contains(urn.getModuleName())) {
+        if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides supplement for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
         } else {
@@ -188,9 +187,9 @@ class UnloadedAssetData<T extends AssetData> {
                 }
             }
             synchronized (deltaSources) {
-                Collections.sort(deltaSources, new SourceComparator<AssetAlterationFileFormat<T>>(environment.getModuleIdsOrderedByDependencies()));
+                Collections.sort(deltaSources, new SourceComparator<AssetAlterationFileFormat<T>>(moduleDependencies.getModulesOrderedByDependency()));
                 for (Source<AssetAlterationFileFormat<T>> source : deltaSources) {
-                    if (source.providingModule.equals(baseModule) || !environment.getDependencyNamesOf(baseModule).contains(source.providingModule)) {
+                    if (source.providingModule.equals(baseModule) || !moduleDependencies.dependencyExists(baseModule, source.providingModule)) {
                         source.format.apply(source.input, result);
                     }
                 }
@@ -258,7 +257,7 @@ class UnloadedAssetData<T extends AssetData> {
         private List<AssetDataFile> inputs = Lists.newArrayList();
 
         public AssetSourceResolver() {
-            final List<Name> moduleOrdering = environment.getModuleIdsOrderedByDependencies();
+            final List<Name> moduleOrdering = moduleDependencies.getModulesOrderedByDependency();
             synchronized (sources) {
                 sources.sort(new SourceComparator<>(moduleOrdering));
                 for (Source<AssetFileFormat<T>> source : sources) {
@@ -270,14 +269,13 @@ class UnloadedAssetData<T extends AssetData> {
                         if (format.equals(source.format)) {
                             inputs.add(source.input);
                         }
-                    } else if (environment.getDependencyNamesOf(source.providingModule).contains(providingModule)) {
+                    } else if (moduleDependencies.dependencyExists(source.providingModule, providingModule)) {
                         providingModule = source.providingModule;
                         format = source.format;
                         inputs.clear();
                         inputs.add(source.input);
-                    } else if (!environment.getDependencyNamesOf(providingModule).contains(source.providingModule)) {
+                    } else if (!moduleDependencies.dependencyExists(providingModule, source.providingModule)) {
                         logger.warn("Conflict - both module '{}' and '{}' override {}, selecting '{}'", providingModule, source.providingModule, urn, providingModule);
-
                     }
                 }
             }

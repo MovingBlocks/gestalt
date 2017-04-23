@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.module;
+package org.terasology.assets.format.producer;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.io.CharStreams;
@@ -36,8 +34,6 @@ import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
-import org.terasology.assets.module.autoreload.AssetFileChangeSubscriber;
-import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -47,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -87,7 +84,7 @@ import java.util.Set;
  * @author Immortius
  */
 @ThreadSafe
-public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataProducer<U>, AssetFileChangeSubscriber {
+public class AssetFileDataProducer<U extends AssetData> implements AssetDataProducer<U>, FileChangeSubscriber {
 
     /**
      * The name of the module directory that contains asset files.
@@ -109,15 +106,15 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
      */
     public static final String REDIRECT_EXTENSION = ".redirect";
 
-    private static final Logger logger = LoggerFactory.getLogger(ModuleAssetDataProducer.class);
+    private static final Logger logger = LoggerFactory.getLogger(AssetFileDataProducer.class);
+
+    private final ModuleDependencyProvider dependencyProvider;
 
     private final ImmutableList<String> folderNames;
 
-    private final ModuleEnvironment moduleEnvironment;
-
-    private final ImmutableList<AssetFileFormat<U>> assetFormats;
-    private final ImmutableList<AssetAlterationFileFormat<U>> deltaFormats;
-    private final ImmutableList<AssetAlterationFileFormat<U>> supplementFormats;
+    private final List<AssetFileFormat<U>> assetFormats;
+    private final List<AssetAlterationFileFormat<U>> deltaFormats;
+    private final List<AssetAlterationFileFormat<U>> supplementFormats;
 
     private final Map<ResourceUrn, UnloadedAssetData<U>> unloadedAssetLookup = new MapMaker().concurrencyLevel(1).makeMap();
     private final Map<ResourceUrn, ResourceUrn> redirectMap = new MapMaker().concurrencyLevel(1).makeMap();
@@ -127,69 +124,73 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
     /**
      * Creates a ModuleAssetDataProducer
      *
-     * @param moduleEnvironment   The module environment to load asset data from
-     * @param assetFormats        The file formats supported for loading asset files
-     * @param supplementalFormats The supplementary file formats supported when loading asset files
-     * @param deltaFormats        The delta file formats supported when loading asset files
+     * @param dependencyProvider  Provider of information on module dependencies
      * @param folderNames         The subfolders that contains files relevant to the asset data this producer loads
      */
-    public ModuleAssetDataProducer(ModuleEnvironment moduleEnvironment,
-                                   Collection<AssetFileFormat<U>> assetFormats,
-                                   Collection<AssetAlterationFileFormat<U>> supplementalFormats,
-                                   Collection<AssetAlterationFileFormat<U>> deltaFormats,
-                                   String... folderNames) {
-        this(moduleEnvironment, assetFormats, supplementalFormats, deltaFormats, Arrays.asList(folderNames));
+    public AssetFileDataProducer(ModuleDependencyProvider dependencyProvider,
+                                 String... folderNames) {
+        this(dependencyProvider, Arrays.asList(folderNames));
     }
 
     /**
      * Creates a ModuleAssetDataProducer
      *
-     * @param moduleEnvironment   The module environment to load asset data from
-     * @param assetFormats        The file formats supported for loading asset files
-     * @param supplementalFormats The supplementary file formats supported when loading asset files
-     * @param deltaFormats        The delta file formats supported when loading asset files
+     * @param dependencyProvider  Provider of information on module dependencies
      * @param folderNames         The subfolders that contains files relevant to the asset data this producer loads
      */
-    public ModuleAssetDataProducer(ModuleEnvironment moduleEnvironment,
-                                   Collection<AssetFileFormat<U>> assetFormats,
-                                   Collection<AssetAlterationFileFormat<U>> supplementalFormats,
-                                   Collection<AssetAlterationFileFormat<U>> deltaFormats,
-                                   Collection<String> folderNames) {
+    public AssetFileDataProducer(ModuleDependencyProvider dependencyProvider,
+                                 Collection<String> folderNames) {
         this.folderNames = ImmutableList.copyOf(folderNames);
-        this.moduleEnvironment = moduleEnvironment;
-        this.assetFormats = ImmutableList.copyOf(assetFormats);
-        this.supplementFormats = ImmutableList.copyOf(supplementalFormats);
-        this.deltaFormats = ImmutableList.copyOf(deltaFormats);
+        this.dependencyProvider = dependencyProvider;
+        this.assetFormats = Lists.newCopyOnWriteArrayList();
+        this.supplementFormats = Lists.newCopyOnWriteArrayList();
+        this.deltaFormats = Lists.newCopyOnWriteArrayList();
     }
 
     /**
      * @return A list of the asset file formats supported
      */
-    public ImmutableList<AssetFileFormat<U>> getAssetFormats() {
-        return assetFormats;
+    public List<AssetFileFormat<U>> getAssetFormats() {
+        return Collections.unmodifiableList(assetFormats);
+    }
+
+    public void addAssetFormat(AssetFileFormat<U> format) {
+        assetFormats.add(format);
+    }
+
+    public boolean removeAssetFormat(AssetFileFormat<U> format) {
+        return assetFormats.remove(format);
     }
 
     /**
      * @return A list of the supplement file formats supported
      */
-    public ImmutableList<AssetAlterationFileFormat<U>> getSupplementFormats() {
-        return supplementFormats;
+    public List<AssetAlterationFileFormat<U>> getSupplementFormats() {
+        return Collections.unmodifiableList(supplementFormats);
+    }
+
+    public void addSupplementFormat(AssetAlterationFileFormat<U> format) {
+        supplementFormats.add(format);
+    }
+
+    public boolean removeSupplementFormat(AssetAlterationFileFormat<U> format) {
+        return supplementFormats.remove(format);
     }
 
     /**
      * @return A list of the delta file formats supported
      */
-    public ImmutableList<AssetAlterationFileFormat<U>> getDeltaFormats() {
-        return deltaFormats;
+    public List<AssetAlterationFileFormat<U>> getDeltaFormats() {
+        return Collections.unmodifiableList(deltaFormats);
     }
 
-    /**
-     * @return The module environment that asset data is read from
-     */
-    public ModuleEnvironment getModuleEnvironment() {
-        return moduleEnvironment;
+    public void addDeltaFormat(AssetAlterationFileFormat<U> format) {
+        deltaFormats.add(format);
     }
 
+    public boolean removeDeltaFormat(AssetAlterationFileFormat<U> format) {
+        return deltaFormats.remove(format);
+    }
 
     @Override
     public Set<ResourceUrn> getAvailableAssetUrns() {
@@ -239,7 +240,7 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
                             return Optional.of(urn);
                         }
                     } else {
-                        UnloadedAssetData<U> source = new UnloadedAssetData<>(urn, moduleEnvironment);
+                        UnloadedAssetData<U> source = new UnloadedAssetData<>(urn, dependencyProvider);
                         if (sourceHandler.registerSource(source, providingModule, format, target)) {
                             unloadedAssetLookup.put(urn, source);
                             resolutionMap.put(urn.getResourceName(), urn.getModuleName());
@@ -453,6 +454,16 @@ public class ModuleAssetDataProducer<U extends AssetData> implements AssetDataPr
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Remove all asset sources.
+     */
+    public void clearAssetSources() {
+        unloadedAssetLookup.clear();
+        redirectMap.clear();
+        redirectSourceMap.clear();
+        resolutionMap.clear();
     }
 
     public List<String> getFolderNames() {

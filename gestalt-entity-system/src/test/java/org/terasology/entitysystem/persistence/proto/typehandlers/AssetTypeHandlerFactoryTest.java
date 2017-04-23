@@ -54,7 +54,7 @@ public class AssetTypeHandlerFactoryTest {
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         typeLibrary.addHandler(new TypeHandler<>(EntityRef.class, ImmutableCopy.create()));
 
-        assetTypeManager.registerCoreAssetType(Prefab.class, Prefab::new, false, "prefabs");
+        assetTypeManager.registerAssetType(Prefab.class, Prefab::new, false, "prefabs");
         assetTypeManager.switchEnvironment(moduleEnvironment);
 
         context.addTypeHandlerFactory(new AssetTypeHandlerFactory(assetManager));

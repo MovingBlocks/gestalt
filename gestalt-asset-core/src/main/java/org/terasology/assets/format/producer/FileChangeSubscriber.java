@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.assets.module.autoreload;
+package org.terasology.assets.format.producer;
 
 import org.terasology.assets.ResourceUrn;
 import org.terasology.naming.Name;
@@ -25,7 +25,7 @@ import java.util.Optional;
 /**
  * @author Immortius
  */
-public interface AssetFileChangeSubscriber {
+public interface FileChangeSubscriber {
 
     Optional<ResourceUrn> assetFileAdded(Path path, Name module, Name providingModule);
 

@@ -29,7 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.assets.module.ModuleAssetDataProducer;
+import org.terasology.assets.format.producer.FileChangeSubscriber;
+import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
@@ -104,9 +105,14 @@ class ModuleEnvironmentWatcher {
      * @param subscriber The subscriber to notify of changes
      * @param assetType  The asset type whom changes urns belong to
      */
-    public synchronized void register(String folderName, AssetFileChangeSubscriber subscriber, AssetType<?, ?> assetType) {
+    public synchronized void register(String folderName, FileChangeSubscriber subscriber, AssetType<?, ?> assetType) {
         Preconditions.checkState(!closed, "Cannot register folder into closed ModuleWatcher");
         subscribers.put(folderName, new SubscriberInfo(assetType, subscriber));
+    }
+
+    public synchronized void unregister(AssetType<?, ?> assetType) {
+        Preconditions.checkState(!closed, "ModuleWatcher is closed");
+        subscribers.values().removeIf(v -> v.type.equals(assetType));
     }
 
     public synchronized boolean isClosed() {
@@ -181,9 +187,9 @@ class ModuleEnvironmentWatcher {
      */
     private static class SubscriberInfo {
         public final AssetType<?, ?> type;
-        public final AssetFileChangeSubscriber subscriber;
+        public final FileChangeSubscriber subscriber;
 
-        public SubscriberInfo(AssetType<?, ?> type, AssetFileChangeSubscriber subscriber) {
+        public SubscriberInfo(AssetType<?, ?> type, FileChangeSubscriber subscriber) {
             this.type = type;
             this.subscriber = subscriber;
         }
@@ -193,7 +199,7 @@ class ModuleEnvironmentWatcher {
      * The form of a method to call to notify a subscriber of changes
      */
     private interface SubscriptionMethod {
-        Optional<ResourceUrn> notify(AssetFileChangeSubscriber subscriber, Path path, Name module, Name providingModule);
+        Optional<ResourceUrn> notify(FileChangeSubscriber subscriber, Path path, Name module, Name providingModule);
     }
 
     /**
@@ -356,13 +362,13 @@ class ModuleEnvironmentWatcher {
         protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
             if (target.getNameCount() == 2) {
                 switch (target.getName(1).toString()) {
-                    case ModuleAssetDataProducer.ASSET_FOLDER: {
+                    case AssetFileDataProducer.ASSET_FOLDER: {
                         return Optional.of(new AssetRootPathWatcher(target, module, getWatchService()));
                     }
-                    case ModuleAssetDataProducer.DELTA_FOLDER: {
+                    case AssetFileDataProducer.DELTA_FOLDER: {
                         return Optional.of(new DeltaRootPathWatcher(target, module, getWatchService()));
                     }
-                    case ModuleAssetDataProducer.OVERRIDE_FOLDER: {
+                    case AssetFileDataProducer.OVERRIDE_FOLDER: {
                         return Optional.of(new OverrideRootPathWatcher(target, module, getWatchService()));
                     }
                 }
@@ -449,21 +455,21 @@ class ModuleEnvironmentWatcher {
         protected void onFileCreated(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Delta added: {}", target);
             String folderName = target.getName(3).toString();
-            notifySubscribers(folderName, target, module, providingModule, AssetFileChangeSubscriber::deltaFileAdded, outChanged);
+            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileAdded, outChanged);
         }
 
         @Override
         protected void onFileModified(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Delta modified: {}", target);
             String folderName = target.getName(3).toString();
-            notifySubscribers(folderName, target, module, providingModule, AssetFileChangeSubscriber::deltaFileModified, outChanged);
+            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileModified, outChanged);
         }
 
         @Override
         protected void onFileDeleted(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Delta deleted: {}", target);
             String folderName = target.getName(3).toString();
-            notifySubscribers(folderName, target, module, providingModule, AssetFileChangeSubscriber::deltaFileDeleted, outChanged);
+            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileDeleted, outChanged);
         }
     }
 
@@ -488,19 +494,19 @@ class ModuleEnvironmentWatcher {
         @Override
         protected void onFileCreated(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset added: {}", target);
-            notifySubscribers(folderName, target, module, providingModule, AssetFileChangeSubscriber::assetFileAdded, outChanged);
+            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileAdded, outChanged);
         }
 
         @Override
         protected void onFileModified(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset modified: {}", target);
-            notifySubscribers(folderName, target, module, providingModule, AssetFileChangeSubscriber::assetFileModified, outChanged);
+            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileModified, outChanged);
         }
 
         @Override
         protected void onFileDeleted(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset deleted: {}", target);
-            notifySubscribers(folderName, target, module, providingModule, AssetFileChangeSubscriber::assetFileDeleted, outChanged);
+            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileDeleted, outChanged);
         }
     }
 

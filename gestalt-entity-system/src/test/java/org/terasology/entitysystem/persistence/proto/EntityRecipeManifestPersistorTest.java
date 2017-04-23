@@ -68,7 +68,7 @@ public class EntityRecipeManifestPersistorTest {
         ModuleEnvironment moduleEnvironment;
         VirtualModuleEnvironment virtualModuleEnvironment = new VirtualModuleEnvironment(getClass());
         moduleEnvironment = virtualModuleEnvironment.createEnvironment();
-        assetTypeManager.registerCoreAssetType(Prefab.class, Prefab::new, false, "prefabs");
+        assetTypeManager.registerAssetType(Prefab.class, Prefab::new, false, "prefabs");
         assetTypeManager.registerCoreFormat(Prefab.class, new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
         assetTypeManager.switchEnvironment(moduleEnvironment);
 

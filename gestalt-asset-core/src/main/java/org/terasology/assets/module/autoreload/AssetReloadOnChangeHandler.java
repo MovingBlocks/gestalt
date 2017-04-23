@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.assets.module.ModuleAssetDataProducer;
+import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.module.ModuleEnvironment;
 
 import java.io.Closeable;
@@ -45,21 +45,20 @@ public class AssetReloadOnChangeHandler implements Closeable {
 
     /**
      * @param environment The module environment to monitor for changes
-     * @param types The asset types to update when changes occur.
      * @throws IOException If an error prevents reload support from being set up
      */
-    public AssetReloadOnChangeHandler(ModuleEnvironment environment, List<AssetType<?, ?>> types) throws IOException {
+    public AssetReloadOnChangeHandler(ModuleEnvironment environment) throws IOException {
         watcher = new ModuleEnvironmentWatcher(environment);
-        for (AssetType<?, ?> assetType : types) {
-            for (AssetDataProducer<?> assetDataProducer : assetType.getProducers()) {
-                if (assetDataProducer instanceof ModuleAssetDataProducer) {
-                    ModuleAssetDataProducer<?> producer = (ModuleAssetDataProducer) assetDataProducer;
-                    for (String folder : producer.getFolderNames()) {
-                        watcher.register(folder, producer, assetType);
-                    }
-                }
-            }
+    }
+
+    public void addAssetType(AssetType<?, ?> assetType, AssetFileDataProducer<?> producer) {
+        for (String folder : producer.getFolderNames()) {
+            watcher.register(folder, producer, assetType);
         }
+    }
+
+    public void removeAssetType(AssetType<?, ?> assetType) {
+        watcher.unregister(assetType);
     }
 
     /**

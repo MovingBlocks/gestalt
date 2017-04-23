@@ -73,7 +73,7 @@ public class PrefabJsonFormatTest {
         typeLibrary.addHandler(new TypeHandler<>(EntityRef.class, ImmutableCopy.create()));
         componentManager = new CodeGenComponentManager(typeLibrary);
 
-        assetTypeManager.registerCoreAssetType(Prefab.class, Prefab::new, false, "prefabs");
+        assetTypeManager.registerAssetType(Prefab.class, Prefab::new, false, "prefabs");
         assetTypeManager.registerCoreFormat(Prefab.class, new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
 
         assetTypeManager.switchEnvironment(moduleEnvironment);

@@ -22,6 +22,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.filesystem.ModuleFileSystemProvider;
@@ -79,13 +80,13 @@ public class ModuleAssetScanner {
                 .build();
     }
 
-    public void scan(ModuleEnvironment environment, ModuleAssetDataProducer<?> producer) {
+    public void scan(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         scanForAssets(environment, producer);
         scanForOverrides(environment, producer);
         scanForDeltas(environment, producer);
     }
-
-    private void scanForAssets(ModuleEnvironment environment, ModuleAssetDataProducer<?> producer) {
+    
+    private void scanForAssets(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         for (Module module : environment.getModulesOrderedByDependencies()) {
             try {
                 PathCache pathCache = assetPathCache.get(module, () -> {
@@ -105,15 +106,17 @@ public class ModuleAssetScanner {
         }
     }
 
-    private void scanForOverrides(ModuleEnvironment environment, ModuleAssetDataProducer<?> producer) {
+    private void scanForOverrides(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         for (Module module : environment.getModulesOrderedByDependencies()) {
             try {
                 PathCache pathCache = overridePathCache.get(module, () -> {
                     PathCache newCache = new PathCache();
                     Path overridePath = environment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), OVERRIDE_FOLDER);
-                    try (DirectoryStream<Path> moduleOverrides = Files.newDirectoryStream(overridePath)) {
-                        for (Path moduleDir : moduleOverrides) {
-                            scanForPathCache(moduleDir, newCache);
+                    if (Files.isDirectory(overridePath)) {
+                        try (DirectoryStream<Path> moduleOverrides = Files.newDirectoryStream(overridePath)) {
+                            for (Path moduleDir : moduleOverrides) {
+                                scanForPathCache(moduleDir, newCache);
+                            }
                         }
                     }
                     return newCache;
@@ -130,15 +133,17 @@ public class ModuleAssetScanner {
         }
     }
 
-    private void scanForDeltas(ModuleEnvironment environment, ModuleAssetDataProducer<?> producer) {
+    private void scanForDeltas(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         for (Module module : environment.getModulesOrderedByDependencies()) {
             try {
                 PathCache pathCache = deltaPathCache.get(module, () -> {
                     PathCache newCache = new PathCache();
                     Path deltaPath = environment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), DELTA_FOLDER);
-                    try (DirectoryStream<Path> moduleOverrides = Files.newDirectoryStream(deltaPath)) {
-                        for (Path moduleDir : moduleOverrides) {
-                            scanForPathCache(moduleDir, newCache);
+                    if (Files.isDirectory(deltaPath)) {
+                        try (DirectoryStream<Path> moduleOverrides = Files.newDirectoryStream(deltaPath)) {
+                            for (Path moduleDir : moduleOverrides) {
+                                scanForPathCache(moduleDir, newCache);
+                            }
                         }
                     }
                     return newCache;

@@ -20,6 +20,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import org.terasology.assets.ResolutionStrategy;
+import org.terasology.assets.format.producer.ModuleDependencyProvider;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
@@ -36,13 +37,17 @@ import java.util.Set;
 @ThreadSafe
 public class ModuleDependencyResolutionStrategy implements ResolutionStrategy {
 
-    private final ModuleEnvironment environment;
+    private final ModuleDependencyProvider dependencyProvider;
 
-    /**
-     * @param environment The module environment providing the module dependencies.
-     */
     public ModuleDependencyResolutionStrategy(ModuleEnvironment environment) {
-        this.environment = environment;
+        this(new ModuleEnvironmentDependencyProvider(environment));
+    }
+    
+    /**
+     * @param dependencyProvider The provider of dependency information
+     */
+    public ModuleDependencyResolutionStrategy(ModuleDependencyProvider dependencyProvider) {
+        this.dependencyProvider = dependencyProvider;
     }
 
     @Override
@@ -51,11 +56,6 @@ public class ModuleDependencyResolutionStrategy implements ResolutionStrategy {
             return ImmutableSet.of(context);
         }
 
-        return ImmutableSet.copyOf(Collections2.filter(modules, new Predicate<Name>() {
-            @Override
-            public boolean apply(Name input) {
-                return environment.getDependencyNamesOf(context).contains(input);
-            }
-        }));
+        return ImmutableSet.copyOf(Collections2.filter(modules, input -> dependencyProvider.dependencyExists(context, input)));
     }
 }
