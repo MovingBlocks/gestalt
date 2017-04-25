@@ -29,8 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.assets.format.producer.FileChangeSubscriber;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
+import org.terasology.assets.format.producer.FileChangeSubscriber;
+import org.terasology.assets.module.ModuleAssetScanner;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
@@ -44,20 +45,20 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingDeque;
 
 /**
- * Centralised detector of changes to asset files (creation, modification, deletion), to inform ModuleAssetDataProducers of the changes
+ * ModuleEnvironmentWatcher detects of changes to asset files (creation, modification, deletion), to inform ModuleAssetDataProducers of the changes
  * and trigger the reload of those assets.
  * <p>
  * One small note: Sometimes it is possible to get file change notifications before the change has actually happened. I observed this under windows
  * when using the New->Folder/New->File optional in explorer - the path will report as not existing unless you wait a short period of time. To address
- * this those events are added into a unreadyEvents queue and processed next check.
+ * this those events are added into an unreadyEvents queue and processed next check.
  * </p>
  *
  * @author Immortius
@@ -81,7 +82,7 @@ class ModuleEnvironmentWatcher {
      * @param environment The environment to watch.
      * @throws IOException If there is an issue establishing the watch service
      */
-    public ModuleEnvironmentWatcher(ModuleEnvironment environment) throws IOException {
+    ModuleEnvironmentWatcher(ModuleEnvironment environment) throws IOException {
         this.service = environment.getFileSystem().newWatchService();
 
         for (Path rootPath : environment.getFileSystem().getRootDirectories()) {
@@ -105,17 +106,25 @@ class ModuleEnvironmentWatcher {
      * @param subscriber The subscriber to notify of changes
      * @param assetType  The asset type whom changes urns belong to
      */
-    public synchronized void register(String folderName, FileChangeSubscriber subscriber, AssetType<?, ?> assetType) {
+    synchronized void register(String folderName, FileChangeSubscriber subscriber, AssetType<?, ?> assetType) {
         Preconditions.checkState(!closed, "Cannot register folder into closed ModuleWatcher");
         subscribers.put(folderName, new SubscriberInfo(assetType, subscriber));
     }
 
-    public synchronized void unregister(AssetType<?, ?> assetType) {
+    /**
+     * Unregisters all subscribes for a given asset type
+     *
+     * @param assetType The assetType to remove subscribers for
+     */
+    synchronized void unregister(AssetType<?, ?> assetType) {
         Preconditions.checkState(!closed, "ModuleWatcher is closed");
         subscribers.values().removeIf(v -> v.type.equals(assetType));
     }
 
-    public synchronized boolean isClosed() {
+    /**
+     * @return Whether the ModuleEnvironmentWatcher is closed
+     */
+    synchronized boolean isClosed() {
         return closed;
     }
 
@@ -124,7 +133,7 @@ class ModuleEnvironmentWatcher {
      *
      * @throws IOException If there is an error shutting down the service
      */
-    public synchronized void shutdown() throws IOException {
+    synchronized void shutdown() throws IOException {
         if (!closed) {
             pathWatchers.clear();
             watchKeys.clear();
@@ -138,7 +147,7 @@ class ModuleEnvironmentWatcher {
      *
      * @return A set of ResourceUrns of changed assets.
      */
-    public synchronized SetMultimap<AssetType<?, ?>, ResourceUrn> checkForChanges() {
+    synchronized SetMultimap<AssetType<?, ?>, ResourceUrn> checkForChanges() {
         if (closed) {
             return LinkedHashMultimap.create();
         }
@@ -154,7 +163,7 @@ class ModuleEnvironmentWatcher {
         WatchKey key = service.poll();
         while (key != null) {
             PathWatcher pathWatcher = pathWatchers.get(key);
-            changed.putAll(pathWatcher.update(key.pollEvents(), Optional.of(unreadyEvents)));
+            changed.putAll(pathWatcher.update(key.pollEvents(), unreadyEvents));
             key.reset();
             key = service.poll();
         }
@@ -176,9 +185,7 @@ class ModuleEnvironmentWatcher {
         for (SubscriberInfo subscriber : subscribers.get(folderName)) {
 
             Optional<ResourceUrn> urn = method.notify(subscriber.subscriber, target, module, providingModule);
-            if (urn.isPresent()) {
-                outChanged.put(subscriber.type, urn.get());
-            }
+            urn.ifPresent(resourceUrn -> outChanged.put(subscriber.type, resourceUrn));
         }
     }
 
@@ -186,10 +193,10 @@ class ModuleEnvironmentWatcher {
      * Information on a subscriber.
      */
     private static class SubscriberInfo {
-        public final AssetType<?, ?> type;
-        public final FileChangeSubscriber subscriber;
+        final AssetType<?, ?> type;
+        final FileChangeSubscriber subscriber;
 
-        public SubscriberInfo(AssetType<?, ?> type, FileChangeSubscriber subscriber) {
+        SubscriberInfo(AssetType<?, ?> type, FileChangeSubscriber subscriber) {
             this.type = type;
             this.subscriber = subscriber;
         }
@@ -209,7 +216,7 @@ class ModuleEnvironmentWatcher {
         private Path watchedPath;
         private WatchService watchService;
 
-        public PathWatcher(Path path, WatchService watchService) throws IOException {
+        private PathWatcher(Path path, WatchService watchService) throws IOException {
             this.watchedPath = path;
             this.watchService = watchService;
             WatchKey key = path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE);
@@ -219,16 +226,16 @@ class ModuleEnvironmentWatcher {
             }
         }
 
-        public Path getWatchedPath() {
+        private Path getWatchedPath() {
             return watchedPath;
         }
 
-        public WatchService getWatchService() {
+        WatchService getWatchService() {
             return watchService;
         }
 
         @SuppressWarnings("unchecked")
-        public final SetMultimap<AssetType<?, ?>, ResourceUrn> update(List<WatchEvent<?>> watchEvents, Optional<Collection<DelayedEvent>> outDelayedEvents) {
+        private SetMultimap<AssetType<?, ?>, ResourceUrn> update(List<WatchEvent<?>> watchEvents, Collection<DelayedEvent> outDelayedEvents) {
             final SetMultimap<AssetType<?, ?>, ResourceUrn> changedAssets = LinkedHashMultimap.create();
             for (WatchEvent<?> event : watchEvents) {
                 WatchEvent.Kind kind = event.kind();
@@ -245,8 +252,8 @@ class ModuleEnvironmentWatcher {
                         onDirectoryCreated(target, changedAssets);
                     } else if (Files.isRegularFile(target)) {
                         onFileCreated(target, changedAssets);
-                    } else if (outDelayedEvents.isPresent()) {
-                        outDelayedEvents.get().add(new DelayedEvent(event, this));
+                    } else if (outDelayedEvents != null) {
+                        outDelayedEvents.add(new DelayedEvent(event, this));
                     }
                 } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
                     if (Files.isRegularFile(target)) {
@@ -267,9 +274,7 @@ class ModuleEnvironmentWatcher {
         private void onDirectoryCreated(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             try {
                 Optional<? extends PathWatcher> pathWatcher = processPath(target);
-                if (pathWatcher.isPresent()) {
-                    pathWatcher.get().onCreated(outChanged);
-                }
+                pathWatcher.ifPresent(pathWatcher1 -> pathWatcher1.onCreated(outChanged));
             } catch (IOException e) {
                 logger.error("Error registering path for change watching '{}'", getWatchedPath(), e);
             }
@@ -278,14 +283,12 @@ class ModuleEnvironmentWatcher {
         /**
          * Called when the path watcher is registered for an existing path
          */
-        public final void onRegistered() {
+        final void onRegistered() {
             try (DirectoryStream<Path> contents = Files.newDirectoryStream(getWatchedPath())) {
                 for (Path path : contents) {
                     if (Files.isDirectory(path)) {
                         Optional<? extends PathWatcher> pathWatcher = processPath(path);
-                        if (pathWatcher.isPresent()) {
-                            pathWatcher.get().onRegistered();
-                        }
+                        pathWatcher.ifPresent(PathWatcher::onRegistered);
                     }
                 }
             } catch (IOException e) {
@@ -298,7 +301,7 @@ class ModuleEnvironmentWatcher {
          *
          * @param outChanged The ResourceUrns of any assets affected by the creation of this path
          */
-        public final void onCreated(SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        final void onCreated(SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             try (DirectoryStream<Path> contents = Files.newDirectoryStream(getWatchedPath())) {
                 for (Path path : contents) {
                     if (Files.isDirectory(path)) {
@@ -353,7 +356,7 @@ class ModuleEnvironmentWatcher {
 
         private Name module;
 
-        public RootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
+        RootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
             super(path, watchService);
             this.module = module;
         }
@@ -362,13 +365,13 @@ class ModuleEnvironmentWatcher {
         protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
             if (target.getNameCount() == 2) {
                 switch (target.getName(1).toString()) {
-                    case AssetFileDataProducer.ASSET_FOLDER: {
+                    case ModuleAssetScanner.ASSET_FOLDER: {
                         return Optional.of(new AssetRootPathWatcher(target, module, getWatchService()));
                     }
-                    case AssetFileDataProducer.DELTA_FOLDER: {
+                    case ModuleAssetScanner.DELTA_FOLDER: {
                         return Optional.of(new DeltaRootPathWatcher(target, module, getWatchService()));
                     }
-                    case AssetFileDataProducer.OVERRIDE_FOLDER: {
+                    case ModuleAssetScanner.OVERRIDE_FOLDER: {
                         return Optional.of(new OverrideRootPathWatcher(target, module, getWatchService()));
                     }
                 }
@@ -381,7 +384,7 @@ class ModuleEnvironmentWatcher {
 
         private Name module;
 
-        public AssetRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
+        AssetRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
             super(path, watchService);
             this.module = module;
         }
@@ -399,7 +402,7 @@ class ModuleEnvironmentWatcher {
 
         private Name module;
 
-        public OverrideRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
+        OverrideRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
             super(path, watchService);
             this.module = module;
         }
@@ -419,7 +422,7 @@ class ModuleEnvironmentWatcher {
 
         private Name module;
 
-        public DeltaRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
+        DeltaRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
             super(path, watchService);
             this.module = module;
         }
@@ -440,7 +443,7 @@ class ModuleEnvironmentWatcher {
         private final Name providingModule;
         private final Name module;
 
-        public DeltaPathWatcher(Path path, Name module, Name providingModule, WatchService watchService) throws IOException {
+        DeltaPathWatcher(Path path, Name module, Name providingModule, WatchService watchService) throws IOException {
             super(path, watchService);
             this.module = module;
             this.providingModule = providingModule;
@@ -479,7 +482,7 @@ class ModuleEnvironmentWatcher {
         private Name module;
         private Name providingModule;
 
-        public AssetPathWatcher(Path path, String folderName, Name module, Name providingModule, WatchService watchService) throws IOException {
+        AssetPathWatcher(Path path, String folderName, Name module, Name providingModule, WatchService watchService) throws IOException {
             super(path, watchService);
             this.folderName = folderName;
             this.module = module;
@@ -514,13 +517,13 @@ class ModuleEnvironmentWatcher {
         private WatchEvent<?> event;
         private PathWatcher watcher;
 
-        public DelayedEvent(WatchEvent<?> event, PathWatcher watcher) {
+        DelayedEvent(WatchEvent<?> event, PathWatcher watcher) {
             this.event = event;
             this.watcher = watcher;
         }
 
-        public SetMultimap<AssetType<?, ?>, ResourceUrn> replay() {
-            return watcher.update(Arrays.asList(event), Optional.empty());
+        SetMultimap<AssetType<?, ?>, ResourceUrn> replay() {
+            return watcher.update(Collections.singletonList(event), null);
         }
     }
 

@@ -60,18 +60,17 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 /**
- * ModuleAwareAssetTypeManager is an AssetTypeManager that integrates with ModuleEnvironment, obtaining assets, registering extension classes and handling asset
+ * ModuleAwareAssetTypeManager is an AssetTypeManager that integrates with a ModuleEnvironment, obtaining assets, registering extension classes and handling asset
  * disposal and reloading when environments change.
  * <p>
  * The major features of ModuleAwareAssetTypeManager are:
  * </p>
  * <ul>
- * <li>Registration of core AssetTypes, AssetDataProducers and file formats. These will automatically be registered when the environment is next switched,
- * and will remain across environment changes.</li>
+ * <li>Registration of core AssetTypes, AssetDataProducers and file formats. These will remain across environment changes.</li>
  * <li>Automatic registration of extension AssetTypes, AssetDataProducers and file formats mark with annotations that are discovered within the module environment
- * being switched to, and removal of these extensions when the module environment is later switched from</li>
- * <li>When the module environment is changed, all assets are either reloaded if within the new environment, or disposed if no longer available.</li>
- * <li>Will reload assets changed on the file system upon request</li>
+ * being switched to, and removal of these extensions when the module environment is later unloaded</li>
+ * <li>Optionally reload all assets from their modules - this is recommended after an environment switch to prevent changes to assets in a previous environment from persisting</li>
+ * <li>Optionally enable detection and auto-reload of assets that change on the file system. If this is enabled then {@link #reloadChangedAssets()} must be called regularly to process changes.</li>
  * </ul>
  *
  * @author Immortius
@@ -104,19 +103,34 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
         });
     }
 
+    /**
+     * @param classFactory The factory to use to instantiate classes for automatic registration.
+     */
     public ModuleAwareAssetTypeManager(ClassFactory classFactory) {
         this.classFactory = classFactory;
     }
 
     @Override
     public synchronized void close() throws IOException {
+        unloadEnvironment();
         assetTypeManager.clear();
+        assetTypeInfo.clear();
+        assetScanner.clearCache();
     }
 
+    /**
+     * @return Whether asset file change detection is enabled
+     */
     public boolean isDetectingChangedAssets() {
         return detectingChangedAssets;
     }
 
+    /**
+     * Allows enabling or disabling of automatic detection of asset file changes in the module environment. When enabled, all asset types will automatically be hooked up for
+     * detection of asset file changes. Calling reloadChangedAssets() will trigger reloading any changed assets.
+     *
+     * @param detectingChangedAssets Whether to enable or disable detecting asset file changes on the file system
+     */
     public synchronized void setDetectingChangedAssets(boolean detectingChangedAssets) {
         this.detectingChangedAssets = detectingChangedAssets;
         if (dependencyProvider.getModuleEnvironment() != null) {
@@ -128,6 +142,9 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
         }
     }
 
+    /**
+     * Triggers reloading any assets whose files have been changed on the file system
+     */
     public synchronized void reloadChangedAssets() {
         if (reloadOnChangeHandler != null) {
             reloadOnChangeHandler.poll();
@@ -176,10 +193,30 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
         assetTypeManager.disposedUnusedAssets();
     }
 
+    /**
+     * Creates and registers an asset type
+     *
+     * @param type           The type of asset the AssetType will handle
+     * @param factory        The factory for creating an asset from asset data
+     * @param subfolderNames The names of the subfolders providing asset files, if any
+     * @param <T>            The type of Asset
+     * @param <U>            The type of AssetData
+     * @return The new AssetType
+     */
     public synchronized <T extends Asset<U>, U extends AssetData> AssetType<T, U> createAssetType(Class<T> type, AssetFactory<T, U> factory, String... subfolderNames) {
         return this.createAssetType(type, factory, Arrays.asList(subfolderNames));
     }
 
+    /**
+     * Creates and registers an asset type
+     *
+     * @param type           The type of asset the AssetType will handle
+     * @param factory        The factory for creating an asset from asset data
+     * @param subfolderNames The names of the subfolders providing asset files, if any
+     * @param <T>            The type of Asset
+     * @param <U>            The type of AssetData
+     * @return The new AssetType
+     */
     public synchronized <T extends Asset<U>, U extends AssetData> AssetType<T, U> createAssetType(Class<T> type, AssetFactory<T, U> factory, Collection<String> subfolderNames) {
         AssetType<T, U> assetType = new AssetType<>(type, factory);
         addAssetType(assetType, subfolderNames);
@@ -192,10 +229,28 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
         return assetType;
     }
 
+    /**
+     * Registers an asset type
+     *
+     * @param assetType      The AssetType to register
+     * @param subfolderNames The names of the subfolders providing asset files, if any
+     * @param <T>            The type of Asset
+     * @param <U>            The type of AssetData
+     * @return The new AssetType
+     */
     public synchronized <T extends Asset<U>, U extends AssetData> AssetType<T, U> addAssetType(AssetType<T, U> assetType, String... subfolderNames) {
         return this.addAssetType(assetType, Arrays.asList(subfolderNames));
     }
 
+    /**
+     * Registers an asset type
+     *
+     * @param assetType      The AssetType to register
+     * @param subfolderNames The names of the subfolders providing asset files, if any
+     * @param <T>            The type of Asset
+     * @param <U>            The type of AssetData
+     * @return The new AssetType
+     */
     public synchronized <T extends Asset<U>, U extends AssetData> AssetType<T, U> addAssetType(AssetType<T, U> assetType, Collection<String> subfolderNames) {
         return addAssetType(assetType, false, subfolderNames);
     }
@@ -214,13 +269,20 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
         return assetType;
     }
 
+    /**
+     * @param assetType The AssetType to get the AssetFileDataProducer for. This must be an AssetType handled by this AssetTypeManager
+     * @param <T>       The type of Asset handled by the AssetType
+     * @param <U>       The type of AssetData handled by the AssetType
+     * @return The AssetFileDataProducer for the given AssetType.
+     */
     @SuppressWarnings("unchecked")
     public <T extends Asset<U>, U extends AssetData> AssetFileDataProducer<U> getAssetFileDataProducer(AssetType<T, U> assetType) {
+        Preconditions.checkArgument(assetTypeInfo.containsKey(assetType));
         return (AssetFileDataProducer<U>) assetTypeInfo.get(assetType).getFileProducer();
     }
 
     /**
-     * Removes an asset type.
+     * Removes and closes an asset type.
      *
      * @param type The type of asset to remove
      * @param <T>  The type of asset
@@ -241,13 +303,12 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
     }
 
     /**
-     * Switches the module environment. This triggers:
+     * Switches the module environment. This:
      * <ul>
-     * <li>Removal of all extension types, producers and formats</li>
-     * <li>Disposal of all assets not present in the new environment</li>
-     * <li>Reload of all assets present in the new environment</li>
-     * <li>Scan for and install extension asset types, producers and formats</li>
-     * <li>Makes available loading assets from the new environment</li>
+     * <li>Unloads any previously loaded environment</li>
+     * <li>Adds any extension AssetTypes, Formats and Producers</li>
+     * <li>Registers all the asset files in the new environment</li>
+     * <li>Starts detection of asset file changes for the new environment, if {@link #isDetectingChangedAssets()} is true</li>
      * </ul>
      *
      * @param newEnvironment The new module environment
@@ -261,12 +322,20 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
         addExtensionFormats(newEnvironment);
         addExtensionProducers(newEnvironment);
 
-        registerAssetSources(newEnvironment);
+        registerAssetFiles(newEnvironment);
         if (detectingChangedAssets) {
             activateAssetReloader(newEnvironment);
         }
     }
 
+    /**
+     * Unloads the current module environment, if any. This:
+     * <ul>
+     * <li>Removes any extension AssetTypes, Formats and Producers</li>
+     * <li>Clears all asset files from the old environment</li>
+     * <li>Stops detection of asset file changes, if {@link #isDetectingChangedAssets()} is true</li>
+     * </ul>
+     */
     public synchronized void unloadEnvironment() {
         if (dependencyProvider.getModuleEnvironment() != null) {
             removeExtensionAssetTypes();
@@ -274,28 +343,35 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
             removeExtensionProducers();
 
             dependencyProvider.setModuleEnvironment(null);
-            clearAssetSources();
+            clearAssetFiles();
             deactivateAssetReloader();
         }
     }
 
+    /**
+     * Reloads all assets.
+     */
     public void reloadAssets() {
         for (AssetType<?, ?> assetType : assetTypeManager.getAssetTypes()) {
             assetType.getLoadedAssetUrns().forEach(assetType::reload);
         }
     }
 
-    private void registerAssetSources(ModuleEnvironment newEnvironment) {
+    private void registerAssetFiles(ModuleEnvironment newEnvironment) {
         dependencyProvider.setModuleEnvironment(newEnvironment);
+
+        if (detectingChangedAssets) {
+            assetScanner.clearCache();
+        }
 
         for (AssetTypeInfo typeInfo : assetTypeInfo.values()) {
             assetScanner.scan(newEnvironment, typeInfo.getFileProducer());
         }
     }
 
-    private void clearAssetSources() {
+    private void clearAssetFiles() {
         for (AssetTypeInfo info : assetTypeInfo.values()) {
-            info.getFileProducer().clearAssetSources();
+            info.getFileProducer().clearAssetFiles();
         }
     }
 

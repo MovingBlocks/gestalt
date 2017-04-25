@@ -54,6 +54,10 @@ import java.util.Set;
  * files that override or alter assets defined in other modules, files redirecting a urn to another urn, and the ability
  * to make modifications to asset files in the file system that can be detected and used to reload assets.
  * <p>
+ * ModuleAssetDataProducer does not discover files itself. Available files (and changes and removals of available files) should be provided through the {@link FileChangeSubscriber}
+ * interface. The available files can also be cleared using {@link #clearAssetFiles()}
+ * </p>
+ * <p>
  * ModuleAsstDataProducer supports five types of files:
  * </p>
  * <ul>
@@ -76,30 +80,12 @@ import java.util.Set;
  * When the data for an asset is requested, ModuleAssetDataProducer will return the data using all of the relevant files across
  * all modules.
  * </p>
- * <p>
- * ModuleAssetDataProducer also sets up watchers for any modules that are folders on the file system. This allows the file
- * system to be checked for any changed assets, and these assets reloaded as desired.
- * </p>
+ *
  *
  * @author Immortius
  */
 @ThreadSafe
 public class AssetFileDataProducer<U extends AssetData> implements AssetDataProducer<U>, FileChangeSubscriber {
-
-    /**
-     * The name of the module directory that contains asset files.
-     */
-    public static final String ASSET_FOLDER = "assets";
-
-    /**
-     * The name of the module directory that contains overrides.
-     */
-    public static final String OVERRIDE_FOLDER = "overrides";
-
-    /**
-     * The name of the module directory that contains detlas.
-     */
-    public static final String DELTA_FOLDER = "deltas";
 
     /**
      * The extension for redirects.
@@ -154,10 +140,17 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         return Collections.unmodifiableList(assetFormats);
     }
 
+    /**
+     * @param format The format to add for handling an asset file
+     */
     public void addAssetFormat(AssetFileFormat<U> format) {
         assetFormats.add(format);
     }
 
+    /**
+     * @param format The format to remove
+     * @return Whether the format was successfully removed
+     */
     public boolean removeAssetFormat(AssetFileFormat<U> format) {
         return assetFormats.remove(format);
     }
@@ -169,10 +162,17 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         return Collections.unmodifiableList(supplementFormats);
     }
 
+    /**
+     * @param format A format to add for handling asset supplement files
+     */
     public void addSupplementFormat(AssetAlterationFileFormat<U> format) {
         supplementFormats.add(format);
     }
 
+    /**
+     * @param format A format to remove
+     * @return Whether the format was successfully removed
+     */
     public boolean removeSupplementFormat(AssetAlterationFileFormat<U> format) {
         return supplementFormats.remove(format);
     }
@@ -184,10 +184,17 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         return Collections.unmodifiableList(deltaFormats);
     }
 
+    /**
+     * @param format A format to add for handling asset delta files
+     */
     public void addDeltaFormat(AssetAlterationFileFormat<U> format) {
         deltaFormats.add(format);
     }
 
+    /**
+     * @param format A format to remove
+     * @return Whether the format was successfully removed
+     */
     public boolean removeDeltaFormat(AssetAlterationFileFormat<U> format) {
         return deltaFormats.remove(format);
     }
@@ -457,15 +464,18 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     /**
-     * Remove all asset sources.
+     * Remove all asset files.
      */
-    public void clearAssetSources() {
+    public void clearAssetFiles() {
         unloadedAssetLookup.clear();
         redirectMap.clear();
         redirectSourceMap.clear();
         resolutionMap.clear();
     }
 
+    /**
+     * @return The list of asset folders used by this AssetFileDataProducer
+     */
     public List<String> getFolderNames() {
         return folderNames;
     }

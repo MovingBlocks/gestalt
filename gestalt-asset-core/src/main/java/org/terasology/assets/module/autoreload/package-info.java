@@ -15,13 +15,7 @@
  */
 
 /**
- * This package contains the interfaces and support for loading asset data from files.
- * <p>
- * A file format applies information from one or more files to create or alter an {@link org.terasology.assets.AssetData AssetData}.
- * {@link org.terasology.assets.format.AssetFileFormat AssetFileFormat} creates AssetData, while
- * {@link org.terasology.assets.format.AssetAlterationFileFormat AssetAlterationFileFormat} modifies an existing AssetData.
+ * This package provides support for detecting changed asset files and reloading affected assets
  */
-@API
-package org.terasology.assets.format;
+package org.terasology.assets.module.autoreload;
 
-import org.terasology.module.sandbox.API;

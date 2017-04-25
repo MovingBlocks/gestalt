@@ -30,6 +30,7 @@ import org.terasology.module.sandbox.PermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -39,28 +40,43 @@ import java.security.Permission;
 import java.util.Collections;
 
 /**
- * This environment loads multiple modules off of the classpath, discovered within a 'virtualModules' package.
+ * This environment loads multiple modules off of the classpath, discovered within a package.
  * This can be used to test more complex asset loading scenarios involving multiple modules.
  * <p>
  * Each virtual module should be in a directory under the virtualModules package, with the same name as the module's id. The directory should include a module.info file.
  * The internal structure of each virtual module is otherwise the standard module structure.
+ * <p>
+ * This environment will also load the classpath as a module, with the identifier 'test' version 1.0.0
  *
  * @author Immortius
  */
 public class VirtualModuleEnvironment {
 
+    public static final Name TEST_MODULE_ID = new Name("test");
+    public static final Version TEST_MODULE_VERSION = new Version("1.0.0");
     protected ModuleRegistry moduleRegistry;
 
-    public VirtualModuleEnvironment() throws Exception {
-        this(VirtualModuleEnvironment.class);
+    /**
+     * @param modulePackage The package that contains the modules to load
+     * @throws IOException If there is a problem constructing the module file system
+     * @throws URISyntaxException If a source location cannot be converted to a proper URI (typically because the path to the source includes an invalid character).
+     */
+    public VirtualModuleEnvironment(String modulePackage) throws IOException, URISyntaxException {
+        this(modulePackage, VirtualModuleEnvironment.class);
     }
 
-    public VirtualModuleEnvironment(Class classpathClass) throws Exception {
+    /**
+     * @param modulePackage The package that contains the modules to load
+     * @param classpathClass A class used to determine the source to use as the classpath module.
+     * @throws IOException If there is a problem constructing the module file system
+     * @throws URISyntaxException If a source location cannot be converted to a proper URI (typically because the path to the source includes an invalid character).
+     */
+    public VirtualModuleEnvironment(String modulePackage, Class classpathClass) throws IOException, URISyntaxException {
         ModuleFactory moduleFactory = new ModuleFactory();
         moduleRegistry = new TableModuleRegistry();
         ModuleMetadata testModuleMetadata = new ModuleMetadata();
-        testModuleMetadata.setId(new Name("test"));
-        testModuleMetadata.setVersion(new Version("1.0.0"));
+        testModuleMetadata.setId(TEST_MODULE_ID);
+        testModuleMetadata.setVersion(TEST_MODULE_VERSION);
         Module testModule = moduleFactory.createClasspathModule(testModuleMetadata, true, classpathClass);
         moduleRegistry.add(testModule);
 
@@ -69,9 +85,9 @@ public class VirtualModuleEnvironment {
             Path virtualPath;
             if (Files.isRegularFile(path)) {
                 FileSystem jarFileSystem = FileSystems.newFileSystem(path, null);
-                virtualPath = jarFileSystem.getPath("virtualModules");
+                virtualPath = jarFileSystem.getPath(modulePackage);
             } else {
-                virtualPath = path.resolve("virtualModules");
+                virtualPath = path.resolve(modulePackage);
             }
             if (Files.isDirectory(virtualPath)) {
                 scanner.scan(moduleRegistry, virtualPath);
@@ -79,63 +95,64 @@ public class VirtualModuleEnvironment {
         }
     }
 
+    /**
+     * @return The module registry containing the virtual modules
+     */
     public ModuleRegistry getRegistry() {
         return moduleRegistry;
     }
 
+    /**
+     * Creates a module environment including the specified modules
+     * @param modules The modules to include in the environment
+     * @return A new module environment
+     * @throws URISyntaxException
+     */
     public ModuleEnvironment createEnvironment(Module... modules) throws URISyntaxException {
-        return new ModuleEnvironment(Lists.newArrayList(modules), new PermissionProviderFactory() {
+        return new ModuleEnvironment(Lists.newArrayList(modules), module -> new PermissionProvider() {
             @Override
-            public PermissionProvider createPermissionProviderFor(Module module) {
-                return new PermissionProvider() {
-                    @Override
-                    public boolean isPermitted(Class aClass) {
-                        return true;
-                    }
+            public boolean isPermitted(Class aClass) {
+                return true;
+            }
 
-                    @Override
-                    public boolean isPermitted(Permission permission, Class<?> aClass) {
-                        return false;
-                    }
-                };
+            @Override
+            public boolean isPermitted(Permission permission, Class<?> aClass) {
+                return false;
             }
         }, Collections.<BytecodeInjector>emptyList());
     }
 
+    /**
+     * @return A new module environment containing no modules
+     */
     public ModuleEnvironment createEmptyEnvironment() {
-        return new ModuleEnvironment(Lists.<Module>newArrayList(), new PermissionProviderFactory() {
+        return new ModuleEnvironment(Lists.<Module>newArrayList(), module -> new PermissionProvider() {
             @Override
-            public PermissionProvider createPermissionProviderFor(Module module) {
-                return new PermissionProvider() {
-                    @Override
-                    public boolean isPermitted(Class aClass) {
-                        return true;
-                    }
+            public boolean isPermitted(Class aClass) {
+                return true;
+            }
 
-                    @Override
-                    public boolean isPermitted(Permission permission, Class<?> aClass) {
-                        return false;
-                    }
-                };
+            @Override
+            public boolean isPermitted(Permission permission, Class<?> aClass) {
+                return false;
             }
         }, Collections.<BytecodeInjector>emptyList());
     }
 
+    /**
+     * @return A new module environment containing just the classpath module
+     * @throws URISyntaxException
+     */
     public ModuleEnvironment createEnvironment() throws URISyntaxException {
-        return new ModuleEnvironment(Lists.newArrayList(moduleRegistry.getLatestModuleVersion(new Name("test"))), new PermissionProviderFactory() {
+        return new ModuleEnvironment(Lists.newArrayList(moduleRegistry.getLatestModuleVersion(TEST_MODULE_ID)), module -> new PermissionProvider() {
             @Override
-            public PermissionProvider createPermissionProviderFor(Module module) {
-                return new PermissionProvider() {
-                    @Override
-                    public boolean isPermitted(Class aClass) {
-                        return true;
-                    }
+            public boolean isPermitted(Class aClass) {
+                return true;
+            }
 
-                    @Override
-                    public boolean isPermitted(Permission permission, Class<?> aClass) {
-                        return false;
-                    }
-                };
+            @Override
+            public boolean isPermitted(Permission permission, Class<?> aClass) {
+                return false;
             }
         }, Collections.<BytecodeInjector>emptyList());
     }

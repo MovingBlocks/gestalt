@@ -38,6 +38,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+/**
+ * ModuleAssetScanner scans a module environment for all available asset files, notifying relevant AssetFileDataProducers of their existence.
+ * <p>
+ * ModuleAssetScanner caches its scans to help speed up environment switches. If there are file changes that need to be detected then {@link #clearCache()} should be used
+ * to clear the cache prior to scanning.
+ */
 public class ModuleAssetScanner {
 
     /**
@@ -61,10 +67,17 @@ public class ModuleAssetScanner {
     private Cache<Module, PathCache> overridePathCache;
     private Cache<Module, PathCache> deltaPathCache;
 
+    /**
+     * Creates a ModuleAssetScanner with cacheSize 128
+     */
     public ModuleAssetScanner() {
         this(128);
     }
 
+    /**
+     * Creates a ModuleAssetScanner
+     * @param cacheSize The number of modules to cache the file paths of. When scanning a module beyond this size limit the cache of the least recently used module will be dropped.
+     */
     public ModuleAssetScanner(int cacheSize) {
         assetPathCache = CacheBuilder.<Module, PathCache>newBuilder()
                 .maximumSize(cacheSize)
@@ -80,10 +93,24 @@ public class ModuleAssetScanner {
                 .build();
     }
 
+    /**
+     * Scans a module environment and adds all asset, override and delta files to the given producer
+     * @param environment The environment to scan
+     * @param producer The producer to register available files to
+     */
     public void scan(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         scanForAssets(environment, producer);
         scanForOverrides(environment, producer);
         scanForDeltas(environment, producer);
+    }
+
+    /**
+     * Clears any cached path information.
+     */
+    public void clearCache() {
+        assetPathCache.invalidateAll();
+        overridePathCache.invalidateAll();
+        deltaPathCache.invalidateAll();
     }
     
     private void scanForAssets(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {

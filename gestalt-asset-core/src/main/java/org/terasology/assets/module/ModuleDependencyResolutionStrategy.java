@@ -39,6 +39,11 @@ public class ModuleDependencyResolutionStrategy implements ResolutionStrategy {
 
     private final ModuleDependencyProvider dependencyProvider;
 
+    /**
+     * Creates a {@link ModuleDependencyResolutionStrategy} from a ModuleEnvironment. It is recommended to use a ModuleDependencyProvider instead as this will
+     * allow for switching environments without creating a new resolution strategy.
+     * @param environment The module environment to use to resolve an asset.
+     */
     public ModuleDependencyResolutionStrategy(ModuleEnvironment environment) {
         this(new ModuleEnvironmentDependencyProvider(environment));
     }

@@ -51,12 +51,21 @@ public class AssetReloadOnChangeHandler implements Closeable {
         watcher = new ModuleEnvironmentWatcher(environment);
     }
 
+    /**
+     * Registers a AssetType/AssetFileDataProducer pair to be notified of changes on the file system
+     * @param assetType The AssetType
+     * @param producer The AssetFileDataProducer to notify of changes
+     */
     public void addAssetType(AssetType<?, ?> assetType, AssetFileDataProducer<?> producer) {
         for (String folder : producer.getFolderNames()) {
             watcher.register(folder, producer, assetType);
         }
     }
 
+    /**
+     * Unregisters an asset type and all its producers from file change notifications
+     * @param assetType The AssetType to unregister
+     */
     public void removeAssetType(AssetType<?, ?> assetType) {
         watcher.unregister(assetType);
     }
@@ -80,8 +89,6 @@ public class AssetReloadOnChangeHandler implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if (watcher != null) {
-            watcher.shutdown();
-        }
+        watcher.shutdown();
     }
 }

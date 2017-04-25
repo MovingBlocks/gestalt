@@ -26,36 +26,52 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
+ * A {@link ModuleDependencyProvider} that uses a module environment to obtain dependency information. This environment can be switched at runtime. It can also be null.
  */
 public class ModuleEnvironmentDependencyProvider implements ModuleDependencyProvider {
 
     private volatile ModuleEnvironment moduleEnvironment;
 
+    /**
+     * Creates an empty {@link ModuleEnvironmentDependencyProvider} with no environment
+     */
     public ModuleEnvironmentDependencyProvider() {
     }
 
-    public ModuleEnvironmentDependencyProvider(ModuleEnvironment moduleEnvironment) {
+    /**
+     * Creates a {@link ModuleEnvironmentDependencyProvider} with the provided environment
+     * @param moduleEnvironment
+     */
+    public ModuleEnvironmentDependencyProvider(@Nullable ModuleEnvironment moduleEnvironment) {
         this.moduleEnvironment = moduleEnvironment;
     }
 
+    /**
+     * Sets the module environment to use to obtain dependency information
+     * @param moduleEnvironment
+     */
     public void setModuleEnvironment(@Nullable ModuleEnvironment moduleEnvironment) {
         this.moduleEnvironment = moduleEnvironment;
     }
 
+    /**
+     * @return The module environment currently being used
+     */
     public ModuleEnvironment getModuleEnvironment() {
         return moduleEnvironment;
     }
 
     @Override
     public boolean dependencyExists(Name fromModule, Name onModule) {
-        return moduleEnvironment != null && moduleEnvironment.getDependencyNamesOf(fromModule).contains(onModule);
+        ModuleEnvironment currentEnvironment = moduleEnvironment;
+        return currentEnvironment != null && currentEnvironment.getDependencyNamesOf(fromModule).contains(onModule);
     }
 
     @Override
     public List<Name> getModulesOrderedByDependency() {
-        if (moduleEnvironment != null) {
-            return moduleEnvironment.getModuleIdsOrderedByDependencies();
+        ModuleEnvironment currentEnvironment = moduleEnvironment;
+        if (currentEnvironment != null) {
+            return currentEnvironment.getModuleIdsOrderedByDependencies();
         } else {
             return Collections.emptyList();
         }

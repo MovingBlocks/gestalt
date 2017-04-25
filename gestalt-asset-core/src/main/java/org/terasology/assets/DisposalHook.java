@@ -19,6 +19,7 @@ package org.terasology.assets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
 
@@ -26,25 +27,21 @@ import java.util.Optional;
  * DisposalHook holds the action to occur when an asset is disposed. This is handled outside of the asset class itself to allow disposal to occur after the asset has been
  * garbage collected via a disposed reference queue mechanism in AssetType.
  */
-public class DisposalHook {
+class DisposalHook {
 
     private static final Logger logger = LoggerFactory.getLogger(DisposalHook.class);
-    private volatile Optional<Runnable> disposeAction = Optional.empty();
+    private volatile Runnable disposeAction;
 
     synchronized void dispose() {
-        if (disposeAction.isPresent()) {
-            disposeAction.get().run();
+        if (disposeAction != null) {
+            disposeAction.run();
         }
-        disposeAction = Optional.empty();
+        disposeAction = null;
     }
 
-    public void setDisposeAction(Runnable disposeAction) {
-        setDisposeAction(Optional.of(disposeAction));
-    }
-
-    public void setDisposeAction(Optional<Runnable> disposeAction) {
-        if (disposeAction.isPresent()) {
-            Class<? extends Runnable> actionType = disposeAction.get().getClass();
+    public void setDisposeAction(@Nullable Runnable disposeAction) {
+        if (disposeAction != null) {
+            Class<? extends Runnable> actionType = disposeAction.getClass();
             if ((actionType.isLocalClass() || actionType.isAnonymousClass() || actionType.isMemberClass()) && !Modifier.isStatic(actionType.getModifiers())) {
                 logger.warn("Non-static anonymous or member class should not be registered as the disposal hook - this will block garbage collection enqueuing for disposal");
             }
