@@ -16,7 +16,7 @@
 
 package org.terasology.valuetype;
 
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.core.Component;
 
 import java.util.Optional;
 

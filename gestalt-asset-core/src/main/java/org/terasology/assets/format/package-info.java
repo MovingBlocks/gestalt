@@ -15,7 +15,7 @@
  */
 
 /**
- * This package contains the interfaces for loading asset data from files.
+ * This package contains the interfaces and support for loading asset data from files.
  * <p>
  * A file format applies information from one or more files to create or alter an {@link org.terasology.assets.AssetData AssetData}.
  * {@link org.terasology.assets.format.AssetFileFormat AssetFileFormat} creates AssetData, while

@@ -19,9 +19,9 @@ package org.terasology.module.filesystem;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import org.junit.Test;
-import org.terasology.module.ClasspathModule;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.ModuleFactory;
 import org.terasology.module.ModuleMetadata;
 import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
@@ -52,7 +52,8 @@ public class ModulePathTest {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name("test"));
         metadata.setVersion(new Version("1.0.0"));
-        Module module = ClasspathModule.create(metadata, true, getClass());
+
+        Module module = new ModuleFactory().createClasspathModule(metadata, true, getClass());
         ModuleEnvironment environment = new ModuleEnvironment(Arrays.asList(module), new StandardPermissionProviderFactory());
 
         fileSystem = new ModuleFileSystemProvider().newFileSystem(environment);

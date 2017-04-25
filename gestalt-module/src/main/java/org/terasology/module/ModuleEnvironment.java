@@ -31,6 +31,7 @@ import org.reflections.ReflectionsException;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.module.dependencyresolution.DependencyInfo;
 import org.terasology.module.filesystem.ModuleFileSystemProvider;
 import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleClassLoader;
@@ -113,13 +114,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         this.modules = buildModuleMap(modules);
         this.apiClassLoader = apiClassLoader;
         this.modulesOrderByDependencies = calculateModulesOrderedByDependencies();
-        this.moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(modulesOrderByDependencies, new Function<Module, Name>() {
-
-            @Override
-            public Name apply(Module input) {
-                return input.getId();
-            }
-        }));
+        this.moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(modulesOrderByDependencies, Module::getId));
 
         ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
         ClassLoader lastClassLoader = apiClassLoader;
@@ -210,12 +205,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private ImmutableList<Module> calculateModulesOrderedByDependencies() {
         List<Module> result = Lists.newArrayList();
         List<Module> alphabeticallyOrderedModules = Lists.newArrayList(modules.values());
-        Collections.sort(alphabeticallyOrderedModules, new Comparator<Module>() {
-            @Override
-            public int compare(Module o1, Module o2) {
-                return o1.getId().compareTo(o2.getId());
-            }
-        });
+        Collections.sort(alphabeticallyOrderedModules, Comparator.comparing(Module::getId));
 
         for (Module module : alphabeticallyOrderedModules) {
             addModuleAfterDependencies(module, result);

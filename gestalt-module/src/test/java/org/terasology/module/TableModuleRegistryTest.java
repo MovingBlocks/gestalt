@@ -20,6 +20,8 @@ import org.junit.Test;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
+import java.util.Collections;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -36,13 +38,9 @@ public class TableModuleRegistryTest {
     @Test
     public void nonSnapshotOverridesShapshot() {
         TableModuleRegistry registry = new TableModuleRegistry();
-        Module moduleSnapshot = mock(Module.class);
-        when(moduleSnapshot.getId()).thenReturn(MODULE_NAME);
-        when(moduleSnapshot.getVersion()).thenReturn(new Version(1, 0, 0, true));
+        Module moduleSnapshot = createModule(MODULE_NAME, new Version(1, 0, 0, true));
         registry.add(moduleSnapshot);
-        Module module = mock(Module.class);
-        when(module.getId()).thenReturn(MODULE_NAME);
-        when(module.getVersion()).thenReturn(new Version(1, 0, 0, false));
+        Module module = createModule(MODULE_NAME, new Version(1, 0, 0, false));
         registry.add(module);
         assertFalse(registry.getLatestModuleVersion(MODULE_NAME).getVersion().isSnapshot());
     }
@@ -50,13 +48,9 @@ public class TableModuleRegistryTest {
     @Test
     public void snapshotDoesNotOverrideNonSnapshot() {
         TableModuleRegistry registry = new TableModuleRegistry();
-        Module module = mock(Module.class);
-        when(module.getId()).thenReturn(MODULE_NAME);
-        when(module.getVersion()).thenReturn(new Version(1, 0, 0, false));
+        Module module = createModule(MODULE_NAME, new Version(1, 0, 0, false));
         registry.add(module);
-        Module moduleSnapshot = mock(Module.class);
-        when(moduleSnapshot.getId()).thenReturn(MODULE_NAME);
-        when(moduleSnapshot.getVersion()).thenReturn(new Version(1, 0, 0, true));
+        Module moduleSnapshot = createModule(MODULE_NAME, new Version(1, 0, 0, true));
         registry.add(moduleSnapshot);
         assertFalse(registry.getLatestModuleVersion(MODULE_NAME).getVersion().isSnapshot());
     }
@@ -64,13 +58,9 @@ public class TableModuleRegistryTest {
     @Test
     public void iteratorRemove() {
         TableModuleRegistry registry = new TableModuleRegistry();
-        Module moduleV1 = mock(Module.class);
-        when(moduleV1.getId()).thenReturn(MODULE_NAME);
-        when(moduleV1.getVersion()).thenReturn(new Version(1, 0, 0));
+        Module moduleV1 = createModule(MODULE_NAME, new Version(1, 0, 0));
+        Module moduleV2 = createModule(MODULE_NAME, new Version(2, 0, 0));
         registry.add(moduleV1);
-        Module moduleV2 = mock(Module.class);
-        when(moduleV2.getId()).thenReturn(MODULE_NAME);
-        when(moduleV2.getVersion()).thenReturn(new Version(2, 0, 0));
         registry.add(moduleV2);
 
         // remove entries based on their version
@@ -81,5 +71,12 @@ public class TableModuleRegistryTest {
         registry.removeIf(mod -> mod.getId().equals(MODULE_NAME));
 
         assertTrue(registry.isEmpty());
+    }
+
+    private Module createModule(Name name, Version version) {
+        ModuleMetadata metadata = new ModuleMetadata();
+        metadata.setId(name);
+        metadata.setVersion(version);
+        return new Module(Collections.emptyList(), Collections.emptyList(), metadata, null);
     }
 }

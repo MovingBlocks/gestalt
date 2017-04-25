@@ -16,6 +16,7 @@
 
 package org.terasology.assets.module.annotations;
 
+import org.terasology.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.module.sandbox.API;
 
 import java.lang.annotation.ElementType;
@@ -25,7 +26,7 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a {@link org.terasology.assets.format.AssetAlterationFileFormat AssetAlterationFileFormat} to be automatically registered by
- * {@link org.terasology.assets.module.ModuleAwareAssetTypeManager ModuleAwareAssetTypeManager} on environment change to handle asset deltas.
+ * {@link ModuleAwareAssetTypeManager ModuleAwareAssetTypeManager} on environment change to handle asset deltas.
  * Asset deltas provide modifications to assets originally declared in another module that the module providing the delta has a dependency on -
  * this allows for multiple modules providing modifications to an asset without necessarily wiping the changes from other modules.
  * <p>

@@ -16,6 +16,7 @@
 
 package org.terasology.entitysystem.component;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -70,11 +71,15 @@ public class PropertyAccessor<T, U> {
     }
 
     /**
-     * @return The class of the property
+     * @return The class of the property - if the type is a class and not some other type.
      */
     @SuppressWarnings("unchecked")
     public Class<U> getPropertyClass() {
-        return (Class<U>) propertyType.getClass();
+        if (propertyType instanceof ParameterizedType) {
+            return (Class<U>) ((ParameterizedType) propertyType).getRawType();
+        } else {
+            return (Class<U>) propertyType;
+        }
     }
 
     /**

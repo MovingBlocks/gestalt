@@ -16,8 +16,11 @@
 
 package org.terasology.module;
 
+import org.terasology.module.dependencyresolution.DependencyInfo;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
+
+import java.util.Collections;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -56,11 +59,10 @@ public class DependencyResolverTestBase {
     }
 
     protected Module createStubModule(ModuleRegistry forRegistry, String id, String version) {
-        Module module = mock(Module.class);
         ModuleMetadata metadata = new ModuleMetadata();
-        when(module.getMetadata()).thenReturn(metadata);
-        when(module.getId()).thenReturn(new Name(id));
-        when(module.getVersion()).thenReturn(new Version(version));
+        metadata.setId(new Name(id));
+        metadata.setVersion(new Version(version));
+        Module module = new Module(Collections.emptyList(), Collections.emptyList(), metadata, null);
         forRegistry.add(module);
         return module;
     }

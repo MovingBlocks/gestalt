@@ -16,7 +16,7 @@
 
 package org.terasology.entitysystem.component;
 
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.core.Component;
 
 /**
  * Manager for components. Provides the ability to create or copy components, or retrieve information on the properties of the component that allows the individual
@@ -55,5 +55,13 @@ public interface ComponentManager {
      * @param <T> The type of component
      * @return The ComponentType for the given type of component.
      */
-    <T extends Component> ComponentType<? super T> getType(Class<T> type);
+    <T extends Component> ComponentType<T> getType(Class<T> type);
+
+    /**
+     * Provides a ComponentType, allowing for reflection like operations.
+     * @param instance An instance of component
+     * @param <T> The type of component
+     * @return The ComponentType for the given type of component.
+     */
+    <T extends Component> ComponentType<T> getType(T instance);
 }

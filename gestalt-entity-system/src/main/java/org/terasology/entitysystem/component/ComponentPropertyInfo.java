@@ -17,12 +17,12 @@
 package org.terasology.entitysystem.component;
 
 import com.google.common.collect.ImmutableMap;
-import org.terasology.entitysystem.Component;
+import com.google.common.collect.ImmutableMultimap;
+import org.terasology.entitysystem.core.Component;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * Information and access to a property of a component
@@ -30,15 +30,21 @@ import java.util.function.Supplier;
 public class ComponentPropertyInfo<T extends Component> {
 
     private final Map<String, PropertyAccessor<T, ?>> properties;
+    private final ImmutableMultimap<Class<?>, PropertyAccessor<T, ?>> propertiesByType;
 
     /**
      * Constructs the property info
+     *
      * @param accessors
      */
     public ComponentPropertyInfo(Collection<PropertyAccessor<T, ?>> accessors) {
-        ImmutableMap.Builder<String, PropertyAccessor<T, ?>> builder = ImmutableMap.builder();
-        accessors.forEach(x -> builder.put(x.getName(), x));
-        this.properties = builder.build();
+        ImmutableMap.Builder<String, PropertyAccessor<T, ?>> nameIndexBuilder = ImmutableMap.builder();
+        accessors.forEach(x -> nameIndexBuilder.put(x.getName(), x));
+        this.properties = nameIndexBuilder.build();
+
+        ImmutableMultimap.Builder<Class<?>, PropertyAccessor<T, ?>> typeIndexBuilder = ImmutableMultimap.builder();
+        accessors.forEach(x -> typeIndexBuilder.put(x.getPropertyClass(), x));
+        this.propertiesByType = typeIndexBuilder.build();
     }
 
     /**
@@ -54,5 +60,9 @@ public class ComponentPropertyInfo<T extends Component> {
      */
     public Optional<PropertyAccessor<T, ?>> getProperty(String name) {
         return Optional.ofNullable(properties.get(name));
+    }
+
+    public Collection<PropertyAccessor<T, ?>> getPropertiesOfType(Class<?> type) {
+        return propertiesByType.get(type);
     }
 }

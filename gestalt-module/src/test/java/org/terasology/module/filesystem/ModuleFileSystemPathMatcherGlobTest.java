@@ -21,9 +21,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.module.ClasspathModule;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.ModuleFactory;
 import org.terasology.module.ModuleMetadata;
 import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
@@ -57,7 +57,7 @@ public class ModuleFileSystemPathMatcherGlobTest {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name("test"));
         metadata.setVersion(new Version("1.0.0"));
-        Module module = ClasspathModule.create(metadata, getClass());
+        Module module = new ModuleFactory().createClasspathModule(metadata, getClass());
 
         ModuleEnvironment environment = new ModuleEnvironment(Arrays.asList(module), new StandardPermissionProviderFactory());
 

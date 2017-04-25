@@ -16,53 +16,65 @@
 
 package org.terasology.entitysystem.component;
 
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.core.Component;
 
 import java.util.function.Supplier;
 
 /**
  * ComponentType provides type information for a component, including reflection-like functionality to create, copy and access the properties of a component instance.
  */
-public class ComponentType<T extends Component> {
+public final class ComponentType<T extends Component> {
     private final Class<T> interfaceType;
-    private final Class<? extends T> implType;
     private final Supplier<T> constructor;
     private final ComponentPropertyInfo<T> type;
     private final ComponentCopyFunction<T> copyStrategy;
 
     /**
      * Creates a component type
-     * @param constructor A supplier that will construct an instance of this component type
+     *
+     * @param constructor   A supplier that will construct an instance of this component type
      * @param interfaceType The type of the interface of this component
-     * @param implType The type of the implementation of this component
-     * @param propertyInfo The property info for this type
-     * @param copyStrategy The function for copying a component
+     * @param propertyInfo  The property info for this type
+     * @param copyStrategy  The function for copying a component
      */
-    public ComponentType(Supplier<T> constructor, Class<T> interfaceType, Class<? extends T> implType, ComponentPropertyInfo<T> propertyInfo, ComponentCopyFunction<T> copyStrategy) {
+    public ComponentType(Supplier<T> constructor, Class<T> interfaceType, ComponentPropertyInfo<T> propertyInfo, ComponentCopyFunction<T> copyStrategy) {
         this.constructor = constructor;
         this.interfaceType = interfaceType;
-        this.implType = implType;
         this.type = propertyInfo;
         this.copyStrategy = copyStrategy;
     }
 
+    /**
+     * @return A new instance of this component
+     */
     public T create() {
         return constructor.get();
     }
 
+    /**
+     * Copies a component onto anothing component
+     * @param from The component to copy from
+     * @param to The component to copy to
+     * @return The updated to component
+     */
     public T copy(T from, T to) {
         return copyStrategy.apply(from, to);
     }
 
-    public Class<T> getInterfaceType() {
+    /**
+     * @return The type of component this the ComponentType is for
+     */
+    public Class<T> getComponentClass() {
         return interfaceType;
     }
 
-    public Class<? extends T> getImplType() {
-        return implType;
-    }
-
+    /**
+     * @return Information on the properties of the component type.
+     */
     public ComponentPropertyInfo<T> getPropertyInfo() {
         return type;
     }
+
 }
+
+

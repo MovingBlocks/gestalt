@@ -17,18 +17,11 @@
 package org.terasology.assets.module;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
-import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;
@@ -36,17 +29,18 @@ import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
-import org.terasology.assets.ResolutionStrategy;
-import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetFileFormat;
+import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.AssetTypeManager;
+import org.terasology.assets.management.MapAssetTypeManager;
 import org.terasology.assets.module.annotations.RegisterAssetDataProducer;
 import org.terasology.assets.module.annotations.RegisterAssetDeltaFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetSupplementalFileFormat;
 import org.terasology.assets.module.annotations.RegisterAssetType;
+import org.terasology.assets.module.autoreload.AssetReloadOnChangeHandler;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.util.reflection.ClassFactory;
 import org.terasology.util.reflection.GenericsUtil;
@@ -60,55 +54,43 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.BiConsumer;
 
 /**
- * ModuleAwareAssetTypeManager is an AssetTypeManager that integrates with ModuleEnvironment, obtaining assets, registering extension classes and handling asset
+ * ModuleAwareAssetTypeManager is an AssetTypeManager that integrates with a ModuleEnvironment, obtaining assets, registering extension classes and handling asset
  * disposal and reloading when environments change.
  * <p>
  * The major features of ModuleAwareAssetTypeManager are:
  * </p>
  * <ul>
- * <li>Registration of core AssetTypes, AssetDataProducers and file formats. These will automatically be registered when the environment is next switched,
- * and will remain across environment changes.</li>
+ * <li>Registration of core AssetTypes, AssetDataProducers and file formats. These will remain across environment changes.</li>
  * <li>Automatic registration of extension AssetTypes, AssetDataProducers and file formats mark with annotations that are discovered within the module environment
- * being switched to, and removal of these extensions when the module environment is later switched from</li>
- * <li>When the module environment is changed, all assets are either reloaded if within the new environment, or disposed if no longer available.</li>
- * <li>Will reload assets changed on the file system upon request</li>
+ * being switched to, and removal of these extensions when the module environment is later unloaded</li>
+ * <li>Optionally reload all assets from their modules - this is recommended after an environment switch to prevent changes to assets in a previous environment from persisting</li>
+ * <li>Optionally enable detection and auto-reload of assets that change on the file system. If this is enabled then {@link #reloadChangedAssets()} must be called regularly to process changes.</li>
  * </ul>
  *
  * @author Immortius
  */
-public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable {
+public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAwareAssetTypeManager.class);
 
-    private final AssetManager assetManager;
-
-    private volatile ImmutableMap<Class<? extends Asset>, AssetType<?, ?>> assetTypes = ImmutableMap.of();
-    private volatile ImmutableListMultimap<Class<? extends Asset>, Class<? extends Asset>> subtypes = ImmutableListMultimap.of();
-
-    private final List<AssetType<?, ?>> coreAssetTypes = Lists.newArrayList();
-    private final Set<Class<? extends Asset>> reloadOnSwitchAssetTypes = Sets.newHashSet();
-
-    private final SetMultimap<Class<? extends Asset>, String> coreAssetTypeFolderNames = HashMultimap.create();
-    private final ListMultimap<Class<? extends Asset<?>>, AssetDataProducer<?>> coreProducers = ArrayListMultimap.create();
-    private final ListMultimap<Class<? extends Asset<?>>, AssetFileFormat<?>> coreFormats = ArrayListMultimap.create();
-    private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreSupplementalFormats = ArrayListMultimap.create();
-    private final ListMultimap<Class<? extends Asset<?>>, AssetAlterationFileFormat<?>> coreDeltaFormats = ArrayListMultimap.create();
-
+    private final MapAssetTypeManager assetTypeManager = new MapAssetTypeManager();
+    private final AssetManager assetManager = new AssetManager(this);
+    private final ModuleEnvironmentDependencyProvider dependencyProvider = new ModuleEnvironmentDependencyProvider();
     private final ClassFactory classFactory;
-    private volatile ModuleWatcher watcher;
+    private final ModuleAssetScanner assetScanner = new ModuleAssetScanner();
 
+    private final Map<AssetType<?, ?>, AssetTypeInfo> assetTypeInfo = Maps.newHashMap();
+
+    private boolean detectingChangedAssets = false;
+    private AssetReloadOnChangeHandler reloadOnChangeHandler;
 
     public ModuleAwareAssetTypeManager() {
-        this.assetManager = new AssetManager(this);
         this.classFactory = new SimpleClassFactory(new ParameterProvider() {
             @Override
             @SuppressWarnings("unchecked")
@@ -121,219 +103,196 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
         });
     }
 
+    /**
+     * @param classFactory The factory to use to instantiate classes for automatic registration.
+     */
     public ModuleAwareAssetTypeManager(ClassFactory classFactory) {
-        this.assetManager = new AssetManager(this);
         this.classFactory = classFactory;
     }
 
     @Override
     public synchronized void close() throws IOException {
-        for (AssetType assetType : assetTypes.values()) {
-            assetType.close();
-        }
-        if (watcher != null) {
-            watcher.shutdown();
-            watcher = null;
-        }
+        unloadEnvironment();
+        assetTypeManager.clear();
+        assetTypeInfo.clear();
+        assetScanner.clearCache();
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T extends Asset<U>, U extends AssetData> Optional<AssetType<T, U>> getAssetType(Class<T> type) {
-        return Optional.ofNullable((AssetType<T, U>) assetTypes.get(type));
+    /**
+     * @return Whether asset file change detection is enabled
+     */
+    public boolean isDetectingChangedAssets() {
+        return detectingChangedAssets;
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T extends Asset<?>> List<AssetType<? extends T, ?>> getAssetTypes(Class<T> type) {
-        List<AssetType<? extends T, ?>> result = Lists.newArrayList();
-        for (Class<? extends Asset> subtype : subtypes.get(type)) {
-            AssetType<? extends T, ?> subAssetType = (AssetType<? extends T, ?>) assetTypes.get(subtype);
-            if (subAssetType != null) {
-                result.add(subAssetType);
+    /**
+     * Allows enabling or disabling of automatic detection of asset file changes in the module environment. When enabled, all asset types will automatically be hooked up for
+     * detection of asset file changes. Calling reloadChangedAssets() will trigger reloading any changed assets.
+     *
+     * @param detectingChangedAssets Whether to enable or disable detecting asset file changes on the file system
+     */
+    public synchronized void setDetectingChangedAssets(boolean detectingChangedAssets) {
+        this.detectingChangedAssets = detectingChangedAssets;
+        if (dependencyProvider.getModuleEnvironment() != null) {
+            if (detectingChangedAssets) {
+                activateAssetReloader(dependencyProvider.getModuleEnvironment());
+            } else {
+                deactivateAssetReloader();
             }
         }
-        return result;
+    }
+
+    /**
+     * Triggers reloading any assets whose files have been changed on the file system
+     */
+    public synchronized void reloadChangedAssets() {
+        if (reloadOnChangeHandler != null) {
+            reloadOnChangeHandler.poll();
+        }
+    }
+
+    private void activateAssetReloader(ModuleEnvironment moduleEnvironment) {
+        try {
+            reloadOnChangeHandler = new AssetReloadOnChangeHandler(moduleEnvironment);
+            for (AssetTypeInfo typeInfo : assetTypeInfo.values()) {
+                reloadOnChangeHandler.addAssetType(typeInfo.getAssetType(), typeInfo.getFileProducer());
+            }
+        } catch (IOException e) {
+            logger.error("Failed to activate automatic asset reloading", e);
+        }
+    }
+
+    private void deactivateAssetReloader() {
+        if (reloadOnChangeHandler != null) {
+            try {
+                reloadOnChangeHandler.close();
+            } catch (IOException e) {
+                logger.error("Error shutting down AssetReloadOnChangeHandler", e);
+            }
+            reloadOnChangeHandler = null;
+        }
+    }
+
+    @Override
+    public <T extends Asset<U>, U extends AssetData> Optional<AssetType<T, U>> getAssetType(Class<T> type) {
+        return assetTypeManager.getAssetType(type);
+    }
+
+    @Override
+    public <T extends Asset<?>> List<AssetType<? extends T, ?>> getAssetTypes(Class<T> type) {
+        return assetTypeManager.getAssetTypes(type);
+    }
+
+    @Override
+    public Collection<AssetType<?, ?>> getAssetTypes() {
+        return assetTypeManager.getAssetTypes();
     }
 
     @Override
     public void disposedUnusedAssets() {
-        assetTypes.values().forEach(type -> type.processDisposal());
+        assetTypeManager.disposedUnusedAssets();
     }
 
     /**
-     * Triggers the reload of any assets that have been altered in directory modules.
-     */
-    public void reloadChangedOnDisk() {
-        if (watcher != null) {
-            SetMultimap<AssetType<?, ?>, ResourceUrn> changes = watcher.checkForChanges();
-            for (Map.Entry<AssetType<?, ?>, ResourceUrn> entry : changes.entries()) {
-                if (entry.getKey().isLoaded(entry.getValue())) {
-                    AssetType<?, ?> assetType = entry.getKey();
-                    ResourceUrn changedUrn = entry.getValue();
-                    logger.info("Reloading changed asset '{}'", changedUrn);
-                    assetType.reload(changedUrn);
-                }
-            }
-        }
-    }
-
-    /**
-     * Registers an asset type. It will be available after the next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called. Asset files will be
-     * read from modules from the provided subfolders. If there are no subfolders then assets will not be loaded from modules.
+     * Creates and registers an asset type
      *
-     * @param type           The type of to register as a core type
-     * @param factory        The factory to create assets of the desired type from asset data
-     * @param subfolderNames The name of the subfolders which asset files related to this type will be read from within modules
-     * @param <T>            The type of asset
-     * @param <U>            The type of asset data
+     * @param type           The type of asset the AssetType will handle
+     * @param factory        The factory for creating an asset from asset data
+     * @param subfolderNames The names of the subfolders providing asset files, if any
+     * @param <T>            The type of Asset
+     * @param <U>            The type of AssetData
+     * @return The new AssetType
      */
-    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory, String... subfolderNames) {
-        registerCoreAssetType(type, factory, true, subfolderNames);
+    public synchronized <T extends Asset<U>, U extends AssetData> AssetType<T, U> createAssetType(Class<T> type, AssetFactory<T, U> factory, String... subfolderNames) {
+        return this.createAssetType(type, factory, Arrays.asList(subfolderNames));
     }
 
     /**
-     * Registers an asset type. It will be available after the next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called. Asset files will be
-     * read from modules from the provided subfolders. If there are no subfolders then assets will not be loaded from modules.
+     * Creates and registers an asset type
      *
-     * @param type           The type of to register as a core type
-     * @param factory        The factory to create assets of the desired type from asset data
-     * @param reloadOnSwitch Whether assets of this type should be reloaded on environment switch rather than just disposed
-     * @param subfolderNames The name of the subfolders which asset files related to this type will be read from within modules
-     * @param <T>            The type of asset
-     * @param <U>            The type of asset data
+     * @param type           The type of asset the AssetType will handle
+     * @param factory        The factory for creating an asset from asset data
+     * @param subfolderNames The names of the subfolders providing asset files, if any
+     * @param <T>            The type of Asset
+     * @param <U>            The type of AssetData
+     * @return The new AssetType
      */
-    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreAssetType(Class<T> type, AssetFactory<T, U> factory, boolean reloadOnSwitch,
-                                                                                             String... subfolderNames) {
-        Preconditions.checkState(!assetTypes.containsKey(type), "Asset type '" + type.getSimpleName() + "' already registered");
+    public synchronized <T extends Asset<U>, U extends AssetData> AssetType<T, U> createAssetType(Class<T> type, AssetFactory<T, U> factory, Collection<String> subfolderNames) {
         AssetType<T, U> assetType = new AssetType<>(type, factory);
-        coreAssetTypes.add(assetType);
-        coreAssetTypeFolderNames.putAll(type, Arrays.asList(subfolderNames));
-        if (reloadOnSwitch) {
-            reloadOnSwitchAssetTypes.add(type);
-        }
+        addAssetType(assetType, subfolderNames);
+        return assetType;
+    }
+
+    private <T extends Asset<U>, U extends AssetData> AssetType<T, U> createAssetType(Class<T> type, AssetFactory<T, U> factory, boolean extension, Collection<String> subfolderNames) {
+        AssetType<T, U> assetType = new AssetType<>(type, factory);
+        addAssetType(assetType, extension, subfolderNames);
+        return assetType;
     }
 
     /**
-     * Removes an asset type. This change will take affect next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
+     * Registers an asset type
+     *
+     * @param assetType      The AssetType to register
+     * @param subfolderNames The names of the subfolders providing asset files, if any
+     * @param <T>            The type of Asset
+     * @param <U>            The type of AssetData
+     * @return The new AssetType
+     */
+    public synchronized <T extends Asset<U>, U extends AssetData> AssetType<T, U> addAssetType(AssetType<T, U> assetType, String... subfolderNames) {
+        return this.addAssetType(assetType, Arrays.asList(subfolderNames));
+    }
+
+    /**
+     * Registers an asset type
+     *
+     * @param assetType      The AssetType to register
+     * @param subfolderNames The names of the subfolders providing asset files, if any
+     * @param <T>            The type of Asset
+     * @param <U>            The type of AssetData
+     * @return The new AssetType
+     */
+    public synchronized <T extends Asset<U>, U extends AssetData> AssetType<T, U> addAssetType(AssetType<T, U> assetType, Collection<String> subfolderNames) {
+        return addAssetType(assetType, false, subfolderNames);
+    }
+
+    private <T extends Asset<U>, U extends AssetData> AssetType<T, U> addAssetType(AssetType<T, U> assetType, boolean extension, Collection<String> subfolderNames) {
+        assetTypeManager.addAssetType(assetType);
+        assetType.setResolutionStrategy(new ModuleDependencyResolutionStrategy(dependencyProvider));
+        AssetTypeInfo info = new AssetTypeInfo(assetType, extension);
+        AssetFileDataProducer<U> producer = new AssetFileDataProducer<U>(dependencyProvider, subfolderNames);
+        info.setFileProducer(producer);
+        assetType.addProducer(producer);
+        assetTypeInfo.put(assetType, info);
+        if (reloadOnChangeHandler != null) {
+            reloadOnChangeHandler.addAssetType(assetType, info.getFileProducer());
+        }
+        return assetType;
+    }
+
+    /**
+     * @param assetType The AssetType to get the AssetFileDataProducer for. This must be an AssetType handled by this AssetTypeManager
+     * @param <T>       The type of Asset handled by the AssetType
+     * @param <U>       The type of AssetData handled by the AssetType
+     * @return The AssetFileDataProducer for the given AssetType.
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends Asset<U>, U extends AssetData> AssetFileDataProducer<U> getAssetFileDataProducer(AssetType<T, U> assetType) {
+        Preconditions.checkArgument(assetTypeInfo.containsKey(assetType));
+        return (AssetFileDataProducer<U>) assetTypeInfo.get(assetType).getFileProducer();
+    }
+
+    /**
+     * Removes and closes an asset type.
      *
      * @param type The type of asset to remove
      * @param <T>  The type of asset
      * @param <U>  The type of asset data
      */
     @SuppressWarnings("unchecked")
-    public synchronized <T extends Asset<U>, U extends AssetData> void removeCoreAssetType(Class<T> type) {
-        Iterator<AssetType<?, ?>> iterator = coreAssetTypes.iterator();
-        while (iterator.hasNext()) {
-            AssetType<?, ?> assetType = iterator.next();
-            if (assetType.getAssetClass() == type) {
-                iterator.remove();
-                coreAssetTypeFolderNames.removeAll(type);
-                reloadOnSwitchAssetTypes.remove(type);
-                break;
-            }
-        }
-    }
-
-    /**
-     * Registers an AssetDataProducer for use by a specified asset type. This change will take affect next time
-     * {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
-     *
-     * @param assetType The type of asset the producer should be registered with
-     * @param producer  The AssetDataProducer.
-     * @param <T>       The type of asset
-     * @param <U>       The type of asset data
-     */
-    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreProducer(Class<T> assetType, AssetDataProducer<U> producer) {
-        coreProducers.put(assetType, producer);
-    }
-
-    /**
-     * Removes an AssetDataProducer. This change will take affect next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
-     *
-     * @param assetType The type of asset the producer was registered with
-     * @param producer  The AssetDataProducer
-     * @param <T>       The type of asset
-     * @param <U>       The type of asset data
-     */
-    public synchronized <T extends Asset<U>, U extends AssetData> void removeCoreProducer(Class<T> assetType, AssetDataProducer<U> producer) {
-        coreProducers.remove(assetType, producer);
-    }
-
-    /**
-     * Registers an asset file format with a specific asset type.
-     * This change will take affect next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
-     *
-     * @param assetType The type of asset to register the format with.
-     * @param format    The AssetFileFormat
-     * @param <T>       The type of asset
-     * @param <U>       The type of asset data
-     */
-    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreFormat(Class<T> assetType, AssetFileFormat<U> format) {
-        coreFormats.put(assetType, format);
-    }
-
-    /**
-     * Removes an asset file format. This change will take affect next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
-     *
-     * @param assetType The type of asset to remove the format from.
-     * @param format    The AssetFileFormat
-     * @param <T>       The type of asset
-     * @param <U>       The type of asset data
-     */
-    public synchronized <T extends Asset<U>, U extends AssetData> void removeCoreFormat(Class<T> assetType, AssetFileFormat<U> format) {
-        coreFormats.remove(assetType, format);
-    }
-
-    /**
-     * Registers an asset supplemental format with a specific asset type.
-     * This change will take affect next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
-     *
-     * @param assetType The type of asset to register the format with.
-     * @param format    The supplemental file format
-     * @param <T>       The type of asset
-     * @param <U>       The type of asset data
-     */
-    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreSupplementalFormat(Class<T> assetType, AssetAlterationFileFormat<U> format) {
-        coreSupplementalFormats.put(assetType, format);
-    }
-
-    /**
-     * Removes an asset supplemental format. This change will take affect next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
-     *
-     * @param assetType The type of asset to remove the format from.
-     * @param format    The supplemental file format.
-     * @param <T>       The type of asset
-     * @param <U>       The type of asset data
-     */
-    public synchronized <T extends Asset<U>, U extends AssetData> void removeCoreSupplementalFormat(Class<T> assetType, AssetAlterationFileFormat<U> format) {
-        coreSupplementalFormats.remove(assetType, format);
-    }
-
-    /**
-     * Registers an asset delta format with a specific asset type.
-     * This change will take affect next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
-     *
-     * @param assetType The type of asset to register the format with.
-     * @param format    The delta file format.
-     * @param <T>       The type of asset
-     * @param <U>       The type of asset data
-     */
-    public synchronized <T extends Asset<U>, U extends AssetData> void registerCoreDeltaFormat(Class<T> assetType, AssetAlterationFileFormat<U> format) {
-        coreDeltaFormats.put(assetType, format);
-    }
-
-    /**
-     * Removes an asset delta format.
-     * This change will take affect next time {@link #switchEnvironment(org.terasology.module.ModuleEnvironment)} is called.
-     *
-     * @param assetType The type of asset to remove the format from
-     * @param format    The delta file format.
-     * @param <T>       The type of asset
-     * @param <U>       The type of asset data
-     */
-    public synchronized <T extends Asset<U>, U extends AssetData> void removeCoreDeltaFormat(Class<T> assetType, AssetAlterationFileFormat<U> format) {
-        coreDeltaFormats.remove(assetType, format);
+    public synchronized <T extends Asset<U>, U extends AssetData> void removeAssetType(Class<T> type) {
+        AssetType<?, ?> assetType = assetTypeManager.removeAssetType(type);
+        assetTypeInfo.remove(type);
+        assetType.close();
     }
 
     /**
@@ -344,110 +303,101 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     }
 
     /**
-     * Switches the module environment. This triggers:
+     * Switches the module environment. This:
      * <ul>
-     * <li>Removal of all extension types, producers and formats</li>
-     * <li>Disposal of all assets not present in the new environment</li>
-     * <li>Reload of all assets present in the new environment</li>
-     * <li>Scan for and install extension asset types, producers and formats</li>
-     * <li>Makes available loading assets from the new environment</li>
+     * <li>Unloads any previously loaded environment</li>
+     * <li>Adds any extension AssetTypes, Formats and Producers</li>
+     * <li>Registers all the asset files in the new environment</li>
+     * <li>Starts detection of asset file changes for the new environment, if {@link #isDetectingChangedAssets()} is true</li>
      * </ul>
      *
      * @param newEnvironment The new module environment
      */
     public synchronized void switchEnvironment(ModuleEnvironment newEnvironment) {
         Preconditions.checkNotNull(newEnvironment);
+        unloadEnvironment();
 
-        if (watcher != null) {
-            try {
-                watcher.shutdown();
-            } catch (IOException e) {
-                logger.error("Failed to shut down watch service", e);
-            }
+        // Add extensions
+        addExtensionAssetTypes(newEnvironment);
+        addExtensionFormats(newEnvironment);
+        addExtensionProducers(newEnvironment);
+
+        registerAssetFiles(newEnvironment);
+        if (detectingChangedAssets) {
+            activateAssetReloader(newEnvironment);
         }
-
-        try {
-            watcher = new ModuleWatcher(newEnvironment);
-        } catch (IOException e) {
-            logger.warn("Failed to establish watch service, will not auto-reload changed assets", e);
-        }
-
-        for (AssetType<?, ?> assetType : assetTypes.values()) {
-            assetType.clearProducers();
-        }
-
-        ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFileFormats = scanForExtensionFormats(newEnvironment);
-        ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionSupplementalFormats = scanForExtensionSupplementalFormats(newEnvironment);
-        ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionDeltaFormats = scanForExtensionDeltaFormats(newEnvironment);
-        ResolutionStrategy resolutionStrategy = new ModuleDependencyResolutionStrategy(newEnvironment);
-
-        Map<Class<? extends Asset>, AssetType<?, ?>> newAssetTypes = Maps.newHashMap();
-
-        setupCoreAssetTypes(newEnvironment, extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats, resolutionStrategy, newAssetTypes);
-        setupExtensionAssetTypes(newEnvironment, extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats, resolutionStrategy, newAssetTypes);
-        scanForExtensionProducers(newEnvironment, newAssetTypes);
-
-        ImmutableMap<Class<? extends Asset>, AssetType<?, ?>> oldAssetTypes = assetTypes;
-        assetTypes = ImmutableMap.copyOf(newAssetTypes);
-        for (AssetType<?, ?> assetType : assetTypes.values()) {
-            if (reloadOnSwitchAssetTypes.contains(assetType.getAssetClass())) {
-                assetType.refresh();
-            } else {
-                assetType.disposeAll();
-            }
-        }
-
-        oldAssetTypes.values().stream().filter(assetType -> !coreAssetTypes.contains(assetType)).forEach(assetType -> assetType.close());
-        updateSubtypesMap();
     }
 
     /**
-     * Updates the map of subtypes based on the current asset types
+     * Unloads the current module environment, if any. This:
+     * <ul>
+     * <li>Removes any extension AssetTypes, Formats and Producers</li>
+     * <li>Clears all asset files from the old environment</li>
+     * <li>Stops detection of asset file changes, if {@link #isDetectingChangedAssets()} is true</li>
+     * </ul>
      */
-    private void updateSubtypesMap() {
-        ListMultimap<Class<? extends Asset>, Class<? extends Asset>> subtypesBuilder = ArrayListMultimap.create();
-        for (Class<? extends Asset> type : assetTypes.keySet()) {
-            for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, new Predicate<Class<?>>() {
-                @Override
-                public boolean apply(Class<?> input) {
-                    return Asset.class.isAssignableFrom(input) && input != Asset.class;
-                }
-            })) {
-                subtypesBuilder.put((Class<? extends Asset>) parentType, type);
-                Collections.sort(subtypesBuilder.get((Class<? extends Asset>) parentType), new Comparator<Class<?>>() {
-                    @Override
-                    public int compare(Class<?> o1, Class<?> o2) {
-                        return o1.getSimpleName().compareTo(o2.getSimpleName());
-                    }
-                });
+    public synchronized void unloadEnvironment() {
+        if (dependencyProvider.getModuleEnvironment() != null) {
+            removeExtensionAssetTypes();
+            removeExtensionFormats();
+            removeExtensionProducers();
+
+            dependencyProvider.setModuleEnvironment(null);
+            clearAssetFiles();
+            deactivateAssetReloader();
+        }
+    }
+
+    /**
+     * Reloads all assets.
+     */
+    public void reloadAssets() {
+        for (AssetType<?, ?> assetType : assetTypeManager.getAssetTypes()) {
+            assetType.getLoadedAssetUrns().forEach(assetType::reload);
+        }
+    }
+
+    private void registerAssetFiles(ModuleEnvironment newEnvironment) {
+        dependencyProvider.setModuleEnvironment(newEnvironment);
+
+        if (detectingChangedAssets) {
+            assetScanner.clearCache();
+        }
+
+        for (AssetTypeInfo typeInfo : assetTypeInfo.values()) {
+            assetScanner.scan(newEnvironment, typeInfo.getFileProducer());
+        }
+    }
+
+    private void clearAssetFiles() {
+        for (AssetTypeInfo info : assetTypeInfo.values()) {
+            info.getFileProducer().clearAssetFiles();
+        }
+    }
+
+    private void removeExtensionProducers() {
+        for (AssetTypeInfo info : assetTypeInfo.values()) {
+            info.removeAllAssetDataProducers();
+        }
+    }
+
+    private void removeExtensionFormats() {
+        for (AssetTypeInfo info : assetTypeInfo.values()) {
+            info.removeAllExtensionFormats();
+        }
+    }
+
+    private void removeExtensionAssetTypes() {
+        for (AssetType<?, ?> assetType : ImmutableList.copyOf(assetTypeManager.getAssetTypes())) {
+            AssetTypeInfo info = assetTypeInfo.get(assetType);
+            if (info != null && info.isExtension()) {
+                assetTypeManager.removeAssetType(assetType.getAssetClass());
+                assetTypeInfo.remove(assetType);
             }
         }
-        subtypes = ImmutableListMultimap.copyOf(subtypesBuilder);
     }
 
-    private void subscribeToChanges(AssetType<?, ?> assetType, ModuleAssetDataProducer<?> producer, Collection<String> folderNames) {
-        if (watcher != null) {
-            for (String folder : folderNames) {
-                watcher.register(folder, producer, assetType);
-            }
-        }
-    }
-
-    private void setupCoreAssetTypes(ModuleEnvironment environment, ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFileFormats,
-                                     ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionSupplementalFormats,
-                                     ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionDeltaFormats, ResolutionStrategy resolutionStrategy,
-                                     Map<Class<? extends Asset>, AssetType<?, ?>> outAssetTypes) {
-        for (AssetType<?, ?> assetType : coreAssetTypes) {
-            Set<String> folderNames = coreAssetTypeFolderNames.get(assetType.getAssetClass());
-            prepareAssetType(assetType, folderNames, resolutionStrategy, environment, extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats);
-            outAssetTypes.put(assetType.getAssetClass(), assetType);
-        }
-    }
-
-    private void setupExtensionAssetTypes(ModuleEnvironment environment, ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFileFormats,
-                                          ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionSupplementalFormats,
-                                          ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionDeltaFormats,
-                                          ResolutionStrategy resolutionStrategy, Map<Class<? extends Asset>, AssetType<?, ?>> outAssetTypes) {
+    private void addExtensionAssetTypes(ModuleEnvironment environment) {
         for (Class<?> type : environment.getTypesAnnotatedWith(RegisterAssetType.class, input -> Asset.class.isAssignableFrom(input))) {
             Class<? extends Asset> assetClass = (Class<? extends Asset>) type;
             Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(assetClass, Asset.class, 0);
@@ -458,120 +408,50 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
             RegisterAssetType registrationInfo = assetClass.getAnnotation(RegisterAssetType.class);
             Optional<AssetFactory> factory = classFactory.instantiateClass(registrationInfo.factoryClass());
             if (factory.isPresent()) {
-                AssetType<?, ?> assetType = new AssetType<>(assetClass, factory.get());
-                prepareAssetType(assetType, Arrays.asList(registrationInfo.folderName()), resolutionStrategy, environment,
-                        extensionFileFormats, extensionSupplementalFormats, extensionDeltaFormats);
-                if (!outAssetTypes.containsKey(assetType.getAssetClass())) {
-                    outAssetTypes.put(assetType.getAssetClass(), assetType);
+                if (!assetTypeManager.getAssetType(assetClass).isPresent()) {
+                    createAssetType(assetClass, factory.get(), true, Arrays.asList(registrationInfo.folderName()));
                 } else {
-                    logger.error("Asset Type already registered for type '{}' - discarding additional registration", assetType.getAssetClass());
-                    assetType.close();
+                    logger.error("Asset Type already registered for type '{}' - discarding additional registration", assetClass);
                 }
             }
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private <T extends Asset<U>, U extends AssetData> void prepareAssetType(
-            AssetType<T, U> assetType,
-            Collection<String> folderNames,
-            ResolutionStrategy resolutionStrategy,
-            ModuleEnvironment environment,
-            ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFileFormats,
-            ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionSupplementalFormats,
-            ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionDeltaFormats) {
-        assetType.setResolutionStrategy(resolutionStrategy);
-        for (AssetDataProducer producer : coreProducers.get(assetType.getAssetClass())) {
-            assetType.addProducer(producer);
-        }
-
-        if (!folderNames.isEmpty()) {
-            List<AssetFileFormat<?>> assetFormats = Lists.newArrayList(coreFormats.get(assetType.getAssetClass()));
-            assetFormats.addAll(extensionFileFormats.get(assetType.getAssetDataClass()));
-
-            List<AssetAlterationFileFormat<?>> supplementalFormats = Lists.newArrayList(coreSupplementalFormats.get(assetType.getAssetClass()));
-            supplementalFormats.addAll(extensionSupplementalFormats.get(assetType.getAssetDataClass()));
-
-            List<AssetAlterationFileFormat<?>> deltaFormats = Lists.newArrayList(coreDeltaFormats.get(assetType.getAssetClass()));
-            deltaFormats.addAll(extensionDeltaFormats.get(assetType.getAssetDataClass()));
-
-            ModuleAssetDataProducer moduleProducer = new ModuleAssetDataProducer(environment, assetFormats, supplementalFormats, deltaFormats, folderNames);
-            assetType.addProducer(moduleProducer);
-            subscribeToChanges(assetType, moduleProducer, folderNames);
-        }
+    private void addExtensionFormats(ModuleEnvironment newEnvironment) {
+        scanAndRegisterExtension(newEnvironment, AssetFileFormat.class, RegisterAssetFileFormat.class, AssetTypeInfo::addExtensionFileFormat);
+        scanAndRegisterExtension(newEnvironment, AssetAlterationFileFormat.class, RegisterAssetSupplementalFileFormat.class, AssetTypeInfo::addExtensionSupplementFormat);
+        scanAndRegisterExtension(newEnvironment, AssetAlterationFileFormat.class, RegisterAssetDeltaFileFormat.class, AssetTypeInfo::addExtensionDeltaFormat);
     }
 
-    @SuppressWarnings("unchecked")
-    private void scanForExtensionProducers(ModuleEnvironment environment, Map<Class<? extends Asset>, AssetType<?, ?>> forAssetTypes) {
-        for (AssetDataProducer producer : findAndInstantiateClasses(environment, AssetDataProducer.class, RegisterAssetDataProducer.class)) {
-            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(producer.getClass(), AssetDataProducer.class, 0);
-            if (!assetDataType.isPresent()) {
-                logger.error("Could not register AssetProducer '{}' - asset data type must be bound in inheritance tree", producer.getClass());
-                continue;
-            }
-            final Class<? extends AssetData> assetDataClass = (Class<? extends AssetData>) GenericsUtil.getClassOfType(assetDataType.get());
-            List<AssetType<?, ?>> validAssetTypes = Lists.newArrayList(Collections2.filter(forAssetTypes.values(), new Predicate<AssetType<?, ?>>() {
-                @Override
-                public boolean apply(AssetType<?, ?> input) {
-                    return input.getAssetDataClass().equals(assetDataClass);
-                }
-            }));
-            if (validAssetTypes.isEmpty()) {
-                logger.error("No asset type available for asset producer {}", producer.getClass());
-            } else {
-                for (AssetType<?, ?> assetType : validAssetTypes) {
-                    assetType.addProducer(producer);
-                }
+    private void addExtensionProducers(ModuleEnvironment environment) {
+        scanAndRegisterExtension(environment, AssetDataProducer.class, RegisterAssetDataProducer.class, AssetTypeInfo::addExtensionProducer);
+    }
+
+    private <T> void scanAndRegisterExtension(ModuleEnvironment environment, Class<T> baseType, Class<? extends Annotation> annotationType, BiConsumer<AssetTypeInfo, T> register) {
+        ListMultimap<Class<? extends AssetData>, T> extensions = scanForTypes(environment, baseType, annotationType);
+        for (Class<? extends AssetData> assetDataClass : extensions.keySet()) {
+            for (T extension : extensions.get(assetDataClass)) {
+                assetTypeInfo.entrySet().stream()
+                        .filter(t -> t.getKey().getAssetDataClass().equals(assetDataClass))
+                        .forEach(t -> register.accept(t.getValue(), extension));
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> scanForExtensionFormats(ModuleEnvironment environment) {
-        ListMultimap<Class<? extends AssetData>, AssetFileFormat<?>> extensionFormats = ArrayListMultimap.create();
+    private <T> ListMultimap<Class<? extends AssetData>, T> scanForTypes(ModuleEnvironment environment, Class<T> baseType, Class<? extends Annotation> annotationType) {
+        ListMultimap<Class<? extends AssetData>, T> discoveredTypes = ArrayListMultimap.create();
 
-        for (AssetFileFormat format : findAndInstantiateClasses(environment, AssetFileFormat.class, RegisterAssetFileFormat.class)) {
-            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetFileFormat.class, 0);
+        for (T format : findAndInstantiateClasses(environment, baseType, annotationType)) {
+            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), baseType, 0);
             if (!assetDataType.isPresent()) {
-                logger.error("Could not register AssetFormat '{}' - asset data type must be bound in inheritance tree", format.getClass());
+                logger.error("Could not register '{}' - asset data type must be bound in inheritance tree", format.getClass());
                 continue;
             }
             final Class<? extends AssetData> assetDataClass = (Class<? extends AssetData>) GenericsUtil.getClassOfType(assetDataType.get());
-            extensionFormats.put(assetDataClass, format);
+            discoveredTypes.put(assetDataClass, format);
         }
-        return extensionFormats;
-    }
-
-    @SuppressWarnings("unchecked")
-    private ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> scanForExtensionSupplementalFormats(ModuleEnvironment environment) {
-        ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionFormats = ArrayListMultimap.create();
-
-        for (AssetAlterationFileFormat format : findAndInstantiateClasses(environment, AssetAlterationFileFormat.class, RegisterAssetSupplementalFileFormat.class)) {
-            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetAlterationFileFormat.class, 0);
-            if (!assetDataType.isPresent()) {
-                logger.error("Could not register Asset Supplemental Format '{}' - asset data type must be bound in inheritance tree", format.getClass());
-                continue;
-            }
-            final Class<? extends AssetData> assetDataClass = (Class<? extends AssetData>) GenericsUtil.getClassOfType(assetDataType.get());
-            extensionFormats.put(assetDataClass, format);
-        }
-        return extensionFormats;
-    }
-
-    @SuppressWarnings("unchecked")
-    private ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> scanForExtensionDeltaFormats(ModuleEnvironment environment) {
-        ListMultimap<Class<? extends AssetData>, AssetAlterationFileFormat<?>> extensionFormats = ArrayListMultimap.create();
-
-        for (AssetAlterationFileFormat format : findAndInstantiateClasses(environment, AssetAlterationFileFormat.class, RegisterAssetDeltaFileFormat.class)) {
-            Optional<Type> assetDataType = GenericsUtil.getTypeParameterBindingForInheritedClass(format.getClass(), AssetAlterationFileFormat.class, 0);
-            if (!assetDataType.isPresent()) {
-                logger.error("Could not register Asset Delta Format '{}' - asset data type must be bound in inheritance tree", format.getClass());
-                continue;
-            }
-            final Class<? extends AssetData> assetDataClass = (Class<? extends AssetData>) GenericsUtil.getClassOfType(assetDataType.get());
-            extensionFormats.put(assetDataClass, format);
-        }
-        return extensionFormats;
+        return discoveredTypes;
     }
 
     @SuppressWarnings("unchecked")
@@ -580,11 +460,78 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
         for (Class<?> discoveredType : environment.getTypesAnnotatedWith(annotation, input -> baseType.isAssignableFrom(input)
                 && !Modifier.isAbstract(input.getModifiers()))) {
             Optional<T> instance = classFactory.instantiateClass((Class<? extends T>) discoveredType);
-            if (instance.isPresent()) {
-                result.add(instance.get());
-            }
+            instance.ifPresent(result::add);
         }
         return result;
     }
 
+    private static class AssetTypeInfo {
+        private boolean extension;
+        private AssetType assetType;
+        private AssetFileDataProducer fileProducer;
+        private List<AssetFileFormat> extensionFileFormats = Lists.newArrayList();
+        private List<AssetAlterationFileFormat> extensionSupplementFormats = Lists.newArrayList();
+        private List<AssetAlterationFileFormat> extensionDeltaFormats = Lists.newArrayList();
+        private List<AssetDataProducer> extensionProducers = Lists.newArrayList();
+
+        AssetTypeInfo(AssetType assetType, boolean extension) {
+            this.assetType = assetType;
+            this.extension = extension;
+        }
+
+        public AssetType getAssetType() {
+            return assetType;
+        }
+
+        boolean isExtension() {
+            return extension;
+        }
+
+        void setFileProducer(AssetFileDataProducer fileProducer) {
+            this.fileProducer = fileProducer;
+        }
+
+        AssetFileDataProducer<?> getFileProducer() {
+            return fileProducer;
+        }
+
+        @SuppressWarnings("unchecked")
+        void addExtensionProducer(AssetDataProducer producer) {
+            extensionProducers.add(producer);
+            assetType.addProducer(producer);
+        }
+
+        @SuppressWarnings("unchecked")
+        void addExtensionFileFormat(AssetFileFormat assetFileFormat) {
+            extensionFileFormats.add(assetFileFormat);
+            fileProducer.addAssetFormat(assetFileFormat);
+        }
+
+        @SuppressWarnings("unchecked")
+        void addExtensionSupplementFormat(AssetAlterationFileFormat supplementFormat) {
+            extensionSupplementFormats.add(supplementFormat);
+            fileProducer.addSupplementFormat(supplementFormat);
+        }
+
+        @SuppressWarnings("unchecked")
+        void addExtensionDeltaFormat(AssetAlterationFileFormat deltaFormat) {
+            extensionDeltaFormats.add(deltaFormat);
+            fileProducer.addDeltaFormat(deltaFormat);
+        }
+
+        @SuppressWarnings("unchecked")
+        void removeAllExtensionFormats() {
+            extensionFileFormats.forEach(fileProducer::removeAssetFormat);
+            extensionFileFormats.clear();
+            extensionSupplementFormats.forEach(fileProducer::removeSupplementFormat);
+            extensionSupplementFormats.clear();
+            extensionDeltaFormats.forEach(fileProducer::removeDeltaFormat);
+            extensionDeltaFormats.clear();
+        }
+
+        void removeAllAssetDataProducers() {
+            extensionProducers.forEach(assetType::removeProducer);
+            extensionProducers.clear();
+        }
+    }
 }

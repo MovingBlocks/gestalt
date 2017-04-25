@@ -31,6 +31,7 @@ import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -38,7 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A basically Map-based AssetTypeManager.
+ * A simple implementation of AssetTypeManager based on {@link Map}.
  *
  * @author Immortius
  */
@@ -53,7 +54,6 @@ public final class MapAssetTypeManager implements AssetTypeManager {
     @SuppressWarnings("unchecked")
     public <T extends Asset<U>, U extends AssetData> Optional<AssetType<T, U>> getAssetType(Class<T> type) {
         return Optional.ofNullable((AssetType<T, U>) assetTypes.get(type));
-
     }
 
     @Override
@@ -64,6 +64,11 @@ public final class MapAssetTypeManager implements AssetTypeManager {
             result.add((AssetType<? extends T, ?>) assetTypes.get(subtype));
         }
         return result;
+    }
+
+    @Override
+    public Collection<AssetType<?, ?>> getAssetTypes() {
+        return Collections.unmodifiableCollection(assetTypes.values());
     }
 
     @Override
@@ -87,23 +92,25 @@ public final class MapAssetTypeManager implements AssetTypeManager {
         Preconditions.checkNotNull(type);
 
         AssetType<T, U> assetType = new AssetType<>(type, factory);
-        assetTypes.put(type, assetType);
-        for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, new Predicate<Class<?>>() {
-            @Override
-            public boolean apply(Class<?> input) {
-                return Asset.class.isAssignableFrom(input) && input != Asset.class;
-            }
-        })) {
-            subtypes.put((Class<? extends Asset>) parentType, type);
-            Collections.sort(subtypes.get((Class<? extends Asset>) parentType), new Comparator<Class<?>>() {
-                @Override
-                public int compare(Class<?> o1, Class<?> o2) {
-                    return o1.getSimpleName().compareTo(o2.getSimpleName());
-                }
-            });
-        }
+        addAssetType(assetType);
 
         return assetType;
+    }
+
+    /**
+     * Adds an assetType. There must not be an existing asset type for the asset class managed by the asset type.
+     * @param assetType
+     */
+    public synchronized void addAssetType(AssetType<?, ?> assetType) {
+        Preconditions.checkNotNull(assetType);
+        Preconditions.checkState(assetTypes.get(assetType.getAssetClass()) == null, "Asset type already registered for - " + assetType.getAssetClass().getSimpleName());
+        
+        assetTypes.put(assetType.getAssetClass(), assetType);
+        for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(assetType.getAssetClass(), (Predicate<Class<?>>) input -> Asset.class.isAssignableFrom(input) && input != Asset.class)) {
+            subtypes.put((Class<? extends Asset>) parentType, assetType.getAssetClass());
+            (subtypes.get((Class<? extends Asset>) parentType)).sort(Comparator.comparing(Class::getSimpleName));
+
+        }
     }
 
     /**
@@ -113,19 +120,26 @@ public final class MapAssetTypeManager implements AssetTypeManager {
      * @param <T>  The type of Asset
      */
     @SuppressWarnings("unchecked")
-    public synchronized <T extends Asset<?>> void removeAssetType(Class<T> type) {
+    public synchronized <T extends Asset<?>> AssetType<?, ?> removeAssetType(Class<T> type) {
         AssetType<?, ?> assetType = assetTypes.remove(type);
         if (assetType != null) {
             assetType.close();
-            for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, new Predicate<Class<?>>() {
-                @Override
-                public boolean apply(Class<?> input) {
-                    return Asset.class.isAssignableFrom(input) && input != Asset.class;
-                }
-            })) {
+            for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, (Predicate<Class<?>>) input -> Asset.class.isAssignableFrom(input) && input != Asset.class)) {
                 subtypes.remove(parentType, type);
             }
         }
+        return assetType;
+    }
+
+    /**
+     * Removes all AssetTypes from the manager, closing all of them.
+     */
+    public synchronized void clear() {
+        for (AssetType<?, ?> assetType : assetTypes.values()) {
+            assetType.close();
+        }
+        assetTypes.clear();
+        subtypes.clear();
     }
 
 

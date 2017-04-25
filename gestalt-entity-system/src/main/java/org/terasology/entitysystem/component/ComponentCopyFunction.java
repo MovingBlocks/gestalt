@@ -19,7 +19,7 @@ package org.terasology.entitysystem.component;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.Component;
+import org.terasology.entitysystem.core.Component;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * A function for copying the properties across from one component to another

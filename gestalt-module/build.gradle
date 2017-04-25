@@ -9,7 +9,7 @@
 dependencies {
     compile project(":gestalt-util")
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
-    compile group: 'com.google.code.gson', name: 'gson', version: '2.5'
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.7'
     compile group: 'dom4j', name : 'dom4j', version: '1.6.1'
     compile group: 'org.apache.commons', name : 'commons-vfs2', version: '2.0'
 	testCompile project(":gestalt-module:testpack-api")
@@ -18,9 +18,26 @@ dependencies {
 // Library and distribution config
 description = 'Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment'
 
-task gatherModules(dependsOn: [':gestalt-module:testpack:moduleA:jar', ':gestalt-module:testpack:moduleB:jar', ':gestalt-module:testpack:moduleC:jar', ':gestalt-module:testpack:moduleD:jar'], type: Copy) 
+task gatherJarModules(dependsOn: [':gestalt-module:testpack:moduleA:jar', ':gestalt-module:testpack:moduleB:jar', ':gestalt-module:testpack:moduleC:jar', ':gestalt-module:testpack:moduleD:jar'], type: Copy) 
+task createModuleE(dependsOn: [':gestalt-module:copyModuleEInfo', ':gestalt-module:copyModuleELibs']) 
+task copyModuleELibs(dependsOn: [':gestalt-module:testpack:moduleA:jar', ':gestalt-module:testpack:moduleD:jar'],type: Copy) 
+task copyModuleEInfo(type: Copy) 
+task gatherModules(dependsOn: [':gestalt-module:gatherJarModules', ':gestalt-module:createModuleE'])
 
-gatherModules {
+copyModuleELibs {
+	from 'testpack/moduleA/build/libs'
+	from 'testpack/moduleD/build/libs'
+	into 'test-modules/moduleE/libs'
+	include('*.jar')
+}
+
+copyModuleEInfo {
+	from 'testpack/moduleE'
+	into 'test-modules/moduleE'
+	include('*.json')
+}
+
+gatherJarModules {
     from 'testpack/moduleA/build/libs/'
     from 'testpack/moduleB/build/libs/'
     from 'testpack/moduleC/build/libs/'

@@ -20,6 +20,7 @@ import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetType;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,6 +54,10 @@ public interface AssetTypeManager {
      */
     <T extends Asset<?>> List<AssetType<? extends T, ?>> getAssetTypes(Class<T> type);
 
+    /**
+     * @return Retrieves a list of all available asset types
+     */
+    Collection<AssetType<?, ?>> getAssetTypes();
 
     /**
      * Disposes any assets that are unused (not referenced)

@@ -339,16 +339,14 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     }
 
     /**
-     * Forces a reload of an asset from a data producer, if possible.
+     * Forces a reload of an asset from a data producer, if possible.  The resource urn must not be an instance urn (it doesn't make sense to reload an instance by urn).
+     * If there is no available source for the asset (it has no producer) then it will not be reloaded.
      *
      * @param urn The urn of the resource to reload.
      * @return The asset if it exists (regardless of whether it was reloaded or not)
      */
     public Optional<T> reload(ResourceUrn urn) {
-        if (urn.isInstance()) {
-            reload(new ResourceUrn(urn.getModuleName(), urn.getResourceName(), urn.getFragmentName(), false));
-            return getAsset(urn);
-        }
+        Preconditions.checkArgument(!urn.isInstance(), "Cannot reload an asset instance urn");
         ResourceUrn redirectUrn = followRedirects(urn);
         try {
             return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
@@ -531,11 +529,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             } else {
                 ResourceLock lock;
                 synchronized (locks) {
-                    lock = locks.get(urn);
-                    if (lock == null) {
-                        lock = new ResourceLock(urn);
-                        locks.put(urn, lock);
-                    }
+                    lock = locks.computeIfAbsent(urn, k -> new ResourceLock(urn));
                 }
                 try {
                     lock.lock();

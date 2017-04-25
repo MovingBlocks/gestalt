@@ -20,6 +20,7 @@ import com.googlecode.gentyref.GenericTypeReflector;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.Optional;
 
 /**
@@ -74,6 +75,7 @@ public final class GenericsUtil {
 
     /**
      * Returns the raw class of a type, or null if the type doesn't represent a class.
+     * For WildcardType, will attempt to determine the base class that the wildcard allows.
      *
      * @param type The type to get the class of
      * @return the raw class of a type, or null if the type doesn't represent a class.
@@ -83,6 +85,11 @@ public final class GenericsUtil {
             return (Class) type;
         } else if (type instanceof ParameterizedType) {
             return (Class) ((ParameterizedType) type).getRawType();
+        } else if (type instanceof WildcardType) {
+            Type[] upperBounds = ((WildcardType) type).getUpperBounds();
+            if (upperBounds.length == 1) {
+                return getClassOfType(upperBounds[0]);
+            }
         }
         return null;
     }

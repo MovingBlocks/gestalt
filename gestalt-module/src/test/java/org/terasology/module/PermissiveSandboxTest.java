@@ -18,6 +18,7 @@ package org.terasology.module;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terasology.module.dependencyresolution.DependencyResolver;
 import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleSecurityManager;
 import org.terasology.module.sandbox.ModuleSecurityPolicy;
