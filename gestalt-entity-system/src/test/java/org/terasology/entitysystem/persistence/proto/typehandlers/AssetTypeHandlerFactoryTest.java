@@ -20,7 +20,7 @@ import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.prefab.EntityRecipe;
@@ -47,14 +47,14 @@ public class AssetTypeHandlerFactoryTest {
     private AssetManager assetManager = new AssetManager(assetTypeManager);
 
     public AssetTypeHandlerFactoryTest() throws Exception {
-        VirtualModuleEnvironment virtualModuleEnvironment = new VirtualModuleEnvironment(getClass());
-        moduleEnvironment = virtualModuleEnvironment.createEnvironment();
+        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
+        moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
 
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         typeLibrary.addHandler(new TypeHandler<>(EntityRef.class, ImmutableCopy.create()));
 
-        assetTypeManager.registerAssetType(Prefab.class, Prefab::new, false, "prefabs");
+        assetTypeManager.createAssetType(Prefab.class, Prefab::new, "prefabs");
         assetTypeManager.switchEnvironment(moduleEnvironment);
 
         context.addTypeHandlerFactory(new AssetTypeHandlerFactory(assetManager));

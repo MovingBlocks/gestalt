@@ -18,7 +18,7 @@ package org.terasology.entitysystem.component;
 
 import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.module.ModuleEnvironment;
@@ -36,8 +36,8 @@ public class ComponentTypeIndexTest {
     private ComponentTypeIndex index;
 
     public ComponentTypeIndexTest() throws Exception {
-        VirtualModuleEnvironment virtualModuleEnvironment = new VirtualModuleEnvironment(getClass());
-        ModuleEnvironment moduleEnvironment = virtualModuleEnvironment.createEnvironment();
+        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
+        ModuleEnvironment moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
         index = new ComponentTypeIndex(moduleEnvironment);
     }
 

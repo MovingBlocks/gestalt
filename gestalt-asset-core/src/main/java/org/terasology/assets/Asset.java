@@ -69,6 +69,24 @@ public abstract class Asset<T extends AssetData> {
     }
 
     /**
+     * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
+     *
+     * @param urn       The urn identifying the asset.
+     * @param assetType The asset type this asset belongs to.
+     * @param disposalAction The action to take when disposing this class.  The action registered to the disposal hook must not have a reference to asset -
+     *                       this would prevent it being garbage collected. It must be a static inner class, or not contained in the asset class
+     *                       (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
+     */
+    public Asset(ResourceUrn urn, AssetType<?, T> assetType, Runnable disposalAction) {
+        Preconditions.checkNotNull(urn);
+        Preconditions.checkNotNull(assetType);
+        this.urn = urn;
+        this.assetType = assetType;
+        disposalHook.setDisposeAction(disposalAction);
+        assetType.registerAsset(this, disposalHook);
+    }
+
+    /**
      * @return This asset's identifying ResourceUrn.
      */
     public final ResourceUrn getUrn() {
@@ -78,14 +96,10 @@ public abstract class Asset<T extends AssetData> {
     /**
      * Retrieves this asset's disposal hook. This is used to hold the action to run when the asset is disposed.
      * <p>
-     * The action registered to the disposal hook must not have a reference to asset - this would prevent it being garbage collected. It must be a static inner class,
-     * or not contained in the asset class (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
+     *
      *
      * @return This asset's disposal hook.
      */
-    protected final DisposalHook getDisposalHook() {
-        return disposalHook;
-    }
 
     /**
      * Reloads this assets using the new data.

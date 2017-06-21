@@ -26,7 +26,7 @@ import java.util.Optional;
  */
 public class OptionalAnswer extends ReturnsEmptyValues {
 
-    @Override
+    @Override               
     public Object answer(InvocationOnMock invocation) {
         Class<?> returnType = invocation.getMethod().getReturnType();
         if (returnType == Optional.class) {

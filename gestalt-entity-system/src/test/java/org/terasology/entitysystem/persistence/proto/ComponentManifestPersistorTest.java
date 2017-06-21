@@ -18,7 +18,7 @@ package org.terasology.entitysystem.persistence.proto;
 
 import com.google.common.collect.Sets;
 import org.junit.Test;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityRef;
@@ -42,8 +42,8 @@ public class ComponentManifestPersistorTest {
     @Test
     public void persistManifest() throws Exception {
         ModuleEnvironment moduleEnvironment;
-        VirtualModuleEnvironment virtualModuleEnvironment = new VirtualModuleEnvironment(getClass());
-        moduleEnvironment = virtualModuleEnvironment.createEnvironment();
+        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
+        moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
 
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));

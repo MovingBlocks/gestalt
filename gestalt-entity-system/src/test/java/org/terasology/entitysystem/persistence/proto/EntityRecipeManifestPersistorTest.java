@@ -18,10 +18,12 @@ package org.terasology.entitysystem.persistence.proto;
 
 import com.google.common.collect.Sets;
 import org.junit.Test;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
@@ -29,6 +31,7 @@ import org.terasology.entitysystem.persistence.proto.persistors.EntityRecipeMani
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.prefab.EntityRecipe;
 import org.terasology.entitysystem.prefab.Prefab;
+import org.terasology.entitysystem.prefab.PrefabData;
 import org.terasology.entitysystem.prefab.PrefabJsonFormat;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.module.ModuleEnvironment;
@@ -66,10 +69,11 @@ public class EntityRecipeManifestPersistorTest {
         componentManager = new CodeGenComponentManager(typeLibrary);
 
         ModuleEnvironment moduleEnvironment;
-        VirtualModuleEnvironment virtualModuleEnvironment = new VirtualModuleEnvironment(getClass());
-        moduleEnvironment = virtualModuleEnvironment.createEnvironment();
-        assetTypeManager.registerAssetType(Prefab.class, Prefab::new, false, "prefabs");
-        assetTypeManager.registerCoreFormat(Prefab.class, new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
+        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
+        moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
+        AssetType<Prefab, PrefabData> prefabAssetType = assetTypeManager.createAssetType(Prefab.class, Prefab::new, "prefabs");
+        AssetFileDataProducer<PrefabData> prefabDataProducer = assetTypeManager.getAssetFileDataProducer(prefabAssetType);
+        prefabDataProducer.addAssetFormat(new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
         assetTypeManager.switchEnvironment(moduleEnvironment);
 
         ComponentPersistor componentPersistor = new ComponentPersistor(context, new ComponentManifest(moduleEnvironment, componentManager));

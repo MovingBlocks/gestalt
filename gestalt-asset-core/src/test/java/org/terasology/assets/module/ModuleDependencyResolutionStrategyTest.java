@@ -18,7 +18,7 @@ package org.terasology.assets.module;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
@@ -30,38 +30,41 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Immortius
  */
-public class ModuleDependencyResolutionStrategyTest extends VirtualModuleEnvironment {
+public class ModuleDependencyResolutionStrategyTest {
 
     private static final Name TEST_MODULE = new Name("Test");
     private static final Name MODULE_A = new Name("ModuleA");
 
+    private VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory("virtualModules", getClass());
+
     public ModuleDependencyResolutionStrategyTest() throws Exception {
+
     }
 
     @Test
     public void resolveNoOptions() throws URISyntaxException {
-        ModuleEnvironment environment = createEnvironment();
+        ModuleEnvironment environment = virtualModuleEnvironmentFactory.createEnvironment();
         ModuleDependencyResolutionStrategy strategy = new ModuleDependencyResolutionStrategy(environment);
         assertEquals(Collections.<Name>emptySet(), strategy.resolve(Collections.<Name>emptySet(), Name.EMPTY));
     }
 
     @Test
     public void resolveSingleOptionOutsideOfContextAndDependencies() throws URISyntaxException {
-        ModuleEnvironment environment = createEnvironment();
+        ModuleEnvironment environment = virtualModuleEnvironmentFactory.createEnvironment();
         ModuleDependencyResolutionStrategy strategy = new ModuleDependencyResolutionStrategy(environment);
         assertEquals(Collections.<Name>emptySet(), strategy.resolve(ImmutableSet.of(new Name("Cats")), Name.EMPTY));
     }
 
     @Test
     public void resolveReturnsContextIfPresent() throws URISyntaxException {
-        ModuleEnvironment environment = createEnvironment(moduleRegistry.getLatestModuleVersion(TEST_MODULE), moduleRegistry.getLatestModuleVersion(MODULE_A));
+        ModuleEnvironment environment = virtualModuleEnvironmentFactory.createEnvironment(TEST_MODULE, MODULE_A);
         ModuleDependencyResolutionStrategy strategy = new ModuleDependencyResolutionStrategy(environment);
         assertEquals(ImmutableSet.of(TEST_MODULE), strategy.resolve(ImmutableSet.of(TEST_MODULE, MODULE_A), TEST_MODULE));
     }
 
     @Test
     public void resolveReturnsOnlyDependenciesOfContext() throws URISyntaxException {
-        ModuleEnvironment environment = createEnvironment(moduleRegistry.getLatestModuleVersion(TEST_MODULE), moduleRegistry.getLatestModuleVersion(MODULE_A));
+        ModuleEnvironment environment = virtualModuleEnvironmentFactory.createEnvironment(TEST_MODULE, MODULE_A);
         ModuleDependencyResolutionStrategy strategy = new ModuleDependencyResolutionStrategy(environment);
         assertEquals(ImmutableSet.of(TEST_MODULE), strategy.resolve(ImmutableSet.of(TEST_MODULE, new Name("Cat")), MODULE_A));
     }
