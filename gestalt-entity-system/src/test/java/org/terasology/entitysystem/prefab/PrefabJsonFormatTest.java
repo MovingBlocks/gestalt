@@ -17,10 +17,12 @@
 package org.terasology.entitysystem.prefab;
 
 import org.junit.Test;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityRef;
@@ -65,19 +67,18 @@ public class PrefabJsonFormatTest {
     private AssetManager assetManager = new AssetManager(assetTypeManager);
 
     public PrefabJsonFormatTest() throws Exception {
-        VirtualModuleEnvironment virtualModuleEnvironment = new VirtualModuleEnvironment(getClass());
-        moduleEnvironment = virtualModuleEnvironment.createEnvironment();
+        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
+        moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
 
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         typeLibrary.addHandler(new TypeHandler<>(EntityRef.class, ImmutableCopy.create()));
         componentManager = new CodeGenComponentManager(typeLibrary);
-
-        assetTypeManager.registerAssetType(Prefab.class, Prefab::new, false, "prefabs");
-        assetTypeManager.registerCoreFormat(Prefab.class, new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
+        AssetType<Prefab, PrefabData> prefabAssetType = assetTypeManager.createAssetType(Prefab.class, Prefab::new, "prefabs");
+        AssetFileDataProducer<PrefabData> prefabDataProducer = assetTypeManager.getAssetFileDataProducer(prefabAssetType);
+        prefabDataProducer.addAssetFormat(new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
 
         assetTypeManager.switchEnvironment(moduleEnvironment);
-
     }
 
     @Test

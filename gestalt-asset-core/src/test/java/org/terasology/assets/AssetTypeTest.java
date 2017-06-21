@@ -19,7 +19,7 @@ package org.terasology.assets;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 import org.terasology.assets.test.Return;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.assets.test.stubs.text.Text;
 import org.terasology.assets.test.stubs.text.TextData;
 import org.terasology.assets.test.stubs.text.TextFactory;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 /**
  * @author Immortius
  */
-public class AssetTypeTest extends VirtualModuleEnvironment {
+public class AssetTypeTest {
 
     public static final String TEXT_VALUE = "Value";
     public static final String TEXT_VALUE_2 = "Value_2";
@@ -50,9 +50,6 @@ public class AssetTypeTest extends VirtualModuleEnvironment {
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
     private AssetType<Text, TextData> assetType = new AssetType<>(Text.class, new TextFactory());
-
-    public AssetTypeTest() throws Exception {
-    }
 
     @Test
     public void construction() {

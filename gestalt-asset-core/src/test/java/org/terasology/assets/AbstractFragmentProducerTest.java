@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.AssetTypeManager;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.assets.test.stubs.book.Book;
 import org.terasology.assets.test.stubs.book.BookData;
 import org.terasology.assets.test.stubs.book.BookFactory;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 /**
  * @author Immortius
  */
-public class AbstractFragmentProducerTest extends VirtualModuleEnvironment {
+public class AbstractFragmentProducerTest {
 
     private static final ResourceUrn FRAGMENT_URN = new ResourceUrn("engine", "test", "0");
     private static final ResourceUrn FRAGMENT_URN_2 = new ResourceUrn("engine", "test", "1");

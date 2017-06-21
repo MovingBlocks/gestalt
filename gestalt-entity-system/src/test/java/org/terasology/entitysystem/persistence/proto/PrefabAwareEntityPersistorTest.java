@@ -17,10 +17,12 @@
 package org.terasology.entitysystem.persistence.proto;
 
 import org.junit.Test;
+import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import org.terasology.assets.test.VirtualModuleEnvironment;
+import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
@@ -79,10 +81,11 @@ public class PrefabAwareEntityPersistorTest {
         componentManager = new CodeGenComponentManager(typeLibrary);
 
         ModuleEnvironment moduleEnvironment;
-        VirtualModuleEnvironment virtualModuleEnvironment = new VirtualModuleEnvironment(getClass());
-        moduleEnvironment = virtualModuleEnvironment.createEnvironment();
-        assetTypeManager.registerAssetType(Prefab.class, Prefab::new, false, "prefabs");
-        assetTypeManager.registerCoreFormat(Prefab.class, new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
+        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
+        moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
+        AssetType<Prefab, PrefabData> prefabAssetType = assetTypeManager.createAssetType(Prefab.class, Prefab::new, "prefabs");
+        AssetFileDataProducer<PrefabData> prefabDataProducer = assetTypeManager.getAssetFileDataProducer(prefabAssetType);
+        prefabDataProducer.addAssetFormat(new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
         assetTypeManager.switchEnvironment(moduleEnvironment);
         persistor = new PrefabAwareEntityPersistor(componentManager, context, new ComponentManifest(moduleEnvironment, componentManager), new EntityRecipeManifest(assetManager));
 
