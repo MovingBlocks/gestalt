@@ -120,6 +120,8 @@ configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.starts
     }
 
     pmd {
+        // Set PMD to an older version than Gradle default - the pmd.xml needs to be updated for a newer PMD version
+        toolVersion = '4.3'
         ignoreFailures = true
         ruleSetFiles = files(new File(rootDir, "config/pmd/pmd.xml"))
     }
