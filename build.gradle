@@ -133,6 +133,10 @@ configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.starts
         reportLevel = 'medium'
         excludeFilter = new File(rootDir, "config/findbugs/findbugs-exclude.xml")
     }
+
+    javadoc {
+        failOnError = false
+    }
 }
 
 // gradle wrapper version
