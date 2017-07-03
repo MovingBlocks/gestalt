@@ -46,6 +46,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -132,29 +133,55 @@ public class CodeGenComponentManager implements ComponentManager {
 
             Collection<PropertyAccessor<T, ?>> accessorList = discoverProperties(type);
 
-            for (PropertyAccessor<T, ?> accessor : accessorList) {
-                generateGettersAndSetters(componentClass, accessor);
+
+            if (accessorList.isEmpty()) {
+                generateEmptyComponent(type, componentClass);
+            } else {
+                generateNormalComponent(type, componentClass, accessorList);
             }
 
-            generateConstructor(componentClass);
-            generateEquals(componentClass, accessorList);
-            generateHashCode(componentClass, accessorList);
-            generateGetType(componentClass, type);
-
             Class<? extends T> implementationClass = componentClass.toClass(targetLoader, type.getProtectionDomain());
-            ComponentPropertyInfo<T> propertyInfo = new ComponentPropertyInfo<>(accessorList);
-            return new ComponentType<>(() -> {
+            Supplier<T> supplier;
+            if (accessorList.isEmpty()) {
                 try {
-                    return implementationClass.newInstance();
-                } catch (InstantiationException | IllegalAccessException e) {
-                    throw new RuntimeException("Failed to instantiate component " + type.getName(), e);
+                    T componentInstance = implementationClass.newInstance();
+                    supplier = () -> componentInstance;
+                } catch (InstantiationException|IllegalAccessException e) {
+                    throw new RuntimeException("Error generating singleton component '" + type.getName() + "'", e);
                 }
-            }, type, propertyInfo, new ComponentCopyFunction<>(propertyInfo, typeLibrary));
+            } else {
+                supplier = () -> {
+                    try {
+                        return implementationClass.newInstance();
+                    } catch (InstantiationException | IllegalAccessException e) {
+                        throw new RuntimeException("Failed to instantiate component " + type.getName(), e);
+                    }
+                };
+            }
+            ComponentPropertyInfo<T> propertyInfo = new ComponentPropertyInfo<>(accessorList);
+            return new ComponentType<>(supplier, type, propertyInfo, new ComponentCopyFunction<>(propertyInfo, typeLibrary));
+
         } catch (CannotCompileException e) {
             throw new RuntimeException("Error compiling component implementation '" + type.getName() + "'", e);
         } catch (NotFoundException e) {
             throw new RuntimeException("Error resolving component interface '" + type.getName() + "'", e);
         }
+    }
+
+    private <T extends Component> void generateEmptyComponent(Class<T> type, CtClass componentClass) throws CannotCompileException {
+        generateConstructor(componentClass);
+        generateGetType(componentClass, type);
+    }
+
+    private <T extends Component> void generateNormalComponent(Class<T> type, CtClass componentClass, Collection<PropertyAccessor<T, ?>> accessorList) throws CannotCompileException {
+        for (PropertyAccessor<T, ?> accessor : accessorList) {
+            generateGettersAndSetters(componentClass, accessor);
+        }
+
+        generateConstructor(componentClass);
+        generateEquals(componentClass, accessorList);
+        generateHashCode(componentClass, accessorList);
+        generateGetType(componentClass, type);
     }
 
     private void generateConstructor(CtClass componentClass) throws CannotCompileException {
