@@ -325,13 +325,16 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         Optional<? extends Asset<U>> result = asset.createCopy(asset.getUrn().getInstanceUrn());
         if (!result.isPresent()) {
             try {
-                for (AssetDataProducer<U> producer : producers) {
-                    Optional<U> data = producer.getAssetData(asset.getUrn());
-                    if (data.isPresent()) {
-                        return Optional.of(loadAsset(asset.getUrn().getInstanceUrn(), data.get()));
+                return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
+                    for (AssetDataProducer<U> producer : producers) {
+                        Optional<U> data = producer.getAssetData(asset.getUrn());
+                        if (data.isPresent()) {
+                            return Optional.of(loadAsset(asset.getUrn().getInstanceUrn(), data.get()));
+                        }
                     }
-                }
-            } catch (IOException e) {
+                    return Optional.ofNullable(assetClass.cast(result.get()));
+                });
+            } catch (PrivilegedActionException e) {
                 logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e);
             }
         }
