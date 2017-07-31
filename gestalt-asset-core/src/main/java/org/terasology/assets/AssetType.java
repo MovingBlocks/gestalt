@@ -335,7 +335,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                     return Optional.ofNullable(assetClass.cast(result.get()));
                 });
             } catch (PrivilegedActionException e) {
-                logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e);
+                logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e.getCause());
             }
         }
         return Optional.ofNullable(assetClass.cast(result.get()));
