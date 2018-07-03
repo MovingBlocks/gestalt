@@ -127,7 +127,7 @@ public class ModuleAwareAssetTypeManager implements AssetTypeManager, Closeable 
     }
 
     @Override
-    public synchronized void close() {
+    public synchronized void close() throws IOException {
         for (AssetType assetType : assetTypes.values()) {
             assetType.close();
         }

@@ -99,7 +99,7 @@ public class AssetDataFile {
         try {
             return AccessController.doPrivileged((PrivilegedExceptionAction<BufferedInputStream>) () -> {
                 Preconditions.checkState(Files.isRegularFile(path));
-                new BufferedInputStream(Files.newInputStream(path))
+                return new BufferedInputStream(Files.newInputStream(path));
             });
         } catch (PrivilegedActionException e) {
             throw new IOException("Failed to open stream for '" + path + "'", e);
