@@ -96,9 +96,11 @@ public class AssetDataFile {
      * @throws IOException If there was an error opening the file
      */
     public BufferedInputStream openStream() throws IOException {
-        Preconditions.checkState(Files.isRegularFile(path));
         try {
-            return AccessController.doPrivileged((PrivilegedExceptionAction<BufferedInputStream>) () -> new BufferedInputStream(Files.newInputStream(path)));
+            return AccessController.doPrivileged((PrivilegedExceptionAction<BufferedInputStream>) () -> {
+                Preconditions.checkState(Files.isRegularFile(path));
+                return new BufferedInputStream(Files.newInputStream(path));
+            });
         } catch (PrivilegedActionException e) {
             throw new IOException("Failed to open stream for '" + path + "'", e);
         }
