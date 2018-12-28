@@ -1,3 +1,3 @@
 rootProject.name = 'gestalt'
-
-include 'gestalt-util', 'gestalt-module', 'gestalt-module:testpack-api', 'gestalt-module:testpack:moduleA', 'gestalt-module:testpack:moduleB', 'gestalt-module:testpack:moduleC', 'gestalt-module:testpack:moduleD', 'gestalt-asset-core', 'gestalt-entity-system'
+//include 'gestalt-util', 'gestalt-module', 'gestalt-module:testpack-api', 'gestalt-module:testpack:moduleA', 'gestalt-module:testpack:moduleB', 'gestalt-module:testpack:moduleC', 'gestalt-module:testpack:moduleD', 'gestalt-asset-core', 'gestalt-entity-system'
+include 'gestalt-util', 'gestalt-android-testbed'

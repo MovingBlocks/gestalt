@@ -19,12 +19,12 @@ package org.terasology.util.collection;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import gnu.trove.map.TObjectIntMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -35,7 +35,7 @@ public class KahnSorter<T> implements TopologicalSorter<T> {
     private Set<T> openNodes = Sets.newLinkedHashSet();
 
     private ListMultimap<T, T> dependentsLookup = ArrayListMultimap.create();
-    private TObjectIntMap<T> dependencyCount = new TObjectIntHashMap<>();
+    private Map<T, Integer> dependencyCount = Maps.newLinkedHashMap();
 
     @Override
     public void addNode(T node) {
@@ -51,7 +51,11 @@ public class KahnSorter<T> implements TopologicalSorter<T> {
     public void addEdge(T fromNode, T toNode) {
         openNodes.remove(toNode);
         dependentsLookup.put(fromNode, toNode);
-        dependencyCount.adjustOrPutValue(toNode, 1, 1);
+        if (dependencyCount.containsKey(toNode)) {
+            dependencyCount.put(toNode, dependencyCount.get(toNode) + 1);
+        } else {
+            dependencyCount.put(toNode, 1);
+        }
     }
 
     @Override
@@ -63,7 +67,13 @@ public class KahnSorter<T> implements TopologicalSorter<T> {
             resultList.add(node);
 
             for (T dependent : dependentsLookup.removeAll(node)) {
-                int dependencies = dependencyCount.adjustOrPutValue(dependent, -1, 0);
+                int dependencies = 0;
+                if (dependencyCount.containsKey(dependent)) {
+                    dependencies = dependencyCount.get(dependent) - 1;
+                    dependencyCount.put(dependent, dependencies);
+                } else {
+                    dependencyCount.put(dependent, 0);
+                }
                 if (dependencies == 0) {
                     openNodes.add(dependent);
                 }

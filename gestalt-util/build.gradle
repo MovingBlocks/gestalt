@@ -5,11 +5,22 @@
  * - View tasks for this project: $ gradlew tasks
  */
 
+apply plugin: 'java'
+ 
 // Primary dependencies definition
 dependencies {
-    compile group: 'com.googlecode.gentyref', name: 'gentyref', version: '1.2.0'
-    compile 'net.sf.trove4j:trove4j:3.0.3'
+    implementation 'com.googlecode.gentyref:gentyref:1.2.0'
+	implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'com.google.guava:guava:27.0.1-android'
+
+	// These dependencies are only needed for running tests
+	testImplementation 'junit:junit:4.12'
+	testImplementation 'ch.qos.logback:logback-classic:1.2.3'
+	testImplementation 'org.mockito:mockito-core:1.10.19'
 }
 
 // Library and distribution config
 description = 'Common utility classes'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
