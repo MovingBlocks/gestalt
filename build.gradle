@@ -4,29 +4,37 @@
  * - Gradle Documentation: http://gradle.org/documentation
  * - View tasks for this project: $ gradlew tasks
  */
-apply plugin: 'project-report'
+
+buildscript {   
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.1'
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
 
 allprojects {
-    apply plugin: 'idea'
-    
-    group = 'org.terasology'
-
-    // Declare remote repositories we're interested in - library files will be fetched from here
     repositories {
-        // Main Maven repo
-        mavenCentral()
-        maven {
+        google()
+        jcenter()
+		maven {
             url "http://artifactory.terasology.org/artifactory/repo"
         }
     }
 }
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'eclipse'
-}
+// Library and distribution config
+description = 'A set of libraries providing core capabilities for games and game engines'
 
-configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.startsWith("module") }) {
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+ 
+/*configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.startsWith("module") }) {
     apply plugin: 'checkstyle'
     apply plugin: 'pmd'
     apply plugin: 'findbugs'
@@ -137,124 +145,6 @@ configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.starts
     javadoc {
         failOnError = false
     }
-}
+}*/
 
-// gradle wrapper version
-wrapper {
-    gradleVersion '2.14'
-}
 
-ext {
-    // Read environment variables, including variables passed by jenkins continuous integration server
-    env = System.getenv()
-}
-
-// Dependencies needed for what our Gradle scripts themselves use. It cannot be included via an external Gradle file :-(
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url 'http://dl.bintray.com/jfrog/jfrog-jars'
-        }
-    }
-
-    dependencies {
-        // Artifactory plugin
-        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.2.3')
-    }
-}
-
-// Library and distribution config
-description = 'A set of libraries providing core capabilities for games and game engines'
-
-// Setup IntelliJ-IDEA
-idea {
-    project {
-        jdkName = '1.8'
-        languageLevel = 'JDK_1_8'
-
-        ipr {
-            withXml { xmlProvider ->
-                def iprNode = xmlProvider.asNode()
-
-                ideaActivateGit(iprNode)
-                ideaActivateCheckstyle(iprNode)
-                ideaActivateCopyright(iprNode)
-            }
-        }
-    }
-
-    module {
-        // Exclude Gradle dir
-        excludeDirs += file('gradle')
-
-        // Exclude Eclipse dirs
-        excludeDirs += file('bin')
-        excludeDirs += file('.settings')
-    }
-
-    workspace.iws.withXml { xmlProvider ->
-        def iwsNode = xmlProvider.asNode()
-        def runManager = iwsNode.find { it.@name == 'RunManager' }
-        def junitDefault = runManager.find { it.@factoryName == 'JUnit' }
-        def workingDir = junitDefault.find { it.@name == 'WORKING_DIRECTORY' }
-        workingDir.@value = 'file://$MODULE_DIR$'
-    }
-
-}
-
-ext {
-
-    // Activate 'git' as VCS
-    ideaActivateGit = { Node iprNode ->
-        def vcsMappings = iprNode.component.find { it.'@name' == 'VcsDirectoryMappings' }
-        vcsMappings.mapping.@vcs = 'Git'
-    }
-
-    // Activate and config 'Checkstyle' plugin
-    ideaActivateCheckstyle = { Node iprNode ->
-        def checkstyle = iprNode.component.find { it.'@name' == 'CheckStyle-IDEA' }
-        if (checkstyle == null) {
-            // Create new CheckStyle component
-            checkstyle = iprNode.appendNode('component', [name: 'CheckStyle-IDEA'])
-            // use NodeBuilder to create the config block in the xml structure
-            def builder = new NodeBuilder()
-            def option = builder.option(name: 'configuration') {
-                map {
-                    entry(key: 'active-configuration',
-                            value: 'PROJECT_RELATIVE:$PROJECT_DIR$/config/checkstyle/checkstyle.xml:gestalt CheckStyle')
-                    entry(key: 'check-nonjava-files', value: false)
-                    entry(key: 'check-test-classes', value: true)
-                    entry(key: 'location-0',
-                            value: 'CLASSPATH:/sun_checks.xml:The default CheckStyle rules')
-                    entry(key: 'location-1',
-                            value: 'PROJECT_RELATIVE:$PROJECT_DIR$/config/checkstyle/checkstyle.xml:gestalt CheckStyle')
-                    entry(key: 'property-1.samedir', value: 'config/checkstyle')
-                    entry(key: 'suppress-errors', value: false)
-                    entry(key: 'thirdparty-classpath', value: '')
-                }
-            }
-            // Add result from NodeBuilder
-            checkstyle.append option
-        }
-    }
-
-    // Activate copyright conventions
-    ideaActivateCopyright = { Node iprNode ->
-        def copyrightManager = iprNode.component.find { it.'@name' == 'CopyrightManager' }
-        copyrightManager.'@default' = "gestalt-module"
-        def copyright = copyrightManager.copyright.find { it.option.find { it.'@name' == "myName" }?.'@value' == "gestalt-module" }
-        if (copyright == null) {
-            copyrightManager.append(new XmlParser().parseText('''
-                <copyright>
-                    <option name="notice" value="Copyright 2015 MovingBlocks&#10;&#10;Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);&#10;you may not use this file except in compliance with the License.&#10;You may obtain a copy of the License at&#10;&#10;     http://www.apache.org/licenses/LICENSE-2.0&#10;&#10;Unless required by applicable law or agreed to in writing, software&#10;distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#10;WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#10;See the License for the specific language governing permissions and&#10;limitations under the License." />
-                    <option name="keyword" value="Copyright" />
-                    <option name="allowReplaceKeyword" value="" />
-                    <option name="myName" value="gestalt-module" />
-                    <option name="myLocal" value="true" />
-                </copyright>
-            '''))
-        }
-    }
-
-}
