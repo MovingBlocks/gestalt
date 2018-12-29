@@ -21,6 +21,4 @@
  * - View tasks for this project: $ gradlew tasks
  */
 
-jar {
-    version = ''
-}
+apply plugin: 'java'
