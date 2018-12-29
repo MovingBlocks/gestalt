@@ -5,13 +5,13 @@
  * - View tasks for this project: $ gradlew tasks
  */
 
-apply plugin: 'java'
+apply plugin: 'java-library'
  
 // Primary dependencies definition
 dependencies {
-    implementation 'com.googlecode.gentyref:gentyref:1.2.0'
+    api 'com.google.guava:guava:27.0.1-android'
+	implementation 'com.googlecode.gentyref:gentyref:1.2.0'
 	implementation 'org.slf4j:slf4j-api:1.7.25'
-    implementation 'com.google.guava:guava:27.0.1-android'
 
 	// These dependencies are only needed for running tests
 	testImplementation 'junit:junit:4.12'

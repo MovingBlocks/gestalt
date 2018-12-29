@@ -7,8 +7,8 @@
 
 // Primary dependencies definition
 dependencies {
-    compile project(":gestalt-util")
-    compile project(":gestalt-module")
+    api project(":gestalt-util")
+    api project(":gestalt-module")
 }
 
 description = 'Provides support for assets - binary resources that can be loaded from modules or procedurally generated at runtime.'
