@@ -55,11 +55,9 @@ public class TableModuleRegistry implements ModuleRegistry {
             }
             return true;
         } else {
-            logger.error("Module {}-{} already registered from {}, cannot register same module from {}",
+            logger.error("Duplicate module {}-{} discovered",
                     module.getId(),
-                    module.getVersion(),
-                    modules.get(module.getId(), module.getVersion()).getLocations(),
-                    module.getLocations());
+                    module.getVersion());
         }
         return false;
     }

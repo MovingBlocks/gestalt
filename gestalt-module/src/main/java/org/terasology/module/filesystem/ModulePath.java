@@ -16,6 +16,8 @@
 
 package org.terasology.module.filesystem;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
@@ -50,6 +52,7 @@ import java.util.Set;
  *
  * @author Immortius
  */
+@RequiresApi(26)
 class ModulePath implements Path {
 
     private static final String SAME_DIR_INDICATOR = ".";
@@ -292,7 +295,8 @@ class ModulePath implements Path {
 
         ModulePath normalisedPath = toAbsolutePath().normalize();
 
-        for (Path location : module.get().getLocations()) {
+        for (File rawLocation : module.get().getResourcePaths()) {
+            Path location = rawLocation.toPath();
             if (Files.isDirectory(location)) {
                 Path actualLocation = applyModulePathToActual(location, normalisedPath);
                 if (Files.exists(actualLocation)) {
@@ -430,7 +434,8 @@ class ModulePath implements Path {
 
         ModulePath normalisedPath = toAbsolutePath().normalize();
 
-        for (Path location : module.get().getLocations()) {
+        for (File rawLocation : module.get().getResourcePaths()) {
+            Path location = rawLocation.toPath();
             if (Files.isDirectory(location)) {
                 Path actualLocation = applyModulePathToActual(location, normalisedPath);
                 if (Files.exists(actualLocation)) {
@@ -463,7 +468,8 @@ class ModulePath implements Path {
         }
 
         ModulePath normalisedPath = toAbsolutePath().normalize();
-        for (Path location : module.get().getLocations()) {
+        for (File rawLocation : module.get().getResourcePaths()) {
+            Path location = rawLocation.toPath();
             if (Files.isDirectory(location)) {
                 Path actualLocation = applyModulePathToActual(location, normalisedPath);
                 if (Files.exists(actualLocation)) {

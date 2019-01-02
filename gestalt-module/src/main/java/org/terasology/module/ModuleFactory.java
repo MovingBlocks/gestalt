@@ -16,6 +16,8 @@
 
 package org.terasology.module;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -46,6 +48,7 @@ import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -54,25 +57,26 @@ import java.util.zip.ZipFile;
 /**
  * A factory for creating various configurations of modules.
  */
+@RequiresApi(26)
 public class ModuleFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleFactory.class);
 
-    private Path defaultCodeSubpath = Paths.get("build", "classes");
-    private Path defaultLibsSubpath = Paths.get("libs");
-    private final Map<Path, ModuleMetadataLoader> moduleMetadataLoaderMap = Maps.newLinkedHashMap();
-    private Path reflectionsCachePath = Paths.get("reflections.cache");
+    private File defaultCodeSubpath = new File("build/classes");
+    private File defaultLibsSubpath = new File("libs");
+    private final Map<String, ModuleMetadataLoader> moduleMetadataLoaderMap = Maps.newLinkedHashMap();
+    private String manifestFilename = "reflections.cache";
 
     public ModuleFactory() {
-        moduleMetadataLoaderMap.put(Paths.get("module.json"), new ModuleMetadataJsonAdapter());
+        moduleMetadataLoaderMap.put("module.json", new ModuleMetadataJsonAdapter());
     }
 
     /**
      * @param defaultCodeSubpath The default subpath in a path module that contains code (compiled class files)
      * @param defaultLibsSubpath The default subpath in a path module that contains libraries (jars)
      */
-    public ModuleFactory(Path defaultCodeSubpath, Path defaultLibsSubpath) {
-        this(defaultCodeSubpath, defaultLibsSubpath, ImmutableMap.of(Paths.get("module.json"), new ModuleMetadataJsonAdapter()));
+    public ModuleFactory(File defaultCodeSubpath, File defaultLibsSubpath) {
+        this(defaultCodeSubpath, defaultLibsSubpath, ImmutableMap.of("module.json", new ModuleMetadataJsonAdapter()));
     }
 
     /**
@@ -80,7 +84,7 @@ public class ModuleFactory {
      * @param defaultLibsSubpath The default subpath in a path module that contains libraries (jars)
      * @param metadataLoaders    A map of relative paths/files to metadata loaders to use for loading module metadata
      */
-    public ModuleFactory(Path defaultCodeSubpath, Path defaultLibsSubpath, Map<Path, ModuleMetadataLoader> metadataLoaders) {
+    public ModuleFactory(File defaultCodeSubpath, File defaultLibsSubpath, Map<String, ModuleMetadataLoader> metadataLoaders) {
         this.moduleMetadataLoaderMap.putAll(metadataLoaders);
         this.defaultCodeSubpath = defaultCodeSubpath;
         this.defaultLibsSubpath = defaultLibsSubpath;
@@ -89,7 +93,7 @@ public class ModuleFactory {
     /**
      * @return The subpath of a path module that contains compiled code
      */
-    public Path getDefaultCodeSubpath() {
+    public File getDefaultCodeSubpath() {
         return defaultCodeSubpath;
     }
 
@@ -98,14 +102,14 @@ public class ModuleFactory {
      *
      * @param defaultCodeSubpath
      */
-    public void setDefaultCodeSubpath(Path defaultCodeSubpath) {
+    public void setDefaultCodeSubpath(File defaultCodeSubpath) {
         this.defaultCodeSubpath = defaultCodeSubpath;
     }
 
     /**
      * @return The subpath of a path module that contains libraries
      */
-    public Path getDefaultLibsSubpath() {
+    public File getDefaultLibsSubpath() {
         return defaultLibsSubpath;
     }
 
@@ -114,32 +118,63 @@ public class ModuleFactory {
      *
      * @param defaultLibsSubpath
      */
-    public void setDefaultLibsSubpath(Path defaultLibsSubpath) {
+    public void setDefaultLibsSubpath(File defaultLibsSubpath) {
         this.defaultLibsSubpath = defaultLibsSubpath;
     }
 
     /**
      * @return The map of paths to module metadata loaders used for loading metadata describing modules
      */
-    public Map<Path, ModuleMetadataLoader> getModuleMetadataLoaderMap() {
+    public Map<String, ModuleMetadataLoader> getModuleMetadataLoaderMap() {
         return moduleMetadataLoaderMap;
     }
 
     /**
      * @return T
      */
-    public Path getReflectionsCachePath() {
-        return reflectionsCachePath;
+    public String getManifestFilename() {
+        return manifestFilename;
     }
 
     /**
      * Sets the path of the reflections cache file that will be loaded from modules.
      *
-     * @param reflectionsCachePath
+     * @param manifestFilename
      */
-    public void setReflectionsCachePath(Path reflectionsCachePath) {
-        this.reflectionsCachePath = reflectionsCachePath;
+    public void setManifestFilename(String manifestFilename) {
+        this.manifestFilename = manifestFilename;
     }
+
+    /**
+     * Creates a module for the full classpath. This module includes everything on the runtime.
+     *
+     * Suggested use is either for a base module for a game, or else situations where modules aren't
+     * really being used.
+     * @param metadata The metadata describing the module
+     * @return A module covering the complete classpath
+     */
+    public Module createClasspathModule(ModuleMetadata metadata) {
+        Reflections manifest = new Reflections();
+        try {
+            Enumeration<URL> resources = getClass().getClassLoader().getResources(getManifestFilename());
+            while (resources.hasMoreElements()) {
+                try (InputStream stream = resources.nextElement().openStream()) {
+                    manifest.collect(stream);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new Module(metadata, Collections.emptyList(), Collections.emptyList(), null, x -> true, x -> true);
+    }
+
+
+    // Directory module
+
+    // Archive module
+
+    // Package module
 
     /**
      * Creates a module for a path, depending on whether it is a directory or a file.
@@ -178,7 +213,7 @@ public class ModuleFactory {
      * @throws IOException If the module fails to load, including if the module metadata file cannot be found or loaded.
      */
     public Module createPathModule(Path path) throws IOException {
-        for (Map.Entry<Path, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
+        for (Map.Entry<String, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
             Path modInfoFile = path.resolve(entry.getKey());
             if (Files.isRegularFile(modInfoFile)) {
                 try (Reader reader = Files.newBufferedReader(modInfoFile, Charsets.UTF_8)) {
@@ -197,8 +232,8 @@ public class ModuleFactory {
      */
     public Module createArchiveModule(Path modulePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(modulePath.toFile())) {
-            for (Map.Entry<Path, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
-                ZipEntry modInfoEntry = zipFile.getEntry(entry.getKey().toString());
+            for (Map.Entry<String, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
+                ZipEntry modInfoEntry = zipFile.getEntry(entry.getKey());
                 if (modInfoEntry != null) {
                     try (Reader reader = new InputStreamReader(zipFile.getInputStream(modInfoEntry), Charsets.UTF_8)) {
                         try {
@@ -222,7 +257,7 @@ public class ModuleFactory {
      * @return A new module for the given directory
      */
     public Module createPathModule(Path path, ModuleMetadata metadata) {
-        return createPathModule(path, path.resolve(defaultCodeSubpath), path.resolve(defaultLibsSubpath), metadata);
+        return createPathModule(path, path.resolve(defaultCodeSubpath.toPath()), path.resolve(defaultLibsSubpath.toPath()), metadata);
     }
 
     /**
@@ -259,7 +294,8 @@ public class ModuleFactory {
 
         Reflections reflectionsCache = readReflectionsCacheFromPath(path, null);
 
-        return new Module(Collections.singletonList(path), classpathBuilder.build(), metadata, reflectionsCache);
+        //return new Module(Collections.singletonList(path), classpathBuilder.build(), metadata, reflectionsCache);
+        return null;
     }
 
     /**
@@ -271,12 +307,10 @@ public class ModuleFactory {
      */
     public Module createArchiveModule(Path path, ModuleMetadata metadata) {
         Preconditions.checkArgument(Files.isRegularFile(path));
-        try {
-            Reflections reflectionsCache = readReflectionsCacheFromArchive(path, null);
-            return new Module(Collections.singletonList(path), ImmutableList.of(path.toUri().toURL()), metadata, reflectionsCache);
-        } catch (MalformedURLException e) {
-            throw new InvalidModulePathException("Could not convert path to URL: " + path, e);
-        }
+        Reflections reflectionsCache = readReflectionsCacheFromArchive(path, null);
+        //return new Module(Collections.singletonList(path), ImmutableList.of(path.toUri().toURL()), metadata, reflectionsCache);
+        return null;
+
     }
 
     /**
@@ -302,7 +336,8 @@ public class ModuleFactory {
                 throw new InvalidModulePathException("Path cannot be converted to URL: " + path, e);
             }
         }
-        return new Module(paths, builder.build(), true, metadata, reflectionsCache);
+        return null;
+        //return new Module(paths, builder.build(), true, metadata, reflectionsCache);
     }
 
     /**
@@ -383,9 +418,9 @@ public class ModuleFactory {
     }
 
     private Reflections readReflectionsCacheFromPath(Path path, Reflections reflectionsCache) {
-        Path reflectionsCacheFile = path.resolve(reflectionsCachePath);
+        Path reflectionsCacheFile = path.resolve(manifestFilename);
         if (Files.isRegularFile(reflectionsCacheFile)) {
-            try (InputStream stream = new BufferedInputStream(Files.newInputStream(path.resolve(reflectionsCachePath)))) {
+            try (InputStream stream = new BufferedInputStream(Files.newInputStream(path.resolve(manifestFilename)))) {
                 if (reflectionsCache == null) {
                     reflectionsCache = new ConfigurationBuilder().getSerializer().read(stream);
                 } else {
@@ -400,7 +435,7 @@ public class ModuleFactory {
 
     private Reflections readReflectionsCacheFromArchive(Path path, Reflections reflectionsCache) {
         try (ZipFile zipFile = new ZipFile(path.toFile())) {
-            ZipEntry modInfoEntry = zipFile.getEntry(reflectionsCachePath.toString());
+            ZipEntry modInfoEntry = zipFile.getEntry(manifestFilename.toString());
             if (modInfoEntry != null) {
                 try (InputStream stream = zipFile.getInputStream(modInfoEntry)) {
                     if (reflectionsCache == null) {

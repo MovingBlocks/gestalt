@@ -62,8 +62,9 @@ public class DependencyResolverTestBase {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name(id));
         metadata.setVersion(new Version(version));
-        Module module = new Module(Collections.emptyList(), Collections.emptyList(), metadata, null);
-        forRegistry.add(module);
-        return module;
+//        Module module = new Module(Collections.emptyList(), Collections.emptyList(), metadata, null);
+//        forRegistry.add(module);
+//        return module;
+        return null;
     }
 }

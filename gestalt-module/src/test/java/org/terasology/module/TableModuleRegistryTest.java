@@ -77,6 +77,7 @@ public class TableModuleRegistryTest {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(name);
         metadata.setVersion(version);
-        return new Module(Collections.emptyList(), Collections.emptyList(), metadata, null);
+        //return new Module(Collections.emptyList(), Collections.emptyList(), metadata, null);
+        return null;
     }
 }
