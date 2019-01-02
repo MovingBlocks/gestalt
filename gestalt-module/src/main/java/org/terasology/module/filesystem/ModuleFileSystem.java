@@ -16,6 +16,8 @@
 
 package org.terasology.module.filesystem;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.terasology.module.ModuleEnvironment;
@@ -45,6 +47,7 @@ import java.util.stream.Collectors;
  *
  * @author Immortius
  */
+@RequiresApi(26)
 class ModuleFileSystem extends FileSystem {
 
     private static final Set<String> SUPPORTED_FILE_ATTRIBUTE_VIEWS = ImmutableSet.of("basic");

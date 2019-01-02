@@ -16,6 +16,8 @@
 
 package org.terasology.module.filesystem;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,7 @@ import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
@@ -65,6 +68,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Immortius
  */
+@RequiresApi(26)
 public class ModuleFileSystemProvider extends FileSystemProvider {
 
     public static final String SCHEME = "module";
@@ -261,7 +265,8 @@ public class ModuleFileSystemProvider extends FileSystemProvider {
                 throw new NotDirectoryException("No such module in the environment: " + moduleName);
             }
 
-            for (Path location : module.getLocations()) {
+            for (File rawLocation : module.getResourcePaths()) {
+                Path location = rawLocation.toPath();
                 try {
                     if (Files.isDirectory(location)) {
                         Path actualLocation = ModulePath.applyModulePathToActual(location, normalisedPath);
