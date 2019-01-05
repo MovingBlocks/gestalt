@@ -1,0 +1,129 @@
+package org.terasology.module.resources;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.io.CharStreams;
+
+import org.junit.Test;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * Base class for testing ModuleFileSources. The expectation is that module file source will have
+ * this structure:
+ *
+ * <pre>
+ * hidden.txt
+ * content/readme.txt
+ * content/fake.class
+ * content/subfolder/test.resource (containing text "this space intentionally left blank")
+ * content/subfolder/subpath/another.resource
+ * content/folder/some.resource
+ * </pre>
+ */
+public abstract class BaseFileSourceTest {
+
+    public abstract ModuleFileSource getFileSource();
+
+    @Test
+    public void listFiles() {
+        Set<String> expected = Sets.newHashSet("readme.txt", "test.resource", "another.resource", "some.resource");
+        Set<String> actual = Sets.newLinkedHashSet();
+        for (ModuleFile moduleFile : getFileSource()) {
+            actual.add(moduleFile.toString());
+        }
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void listFilesInPath() {
+        List<String> expected = Lists.newArrayList("test.resource");
+        List<String> actual = Lists.newArrayList();
+        for (ModuleFile moduleFile : getFileSource().getFilesInPath(false, "subfolder")) {
+            actual.add(moduleFile.toString());
+        }
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void listFilesInPathRecursive() {
+        Set<String> expected = Sets.newHashSet("test.resource", "another.resource");
+        Set<String> actual = Sets.newLinkedHashSet();
+        for (ModuleFile moduleFile : getFileSource().getFilesInPath(true, "subfolder")) {
+            actual.add(moduleFile.toString());
+        }
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void listFilesInNonexistentPath() {
+        Set<String> expected = Collections.emptySet();
+        Set<String> actual = Sets.newLinkedHashSet();
+        for (ModuleFile moduleFile : getFileSource().getFilesInPath(true, "notafolder")) {
+            actual.add(moduleFile.toString());
+        }
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void listFilesBreakingDirectoryStructureFails() {
+        List<String> expected = Lists.newArrayList();
+        List<String> actual = Lists.newArrayList();
+        for (ModuleFile moduleFile : getFileSource().getFilesInPath(true, "..")) {
+            actual.add(moduleFile.toString());
+        }
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void getNonexistentFile() {
+        Optional<ModuleFile> file = getFileSource().getFile("missing.jpg");
+        assertFalse(file.isPresent());
+    }
+
+    @Test
+    public void getFileBreakingDirectoryStructureFails() {
+        Optional<ModuleFile> file = getFileSource().getFile("..", "hidden.txt");
+        assertFalse(file.isPresent());
+    }
+
+    @Test
+    public void getExistentFile() throws IOException {
+        Optional<ModuleFile> file = getFileSource().getFile("subfolder", "test.resource");
+        assertTrue(file.isPresent());
+        ModuleFile fullFile = file.get();
+
+        assertEquals(Lists.newArrayList("subfolder"), fullFile.getPath());
+        try (Reader reader = new InputStreamReader(fullFile.open(), Charsets.UTF_8)) {
+            String result = CharStreams.toString(reader);
+            assertEquals("this space intentionally left blank", result);
+        }
+    }
+
+    @Test
+    public void getSubpaths() {
+        assertEquals(Sets.newHashSet("subfolder", "folder"), getFileSource().getSubpaths());
+    }
+
+    @Test
+    public void getSubpathsOfSubpath() {
+        assertEquals(Sets.newHashSet("subpath"), getFileSource().getSubpaths("subfolder"));
+    }
+
+    @Test
+    public void getSubpathsResistsBreakingStructure() {
+        assertEquals(Collections.emptySet(), getFileSource().getSubpaths(".."));
+    }
+
+}

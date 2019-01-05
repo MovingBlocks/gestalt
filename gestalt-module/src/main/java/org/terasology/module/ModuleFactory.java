@@ -163,10 +163,11 @@ public class ModuleFactory {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // TODO
         }
 
-        return new Module(metadata, Collections.emptyList(), Collections.emptyList(), null, x -> true, x -> true);
+        //return new Module(metadata, Collections.emptyList(), Collections.emptyList(), null, x -> true, x -> true);
+        return null;
     }
 
 
