@@ -27,9 +27,15 @@ import org.terasology.module.ModuleRegistry;
 public class APIScanner {
 
     private StandardPermissionProviderFactory permissionProviderFactory;
+    private ClassLoader forClassLoader;
 
     public APIScanner(StandardPermissionProviderFactory permissionProviderFactory) {
+        this(permissionProviderFactory, ClassLoader.getSystemClassLoader());
+    }
+
+    public APIScanner(StandardPermissionProviderFactory permissionProviderFactory, ClassLoader forClassLoader) {
         this.permissionProviderFactory = permissionProviderFactory;
+        this.forClassLoader = forClassLoader;
     }
 
     /**
@@ -40,9 +46,7 @@ public class APIScanner {
      */
     public void scan(ModuleRegistry registry) {
         for (Module module : registry) {
-//            if (module.isOnClasspath()) {
-//                scan(module);
-//            }
+            scan(module);
         }
     }
 
@@ -52,21 +56,23 @@ public class APIScanner {
      * @param module The module to scan
      */
     public void scan(Module module) {
-//        for (Class<?> apiClass : module.getReflectionsFragment().getTypesAnnotatedWith(API.class, true)) {
-//            for (String permissionSetId : apiClass.getAnnotation(API.class).permissionSet()) {
-//                PermissionSet permissionSet = permissionProviderFactory.getPermissionSet(permissionSetId);
-//                if (permissionSet == null) {
-//                    permissionSet = new PermissionSet();
-//                    permissionProviderFactory.addPermissionSet(permissionSetId, permissionSet);
-//                }
-//                if (apiClass.isSynthetic()) {
-//                    // This is a package-info
-//                    permissionSet.addAPIPackage(apiClass.getPackage().getName());
-//                } else {
-//                    permissionSet.addAPIClass(apiClass);
-//                }
-//            }
-//        }
+        for (Class<?> apiClass : module.getModuleManifest().getTypesAnnotatedWith(API.class, true)) {
+            if (forClassLoader == apiClass.getClassLoader()) {
+                for (String permissionSetId : apiClass.getAnnotation(API.class).permissionSet()) {
+                    PermissionSet permissionSet = permissionProviderFactory.getPermissionSet(permissionSetId);
+                    if (permissionSet == null) {
+                        permissionSet = new PermissionSet();
+                        permissionProviderFactory.addPermissionSet(permissionSetId, permissionSet);
+                    }
+                    if (apiClass.isSynthetic()) {
+                        // This is a package-info
+                        permissionSet.addAPIPackage(apiClass.getPackage().getName());
+                    } else {
+                        permissionSet.addAPIClass(apiClass);
+                    }
+                }
+            }
+        }
     }
 
 }

@@ -39,7 +39,7 @@ public class APIScannerTest {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name("test"));
         metadata.setVersion(new Version("1.0.0"));
-        Module module = new ModuleFactory().createClasspathModule(metadata, true, getClass());
+        Module module = new ModuleFactory().createFullClasspathModule(metadata);
 
         StandardPermissionProviderFactory permissionProviderFactory = mock(StandardPermissionProviderFactory.class);
         PermissionSet permSet = new PermissionSet();

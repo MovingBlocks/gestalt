@@ -20,11 +20,16 @@ import java.util.Set;
  *     <li>It is possible to discover what files are within a path, optionally recursively</li>
  *     <li>A file can be streamed</li>
  * </ul>
+ *
+ * Paths are represented as a {@link List} of String path elements, where each element is a
+ * directory or file. For example, if the ModuleFileSource is reading from a directory
+ * "content/stuff/blurg", this would be represented as the path ["content", "stuff", "blurg"]
  */
 public interface ModuleFileSource extends Iterable<ModuleFile> {
 
     /**
-     * Obtain the handle to a specific file
+     * Obtain the handle to a specific file. The file path should be provided as one or more
+     * string elements that together compose the path
      * @param path The path to the file
      * @param morePath More path to the file
      * @return The requested file, or {@link Optional#empty()} if it doesn't exist
