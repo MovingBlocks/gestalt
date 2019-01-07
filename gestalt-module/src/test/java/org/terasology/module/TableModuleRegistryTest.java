@@ -17,6 +17,10 @@
 package org.terasology.module;
 
 import org.junit.Test;
+import org.reflections.Configuration;
+import org.reflections.Reflections;
+import org.reflections.util.ConfigurationBuilder;
+import org.terasology.module.resources.EmptyFileSource;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
@@ -77,7 +81,6 @@ public class TableModuleRegistryTest {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(name);
         metadata.setVersion(version);
-        //return new Module(Collections.emptyList(), Collections.emptyList(), metadata, null);
-        return null;
+        return new Module(metadata, new EmptyFileSource(), Collections.emptyList(), new Reflections(new ConfigurationBuilder()), x -> false);
     }
 }

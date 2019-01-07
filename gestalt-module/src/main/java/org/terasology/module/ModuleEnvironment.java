@@ -16,6 +16,8 @@
 
 package org.terasology.module;
 
+import android.support.annotation.NonNull;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -28,16 +30,25 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 
 import org.reflections.Reflections;
+import org.reflections.ReflectionsException;
+import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.dependencyresolution.DependencyInfo;
 import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleClassLoader;
+import org.terasology.module.sandbox.ObtainClassloader;
+import org.terasology.module.sandbox.PermissionProvider;
 import org.terasology.module.sandbox.PermissionProviderFactory;
 import org.terasology.naming.Name;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.FileSystem;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -64,13 +75,12 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
 
     private final ImmutableMap<Name, Module> modules;
     private final ClassLoader apiClassLoader;
-//    private final ClassLoader finalClassLoader;
-//    private final ImmutableList<ModuleClassLoader> managedClassLoaders;
-//    private final ImmutableSetMultimap<Name, Name> moduleDependencies;
-//    private final Reflections fullReflections;
+    private final ClassLoader finalClassLoader;
+    private final ImmutableList<ModuleClassLoader> managedClassLoaders;
+    private final ImmutableSetMultimap<Name, Name> moduleDependencies;
+    private final Reflections fullReflections;
     private final ImmutableList<Module> modulesOrderByDependencies;
     private final ImmutableList<Name> moduleIdsOrderedByDependencies;
-//    private final FileSystem fileSystem;
 
 
     /**
@@ -107,26 +117,21 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         this.modulesOrderByDependencies = calculateModulesOrderedByDependencies();
         this.moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(modulesOrderByDependencies, Module::getId));
 
-//        ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
-//        ClassLoader lastClassLoader = apiClassLoader;
-//        List<Module> orderedModules = getModulesOrderedByDependencies();
-//        for (final Module module : orderedModules) {
-//            if (module.isCodeModule()) {
-//                Optional<ModuleClassLoader> classLoader = determineClassloaderFor(module, lastClassLoader, permissionProviderFactory, injectors);
-//                if (classLoader.isPresent()) {
-//                    managedClassLoaderListBuilder.add(classLoader.get());
-//                    lastClassLoader = classLoader.get();
-//                }
-//                reflectionsByModule.put(module.getId(), module.getReflectionsFragment());
-//            }
-//        }
-//        this.finalClassLoader = lastClassLoader;
-//        this.fullReflections = buildFullReflections(reflectionsByModule);
-//        this.managedClassLoaders = managedClassLoaderListBuilder.build();
-//        this.moduleDependencies = buildModuleDependencies();
-//
-//        this.fileSystem = new ModuleFileSystemProvider().newFileSystem(this);
-
+        ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
+        ClassLoader lastClassLoader = apiClassLoader;
+        List<Module> orderedModules = getModulesOrderedByDependencies();
+        for (final Module module : orderedModules) {
+            if (!module.getClasspaths().isEmpty()) {
+                ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, injectors);
+                managedClassLoaderListBuilder.add(classLoader);
+                lastClassLoader = classLoader;
+            }
+            reflectionsByModule.put(module.getId(), module.getModuleManifest());
+        }
+        this.finalClassLoader = lastClassLoader;
+        this.fullReflections = buildFullReflections(reflectionsByModule);
+        this.managedClassLoaders = managedClassLoaderListBuilder.build();
+        this.moduleDependencies = buildModuleDependencies();
     }
 
     /**
@@ -150,20 +155,12 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @param injectors                 Any Bytecode Injectors that should be run over any loaded module class.
      * @return The new module classloader to use for this module, or absent if the parent classloader should be used.
      */
-    private Optional<ModuleClassLoader> determineClassloaderFor(final Module module, final ClassLoader parent,
-                                                                final PermissionProviderFactory permissionProviderFactory, final Iterable<BytecodeInjector> injectors) {
-//        if (!module.isOnClasspath()) {
-//            ModuleClassLoader moduleClassloader = AccessController.doPrivileged(new PrivilegedAction<ModuleClassLoader>() {
-//                @Override
-//                public ModuleClassLoader run() {
-//                    return new ModuleClassLoader(module.getId(), module.getClasspaths().toArray(new URL[module.getClasspaths().size()]),
-//                            parent, permissionProviderFactory.createPermissionProviderFor(module), injectors);
-//                }
-//            });
-//            return Optional.of(moduleClassloader);
-//        } else {
-            return Optional.empty();
-//        }
+    private ModuleClassLoader buildModuleClassLoader(final Module module, final ClassLoader parent,
+                                                     final PermissionProviderFactory permissionProviderFactory, final Iterable<BytecodeInjector> injectors) {
+        URL[] urls = module.getClasspaths().toArray(new URL[module.getClasspaths().size()]);
+        PermissionProvider permissionProvider = permissionProviderFactory.createPermissionProviderFor(module);
+        return AccessController.doPrivileged((PrivilegedAction<ModuleClassLoader>) () ->
+                    new ModuleClassLoader(module.getId(), urls, parent, permissionProvider, injectors));
     }
 
     /**
@@ -172,15 +169,13 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @param reflectionsByModule A map of reflection information for each module
      */
     private Reflections buildFullReflections(Map<Name, Reflections> reflectionsByModule) {
-//        ConfigurationBuilder fullBuilder = new ConfigurationBuilder()
-//                .addClassLoader(apiClassLoader)
-//                .addClassLoader(finalClassLoader);
-//        Reflections reflections = new Reflections(fullBuilder);
-//        for (Reflections moduleReflection : reflectionsByModule.values()) {
-//            reflections.merge(moduleReflection);
-//        }
-//        return reflections;
-        return null;
+        ConfigurationBuilder fullBuilder = new ConfigurationBuilder()
+                .addClassLoader(finalClassLoader);
+        Reflections reflections = new Reflections(fullBuilder);
+        for (Reflections moduleReflection : reflectionsByModule.values()) {
+            reflections.merge(moduleReflection);
+        }
+        return reflections;
     }
 
     private ImmutableSetMultimap<Name, Name> buildModuleDependencies() {
@@ -197,7 +192,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private ImmutableList<Module> calculateModulesOrderedByDependencies() {
         List<Module> result = Lists.newArrayList();
         List<Module> alphabeticallyOrderedModules = Lists.newArrayList(modules.values());
-        Collections.sort(alphabeticallyOrderedModules, Comparator.comparing(Module::getId));
+        alphabeticallyOrderedModules.sort(Comparator.comparing(Module::getId));
 
         for (Module module : alphabeticallyOrderedModules) {
             addModuleAfterDependencies(module, result);
@@ -230,13 +225,13 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
 
     @Override
     public void close() {
-//        for (ModuleClassLoader classLoader : managedClassLoaders) {
-//            try {
-//                classLoader.close();
-//            } catch (IOException e) {
-//                logger.error("Failed to close classLoader for module '" + classLoader.getModuleId() + "'", e);
-//            }
-//        }
+        for (ModuleClassLoader classLoader : managedClassLoaders) {
+            try {
+                classLoader.close();
+            } catch (IOException e) {
+                logger.error("Failed to close classLoader for module '" + classLoader.getModuleId() + "'", e);
+            }
+        }
     }
 
     /**
@@ -271,24 +266,15 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @return The module providing the class, or null if it doesn't come from a module.
      */
     public Name getModuleProviding(Class<?> type) {
-//        ClassLoader classLoader = AccessController.doPrivileged(new ObtainClassloader(type));
-//        if (classLoader instanceof ModuleClassLoader) {
-//            return ((ModuleClassLoader) classLoader).getModuleId();
-//        }
-//        try {
-//            Path sourceLocation = Paths.get(type.getProtectionDomain().getCodeSource().getLocation().toURI());
-//            for (Module module : modules.values()) {
-//                if (module.isCodeModule()) {
-//                    for (URL classpath : module.getClasspaths()) {
-//                        if (Paths.get(classpath.toURI()).equals(sourceLocation)) {
-//                            return module.getId();
-//                        }
-//                    }
-//                }
-//            }
-//        } catch (URISyntaxException e) {
-//            logger.error("Failed to convert url to uri for comparison", e);
-//        }
+        ClassLoader classLoader = AccessController.doPrivileged(new ObtainClassloader(type));
+        if (classLoader instanceof ModuleClassLoader) {
+            return ((ModuleClassLoader) classLoader).getModuleId();
+        }
+        for (Module module : modulesOrderByDependencies) {
+            if (module.getClassPredicate().test(type)) {
+                return module.getId();
+            }
+        }
         return null;
     }
 
@@ -297,8 +283,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @return The ids of the dependencies of the desired module
      */
     public Set<Name> getDependencyNamesOf(Name moduleId) {
-//        return moduleDependencies.get(moduleId);
-        return null;
+        return moduleDependencies.get(moduleId);
     }
 
     /**
@@ -307,12 +292,11 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @return A Iterable over all subtypes of type that appear in the module environment
      */
     public <U> Iterable<Class<? extends U>> getSubtypesOf(Class<U> type) {
-//        try {
-//            return fullReflections.getSubTypesOf(type);
-//        } catch (ReflectionsException e) {
-//            throw new ReflectionsException("Could not obtain subtypes of '" + type + "' - possible subclass without permission", e);
-//        }
-        return null;
+        try {
+            return fullReflections.getSubTypesOf(type);
+        } catch (ReflectionsException e) {
+            throw new ReflectionsException("Could not obtain subtypes of '" + type + "' - possible subclass without permission", e);
+        }
     }
 
     /**
@@ -322,8 +306,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @return A Iterable over all subtypes of type that appear in the module environment
      */
     public <U> Iterable<Class<? extends U>> getSubtypesOf(Class<U> type, Predicate<Class<?>> filter) {
-//        return Collections2.filter(fullReflections.getSubTypesOf(type), filter);
-        return null;
+        return Collections2.filter(fullReflections.getSubTypesOf(type), filter);
     }
 
     /**
@@ -332,8 +315,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * as @Inherited
      */
     public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation) {
-//        return fullReflections.getTypesAnnotatedWith(annotation, true);
-        return null;
+        return fullReflections.getTypesAnnotatedWith(annotation, true);
     }
 
     /**
@@ -343,17 +325,13 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * as @Inherited
      */
     public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation, Predicate<Class<?>> filter) {
-//        return Collections2.filter(fullReflections.getTypesAnnotatedWith(annotation, true), filter);
-        return null;
+        return Collections2.filter(fullReflections.getTypesAnnotatedWith(annotation, true), filter);
     }
 
+    @NonNull
     @Override
     public Iterator<Module> iterator() {
         return modules.values().iterator();
     }
 
-    public FileSystem getFileSystem() {
-//        return fileSystem;
-        return null;
-    }
 }

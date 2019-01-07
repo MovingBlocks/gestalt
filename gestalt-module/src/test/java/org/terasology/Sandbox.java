@@ -72,11 +72,7 @@ public class Sandbox {
         metadata.setId(new Name("Core"));
         metadata.setVersion(new Version("1.0.0"));
         ModuleFactory factory = new ModuleFactory();
-        try {
-            return factory.createClasspathModule(metadata, true, getClass());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException("Source location could not be converted to URI", e);
-        }
+        return factory.createFullClasspathModule(metadata);
     }
 
     public ModuleEnvironment establishSecureModuleEnvironment() {

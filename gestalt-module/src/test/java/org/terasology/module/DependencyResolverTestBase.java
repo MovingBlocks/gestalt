@@ -16,7 +16,11 @@
 
 package org.terasology.module;
 
+import org.reflections.Configuration;
+import org.reflections.Reflections;
+import org.reflections.util.ConfigurationBuilder;
 import org.terasology.module.dependencyresolution.DependencyInfo;
+import org.terasology.module.resources.EmptyFileSource;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
@@ -62,9 +66,9 @@ public class DependencyResolverTestBase {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name(id));
         metadata.setVersion(new Version(version));
-//        Module module = new Module(Collections.emptyList(), Collections.emptyList(), metadata, null);
-//        forRegistry.add(module);
-//        return module;
-        return null;
+        Configuration config = new ConfigurationBuilder();
+        Module module = new Module(metadata, new EmptyFileSource(), Collections.emptyList(), new Reflections(config), x -> false);
+        forRegistry.add(module);
+        return module;
     }
 }

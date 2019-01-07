@@ -15,6 +15,7 @@
  */
 package org.terasology.module;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.reflections.Reflections;
@@ -42,7 +43,7 @@ public final class Module {
     private static final Logger logger = LoggerFactory.getLogger(Module.class);
 
     private final ModuleMetadata metadata;
-    private final ImmutableList<ModuleFileSource> moduleFileSources;
+    private final ModuleFileSource moduleFileSources;
     private final ImmutableList<URL> moduleClasspaths;
     private final Predicate<Class<?>> classPredicate;
 
@@ -52,15 +53,18 @@ public final class Module {
      * Creates a module composed of the given paths, classpaths, and described by the given metadata.
      *
      * @param metadata The metadata describing the module
-     * @param fileSources Any sources of files that compose the module
+     * @param fileSources Any sources of files that compose the module. Must not be null - can be {@link org.terasology.module.resources.EmptyFileSource}
      * @param classpaths Any extra classpaths to load for the module
      * @param moduleManifest A manifest of the contents of the module. This should indicate all classes and any classpath provided resources.
      *                       Additionally this provides additional information on classes such as what they inherit and what annotations they are flagged with.
      * @param classPredicate Predicate to determine what classes to include from the main classpath (classes from the unloaded classpaths will be included automatically)
      */
-    public Module(ModuleMetadata metadata, Collection<ModuleFileSource> fileSources, Collection<URL> classpaths, Reflections moduleManifest, Predicate<Class<?>> classPredicate) {
+    public Module(ModuleMetadata metadata, ModuleFileSource fileSources, Collection<URL> classpaths, Reflections moduleManifest, Predicate<Class<?>> classPredicate) {
+        Preconditions.checkNotNull(metadata);
+        Preconditions.checkNotNull(fileSources);
+        Preconditions.checkNotNull(moduleManifest);
         this.metadata = metadata;
-        this.moduleFileSources = ImmutableList.copyOf(fileSources);
+        this.moduleFileSources = fileSources;
         this.moduleClasspaths = ImmutableList.copyOf(classpaths);
         this.classPredicate = classPredicate;
         this.moduleManifest = moduleManifest;
@@ -69,7 +73,7 @@ public final class Module {
     /**
      * @return A list of file sources composing the module
      */
-    public ImmutableList<ModuleFileSource> getFileSources() {
+    public ModuleFileSource getFileSource() {
         return moduleFileSources;
     }
 
@@ -115,35 +119,13 @@ public final class Module {
         return moduleManifest;
     }
 
+    /**
+     * @return A predicate that specifies whether a given class from the main classloader is a
+     * member of this module
+     */
     public Predicate<Class<?>> getClassPredicate() {
         return classPredicate;
     }
-
-    //
-//    /**
-//     * Provides the partial reflection information for this module, in isolation of other modules.  This information is of limited use by itself - without combining
-//     * it with the information from its dependencies, it will be unable to resolve subtypes if an intermediate class is missing. Discovered classes will also not be
-//     * instantiable.
-//     * <p>
-//     * Intended for use in building a reflection information for a complete environment.
-//     * </p>
-//     *
-//     * @return The partial reflection information for this module in isolation
-//     */
-//    public Reflections getReflectionsFragment() {
-//        Preconditions.checkState(isCodeModule(), "Cannot get reflections fragment for non-code module");
-//        if (reflectionsFragment == null) {
-//            scanForReflections();
-//        }
-//        return reflectionsFragment;
-//    }
-//
-//    private void scanForReflections() {
-//        reflectionsFragment = new Reflections(new ConfigurationBuilder()
-//                .addUrls(getClasspaths())
-//                .setScanners(new TypeAnnotationsScanner(), new SubTypesScanner())
-//                .addClassLoader(ClasspathHelper.staticClassLoader()));
-//    }
 
     @Override
     public boolean equals(Object obj) {
