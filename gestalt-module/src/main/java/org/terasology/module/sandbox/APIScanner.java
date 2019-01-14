@@ -16,6 +16,8 @@
 
 package org.terasology.module.sandbox;
 
+import com.google.common.reflect.Reflection;
+
 import org.terasology.module.Module;
 import org.terasology.module.ModuleRegistry;
 
@@ -66,7 +68,7 @@ public class APIScanner {
                     }
                     if (apiClass.isSynthetic()) {
                         // This is a package-info
-                        permissionSet.addAPIPackage(apiClass.getPackage().getName());
+                        permissionSet.addAPIPackage(Reflection.getPackageName(apiClass));
                     } else {
                         permissionSet.addAPIClass(apiClass);
                     }

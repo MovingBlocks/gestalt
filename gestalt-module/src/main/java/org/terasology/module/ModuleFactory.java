@@ -22,10 +22,10 @@ import android.support.annotation.RequiresApi;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.Reflection;
 import com.google.gson.JsonParseException;
 
 import org.reflections.Configuration;
@@ -39,25 +39,19 @@ import org.reflections.serializers.XmlSerializer;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.module.exceptions.InvalidModulePathException;
 import org.terasology.module.resources.ArchiveFileSource;
 import org.terasology.module.resources.ClasspathFileSource;
 import org.terasology.module.resources.DirectoryFileSource;
-import org.terasology.module.resources.PathFileSource;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -65,27 +59,29 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
  * A factory for creating various configurations of modules.
  */
-@RequiresApi(26)
+@RequiresApi(24)
 public class ModuleFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleFactory.class);
-    private static final Joiner PACKAGE_JOINER = Joiner.on('.');
     private static final Joiner RESOURCE_PATH_JOINER = Joiner.on('/');
+    private static final Configuration EMPTY_CONFIG = new ConfigurationBuilder();
+    private static final String STANDARD_CODE_SUBPATH = "build/classes";
+    private static final String STANDARD_LIBS_SUBPATH = "libs";
 
-    private String defaultCodeSubpath = "build/classes";
-    private String defaultLibsSubpath = "libs";
+    private String defaultCodeSubpath;
+    private String defaultLibsSubpath;
     private final Map<String, ModuleMetadataLoader> moduleMetadataLoaderMap = Maps.newLinkedHashMap();
-    private Map<String, Serializer> manifestSerializersByFilename = Maps.newLinkedHashMap();
-    public static final Configuration EMPTY_CONFIG = new ConfigurationBuilder();
+    private final Map<String, Serializer> manifestSerializersByFilename = Maps.newLinkedHashMap();
 
     public ModuleFactory() {
-        moduleMetadataLoaderMap.put("module.json", new ModuleMetadataJsonAdapter());
+        this(STANDARD_CODE_SUBPATH, STANDARD_LIBS_SUBPATH);
     }
 
     /**
@@ -168,11 +164,15 @@ public class ModuleFactory {
 
     @NonNull
     private Reflections scanOrLoadClasspathReflections(String packagePath) {
+        String path = packagePath;
+        if (!path.isEmpty() && !path.endsWith("/")) {
+            path += "/";
+        }
         Reflections manifest = new Reflections(EMPTY_CONFIG);
         try {
             boolean loaded = false;
             for (Map.Entry<String, Serializer> manifestEntry : manifestSerializersByFilename.entrySet()) {
-                Enumeration<URL> resources = getClass().getClassLoader().getResources(manifestEntry.getKey());
+                Enumeration<URL> resources = getClass().getClassLoader().getResources(path + manifestEntry.getKey());
                 while (resources.hasMoreElements()) {
                     try (InputStream stream = resources.nextElement().openStream()) {
                         manifest.merge(manifestEntry.getValue().read(stream));
@@ -181,9 +181,7 @@ public class ModuleFactory {
                 }
             }
             if (!loaded) {
-                ResourcesScanner resourcesScanner = new ResourcesScanner();
-                resourcesScanner.setResultFilter(s -> false);
-                Configuration config = new ConfigurationBuilder().addScanners(resourcesScanner, new SubTypesScanner(), new TypeAnnotationsScanner()).forPackages(packagePath);
+                Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).forPackages(packagePath);
                 Reflections reflections = new Reflections(config);
                 manifest.merge(reflections);
             }
@@ -219,9 +217,7 @@ public class ModuleFactory {
     }
 
     private void scanContents(File directory, Reflections manifest) throws MalformedURLException {
-        ResourcesScanner resourcesScanner = new ResourcesScanner();
-        resourcesScanner.setResultFilter(s -> false);
-        Configuration config = new ConfigurationBuilder().addScanners(resourcesScanner, new SubTypesScanner(), new TypeAnnotationsScanner()).addUrls(directory.toURI().toURL());
+        Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).addUrls(directory.toURI().toURL());
         Reflections reflections = new Reflections(config);
         manifest.merge(reflections);
     }
@@ -260,17 +256,18 @@ public class ModuleFactory {
      * Creates a module from a package on the main classpath. If available will load a reflections cache from the package,
      * otherwise a scan will be run to determine contents.
      * @param metadata The metadata describing the module
-     * @param fromPackage The package to create the module from, as a list of the parts of the package
+     * @param packageName The package to create the module from, as a list of the parts of the package
      * @return A module covering the contents of the package on the classpath
      */
-    public Module createPackageModule(ModuleMetadata metadata, List<String> fromPackage) {
-        Reflections manifest = scanOrLoadClasspathReflections(RESOURCE_PATH_JOINER.join(fromPackage));
-        return createPackageModule(metadata, fromPackage, manifest);
+    public Module createPackageModule(ModuleMetadata metadata, String packageName) {
+        List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));
+        Reflections manifest = scanOrLoadClasspathReflections(RESOURCE_PATH_JOINER.join(packageParts));
+        return createPackageModule(metadata, packageName, manifest);
     }
 
-    public Module createPackageModule(ModuleMetadata metadata, List<String> fromPackage, Reflections manifest) {
-        String packageName = PACKAGE_JOINER.join(fromPackage);
-        return new Module(metadata, new ClasspathFileSource(manifest, RESOURCE_PATH_JOINER.join(fromPackage)), Collections.emptyList(), manifest, x -> packageName.equals(x.getPackage().getName()));
+    public Module createPackageModule(ModuleMetadata metadata, String packageName, Reflections manifest) {
+        List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));
+        return new Module(metadata, new ClasspathFileSource(manifest, RESOURCE_PATH_JOINER.join(packageParts)), Collections.emptyList(), manifest, x -> packageName.equals(Reflection.getPackageName(x)));
     }
 
     public Module createDirectoryModule(File directory) throws IOException {

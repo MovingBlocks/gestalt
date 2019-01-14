@@ -20,6 +20,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+import com.google.common.reflect.Reflection;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +52,7 @@ public class PermissionSet {
      * @return Whether access to this type is granted by the permission set
      */
     public boolean isPermitted(Class<?> type) {
-        return apiClasses.contains(type) || apiPackages.contains(type.getPackage().getName());
+        return apiClasses.contains(type) || apiPackages.contains(Reflection.getPackageName(type));
     }
 
     /**
@@ -62,8 +64,8 @@ public class PermissionSet {
         return globallyAllowedPermissionsTypes.contains(permission.getClass()) || globallyAllowedPermissionsInstances.contains(permission)
                 || allowedPermissionInstances.get(permission).contains(context)
                 || allowedPermissionsTypes.get(permission.getClass()).contains(context)
-                || allowedPackagePermissionInstances.get(permission).contains(context.getPackage().getName())
-                || allowedPackagePermissionsTypes.get(permission.getClass()).contains(context.getPackage().getName());
+                || allowedPackagePermissionInstances.get(permission).contains(Reflection.getPackageName(context))
+                || allowedPackagePermissionsTypes.get(permission.getClass()).contains(Reflection.getPackageName(context));
     }
 
     /**
@@ -271,7 +273,7 @@ public class PermissionSet {
         Iterator<Class<?>> iterator = allowedPermissionsTypes.get(permission).iterator();
         while (iterator.hasNext()) {
             Class<?> clazz = iterator.next();
-            if (packageName.equals(clazz.getPackage().getName())) {
+            if (packageName.equals(Reflection.getPackageName(clazz))) {
                 iterator.remove();
             }
         }
@@ -297,7 +299,7 @@ public class PermissionSet {
         Iterator<Class<?>> iterator = allowedPermissionInstances.get(permission).iterator();
         while (iterator.hasNext()) {
             Class<?> clazz = iterator.next();
-            if (packageName.equals(clazz.getPackage().getName())) {
+            if (packageName.equals(Reflection.getPackageName(clazz))) {
                 iterator.remove();
             }
         }
@@ -335,7 +337,7 @@ public class PermissionSet {
         Iterator<Class<?>> iterator = apiClasses.iterator();
         while (iterator.hasNext()) {
             Class<?> clazz = iterator.next();
-            if (packageName.equals(clazz.getPackage().getName())) {
+            if (packageName.equals(Reflection.getPackageName(clazz))) {
                 iterator.remove();
             }
         }
