@@ -9,6 +9,7 @@ buildscript {
     repositories {
         google()
         jcenter()
+        mavenLocal()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
@@ -24,6 +25,7 @@ allprojects {
 		maven {
             url "http://artifactory.terasology.org/artifactory/repo"
         }
+        mavenLocal()
     }
 }
 

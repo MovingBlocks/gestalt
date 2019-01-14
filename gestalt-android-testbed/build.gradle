@@ -1,3 +1,13 @@
+import com.google.common.base.Predicate
+import org.reflections.Reflections
+import org.reflections.scanners.ResourcesScanner
+import org.reflections.scanners.SubTypesScanner
+import org.reflections.scanners.TypeAnnotationsScanner
+import org.reflections.serializers.JsonSerializer
+import org.reflections.util.ClasspathHelper
+
+import java.util.regex.Pattern
+
 apply plugin: 'com.android.application'
 
 android {
@@ -22,13 +32,67 @@ android {
     }
 }
 
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        mavenLocal()
+    }
+    dependencies {
+        classpath 'org.reflections:reflections:0.9.12-SNAPSHOT'
+    }
+}
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation project(':gestalt-module')
     implementation 'com.google.guava:guava:27.0.1-android'
+    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'com.github.tony19:logback-android:1.3.0-3'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
+
+def reflectPackage(packageName, variant) {
+    def resourcesPath = variant.sourceSets.find{it.name == 'main'}.resources.srcDirs
+    def classPath = files {variant.javaCompiler.destinationDir}
+    URL[] scanUrls = classPath.collect {it.toURI().toURL()} + resourcesPath.collect {it.toURI().toURL()}
+    URL[] classLoaderUrls = scanUrls + variant.javaCompiler.classpath.collect {it.toURI().toURL()} + [new File(android.sdkDirectory, "platforms/" + android.compileSdkVersion + "/android.jar").toURI().toURL()]
+
+    ClassLoader classLoader = new URLClassLoader(classLoaderUrls, getClass().getClassLoader())
+    org.reflections.Configuration config = new org.reflections.util.ConfigurationBuilder()
+    config.addClassLoader(classLoader)
+    config.setUrls(scanUrls)
+    config.filterInputsBy(new Predicate<String>() {
+        @Override
+        boolean apply(@javax.annotation.Nullable String s) {
+            return packageName.isEmpty() || s.startsWith(packageName + ".")
+        }
+    })
+
+    config.addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner().filterResultsBy())
+    Reflections reflections = new Reflections(config)
+    JsonSerializer serializer = new JsonSerializer()
+    def outPath = variant.javaCompiler.destinationDir.toString() + "/" + packageName.replaceAll(Pattern.quote("."), "/") + "/manifest.json"
+    serializer.save(reflections, outPath)
+}
+
+afterEvaluate {
+    android.applicationVariants.each {
+        variant ->
+            variant.javaCompiler.doLast {
+                reflectPackage("org.terasology.gestalt.android.testbed.engine", variant)
+                reflectPackage("org.terasology.gestalt.android.testbed.moduleA", variant)
+                reflectPackage("org.terasology.gestalt.android.testbed.moduleB", variant)
+            }
+    }
+}
+
+android {
+    lintOptions {
+        abortOnError false
+    }
 }
