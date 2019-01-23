@@ -4,6 +4,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.google.common.io.CharStreams;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.android.testbed.engine.TextProducer;
@@ -11,10 +13,15 @@ import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
 import org.terasology.module.ModuleMetadata;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Arrays;
 
 public class GestaltTestActivity extends AppCompatActivity {
@@ -55,8 +62,34 @@ public class GestaltTestActivity extends AppCompatActivity {
                 displayText.append(e.getMessage());
                 displayText.append("\n");
             }
+        }
+
+//        InputStream stream = getClassLoader().getResourceAsStream("/org/terasology/gestalt/android/testbed/moduleA/testasset.asset");
+//        logger.info("", stream);
+
+        for (Module module : environment.getModulesOrderedByDependencies()) {
+            for (ModuleFile moduleFile : module.getResources().getFiles()) {
+                displayText.append(module.getId() + " contains resource " + moduleFile.getName());
+                if (moduleFile.getName().endsWith(".asset")) {
+                    try {
+                        InputStream stream = moduleFile.open();
+                    } catch (IOException e) {
+                        logger.error("", e);
+                    }
+                    try (Reader reader = new InputStreamReader(moduleFile.open())) {
+                        displayText.append(CharStreams.toString(reader));
+                        displayText.append("\n");
+                    } catch (IOException e) {
+                        displayText.append("Error: ");
+                        displayText.append(e.getMessage());
+                        displayText.append("\n");
+                    }
+                }
+                displayText.append("\n");
+            }
 
         }
+
 
         text.setText(displayText);
     }

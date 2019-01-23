@@ -36,6 +36,7 @@ import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.serializers.JsonSerializer;
 import org.reflections.serializers.Serializer;
 import org.reflections.serializers.XmlSerializer;
+import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,9 +80,17 @@ public class ModuleFactory {
     private String defaultLibsSubpath;
     private final Map<String, ModuleMetadataLoader> moduleMetadataLoaderMap = Maps.newLinkedHashMap();
     private final Map<String, Serializer> manifestSerializersByFilename = Maps.newLinkedHashMap();
+    private final ClassLoader classLoader;
 
     public ModuleFactory() {
-        this(STANDARD_CODE_SUBPATH, STANDARD_LIBS_SUBPATH);
+        this(ClasspathHelper.contextClassLoader());
+    }
+
+    /**
+     * @param classLoader The classloader to use for classpath and package modules
+     */
+    public ModuleFactory(ClassLoader classLoader) {
+        this(classLoader, STANDARD_CODE_SUBPATH, STANDARD_LIBS_SUBPATH, ImmutableMap.of("module.json", new ModuleMetadataJsonAdapter()));
     }
 
     /**
@@ -89,7 +98,7 @@ public class ModuleFactory {
      * @param defaultLibsSubpath The default subpath in a path module that contains libraries (jars)
      */
     public ModuleFactory(String defaultCodeSubpath, String defaultLibsSubpath) {
-        this(defaultCodeSubpath, defaultLibsSubpath, ImmutableMap.of("module.json", new ModuleMetadataJsonAdapter()));
+        this(ClasspathHelper.contextClassLoader(), defaultCodeSubpath, defaultLibsSubpath, ImmutableMap.of("module.json", new ModuleMetadataJsonAdapter()));
     }
 
     /**
@@ -97,11 +106,11 @@ public class ModuleFactory {
      * @param defaultLibsSubpath The default subpath in a path module that contains libraries (jars)
      * @param metadataLoaders    A map of relative paths/files to metadata loaders to use for loading module metadata
      */
-    public ModuleFactory(String defaultCodeSubpath, String defaultLibsSubpath, Map<String, ModuleMetadataLoader> metadataLoaders) {
+    public ModuleFactory(ClassLoader classLoader, String defaultCodeSubpath, String defaultLibsSubpath, Map<String, ModuleMetadataLoader> metadataLoaders) {
+        this.classLoader = classLoader;
         this.moduleMetadataLoaderMap.putAll(metadataLoaders);
         this.defaultCodeSubpath = defaultCodeSubpath;
         this.defaultLibsSubpath = defaultLibsSubpath;
-        manifestSerializersByFilename.put("reflections.cache", new XmlSerializer());
         manifestSerializersByFilename.put("manifest.json", new JsonSerializer());
     }
 
@@ -172,7 +181,7 @@ public class ModuleFactory {
         try {
             boolean loaded = false;
             for (Map.Entry<String, Serializer> manifestEntry : manifestSerializersByFilename.entrySet()) {
-                Enumeration<URL> resources = getClass().getClassLoader().getResources(path + manifestEntry.getKey());
+                Enumeration<URL> resources = classLoader.getResources(path + manifestEntry.getKey());
                 while (resources.hasMoreElements()) {
                     try (InputStream stream = resources.nextElement().openStream()) {
                         manifest.merge(manifestEntry.getValue().read(stream));
@@ -181,7 +190,7 @@ public class ModuleFactory {
                 }
             }
             if (!loaded) {
-                Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).forPackages(packagePath);
+                Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).addClassLoader(classLoader).forPackages(packagePath);
                 Reflections reflections = new Reflections(config);
                 manifest.merge(reflections);
             }
@@ -249,7 +258,7 @@ public class ModuleFactory {
     }
 
     public Module createFullClasspathModule(ModuleMetadata metadata, Reflections manifest) {
-        return new Module(metadata, new ClasspathFileSource(manifest), Collections.emptyList(), manifest, x -> true);
+        return new Module(metadata, new ClasspathFileSource(manifest, "", classLoader), Collections.emptyList(), manifest, x -> true);
     }
 
     /**
@@ -267,7 +276,7 @@ public class ModuleFactory {
 
     public Module createPackageModule(ModuleMetadata metadata, String packageName, Reflections manifest) {
         List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));
-        return new Module(metadata, new ClasspathFileSource(manifest, RESOURCE_PATH_JOINER.join(packageParts)), Collections.emptyList(), manifest, x -> packageName.equals(Reflection.getPackageName(x)));
+        return new Module(metadata, new ClasspathFileSource(manifest, RESOURCE_PATH_JOINER.join(packageParts), classLoader), Collections.emptyList(), manifest, x -> packageName.equals(Reflection.getPackageName(x)));
     }
 
     public Module createDirectoryModule(File directory) throws IOException {
