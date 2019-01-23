@@ -35,6 +35,8 @@ import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.dependencyresolution.DependencyInfo;
+import org.terasology.module.resources.CompositeFileSource;
+import org.terasology.module.resources.ModuleFileSource;
 import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleClassLoader;
 import org.terasology.module.sandbox.ObtainClassloader;
@@ -44,9 +46,7 @@ import org.terasology.naming.Name;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.FileSystem;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
@@ -54,8 +54,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -81,7 +81,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private final Reflections fullReflections;
     private final ImmutableList<Module> modulesOrderByDependencies;
     private final ImmutableList<Name> moduleIdsOrderedByDependencies;
-
+    private final ModuleFileSource resources;
 
     /**
      * @param modules                   The modules this environment should encompass.
@@ -132,6 +132,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         this.fullReflections = buildFullReflections(reflectionsByModule);
         this.managedClassLoaders = managedClassLoaderListBuilder.build();
         this.moduleDependencies = buildModuleDependencies();
+        this.resources = new CompositeFileSource(getModulesOrderedByDependencies().stream().map(Module::getResources).collect(Collectors.toList()));
     }
 
     /**
@@ -284,6 +285,13 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      */
     public Set<Name> getDependencyNamesOf(Name moduleId) {
         return moduleDependencies.get(moduleId);
+    }
+
+    /**
+     * @return The available resources across all modules
+     */
+    public ModuleFileSource getResources() {
+        return resources;
     }
 
     /**

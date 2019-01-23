@@ -71,9 +71,9 @@ public final class Module {
     }
 
     /**
-     * @return A list of file sources composing the module
+     * @return A ModuleFileSource providing this module's resources
      */
-    public ModuleFileSource getFileSource() {
+    public ModuleFileSource getResources() {
         return moduleFileSources;
     }
 
