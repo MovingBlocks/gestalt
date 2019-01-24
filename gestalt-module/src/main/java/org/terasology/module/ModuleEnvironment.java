@@ -158,7 +158,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      */
     private ModuleClassLoader buildModuleClassLoader(final Module module, final ClassLoader parent,
                                                      final PermissionProviderFactory permissionProviderFactory, final Iterable<BytecodeInjector> injectors) {
-        URL[] urls = module.getClasspaths().toArray(new URL[module.getClasspaths().size()]);
+        URL[] urls = module.getClasspaths().toArray(new URL[0]);
         PermissionProvider permissionProvider = permissionProviderFactory.createPermissionProviderFor(module);
         return AccessController.doPrivileged((PrivilegedAction<ModuleClassLoader>) () ->
                     new ModuleClassLoader(module.getId(), urls, parent, permissionProvider, injectors));

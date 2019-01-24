@@ -68,6 +68,8 @@ public final class Module {
         this.moduleClasspaths = ImmutableList.copyOf(classpaths);
         this.classPredicate = classPredicate;
         this.moduleManifest = moduleManifest;
+        // Sometimes reflections loses the Resources store if it is empty? Debugging still, but this prevents it from breaking everything
+        moduleManifest.getStore().getOrCreate("ResourcesScanner");
     }
 
     /**
