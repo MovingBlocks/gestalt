@@ -192,7 +192,7 @@ public class DirectoryFileSource implements ModuleFileSource {
         DirectoryIterator(File rootDirectory, File baseDirectory, Predicate<File> filter, boolean recursive) {
             this.filter = filter;
             this.recursive = recursive;
-            files.add(baseDirectory);
+            this.rootDirectory = rootDirectory;
             addDirectoryContentsToQueue(baseDirectory);
             findNext();
         }
