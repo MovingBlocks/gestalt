@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package org.terasology.test.api;
-
-/**
- * @author Immortius
+/*
+ * This is a Gradle build file:
+ * - Gradle Homepage: http://gradle.org/
+ * - Gradle Documentation: http://gradle.org/documentation
+ * - View tasks for this project: $ gradlew tasks
  */
-public interface ApiInterface {
+apply plugin: 'java'
 
-    float apiMethod();
+jar {
+    version = ''
+}
+
+dependencies {
+    implementation project(":testpack:testpack-api")
 }

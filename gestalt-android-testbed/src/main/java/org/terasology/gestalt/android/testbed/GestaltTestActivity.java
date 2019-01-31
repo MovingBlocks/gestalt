@@ -11,7 +11,6 @@ import com.google.common.io.CharStreams;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.gestalt.android.testbed.engine.TextProducer;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
@@ -20,6 +19,7 @@ import org.terasology.module.resources.ModuleFile;
 import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
+import org.terasology.test.api.ApiInterface;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,26 +45,23 @@ public class GestaltTestActivity extends AppCompatActivity {
 
         List<Module> modules = Lists.newArrayList();
         ModuleFactory factory = new ModuleFactory();
-        ModuleMetadata engineMetadata = new ModuleMetadata();
-        engineMetadata.setId(new Name("Engine"));
-        engineMetadata.setVersion(new Version(1, 0, 0));
-        modules.add(factory.createPackageModule(engineMetadata, "org.terasology.gestalt.android.testbed.engine"));
 
         ModuleMetadata metadataA = new ModuleMetadata();
-        metadataA.setId(new Name("ModuleA"));
+        metadataA.setId(new Name("PackageModuleA"));
         metadataA.setVersion(new Version(1, 0, 0));
-        modules.add(factory.createPackageModule(metadataA, "org.terasology.gestalt.android.testbed.moduleA"));
+        modules.add(factory.createPackageModule(metadataA, "org.terasology.gestalt.android.testbed.packageModuleA"));
 
         ModuleMetadata metadataB = new ModuleMetadata();
-        metadataB.setId(new Name("ModuleB"));
+        metadataB.setId(new Name("PackageModuleB"));
         metadataB.setVersion(new Version(1, 0, 0));
-        modules.add(factory.createPackageModule(metadataB, "org.terasology.gestalt.android.testbed.moduleB"));
+        modules.add(factory.createPackageModule(metadataB, "org.terasology.gestalt.android.testbed.packageModuleB"));
 
         copyModulesToData();
 
         try {
             modules.add(factory.createDirectoryModule(new File(getFilesDir(), "directoryModule")));
-
+            modules.add(factory.createArchiveModule(new File(getFilesDir(), "archiveModule.zip")));
+            modules.add(factory.createArchiveModule(new File(getFilesDir(), "moduleAAndroid.jar")));
         } catch (IOException e) {
             displayText.append("Error: ");
             displayText.append(e.getMessage());
@@ -72,12 +69,13 @@ public class GestaltTestActivity extends AppCompatActivity {
         }
 
 
-        ModuleEnvironment environment = new ModuleEnvironment(modules, new PermitAllPermissionProviderFactory());
 
-        for (Class<? extends TextProducer> textProducerClass : environment.getSubtypesOf(TextProducer.class)) {
+        ModuleEnvironment environment = new ModuleEnvironment(modules, new PermitAllPermissionProviderFactory(), (module, parent, permissionProvider) -> AndroidModuleClassLoader.create(module, parent, permissionProvider, getCodeCacheDir()));
+
+        for (Class<? extends ApiInterface> textProducerClass : environment.getSubtypesOf(ApiInterface.class)) {
             try {
-                TextProducer textProducer = textProducerClass.newInstance();
-                displayText.append(textProducer.getText());
+                ApiInterface textProducer = textProducerClass.newInstance();
+                displayText.append(textProducer.apiMethod());
                 displayText.append("\n");
             } catch (IllegalAccessException | InstantiationException e) {
                 displayText.append("Error: ");
@@ -122,15 +120,16 @@ public class GestaltTestActivity extends AppCompatActivity {
                     if (!dir.exists()) {
                         dir.mkdir();
                     }
-                    toCopy.addAll(Arrays.asList(contents).stream().map(x -> assetPath + "/" + x).collect(Collectors.toList()));
+                    toCopy.addAll(Arrays.stream(contents).map(x -> assetPath + "/" + x).collect(Collectors.toList()));
                 } else {
                     File file = new File(getFilesDir(), assetPath);
-                    if (!file.exists()) {
-                        try (FileOutputStream out = new FileOutputStream(file); InputStream in = getAssets().open("modules/" + assetPath)) {
-                            ByteStreams.copy(in, out);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                    try (FileOutputStream out = new FileOutputStream(file); InputStream in = getAssets().open("modules/" + assetPath)) {
+                        ByteStreams.copy(in, out);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }

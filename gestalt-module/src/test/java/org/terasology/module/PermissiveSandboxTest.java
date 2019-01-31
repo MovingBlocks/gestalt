@@ -70,7 +70,7 @@ public class PermissiveSandboxTest {
     public void accessToNormalMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment =
-                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
+                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
@@ -82,7 +82,7 @@ public class PermissiveSandboxTest {
     public void deniedAccessToRestrictedClass() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment =
-                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
+                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
@@ -94,7 +94,7 @@ public class PermissiveSandboxTest {
     public void allowedAccessToClassFromRequiredPermissionSet() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment =
-                new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
+                new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
@@ -106,7 +106,7 @@ public class PermissiveSandboxTest {
     public void deniedAccessToClassPermittedToParent() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment =
-                new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory, Collections.<BytecodeInjector>emptyList());
+                new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleCClass", environment);
         Object instance = type.newInstance();

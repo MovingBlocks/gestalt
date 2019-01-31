@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * This is a Gradle build file:
- * - Gradle Homepage: http://gradle.org/
- * - Gradle Documentation: http://gradle.org/documentation
- * - View tasks for this project: $ gradlew tasks
+package org.terasology.test.api;
+
+/**
+ * @author Immortius
  */
+public interface ApiInterface {
 
-apply plugin: 'java'
-
-jar {
-    version = ''
-}
-
-dependencies {
-    implementation project(":gestalt-module:testpack-api")
+    String apiMethod();
 }

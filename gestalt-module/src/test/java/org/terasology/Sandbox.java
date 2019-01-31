@@ -94,8 +94,7 @@ public class Sandbox {
 
         // Installs a policy that relaxes permission access for non-module code
         Policy.setPolicy(new ModuleSecurityPolicy());
-        return new ModuleEnvironment(determineModuleSet(), permissionProviderFactory,
-                Collections.emptyList());
+        return new ModuleEnvironment(determineModuleSet(), permissionProviderFactory);
 
 
     }

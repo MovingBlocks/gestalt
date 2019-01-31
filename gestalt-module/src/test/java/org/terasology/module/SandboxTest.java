@@ -69,7 +69,7 @@ public class SandboxTest {
     @Test
     public void accessToNormalMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
@@ -80,7 +80,7 @@ public class SandboxTest {
     @Test(expected = InvocationTargetException.class)
     public void deniedAccessToRestrictedClassInMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
@@ -90,7 +90,7 @@ public class SandboxTest {
     @Test(expected = ClassNotFoundException.class)
     public void deniedAccessToClassImplementingRestrictedInterface() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory);
 
         findClass("ModuleDRestrictedClass", environment);
     }
@@ -98,7 +98,7 @@ public class SandboxTest {
     @Test
     public void allowedAccessToClassImplementingPermissionSetInterface() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBPermittedClass", environment);
         assertNotNull(type);
@@ -109,7 +109,7 @@ public class SandboxTest {
     @Test
     public void allowedAccessToClassFromRequiredPermissionSet() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
@@ -120,7 +120,7 @@ public class SandboxTest {
     @Test(expected = InvocationTargetException.class)
     public void deniedAccessToClassPermittedToParent() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleCClass", environment);
         Object instance = type.newInstance();
