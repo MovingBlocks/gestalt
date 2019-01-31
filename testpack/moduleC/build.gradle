@@ -28,5 +28,5 @@ jar {
 }
 
 dependencies {
-    implementation project(":gestalt-module:testpack-api")
+    implementation project(":testpack:testpack-api")
 }

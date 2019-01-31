@@ -17,11 +17,10 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.25'
     implementation 'com.android.support:support-annotations:28.0.0'
 
-    testImplementation project("testpack-api")
+    testImplementation project(":testpack:testpack-api")
     testImplementation 'junit:junit:4.12'
     testImplementation 'ch.qos.logback:logback-classic:1.2.3'
     testImplementation 'org.mockito:mockito-core:1.10.19'
-
 
 }
 
@@ -31,30 +30,30 @@ description = 'Provides support for modules - java libraries that can be activat
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-task gatherJarModules(dependsOn: [':gestalt-module:testpack:moduleA:jar', ':gestalt-module:testpack:moduleB:jar', ':gestalt-module:testpack:moduleC:jar', ':gestalt-module:testpack:moduleD:jar'], type: Copy)
+task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar', ':testpack:moduleD:jar'], type: Copy)
 task createModuleE(dependsOn: [':gestalt-module:copyModuleEInfo', ':gestalt-module:copyModuleELibs']) 
-task copyModuleELibs(dependsOn: [':gestalt-module:testpack:moduleA:jar', ':gestalt-module:testpack:moduleD:jar'],type: Copy) 
+task copyModuleELibs(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleD:jar'],type: Copy)
 task copyModuleEInfo(type: Copy) 
 task gatherModules(dependsOn: [':gestalt-module:gatherJarModules', ':gestalt-module:createModuleE'])
 
 copyModuleELibs {
-	from 'testpack/moduleA/build/libs'
-	from 'testpack/moduleD/build/libs'
+	from '../testpack/moduleA/build/libs'
+	from '../testpack/moduleD/build/libs'
 	into 'test-modules/moduleE/libs'
 	include('*.jar')
 }
 
 copyModuleEInfo {
-	from 'testpack/moduleE'
+	from '../testpack/moduleE'
 	into 'test-modules/moduleE'
 	include('*.json')
 }
 
 gatherJarModules {
-    from 'testpack/moduleA/build/libs/'
-    from 'testpack/moduleB/build/libs/'
-    from 'testpack/moduleC/build/libs/'
-	from 'testpack/moduleD/build/libs/'
+    from '../testpack/moduleA/build/libs/'
+    from '../testpack/moduleB/build/libs/'
+    from '../testpack/moduleC/build/libs/'
+	from '../testpack/moduleD/build/libs/'
     into 'test-modules'
     include('*.jar')
 }

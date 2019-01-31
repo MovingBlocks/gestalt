@@ -67,7 +67,7 @@ public class EmbeddedLibraryTest {
     @Test
     public void loadedModuleContainsEmbeddedLibraryClasses() {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleE")).getModules(), permissionProviderFactory, Collections.emptyList());
+        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleE")).getModules(), permissionProviderFactory);
 
         LinkedHashSet<Class<?>> classes = Sets.newLinkedHashSet(environment.getTypesAnnotatedWith(IndexForTest.class));
 

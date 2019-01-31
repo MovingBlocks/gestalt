@@ -44,7 +44,7 @@ public final class Module {
 
     private final ModuleMetadata metadata;
     private final ModuleFileSource moduleFileSources;
-    private final ImmutableList<URL> moduleClasspaths;
+    private final ImmutableList<File> moduleClasspaths;
     private final Predicate<Class<?>> classPredicate;
 
     private final Reflections moduleManifest;
@@ -59,7 +59,7 @@ public final class Module {
      *                       Additionally this provides additional information on classes such as what they inherit and what annotations they are flagged with.
      * @param classPredicate Predicate to determine what classes to include from the main classpath (classes from the unloaded classpaths will be included automatically)
      */
-    public Module(ModuleMetadata metadata, ModuleFileSource fileSources, Collection<URL> classpaths, Reflections moduleManifest, Predicate<Class<?>> classPredicate) {
+    public Module(ModuleMetadata metadata, ModuleFileSource fileSources, Collection<File> classpaths, Reflections moduleManifest, Predicate<Class<?>> classPredicate) {
         Preconditions.checkNotNull(metadata);
         Preconditions.checkNotNull(fileSources);
         Preconditions.checkNotNull(moduleManifest);
@@ -82,7 +82,7 @@ public final class Module {
     /**
      * @return A list of additional classpaths to load
      */
-    public List<URL> getClasspaths() {
+    public List<File> getClasspaths() {
         return moduleClasspaths;
     }
 

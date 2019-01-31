@@ -297,31 +297,26 @@ public class ModuleFactory {
         Preconditions.checkArgument(directory.isDirectory());
 
         Reflections manifest = new Reflections(EMPTY_CONFIG);
-        List<URL> codeUrls = Lists.newArrayList();
+        List<File> codeLocations = Lists.newArrayList();
         File codeDir = new File(directory, getDefaultCodeSubpath());
         if (codeDir.exists() && codeDir.isDirectory()) {
-            try {
-                codeUrls.add(codeDir.toURI().toURL());
-                manifest.merge(scanOrLoadDirectoryManifest(codeDir));
-            } catch (MalformedURLException e) {
-                logger.error("Failed to add code location {} to module {}", codeDir, metadata.getId());
-            }
+            codeLocations.add(codeDir);
+            manifest.merge(scanOrLoadDirectoryManifest(codeDir));
         }
         File libDir = new File(directory, getDefaultLibsSubpath());
-        if (libDir.exists() && libDir.isDirectory()) {
-            for (File lib : libDir.listFiles()) {
-                if (lib.isFile()) {
-                    try {
-                        codeUrls.add(lib.toURI().toURL());
+        if (libDir.exists() && libDir.isDirectory() && libDir.listFiles() != null) {
+            File[] libDirContents = libDir.listFiles();
+            if (libDirContents != null) {
+                for (File lib : libDirContents) {
+                    if (lib.isFile()) {
+                        codeLocations.add(lib);
                         manifest.merge(scanOrLoadArchiveManifest(lib));
-                    } catch (MalformedURLException e) {
-                        logger.error("Failed to add library {} to module {}", lib, metadata.getId());
                     }
                 }
             }
         }
 
-        return new Module(metadata, new DirectoryFileSource(directory), codeUrls, manifest, x -> false);
+        return new Module(metadata, new DirectoryFileSource(directory), codeLocations, manifest, x -> false);
     }
 
     public Module createArchiveModule(File archive) throws IOException {
@@ -347,7 +342,7 @@ public class ModuleFactory {
         Preconditions.checkArgument(archive.isFile());
 
         try {
-            return new Module(metadata, new ArchiveFileSource(archive), Collections.singletonList(archive.toURI().toURL()), scanOrLoadArchiveManifest(archive), x -> false);
+            return new Module(metadata, new ArchiveFileSource(archive), Collections.singletonList(archive), scanOrLoadArchiveManifest(archive), x -> false);
         } catch (MalformedURLException e) {
             throw new RuntimeException("Unable to convert file path to url for " + archive, e);
         }
