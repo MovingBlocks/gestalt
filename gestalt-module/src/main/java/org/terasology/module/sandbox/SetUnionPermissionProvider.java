@@ -27,15 +27,15 @@ import java.security.Permission;
  */
 public class SetUnionPermissionProvider implements PermissionProvider {
 
-    private final ImmutableList<PermissionSet> permissionSets;
+    private final ImmutableList<PermissionProvider> permissionSets;
 
-    public SetUnionPermissionProvider(Iterable<PermissionSet> permissionSets) {
+    public SetUnionPermissionProvider(Iterable<PermissionProvider> permissionSets) {
         this.permissionSets = ImmutableList.copyOf(permissionSets);
     }
 
     @Override
     public boolean isPermitted(Class<?> type) {
-        for (PermissionSet set : permissionSets) {
+        for (PermissionProvider set : permissionSets) {
             if (set.isPermitted(type)) {
                 return true;
             }
@@ -45,7 +45,7 @@ public class SetUnionPermissionProvider implements PermissionProvider {
 
     @Override
     public boolean isPermitted(Permission permission, Class<?> context) {
-        for (PermissionSet set : permissionSets) {
+        for (PermissionProvider set : permissionSets) {
             if (set.isPermitted(permission, context)) {
                 return true;
             }

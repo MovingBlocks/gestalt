@@ -24,6 +24,7 @@ import org.terasology.module.Module;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * A permission provider factory that gives each module permissions based on a number of permission sets, where each module has access to the
@@ -66,8 +67,8 @@ public class StandardPermissionProviderFactory implements PermissionProviderFact
     }
 
     @Override
-    public PermissionProvider createPermissionProviderFor(Module module) {
-        List<PermissionSet> grantedPermissionSets = Lists.newArrayList();
+    public PermissionProvider createPermissionProviderFor(Module module, Predicate<Class<?>> isClasspathModuleClass) {
+        List<PermissionProvider> grantedPermissionSets = Lists.newArrayList();
         grantedPermissionSets.add(getBasePermissionSet());
         for (String permissionSetId : module.getRequiredPermissions()) {
             PermissionSet set = getPermissionSet(permissionSetId);
@@ -77,6 +78,7 @@ public class StandardPermissionProviderFactory implements PermissionProviderFact
                 logger.warn("Module '{}' requires unknown permission '{}'", module, permissionSetId);
             }
         }
+        grantedPermissionSets.add(new PredicatePermissionSet(isClasspathModuleClass));
         return new SetUnionPermissionProvider(grantedPermissionSets);
     }
 }

@@ -16,7 +16,11 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
 import org.terasology.module.ModuleMetadata;
 import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.sandbox.ModuleSecurityManager;
+import org.terasology.module.sandbox.ModuleSecurityPolicy;
 import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
+import org.terasology.module.sandbox.StandardPermissionProviderFactory;
+import org.terasology.module.sandbox.WarnOnlyProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.test.api.ApiInterface;
@@ -27,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.security.Policy;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
@@ -45,6 +50,7 @@ public class GestaltTestActivity extends AppCompatActivity {
 
         List<Module> modules = Lists.newArrayList();
         ModuleFactory factory = new ModuleFactory();
+        factory.setScanningForClasses(false);
 
         ModuleMetadata metadataA = new ModuleMetadata();
         metadataA.setId(new Name("PackageModuleA"));
@@ -68,9 +74,11 @@ public class GestaltTestActivity extends AppCompatActivity {
             displayText.append("\n");
         }
 
-
-
-        ModuleEnvironment environment = new ModuleEnvironment(modules, new PermitAllPermissionProviderFactory(), (module, parent, permissionProvider) -> AndroidModuleClassLoader.create(module, parent, permissionProvider, getCodeCacheDir()));
+        //Policy.setPolicy(new ModuleSecurityPolicy());
+        StandardPermissionProviderFactory permissionProviderFactory = new StandardPermissionProviderFactory();
+        permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
+        permissionProviderFactory.getBasePermissionSet().addAPIPackage("org.terasology.test.api");
+        ModuleEnvironment environment = new ModuleEnvironment(modules, new WarnOnlyProviderFactory(permissionProviderFactory), (module, parent, permissionProvider) -> AndroidModuleClassLoader.create(module, parent, permissionProvider, getCodeCacheDir()));
 
         for (Class<? extends ApiInterface> textProducerClass : environment.getSubtypesOf(ApiInterface.class)) {
             try {

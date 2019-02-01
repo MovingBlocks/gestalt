@@ -16,14 +16,22 @@
 
 package org.terasology.module;
 
+import com.google.common.collect.Lists;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 import org.terasology.module.dependencyresolution.DependencyResolver;
+import org.terasology.module.resources.EmptyFileSource;
 import org.terasology.module.sandbox.ModuleSecurityManager;
 import org.terasology.module.sandbox.ModuleSecurityPolicy;
 import org.terasology.module.sandbox.PermissionSet;
 import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
+import org.terasology.naming.Version;
 import org.terasology.test.api.IOInterface;
 import org.terasology.test.api.IndexForTest;
 
@@ -31,7 +39,9 @@ import java.io.FilePermission;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.security.Policy;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -125,6 +135,22 @@ public class SandboxTest {
         Class<?> type = findClass("ModuleCClass", environment);
         Object instance = type.newInstance();
         type.getMethod("requiresIoMethod").invoke(instance);
+    }
+
+    @Test
+    public void allowedAccessToPackageModuleClassViaModuleClassloader() throws Exception {
+        DependencyResolver resolver = new DependencyResolver(registry);
+        ModuleMetadata metadata = new ModuleMetadata();
+        metadata.setId(new Name("PackageModule"));
+        metadata.setVersion(Version.DEFAULT);
+
+        Reflections reflections = new Reflections(new ConfigurationBuilder().forPackages("org.terasology.module.packageModule").addClassLoader(ClasspathHelper.contextClassLoader()).addScanners(new SubTypesScanner()));
+        Module module = new Module(metadata, new EmptyFileSource(), Collections.emptyList(), reflections, x -> com.google.common.reflect.Reflection.getPackageName(x).startsWith("org.terasology.module.packageModule"));
+        List<Module> modules = Lists.newArrayList(module);
+        modules.addAll(resolver.resolve(new Name("moduleC")).getModules());
+        ModuleEnvironment environment = new ModuleEnvironment(modules, permissionProviderFactory);
+        Object result = findClass("StandaloneClass", environment).newInstance();
+        assertNotNull(result);
     }
 
     private Class<?> findClass(String name, ModuleEnvironment environment) throws ClassNotFoundException {

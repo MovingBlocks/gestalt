@@ -34,7 +34,7 @@ import java.util.Set;
  *
  * @author Immortius
  */
-public class PermissionSet {
+public class PermissionSet implements PermissionProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(PermissionSet.class);
 
@@ -51,6 +51,7 @@ public class PermissionSet {
      * @param type The type to check whether access is permitted to
      * @return Whether access to this type is granted by the permission set
      */
+    @Override
     public boolean isPermitted(Class<?> type) {
         return apiClasses.contains(type) || apiPackages.contains(Reflection.getPackageName(type));
     }
@@ -60,6 +61,7 @@ public class PermissionSet {
      * @param context The context to check
      * @return Whether the given permission is granted in the given context, by this permission set
      */
+    @Override
     public boolean isPermitted(Permission permission, Class<?> context) {
         return globallyAllowedPermissionsTypes.contains(permission.getClass()) || globallyAllowedPermissionsInstances.contains(permission)
                 || allowedPermissionInstances.get(permission).contains(context)

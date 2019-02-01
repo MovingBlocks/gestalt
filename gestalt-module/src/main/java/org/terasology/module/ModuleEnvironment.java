@@ -18,8 +18,6 @@ package org.terasology.module;
 
 import android.support.annotation.NonNull;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -31,6 +29,7 @@ import com.google.common.collect.SetMultimap;
 
 import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
+import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,10 +53,15 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+
+import static org.reflections.util.Utils.index;
 
 /**
  * An environment composed of a set of modules. A chain of class loaders is created for each module that isn't on the classpath, such that dependencies appear before
@@ -119,9 +123,10 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
         ClassLoader lastClassLoader = apiClassLoader;
         List<Module> orderedModules = getModulesOrderedByDependencies();
+        Predicate<Class<?>> classpathModuleClassesPredicate = orderedModules.stream().map(x -> x.getClassPredicate()).reduce(x -> false, Predicate::or);
         for (final Module module : orderedModules) {
-            if (!module.getClasspaths().isEmpty()) {
-                ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, classLoaderSupplier);
+            if (!module.getClasspaths().isEmpty() && !hasClassContent(module)) {
+                ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, classLoaderSupplier, classpathModuleClassesPredicate);
                 managedClassLoaderListBuilder.add(classLoader);
                 lastClassLoader = classLoader.getClassLoader();
             }
@@ -132,6 +137,10 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         this.managedClassLoaders = managedClassLoaderListBuilder.build();
         this.moduleDependencies = buildModuleDependencies();
         this.resources = new CompositeFileSource(getModulesOrderedByDependencies().stream().map(Module::getResources).collect(Collectors.toList()));
+    }
+
+    private boolean hasClassContent(Module module) {
+        return module.getModuleManifest().getStore().getAll(index(SubTypesScanner.class), Object.class.getName()).iterator().hasNext();
     }
 
     /**
@@ -156,8 +165,9 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      */
     private ModuleClassLoader buildModuleClassLoader(final Module module, final ClassLoader parent,
                                                      final PermissionProviderFactory permissionProviderFactory,
-                                                     final ClassLoaderSupplier classLoaderSupplier) {
-        PermissionProvider permissionProvider = permissionProviderFactory.createPermissionProviderFor(module);
+                                                     final ClassLoaderSupplier classLoaderSupplier,
+                                                     final Predicate<Class<?>> classpathModuleClassesPredicate) {
+        PermissionProvider permissionProvider = permissionProviderFactory.createPermissionProviderFor(module, classpathModuleClassesPredicate);
         return AccessController.doPrivileged((PrivilegedAction<ModuleClassLoader>) () -> classLoaderSupplier.create(module, parent, permissionProvider));
     }
 
@@ -200,23 +210,12 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
 
     private void addModuleAfterDependencies(Module module, List<Module> out) {
         if (!out.contains(module)) {
-            List<Name> dependencies = Lists.newArrayList(Collections2.transform(module.getMetadata().getDependencies(), new Function<DependencyInfo, Name>() {
-                @Nullable
-                @Override
-                public Name apply(@Nullable DependencyInfo input) {
-                    if (input != null) {
-                        return input.getId();
-                    }
-                    return null;
-                }
-            }));
-            Collections.sort(dependencies);
-            for (Name dependency : dependencies) {
+            module.getMetadata().getDependencies().stream().filter(Objects::nonNull).map(DependencyInfo::getId).sorted().forEach(dependency -> {
                 Module dependencyModule = modules.get(dependency);
                 if (dependencyModule != null) {
                     addModuleAfterDependencies(dependencyModule, out);
                 }
-            }
+            });
             out.add(module);
         }
     }
@@ -311,7 +310,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * @return A Iterable over all subtypes of type that appear in the module environment
      */
     public <U> Iterable<Class<? extends U>> getSubtypesOf(Class<U> type, Predicate<Class<?>> filter) {
-        return Collections2.filter(fullReflections.getSubTypesOf(type), filter);
+        return fullReflections.getSubTypesOf(type).stream().filter(filter).collect(Collectors.toSet());
     }
 
     /**
@@ -330,7 +329,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      * as @Inherited
      */
     public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation, Predicate<Class<?>> filter) {
-        return Collections2.filter(fullReflections.getTypesAnnotatedWith(annotation, true), filter);
+        return fullReflections.getTypesAnnotatedWith(annotation, true).stream().filter(filter).collect(Collectors.toSet());
     }
 
     @NonNull

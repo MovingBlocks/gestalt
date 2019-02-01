@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.terasology.module.Module;
 
 import java.security.Permission;
+import java.util.function.Predicate;
 
 /**
  * This provider factory wraps another factory. Whenever the other factory would deny access, this factory logs an error and grants permission.
@@ -40,10 +41,10 @@ public class WarnOnlyProviderFactory implements PermissionProviderFactory {
     }
 
     @Override
-    public PermissionProvider createPermissionProviderFor(Module module) {
+    public PermissionProvider createPermissionProviderFor(Module module, Predicate<Class<?>> classpathModuleClasses) {
         return new PermissionProvider() {
 
-            private PermissionProvider wrapped = wrappedFactory.createPermissionProviderFor(module);
+            private PermissionProvider wrapped = wrappedFactory.createPermissionProviderFor(module, classpathModuleClasses);
 
             @Override
             public boolean isPermitted(Class<?> type) {

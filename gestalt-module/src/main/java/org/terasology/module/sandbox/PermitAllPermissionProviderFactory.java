@@ -3,11 +3,12 @@ package org.terasology.module.sandbox;
 import org.terasology.module.Module;
 
 import java.security.Permission;
+import java.util.function.Predicate;
 
 public class PermitAllPermissionProviderFactory implements PermissionProviderFactory {
 
     @Override
-    public PermissionProvider createPermissionProviderFor(Module module) {
+    public PermissionProvider createPermissionProviderFor(Module module, Predicate<Class<?>> classpathModuleClasses) {
         return new PermissionProvider() {
             @Override
             public boolean isPermitted(Class<?> type) {

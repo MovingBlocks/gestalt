@@ -78,6 +78,8 @@ public class ModuleFactory {
 
     private String defaultCodeSubpath;
     private String defaultLibsSubpath;
+    private boolean scanningForClasses = true;
+
     private final Map<String, ModuleMetadataLoader> moduleMetadataLoaderMap = Maps.newLinkedHashMap();
     private final Map<String, Serializer> manifestSerializersByFilename = Maps.newLinkedHashMap();
     private final ClassLoader classLoader;
@@ -119,6 +121,14 @@ public class ModuleFactory {
      */
     public String getDefaultCodeSubpath() {
         return defaultCodeSubpath;
+    }
+
+    public void setScanningForClasses(boolean scanForClasses) {
+        this.scanningForClasses = scanForClasses;
+    }
+
+    public boolean isScanningForClasses() {
+        return scanningForClasses;
     }
 
     /**
@@ -189,7 +199,7 @@ public class ModuleFactory {
                     }
                 }
             }
-            if (!loaded) {
+            if (!loaded && scanningForClasses) {
                 Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).addClassLoader(classLoader).forPackages(packagePath);
                 Reflections reflections = new Reflections(config);
                 manifest.merge(reflections);
@@ -226,9 +236,11 @@ public class ModuleFactory {
     }
 
     private void scanContents(File directory, Reflections manifest) throws MalformedURLException {
-        Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).addUrls(directory.toURI().toURL());
-        Reflections reflections = new Reflections(config);
-        manifest.merge(reflections);
+        if (scanningForClasses) {
+            Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).addUrls(directory.toURI().toURL());
+            Reflections reflections = new Reflections(config);
+            manifest.merge(reflections);
+        }
     }
 
     @NonNull
@@ -276,7 +288,10 @@ public class ModuleFactory {
 
     public Module createPackageModule(ModuleMetadata metadata, String packageName, Reflections manifest) {
         List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));
-        return new Module(metadata, new ClasspathFileSource(manifest, RESOURCE_PATH_JOINER.join(packageParts), classLoader), Collections.emptyList(), manifest, x -> packageName.equals(Reflection.getPackageName(x)));
+        return new Module(metadata, new ClasspathFileSource(manifest, RESOURCE_PATH_JOINER.join(packageParts), classLoader), Collections.emptyList(), manifest, x -> {
+            String classPackageName = Reflection.getPackageName(x);
+            return packageName.equals(classPackageName) || classPackageName.startsWith(packageName + ".");
+        });
     }
 
     public Module createDirectoryModule(File directory) throws IOException {
