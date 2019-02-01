@@ -63,6 +63,7 @@ public final class Module {
         Preconditions.checkNotNull(metadata);
         Preconditions.checkNotNull(fileSources);
         Preconditions.checkNotNull(moduleManifest);
+        Preconditions.checkNotNull(classPredicate);
         this.metadata = metadata;
         this.moduleFileSources = fileSources;
         this.moduleClasspaths = ImmutableList.copyOf(classpaths);

@@ -18,6 +18,8 @@ package org.terasology.module.sandbox;
 
 import org.terasology.module.Module;
 
+import java.util.function.Predicate;
+
 /**
  * Interface for factories that produce permission providers for modules.
  *
@@ -29,5 +31,5 @@ public interface PermissionProviderFactory {
      * @param module The module to create a permission provider for.
      * @return A permission provider suitable for the given module
      */
-    PermissionProvider createPermissionProviderFor(Module module);
+    PermissionProvider createPermissionProviderFor(Module module, Predicate<Class<?>> classpathModuleClasses);
 }
