@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.terasology.module;
 import org.junit.Before;
 import org.junit.Test;
 import org.terasology.module.dependencyresolution.DependencyResolver;
-import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.ModuleSecurityManager;
 import org.terasology.module.sandbox.ModuleSecurityPolicy;
 import org.terasology.module.sandbox.PermissionProviderFactory;
@@ -33,7 +32,6 @@ import org.terasology.test.api.IndexForTest;
 import java.io.FilePermission;
 import java.nio.file.Paths;
 import java.security.Policy;
-import java.util.Collections;
 
 /**
  * @author OvermindDL1

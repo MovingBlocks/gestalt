@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+
 import org.terasology.i18n.I18nMap;
 
 import java.lang.reflect.Type;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.terasology.module.sandbox;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.Module;
@@ -29,8 +30,9 @@ import java.util.function.Predicate;
 /**
  * A permission provider factory that gives each module permissions based on a number of permission sets, where each module has access to the
  * default set of permissions and can request additional permission sets.
- * @see org.terasology.module.sandbox.PermissionSet
+ *
  * @author Immortius
+ * @see org.terasology.module.sandbox.PermissionSet
  */
 public class StandardPermissionProviderFactory implements PermissionProviderFactory {
 
@@ -59,7 +61,8 @@ public class StandardPermissionProviderFactory implements PermissionProviderFact
 
     /**
      * Adds or replaces a permission set that modules can request
-     * @param name The name to give the permission set
+     *
+     * @param name          The name to give the permission set
      * @param permissionSet A permission set to associate with the given name
      */
     public void addPermissionSet(String name, PermissionSet permissionSet) {

@@ -1,11 +1,11 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,10 +16,7 @@
 
 package org.terasology.module;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.sql.Date;
-import java.util.Locale;
+import com.google.common.collect.ImmutableMap;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +25,10 @@ import org.terasology.module.dependencyresolution.DependencyInfo;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
-import com.google.common.collect.ImmutableMap;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.sql.Date;
+import java.util.Locale;
 
 /**
  * Tests the {@link ModuleMetadataJsonAdapter} class.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package org.terasology.module.dependencyresolution;
 
-import java.util.Objects;
-
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.naming.VersionRange;
+
+import java.util.Objects;
 
 /**
  * Describes a dependency on a module. Dependencies apply to a range of versions - anything from the min version (inclusive) to the max version (exclusive) are supported.
@@ -52,10 +52,28 @@ public class DependencyInfo {
     }
 
     /**
+     * Sets the id of the module
+     *
+     * @param id The id of the module
+     */
+    public void setId(Name id) {
+        this.id = id;
+    }
+
+    /**
      * @return The minimum supported version
      */
     public Version getMinVersion() {
         return minVersion;
+    }
+
+    /**
+     * The minimum supported version.
+     *
+     * @param value The minimum version
+     */
+    public void setMinVersion(Version value) {
+        this.minVersion = value;
     }
 
     /**
@@ -74,40 +92,6 @@ public class DependencyInfo {
     }
 
     /**
-     * An optional dependency does not need to be present for a module with the dependency to be used. If it is present, it must fall within
-     * the allowed version range.
-     * @return Whether this dependency is optional
-     */
-    public boolean isOptional() {
-        return optional;
-    }
-
-    /**
-     * @return The range of supported versions
-     */
-    public VersionRange versionRange() {
-        return new VersionRange(getMinVersion(), getMaxVersion());
-    }
-
-    /**
-     * Sets the id of the module
-     *
-     * @param id The id of the module
-     */
-    public void setId(Name id) {
-        this.id = id;
-    }
-
-    /**
-     * The minimum supported version.
-     *
-     * @param value The minimum version
-     */
-    public void setMinVersion(Version value) {
-        this.minVersion = value;
-    }
-
-    /**
      * The upperbound of supported versions (exclusive)
      *
      * @param value The new upperbound
@@ -117,12 +101,29 @@ public class DependencyInfo {
     }
 
     /**
+     * An optional dependency does not need to be present for a module with the dependency to be used. If it is present, it must fall within
+     * the allowed version range.
+     *
+     * @return Whether this dependency is optional
+     */
+    public boolean isOptional() {
+        return optional;
+    }
+
+    /**
      * Sets whether the dependency is optional
      *
      * @param optional Whether this dependency should be optional
      */
     public void setOptional(boolean optional) {
         this.optional = optional;
+    }
+
+    /**
+     * @return The range of supported versions
+     */
+    public VersionRange versionRange() {
+        return new VersionRange(getMinVersion(), getMaxVersion());
     }
 
     @Override
@@ -145,9 +146,9 @@ public class DependencyInfo {
         if (obj instanceof DependencyInfo) {
             DependencyInfo other = (DependencyInfo) obj;
             return Objects.equals(id, other.id)
-                && Objects.equals(minVersion, other.minVersion)
-                && Objects.equals(maxVersion, other.maxVersion)
-                && Objects.equals(optional, other.optional);
+                    && Objects.equals(minVersion, other.minVersion)
+                    && Objects.equals(maxVersion, other.maxVersion)
+                    && Objects.equals(optional, other.optional);
         }
 
         return false;

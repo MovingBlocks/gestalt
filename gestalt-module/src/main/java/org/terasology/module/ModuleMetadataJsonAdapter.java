@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,8 +78,8 @@ public class ModuleMetadataJsonAdapter implements ModuleMetadataLoader {
     }.getType();
 
     private final GsonBuilder builder;
-    private volatile Gson cachedGson;
     private final Map<String, Type> extensionMap = Maps.newHashMap();
+    private volatile Gson cachedGson;
 
     public ModuleMetadataJsonAdapter() {
         this.builder = new GsonBuilder()
@@ -145,8 +145,8 @@ public class ModuleMetadataJsonAdapter implements ModuleMetadataLoader {
 
     /**
      * @param writer A writer that receives the json metadata
-     * @param data the module metadata that should be written
-     * @throws com.google.gson.JsonIOException     if there was a problem writing to the Writer
+     * @param data   the module metadata that should be written
+     * @throws com.google.gson.JsonIOException if there was a problem writing to the Writer
      */
     public void write(ModuleMetadata data, Writer writer) {
         if (cachedGson == null) {
@@ -154,7 +154,7 @@ public class ModuleMetadataJsonAdapter implements ModuleMetadataLoader {
         }
         cachedGson.toJson(data, writer);
     }
-    
+
     private class ModuleMetadataTypeAdapter implements JsonDeserializer<ModuleMetadata>, JsonSerializer<ModuleMetadata> {
 
         @SuppressWarnings("unchecked")

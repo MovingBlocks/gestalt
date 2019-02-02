@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 /**
  * Provides support for determining a compatible set of modules, based on what modules and versions of those modules are available, the desired set of modules, and
  * module dependencies.
- *
+ * <p>
  * Important classes:
  * <ul>
- *     <li>{@link org.terasology.module.dependencyresolution.DependencyResolver} is the core class for resolving a compatible dependent set</li>
- *     <li>{@link org.terasology.module.dependencyresolution.ResolutionResult} holds the results of dependency resolution</li>
+ * <li>{@link org.terasology.module.dependencyresolution.DependencyResolver} is the core class for resolving a compatible dependent set</li>
+ * <li>{@link org.terasology.module.dependencyresolution.ResolutionResult} holds the results of dependency resolution</li>
  * </ul>
  */
 package org.terasology.module.dependencyresolution;

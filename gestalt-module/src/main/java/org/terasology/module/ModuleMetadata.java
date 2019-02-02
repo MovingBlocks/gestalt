@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ package org.terasology.module;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
 import org.terasology.i18n.I18nMap;
 import org.terasology.module.dependencyresolution.DependencyInfo;
 import org.terasology.naming.Name;
@@ -52,14 +53,13 @@ public class ModuleMetadata {
      * The set of reserved ids that cannot be used by extensions.
      */
     public static final Set<String> RESERVED_IDS = ImmutableSet.of(ID, VERSION, DISPLAY_NAME, DESCRIPTION, DEPENDENCIES, REQUIRED_PERMISSIONS);
-
+    private final Map<String, Object> extensions = Maps.newHashMap();
     private Name id;
     private Version version = Version.DEFAULT;
     private I18nMap displayName = new I18nMap("");
     private I18nMap description = new I18nMap("");
     private Set<String> requiredPermissions = Sets.newLinkedHashSet();
     private List<DependencyInfo> dependencies = Lists.newArrayList();
-    private final Map<String, Object> extensions = Maps.newHashMap();
 
     public ModuleMetadata() {
     }
@@ -195,12 +195,12 @@ public class ModuleMetadata {
             ModuleMetadata other = (ModuleMetadata) obj;
 
             return Objects.equals(id, other.id)
-                && Objects.equals(version, other.version)
-                && Objects.equals(displayName, other.displayName)
-                && Objects.equals(description, other.description)
-                && Objects.equals(requiredPermissions, other.requiredPermissions)
-                && Objects.equals(dependencies, other.dependencies)
-                && Objects.equals(extensions, other.extensions);
+                    && Objects.equals(version, other.version)
+                    && Objects.equals(displayName, other.displayName)
+                    && Objects.equals(description, other.description)
+                    && Objects.equals(requiredPermissions, other.requiredPermissions)
+                    && Objects.equals(dependencies, other.dependencies)
+                    && Objects.equals(extensions, other.extensions);
         }
         return false;
     }

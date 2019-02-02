@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public interface PermissionProvider {
 
     /**
      * @param permission The permission to check
-     * @param context The type invoking the permission check
+     * @param context    The type invoking the permission check
      * @return Whether access to the given permission is permitted
      */
     boolean isPermitted(Permission permission, Class<?> context);

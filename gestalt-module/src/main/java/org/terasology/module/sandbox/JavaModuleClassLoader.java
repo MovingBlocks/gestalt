@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,9 @@ package org.terasology.module.sandbox;
 
 import com.google.common.collect.ImmutableList;
 
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.NotFoundException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.Module;
-import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
 import java.io.File;
@@ -38,7 +33,10 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.NotFoundException;
 
 /**
  * A classloader to use when loading modules. This classloader ties into the sandboxing of modules by:

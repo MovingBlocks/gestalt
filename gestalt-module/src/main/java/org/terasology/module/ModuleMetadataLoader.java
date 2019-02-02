@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,5 +30,5 @@ public interface ModuleMetadataLoader {
      * @throws IOException If there was an error reading the ModuleMetadata
      */
     ModuleMetadata read(Reader reader) throws IOException;
-    
+
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 MovingBlocks
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.terasology.module.resources;
 
 import android.support.annotation.NonNull;
@@ -9,7 +25,6 @@ import org.reflections.Reflections;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -34,12 +49,12 @@ public class ClasspathFileSource implements ModuleFileSource {
      * @param resourceManifest A reflections manifest indicating what files are available on the classpath
      */
     public ClasspathFileSource(Reflections resourceManifest) {
-        this(resourceManifest,CLASS_PATH_SEPARATOR, ClassLoader.getSystemClassLoader());
+        this(resourceManifest, CLASS_PATH_SEPARATOR, ClassLoader.getSystemClassLoader());
     }
 
     /**
      * @param resourceManifest A reflections manifest indicating what files are available on the classpath
-     * @param basePath A subpath in the classpath to expose resources from
+     * @param basePath         A subpath in the classpath to expose resources from
      */
     public ClasspathFileSource(Reflections resourceManifest, String basePath) {
         this(resourceManifest, basePath, ClassLoader.getSystemClassLoader());
@@ -47,8 +62,8 @@ public class ClasspathFileSource implements ModuleFileSource {
 
     /**
      * @param resourceManifest A reflections manifest indicating what files are available on the classpath
-     * @param basePath A subpath in the classpath to expose resources from
-     * @param classLoader The classloader to use to access resources
+     * @param basePath         A subpath in the classpath to expose resources from
+     * @param classLoader      The classloader to use to access resources
      */
     public ClasspathFileSource(Reflections resourceManifest, String basePath, ClassLoader classLoader) {
         this.manifest = resourceManifest;
@@ -72,13 +87,13 @@ public class ClasspathFileSource implements ModuleFileSource {
     @Override
     public Collection<ModuleFile> getFilesInPath(boolean recursive, List<String> path) {
         String fullPath = buildPathString(path);
-        return manifest.getResources(x -> true).stream().filter(x->x.startsWith(fullPath) && (recursive || !x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR))).map(x -> new ClasspathSourceFile(x, extractSubpath(x), classLoader)).collect(Collectors.toList());
+        return manifest.getResources(x -> true).stream().filter(x -> x.startsWith(fullPath) && (recursive || !x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR))).map(x -> new ClasspathSourceFile(x, extractSubpath(x), classLoader)).collect(Collectors.toList());
     }
 
     @Override
     public Set<String> getSubpaths(List<String> path) {
         String fullPath = buildPathString(path);
-        return manifest.getResources(x -> true).stream().filter(x->x.startsWith(fullPath) && x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR)).map(x -> {
+        return manifest.getResources(x -> true).stream().filter(x -> x.startsWith(fullPath) && x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR)).map(x -> {
             String subpath = x.substring(fullPath.length());
             return subpath.substring(0, subpath.indexOf(CLASS_PATH_SEPARATOR));
         }).collect(Collectors.toSet());
@@ -94,7 +109,7 @@ public class ClasspathFileSource implements ModuleFileSource {
         return fullPath;
     }
 
-    private String extractSubpath(String path){
+    private String extractSubpath(String path) {
         return path.substring(basePath.length());
     }
 

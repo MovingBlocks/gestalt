@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class NameVersionTest {
 
     @Test
     public void equalityFailsIfNameDiffers() {
-       assertNotEquals(new NameVersion(NAME_1, V1), new NameVersion(NAME_2, V1));
+        assertNotEquals(new NameVersion(NAME_1, V1), new NameVersion(NAME_2, V1));
     }
 
     @Test
