@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableList;
 import java.security.Permission;
 
 /**
- * This permission provider is based on a union of PermissionSets. As long as one PermissionSet in the provider has the permission it is granted.
+ * This permission provider is based on a union of {@link PermissionProvider}. As long as one PermissionProvider in the provider has the permission it is granted.
  *
  * @author Immortius
  */
@@ -29,8 +29,11 @@ public class SetUnionPermissionProvider implements PermissionProvider {
 
     private final ImmutableList<PermissionProvider> permissionSets;
 
-    public SetUnionPermissionProvider(Iterable<PermissionProvider> permissionSets) {
-        this.permissionSets = ImmutableList.copyOf(permissionSets);
+    /**
+     * @param permissionProviders A collection of PermissionProviders to use
+     */
+    public SetUnionPermissionProvider(Iterable<PermissionProvider> permissionProviders) {
+        this.permissionSets = ImmutableList.copyOf(permissionProviders);
     }
 
     @Override

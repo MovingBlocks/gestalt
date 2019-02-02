@@ -81,7 +81,7 @@ public class StandardPermissionProviderFactory implements PermissionProviderFact
                 logger.warn("Module '{}' requires unknown permission '{}'", module, permissionSetId);
             }
         }
-        grantedPermissionSets.add(new PredicatePermissionSet(isClasspathModuleClass));
+        grantedPermissionSets.add(new PredicatePermissionProvider(isClasspathModuleClass));
         return new SetUnionPermissionProvider(grantedPermissionSets);
     }
 }

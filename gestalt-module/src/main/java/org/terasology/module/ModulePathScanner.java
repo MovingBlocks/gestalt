@@ -19,11 +19,9 @@ package org.terasology.module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.util.Varargs;
-import org.terasology.util.io.FileTypesFilter;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
 
@@ -41,8 +39,8 @@ public class ModulePathScanner {
         this.moduleFactory = new ModuleFactory();
     }
 
-    public ModulePathScanner(ModuleFactory loader) {
-        this.moduleFactory = loader;
+    public ModulePathScanner(ModuleFactory factory) {
+        this.moduleFactory = factory;
     }
 
     public ModuleFactory getModuleFactory() {
@@ -57,8 +55,8 @@ public class ModulePathScanner {
      * @param path            The first path to scan
      * @param additionalPaths Additional paths to scan
      */
-    public void scan(ModuleRegistry registry, Path path, Path... additionalPaths) {
-        Set<Path> discoveryPaths = Varargs.combineToSet(path, additionalPaths);
+    public void scan(ModuleRegistry registry, File path, File... additionalPaths) {
+        Set<File> discoveryPaths = Varargs.combineToSet(path, additionalPaths);
         scan(registry, discoveryPaths);
     }
 
@@ -70,8 +68,8 @@ public class ModulePathScanner {
      * @param registry The registry to populate with discovered modules
      * @param paths    The paths to scan
      */
-    public void scan(ModuleRegistry registry, Collection<Path> paths) {
-        for (Path discoveryPath : paths) {
+    public void scan(ModuleRegistry registry, Collection<File> paths) {
+        for (File discoveryPath : paths) {
             try {
                 scanModuleDirectories(discoveryPath, registry);
                 scanModuleArchives(discoveryPath, registry);
@@ -88,9 +86,12 @@ public class ModulePathScanner {
      * @param registry      The registry to populate with discovered modules
      * @throws IOException If an error occurs scanning the directory - but not an individual module.
      */
-    private void scanModuleArchives(Path discoveryPath, ModuleRegistry registry) throws IOException {
-        for (Path modulePath : Files.newDirectoryStream(discoveryPath, new FileTypesFilter("jar", "zip"))) {
-            loadModule(registry, modulePath);
+    private void scanModuleArchives(File discoveryPath, ModuleRegistry registry) throws IOException {
+        File[] files = discoveryPath.listFiles(x -> !x.isDirectory() && (x.getName().endsWith(".jar") || x.getName().endsWith(".zip")));
+        if (files != null) {
+            for (File modulePath : files) {
+                loadModule(registry, modulePath);
+            }
         }
     }
 
@@ -101,13 +102,16 @@ public class ModulePathScanner {
      * @param registry      The registry to populate with discovered modules
      * @throws IOException If an error occurs scanning the directory - but not an individual module.
      */
-    private void scanModuleDirectories(Path discoveryPath, ModuleRegistry registry) throws IOException {
-        for (Path modulePath : Files.newDirectoryStream(discoveryPath, Files::isDirectory)) {
-            loadModule(registry, modulePath);
+    private void scanModuleDirectories(File discoveryPath, ModuleRegistry registry) throws IOException {
+        File[] files = discoveryPath.listFiles(File::isDirectory);
+        if (files != null) {
+            for (File modulePath : files) {
+                loadModule(registry, modulePath);
+            }
         }
     }
 
-    private void loadModule(ModuleRegistry registry, Path modulePath) {
+    private void loadModule(ModuleRegistry registry, File modulePath) {
         try {
             Module module = moduleFactory.createModule(modulePath);
             if (registry.add(module)) {

@@ -28,7 +28,6 @@ import java.security.Permission;
  * <p>
  * AccessController.doPrivileged() is fully supported by this system, so non-module code can use this to avoid needing to be explicitly registered as allowing a permission
  * to modules using it, if the code is intended to run at the engine's security level.
- * </p>
  *
  * @author Immortius
  * @see ModuleClassLoader

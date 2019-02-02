@@ -52,8 +52,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -129,10 +127,16 @@ public class ModuleFactory {
         this.defaultCodeSubpath = defaultCodeSubpath;
     }
 
+    /**
+     * @return Whether the module factory will scan modules for class files if a manifest isn't available
+     */
     public boolean isScanningForClasses() {
         return scanningForClasses;
     }
 
+    /**
+     * @param scanForClasses Whether the module factory should scan modules for class files if a manifest isn't present
+     */
     public void setScanningForClasses(boolean scanForClasses) {
         this.scanningForClasses = scanForClasses;
     }
@@ -153,8 +157,14 @@ public class ModuleFactory {
         this.defaultLibsSubpath = defaultLibsSubpath;
     }
 
-    public void setManifestFileType(String name, Serializer serializer) {
-        this.manifestSerializersByFilename.put(name, serializer);
+    /**
+     * Adds a deserializer for a manifest file.
+     *
+     * @param name         The name of the manifest file this loader will load
+     * @param deserializer The deserializer
+     */
+    public void setManifestFileType(String name, Serializer deserializer) {
+        this.manifestSerializersByFilename.put(name, deserializer);
     }
 
     /**
@@ -162,21 +172,6 @@ public class ModuleFactory {
      */
     public Map<String, ModuleMetadataLoader> getModuleMetadataLoaderMap() {
         return moduleMetadataLoaderMap;
-    }
-
-    /**
-     * Creates a module for the full classpath. This module includes everything on the runtime.
-     * If available it will load a reflections cache, otherwise it will scan to determine contents.
-     * <p>
-     * Suggested use is either for a base module for a game, or else situations where modules aren't
-     * really being used.
-     *
-     * @param metadata The metadata describing the module
-     * @return A module covering the complete classpath
-     */
-    public Module createFullClasspathModule(ModuleMetadata metadata) {
-        Reflections manifest = scanOrLoadClasspathReflections("");
-        return createFullClasspathModule(metadata, manifest);
     }
 
     @NonNull
@@ -267,32 +262,30 @@ public class ModuleFactory {
         return manifest;
     }
 
-    public Module createFullClasspathModule(ModuleMetadata metadata, Reflections manifest) {
-        return new Module(metadata, new ClasspathFileSource(manifest, "", classLoader), Collections.emptyList(), manifest, x -> true);
-    }
-
     /**
-     * Creates a module from a package on the main classpath. If available will load a reflections cache from the package,
-     * otherwise a scan will be run to determine contents.
+     * Creates a module from a package on the main classpath.
      *
      * @param metadata    The metadata describing the module
      * @param packageName The package to create the module from, as a list of the parts of the package
      * @return A module covering the contents of the package on the classpath
+     * @
      */
     public Module createPackageModule(ModuleMetadata metadata, String packageName) {
         List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));
         Reflections manifest = scanOrLoadClasspathReflections(RESOURCE_PATH_JOINER.join(packageParts));
-        return createPackageModule(metadata, packageName, manifest);
-    }
 
-    public Module createPackageModule(ModuleMetadata metadata, String packageName, Reflections manifest) {
-        List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));
         return new Module(metadata, new ClasspathFileSource(manifest, RESOURCE_PATH_JOINER.join(packageParts), classLoader), Collections.emptyList(), manifest, x -> {
             String classPackageName = Reflection.getPackageName(x);
             return packageName.equals(classPackageName) || classPackageName.startsWith(packageName + ".");
         });
     }
 
+    /**
+     * Creates a module from a directory.
+     *
+     * @param directory The directory to load as a module
+     * @return A module covering the contents of the directory
+     */
     public Module createDirectoryModule(File directory) throws IOException {
         for (Map.Entry<String, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
             File modInfoFile = new File(directory, entry.getKey());
@@ -307,6 +300,13 @@ public class ModuleFactory {
         throw new IOException("Could not resolve module metadata for module at " + directory);
     }
 
+    /**
+     * Creates a module from a directory.
+     *
+     * @param metadata  The metadata describing the module
+     * @param directory The directory to load as a module
+     * @return A module covering the contents of the directory
+     */
     public Module createDirectoryModule(ModuleMetadata metadata, File directory) {
         Preconditions.checkArgument(directory.isDirectory());
 
@@ -333,6 +333,13 @@ public class ModuleFactory {
         return new Module(metadata, new DirectoryFileSource(directory), codeLocations, manifest, x -> false);
     }
 
+    /**
+     * Loads an archive (zip) module. This module may contain compiled code (e.g. could be a jar).
+     *
+     * @param archive The archive file
+     * @return The loaded module
+     * @throws IOException If there is an issue loading the module
+     */
     public Module createArchiveModule(File archive) throws IOException {
         try (ZipFile zipFile = new ZipFile(archive)) {
             for (Map.Entry<String, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
@@ -352,6 +359,14 @@ public class ModuleFactory {
         throw new IOException("Missing module metadata in archive module '" + archive + "'");
     }
 
+    /**
+     * Loads an archive (zip) module. This module may contain compiled code (e.g. could be a jar).
+     *
+     * @param metadata The metadata describing the module
+     * @param archive  The archive file
+     * @return The loaded module
+     * @throws IOException If there is an issue loading the module
+     */
     public Module createArchiveModule(ModuleMetadata metadata, File archive) throws IOException {
         Preconditions.checkArgument(archive.isFile());
 
@@ -362,14 +377,6 @@ public class ModuleFactory {
         }
     }
 
-    public Module createModule(ModuleMetadata metadata, File path) throws IOException {
-        if (path.isDirectory()) {
-            return createDirectoryModule(metadata, path);
-        } else {
-            return createArchiveModule(metadata, path);
-        }
-    }
-
     /**
      * Creates a module for a path, depending on whether it is a directory or a file.
      *
@@ -377,12 +384,11 @@ public class ModuleFactory {
      * @param metadata The metadata describing the module.
      * @return The new module.
      */
-    @RequiresApi(26)
-    public Module createModule(ModuleMetadata metadata, Path path) throws IOException {
-        if (Files.isDirectory(path)) {
-            return createDirectoryModule(metadata, path.toFile());
+    public Module createModule(ModuleMetadata metadata, File path) throws IOException {
+        if (path.isDirectory()) {
+            return createDirectoryModule(metadata, path);
         } else {
-            return createArchiveModule(metadata, path.toFile());
+            return createArchiveModule(metadata, path);
         }
     }
 
@@ -394,12 +400,12 @@ public class ModuleFactory {
      * @return The loaded module
      * @throws IOException If the module fails to load, including if the module metadata file cannot be found or loaded.
      */
-    @RequiresApi(26)
-    public Module createModule(Path path) throws IOException {
-        if (Files.isDirectory(path)) {
-            return createDirectoryModule(path.toFile());
+    public Module createModule(File path) throws IOException {
+        Preconditions.checkArgument(path.exists());
+        if (path.isDirectory()) {
+            return createDirectoryModule(path);
         } else {
-            return createArchiveModule(path.toFile());
+            return createArchiveModule(path);
         }
     }
 

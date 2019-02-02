@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.util.List;
 
 /**
- * A handle describing and for accessing a
+ * A handle describing and providing access to a file from a {@link ModuleFileSource}
  */
 public interface ModuleFile {
 
@@ -31,12 +31,12 @@ public interface ModuleFile {
     String getName();
 
     /**
-     * @return The path to the file
+     * @return The path to the file (within the file source)
      */
     List<String> getPath();
 
     /**
-     * @return A stream for reading the file. Closing the stream is the duty of the caller
+     * @return An new InputStream for reading the file. Closing the stream is the duty of the caller
      * @throws IOException If there is an exception opening the file
      */
     InputStream open() throws IOException;

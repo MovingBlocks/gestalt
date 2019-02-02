@@ -82,14 +82,18 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
         this.moduleId = module;
         this.permissionProvider = permissionProvider;
         this.bytecodeInjectors = ImmutableList.copyOf(injectors);
-        pool = new ClassPool(ClassPool.getDefault());
-        for (URL url : urls) {
-            try {
-                logger.debug("Module path: {}", url.toURI());
-                pool.appendClassPath(new File(url.toURI()).toString());
-            } catch (NotFoundException | URISyntaxException e) {
-                logger.error("Failed to process module url: {}", url);
+        if (!bytecodeInjectors.isEmpty()) {
+            pool = new ClassPool(ClassPool.getDefault());
+            for (URL url : urls) {
+                try {
+                    logger.debug("Module path: {}", url.toURI());
+                    pool.appendClassPath(new File(url.toURI()).toString());
+                } catch (NotFoundException | URISyntaxException e) {
+                    logger.error("Failed to process module url: {}", url);
+                }
             }
+        } else {
+            pool = null;
         }
     }
 
@@ -129,7 +133,7 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
     /**
      * @return The non-ModuleClassLoader that the module classloader chain is based on
      */
-    ClassLoader getBaseClassLoader() {
+    private ClassLoader getBaseClassLoader() {
         if (getParent() instanceof ModuleClassLoader) {
             return ((JavaModuleClassLoader) getParent()).getBaseClassLoader();
         }
@@ -163,9 +167,8 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
             return null;
         }
         try {
-            return AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
-                @Override
-                public Class<?> run() throws Exception {
+            if (pool != null) {
+                return AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>>) () -> {
                     CtClass cc = pool.get(name);
 
                     for (BytecodeInjector injector : bytecodeInjectors) {
@@ -173,10 +176,10 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
                     }
                     byte[] b = cc.toBytecode();
                     return defineClass(name, b, 0, b.length);
-                }
-
-
-            });
+                });
+            } else {
+                return super.findClass(name);
+            }
 
         } catch (PrivilegedActionException e) {
             throw new ClassNotFoundException("Failed to find or load class " + name, e.getCause());

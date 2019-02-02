@@ -17,6 +17,11 @@
 package org.terasology.module.sandbox;
 
 import org.junit.Test;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleFactory;
 import org.terasology.module.ModuleMetadata;
@@ -36,16 +41,14 @@ public class APIScannerTest {
 
     @Test
     public void test() throws Exception {
-        ModuleMetadata metadata = new ModuleMetadata();
-        metadata.setId(new Name("test"));
-        metadata.setVersion(new Version("1.0.0"));
-        Module module = new ModuleFactory().createFullClasspathModule(metadata);
-
         StandardPermissionProviderFactory permissionProviderFactory = mock(StandardPermissionProviderFactory.class);
         PermissionSet permSet = new PermissionSet();
         when(permissionProviderFactory.getPermissionSet(any(String.class))).thenReturn(permSet);
 
-        new APIScanner(permissionProviderFactory).scan(module);
+        ConfigurationBuilder config = new ConfigurationBuilder().addClassLoader(ClasspathHelper.contextClassLoader()).addUrls(ClasspathHelper.forClassLoader()).addScanners(new TypeAnnotationsScanner());
+        Reflections reflections = new Reflections(config);
+
+        new APIScanner(permissionProviderFactory).scan(reflections);
         assertTrue(permSet.isPermitted(APIClass.class));
         assertFalse(permSet.isPermitted(NonAPIClassInheritingAPIClass.class));
     }

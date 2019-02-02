@@ -128,7 +128,7 @@ public class DirectoryFileSource implements ModuleFileSource {
             if (dir.getCanonicalPath().startsWith(rootDirectory.getPath())) {
                 File[] contents = dir.listFiles();
                 if (contents != null) {
-                    return Arrays.asList(contents).stream().filter(x -> x.isDirectory()).map(x -> x.getName()).collect(Collectors.toSet());
+                    return Arrays.stream(contents).filter(File::isDirectory).map(File::getName).collect(Collectors.toSet());
                 }
             }
         } catch (IOException e) {

@@ -21,6 +21,10 @@ import org.terasology.module.Module;
 import java.security.Permission;
 import java.util.function.Predicate;
 
+/**
+ * A trivial permission provider that simply allows modules to do anything. Should only be used where
+ * custom modules are not a factor.
+ */
 public class PermitAllPermissionProviderFactory implements PermissionProviderFactory {
 
     @Override
