@@ -42,14 +42,15 @@ public interface TopologicalSorter<T> {
     /**
      * @param nodes A series of nodes to add to be sorted
      */
-    default void addNodes(T ... nodes) {
+    default void addNodes(T... nodes) {
         addNodes(Arrays.asList(nodes));
     }
 
     /**
      * An edge top consider when sorting. In the result, fromNode will appear before toNode.
+     *
      * @param fromNode The node to appear first in the sorted list
-     * @param toNode The node to appear later in the sorted list
+     * @param toNode   The node to appear later in the sorted list
      */
     void addEdge(T fromNode, T toNode);
 

@@ -16,9 +16,12 @@
 
 package org.terasology.util.io;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+
 import org.terasology.util.Varargs;
 
 import java.nio.file.Path;
@@ -31,6 +34,7 @@ import java.util.Set;
  *
  * @author Immortius
  */
+@RequiresApi(26)
 public class FileExtensionPathMatcher implements PathMatcher {
 
     private final Set<String> extensions;

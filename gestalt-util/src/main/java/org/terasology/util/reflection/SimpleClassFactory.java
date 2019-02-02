@@ -17,6 +17,7 @@
 package org.terasology.util.reflection;
 
 import com.google.common.collect.Lists;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +35,9 @@ import java.util.Optional;
  * with the least parameters, using the first one it is able to satisfy. If multiple constructors have the same number of parameters
  * it is undefined which it will use.
  * <p>
- *     SimpleClassFactory has special handling of {@link java.util.Optional} parameters - it will fill them with the appropriate object from the parameter provider
- *     if possible, but otherwise will use {@link java.util.Optional#empty}. So it will be able to use constructors with Optional parameters regardless
- *     of whether it has the desired object for them.
+ * SimpleClassFactory has special handling of {@link java.util.Optional} parameters - it will fill them with the appropriate object from the parameter provider
+ * if possible, but otherwise will use {@link java.util.Optional#empty}. So it will be able to use constructors with Optional parameters regardless
+ * of whether it has the desired object for them.
  * </p>
  *
  * @author Immortius
@@ -60,6 +61,7 @@ public class SimpleClassFactory implements ClassFactory {
 
     /**
      * Creates a SimpleClassFactory that will use any constructor which requires the objects the given parameterProvider can provide.
+     *
      * @param parameterProvider A provider of objects to use as constructor parameters.
      */
     public SimpleClassFactory(ParameterProvider parameterProvider) {
@@ -69,12 +71,12 @@ public class SimpleClassFactory implements ClassFactory {
     @Override
     public <T> Optional<T> instantiateClass(Class<? extends T> discoveredType) {
         List<Constructor<?>> possibleConstructors = Lists.newArrayList(discoveredType.getConstructors());
-        Collections.sort(possibleConstructors, Comparator.<Constructor<?>, Integer>comparing(Constructor::getParameterCount).reversed());
+        possibleConstructors.sort(Comparator.<Constructor<?>, Integer>comparing(x -> x.getParameterTypes().length).reversed());
 
         for (Constructor<?> constructor : possibleConstructors) {
             boolean populatedAllParams = true;
-            Object[] param = new Object[constructor.getParameterCount()];
-            for (int i = 0; i < constructor.getParameterCount(); i++) {
+            Object[] param = new Object[constructor.getParameterTypes().length];
+            for (int i = 0; i < constructor.getParameterTypes().length; i++) {
                 if (constructor.getParameterTypes()[i].equals(Optional.class)) {
                     Optional<Type> optionalType = GenericsUtil.getTypeParameterBinding(constructor.getGenericParameterTypes()[i], 0);
                     if (!optionalType.isPresent()) {

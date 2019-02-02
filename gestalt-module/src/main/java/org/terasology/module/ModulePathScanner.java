@@ -103,7 +103,7 @@ public class ModulePathScanner {
      * @throws IOException If an error occurs scanning the directory - but not an individual module.
      */
     private void scanModuleDirectories(Path discoveryPath, ModuleRegistry registry) throws IOException {
-        for (Path modulePath : Files.newDirectoryStream(discoveryPath, FilesUtil.DIRECTORY_FILTER)) {
+        for (Path modulePath : Files.newDirectoryStream(discoveryPath, Files::isDirectory)) {
             loadModule(registry, modulePath);
         }
     }

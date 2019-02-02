@@ -16,6 +16,8 @@
 
 package org.terasology.util.io;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -29,6 +31,7 @@ import java.nio.file.Path;
  *
  * @author Immortius
  */
+@RequiresApi(26)
 public class FileTypesFilter implements DirectoryStream.Filter<Path> {
 
     private final ImmutableList<String> fileTypes;

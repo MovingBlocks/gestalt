@@ -20,12 +20,13 @@ import java.util.Optional;
 
 /**
  * Interface for Class factories. These generically generate requested classes.
+ *
  * @author Immortius
  */
 public interface ClassFactory {
     /**
      * @param type The type to instantiate.
-     * @param <T> The type to return the instantiated object as
+     * @param <T>  The type to return the instantiated object as
      * @return An optional that contains the instantiated object if successful
      */
     <T> Optional<T> instantiateClass(Class<? extends T> type);

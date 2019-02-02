@@ -16,6 +16,8 @@
 
 package org.terasology.util.io;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -29,25 +31,19 @@ import java.util.List;
 
 /**
  * Uitlity helper class for scanning Paths for files of interest.
+ *
  * @author Immortius
  */
+@RequiresApi(26)
 public final class FileScanning {
-
-    private static final PathMatcher ACCEPT_ALL_PATH_MATCHER = new AcceptAllPathMatcher();
 
     private FileScanning() {
     }
 
     /**
-     * @return A trivial PathMatcher that accepts all paths
-     */
-    public static PathMatcher acceptAll() {
-        return ACCEPT_ALL_PATH_MATCHER;
-    }
-
-    /**
      * Scans a path, recursing all paths matching the scanFilter and returning all files matching the fileFilter
-     * @param rootPath The path to scan
+     *
+     * @param rootPath   The path to scan
      * @param scanFilter A PathMatcher indicating which subpaths to scan
      * @param fileFilter A PathMatcher indicating which files to return
      * @return A list of matching files within the path tree
@@ -76,7 +72,7 @@ public final class FileScanning {
 
         /**
          * @param directoryFilter A filter determining which directories to visit
-         * @param fileFilter A filter determining which files match
+         * @param fileFilter      A filter determining which files match
          */
         public FilteredFileVisitor(PathMatcher directoryFilter, PathMatcher fileFilter) {
             this.directoryFilter = directoryFilter;
@@ -85,6 +81,7 @@ public final class FileScanning {
 
         /**
          * This method is called for each matching file
+         *
          * @param file A matching file
          */
         protected abstract void onMatch(Path file);
@@ -103,17 +100,6 @@ public final class FileScanning {
                 onMatch(file);
             }
             return FileVisitResult.CONTINUE;
-        }
-    }
-
-    /**
-     * Trivial path matcher that matches all paths
-     */
-    private static class AcceptAllPathMatcher implements PathMatcher {
-
-        @Override
-        public boolean matches(Path path) {
-            return true;
         }
     }
 }

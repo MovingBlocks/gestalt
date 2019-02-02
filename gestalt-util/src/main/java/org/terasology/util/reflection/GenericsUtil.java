@@ -42,7 +42,11 @@ public final class GenericsUtil {
      * @return An optional that contains the parameter type if bound.
      */
     public static Optional<Type> getTypeParameterBinding(Type target, int index) {
-        return getTypeParameterBindingForInheritedClass(target, getClassOfType(target), index);
+        Class<?> classOfType = getClassOfType(target);
+        if (classOfType != null) {
+            return getTypeParameterBindingForInheritedClass(target, classOfType, index);
+        }
+        throw new IllegalArgumentException("Unsupported type: " + target);
     }
 
     /**
@@ -58,7 +62,11 @@ public final class GenericsUtil {
         if (superClass.getTypeParameters().length == 0) {
             throw new IllegalArgumentException("Class '" + superClass + "' is not parameterized");
         }
-        if (!superClass.isAssignableFrom(getClassOfType(target))) {
+        Class<?> classOfType = getClassOfType(target);
+        if (classOfType == null) {
+            throw new IllegalArgumentException("Unsupported type: " + target);
+        }
+        if (!superClass.isAssignableFrom(classOfType)) {
             throw new IllegalArgumentException("Class '" + target + "' does not implement '" + superClass + "'");
         }
 

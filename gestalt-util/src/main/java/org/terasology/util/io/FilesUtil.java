@@ -15,6 +15,8 @@
  */
 package org.terasology.util.io;
 
+import android.support.annotation.RequiresApi;
+
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -27,17 +29,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 /**
  * General file utility
  */
+@RequiresApi(26)
 public final class FilesUtil {
 
     /**
      * A filter for DirectoryStream that only accepts directories
      */
-    public static final DirectoryStream.Filter<Path> DIRECTORY_FILTER =
-            new DirectoryStream.Filter<Path>() {
-                public boolean accept(Path file) throws IOException {
-                    return Files.isDirectory(file);
-                }
-            };
+    public static final DirectoryStream.Filter<Path> DIRECTORY_FILTER = Files::isDirectory;
 
     private FilesUtil() {
     }

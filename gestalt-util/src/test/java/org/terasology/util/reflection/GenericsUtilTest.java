@@ -17,6 +17,7 @@
 package org.terasology.util.reflection;
 
 import com.google.common.base.Predicate;
+
 import org.junit.Test;
 
 import java.lang.reflect.Type;
