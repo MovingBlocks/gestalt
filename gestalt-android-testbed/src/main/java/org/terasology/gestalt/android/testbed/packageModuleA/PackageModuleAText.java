@@ -6,6 +6,6 @@ public class PackageModuleAText implements ApiInterface {
 
     @Override
     public String apiMethod() {
-        return "Hello from Module A!";
+        return "Hello from Package Module A!";
     }
 }

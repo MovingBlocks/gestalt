@@ -57,10 +57,14 @@ dependencies {
 }
 
 def reflectPackage(packageName, variant) {
-    def resourcesPath = variant.sourceSets.find{it.name == 'main'}.resources.srcDirs
-    def classPath = files {variant.javaCompiler.destinationDir}
-    URL[] scanUrls = classPath.collect {it.toURI().toURL()} + resourcesPath.collect {it.toURI().toURL()}
-    URL[] classLoaderUrls = scanUrls + variant.javaCompiler.classpath.collect {it.toURI().toURL()} + [new File(android.sdkDirectory, "platforms/" + android.compileSdkVersion + "/android.jar").toURI().toURL()]
+    def resourcesPath = variant.sourceSets.find { it.name == 'main' }.resources.srcDirs
+    def classPath = files { variant.javaCompiler.destinationDir }
+    URL[] scanUrls = classPath.collect { it.toURI().toURL() } + resourcesPath.collect {
+        it.toURI().toURL()
+    }
+    URL[] classLoaderUrls = scanUrls + variant.javaCompiler.classpath.collect {
+        it.toURI().toURL()
+    } + [new File(android.sdkDirectory, "platforms/" + android.compileSdkVersion + "/android.jar").toURI().toURL()]
 
     ClassLoader classLoader = new URLClassLoader(classLoaderUrls, getClass().getClassLoader())
     org.reflections.Configuration config = new org.reflections.util.ConfigurationBuilder()
