@@ -1,9 +1,5 @@
-import com.google.common.base.Predicate
-
-import java.util.regex.Pattern
-
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +13,10 @@ import java.util.regex.Pattern
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import com.google.common.base.Predicate
+
+import java.util.regex.Pattern
 
 /*
  * This is a Gradle build file:
