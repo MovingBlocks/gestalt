@@ -17,6 +17,7 @@
 package org.terasology.util.collection;
 
 import com.google.common.collect.Lists;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -47,7 +48,7 @@ public class KahnSorterTest {
         assertEquals(Lists.newArrayList(3, 2, 1), sorter.sort());
     }
 
-    @Test(expected=CircularDependencyException.class)
+    @Test(expected = CircularDependencyException.class)
     public void circularDependency() {
         sorter.addNodes(1, 2, 3);
         sorter.addEdge(2, 1);

@@ -20,13 +20,14 @@ import java.util.Optional;
 
 /**
  * ParameterProvider provides objects of desired types. It is used by the SimpleClassFactory to obtain values to use for constructor parameters.
+ *
  * @author Immortius
  */
 public interface ParameterProvider {
 
     /**
      * @param type The desired type
-     * @param <T> The desired type
+     * @param <T>  The desired type
      * @return An optional with a value of the desired type, or empty if no such object is available
      */
     <T> Optional<T> get(Class<T> type);

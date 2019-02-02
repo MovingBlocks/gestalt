@@ -1,14 +1,10 @@
-package org.terasology.gestalt.android.testbed;
-
-import android.content.Context;
+package org.terasology.gestalt.android;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.Module;
-import org.terasology.module.sandbox.BytecodeInjector;
 import org.terasology.module.sandbox.JavaModuleClassLoader;
 import org.terasology.module.sandbox.ModuleClassLoader;
 import org.terasology.module.sandbox.ObtainClassloader;
@@ -16,14 +12,7 @@ import org.terasology.module.sandbox.PermissionProvider;
 import org.terasology.naming.Name;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.Collections;
 import java.util.List;
 
 import dalvik.system.DexClassLoader;

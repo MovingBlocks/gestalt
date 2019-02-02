@@ -20,11 +20,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
 import java.util.Collection;
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 /**
@@ -43,6 +41,7 @@ public class TypeKeyedMap<T> {
 
     /**
      * Constructs a TypeKeyedMap, using the provided supplier to produce the implementing map
+     *
      * @param mapSupplier The supplier of the map implementation
      */
     public TypeKeyedMap(Supplier<Map<Class<? extends T>, T>> mapSupplier) {
@@ -51,6 +50,7 @@ public class TypeKeyedMap<T> {
 
     /**
      * Constructs a TypeKeyedMap, using the provided implementing map
+     *
      * @param baseMap The map to encapsulate
      */
     public TypeKeyedMap(Map<Class<? extends T>, T> baseMap) {
@@ -99,6 +99,7 @@ public class TypeKeyedMap<T> {
 
     /**
      * Adds a value to the map, against the provided key
+     *
      * @param key
      * @param value
      * @param <U>
@@ -111,6 +112,7 @@ public class TypeKeyedMap<T> {
 
     /**
      * Removes a key and its associated value from the map.
+     *
      * @param key
      * @param <U>
      * @return The value associated with the removed key
@@ -260,6 +262,7 @@ public class TypeKeyedMap<T> {
 
     /**
      * An entry in a TypeKeyedMap.
+     *
      * @param <T>
      */
     public static class Entry<T> {
