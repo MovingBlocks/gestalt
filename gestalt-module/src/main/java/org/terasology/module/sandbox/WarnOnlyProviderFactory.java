@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 /**
  * This provider factory wraps another factory. Whenever the other factory would deny access, this factory logs an error and grants permission.
  * <p>This is intended to allow code being developed to run regardless of permission issues, so that required permissions can be gathered.</p>
+ *
  * @author Immortius
  */
 public class WarnOnlyProviderFactory implements PermissionProviderFactory {

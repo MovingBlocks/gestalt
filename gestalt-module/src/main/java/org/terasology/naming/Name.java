@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package org.terasology.naming;
 
 import com.google.common.base.Preconditions;
 
-import javax.annotation.concurrent.Immutable;
 import java.util.Locale;
+
+import javax.annotation.concurrent.Immutable;
 
 /**
  * A name is a normalised string used as an identifier. Primarily this means it is case insensitive.

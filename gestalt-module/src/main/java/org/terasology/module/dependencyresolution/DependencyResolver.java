@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 package org.terasology.module.dependencyresolution;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
-
 import org.terasology.module.ModuleRegistry;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 import org.terasology.naming.VersionRange;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Dependency Resolver determines a working set of modules for a given set of desired modules. Where multiple versions are compatible, they are resolved in favour of the
@@ -91,6 +91,7 @@ public class DependencyResolver {
         /**
          * Adds a module to the set of requirements.
          * Previously defined requirements on a module are overwritten.
+         *
          * @param moduleId the id of the module that must be resolved. Any version matches;
          *                 later versions are preferred, if multiple versions are available.
          * @return this instance
@@ -103,8 +104,9 @@ public class DependencyResolver {
         /**
          * Adds a module to the set of requirements.
          * Previously defined requirements on a module are overwritten.
+         *
          * @param moduleId the id of the module that must be resolved. Only the specified version matches.
-         * @param version the version of the module that must be matched
+         * @param version  the version of the module that must be matched
          * @return this instance
          */
         public ResolutionBuilder requireVersion(Name moduleId, Version version) {
@@ -115,8 +117,9 @@ public class DependencyResolver {
         /**
          * Adds a module to the set of requirements.
          * Previously defined requirements on a module are overwritten.
+         *
          * @param moduleId the id of the module that must be resolved. Only the specified version range matches.
-         * @param range the version range of the module that must be matched
+         * @param range    the version range of the module that must be matched
          * @return this instance
          */
         public ResolutionBuilder requireVersionRange(Name moduleId, VersionRange range) {
@@ -127,8 +130,9 @@ public class DependencyResolver {
         /**
          * Adds multiple modules to the set of requirements.
          * Previously defined requirements on a module are overwritten.
+         *
          * @param moduleIds an array of module IDs that must be resolved. Any version matches;
-         *                 later versions are preferred, if multiple versions of a module are available.
+         *                  later versions are preferred, if multiple versions of a module are available.
          * @return this instance
          */
         public ResolutionBuilder requireAll(Name[] moduleIds) {
@@ -141,8 +145,9 @@ public class DependencyResolver {
         /**
          * Adds multiple modules to the set of requirements.
          * Previously defined requirements on a module are overwritten.
+         *
          * @param moduleIds a group of module IDs that must be resolved. Any version matches;
-         *                 later versions are preferred, if multiple versions of a module are available.
+         *                  later versions are preferred, if multiple versions of a module are available.
          * @return this instance
          */
         public ResolutionBuilder requireAll(Iterable<Name> moduleIds) {
@@ -155,6 +160,7 @@ public class DependencyResolver {
 
         /**
          * Performs the actual dependency resolution.
+         *
          * @return the result of the process.
          */
         public ResolutionResult build() {

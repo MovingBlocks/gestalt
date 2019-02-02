@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,8 @@ import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.security.Policy;
-import java.util.Collections;
 import java.util.Set;
 
 /**

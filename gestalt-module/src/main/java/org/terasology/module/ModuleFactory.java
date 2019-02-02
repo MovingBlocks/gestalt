@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.serializers.JsonSerializer;
 import org.reflections.serializers.Serializer;
-import org.reflections.serializers.XmlSerializer;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -75,14 +74,12 @@ public class ModuleFactory {
     private static final Configuration EMPTY_CONFIG = new ConfigurationBuilder();
     private static final String STANDARD_CODE_SUBPATH = "build/classes";
     private static final String STANDARD_LIBS_SUBPATH = "libs";
-
-    private String defaultCodeSubpath;
-    private String defaultLibsSubpath;
-    private boolean scanningForClasses = true;
-
     private final Map<String, ModuleMetadataLoader> moduleMetadataLoaderMap = Maps.newLinkedHashMap();
     private final Map<String, Serializer> manifestSerializersByFilename = Maps.newLinkedHashMap();
     private final ClassLoader classLoader;
+    private String defaultCodeSubpath;
+    private String defaultLibsSubpath;
+    private boolean scanningForClasses = true;
 
     public ModuleFactory() {
         this(ClasspathHelper.contextClassLoader());
@@ -123,14 +120,6 @@ public class ModuleFactory {
         return defaultCodeSubpath;
     }
 
-    public void setScanningForClasses(boolean scanForClasses) {
-        this.scanningForClasses = scanForClasses;
-    }
-
-    public boolean isScanningForClasses() {
-        return scanningForClasses;
-    }
-
     /**
      * Sets the default subpath for code in a path module
      *
@@ -138,6 +127,14 @@ public class ModuleFactory {
      */
     public void setDefaultCodeSubpath(String defaultCodeSubpath) {
         this.defaultCodeSubpath = defaultCodeSubpath;
+    }
+
+    public boolean isScanningForClasses() {
+        return scanningForClasses;
+    }
+
+    public void setScanningForClasses(boolean scanForClasses) {
+        this.scanningForClasses = scanForClasses;
     }
 
     /**
@@ -170,9 +167,10 @@ public class ModuleFactory {
     /**
      * Creates a module for the full classpath. This module includes everything on the runtime.
      * If available it will load a reflections cache, otherwise it will scan to determine contents.
-     *
+     * <p>
      * Suggested use is either for a base module for a game, or else situations where modules aren't
      * really being used.
+     *
      * @param metadata The metadata describing the module
      * @return A module covering the complete classpath
      */
@@ -276,7 +274,8 @@ public class ModuleFactory {
     /**
      * Creates a module from a package on the main classpath. If available will load a reflections cache from the package,
      * otherwise a scan will be run to determine contents.
-     * @param metadata The metadata describing the module
+     *
+     * @param metadata    The metadata describing the module
      * @param packageName The package to create the module from, as a list of the parts of the package
      * @return A module covering the contents of the package on the classpath
      */
@@ -390,6 +389,7 @@ public class ModuleFactory {
     /**
      * Creates a module from a path, determining whether it is an archive (jar or zip) or directory and handling it appropriately. A module metadata file will be loaded and
      * to determine the module's id, version and other details.
+     *
      * @param path
      * @return The loaded module
      * @throws IOException If the module fails to load, including if the module metadata file cannot be found or loaded.

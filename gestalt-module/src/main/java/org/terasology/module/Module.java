@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.terasology.module;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,6 @@ import org.terasology.naming.Name;
 import org.terasology.naming.Version;
 
 import java.io.File;
-import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -52,9 +52,9 @@ public final class Module {
     /**
      * Creates a module composed of the given paths, classpaths, and described by the given metadata.
      *
-     * @param metadata The metadata describing the module
-     * @param fileSources Any sources of files that compose the module. Must not be null - can be {@link org.terasology.module.resources.EmptyFileSource}
-     * @param classpaths Any extra classpaths to load for the module
+     * @param metadata       The metadata describing the module
+     * @param fileSources    Any sources of files that compose the module. Must not be null - can be {@link org.terasology.module.resources.EmptyFileSource}
+     * @param classpaths     Any extra classpaths to load for the module
      * @param moduleManifest A manifest of the contents of the module. This should indicate all classes and any classpath provided resources.
      *                       Additionally this provides additional information on classes such as what they inherit and what annotations they are flagged with.
      * @param classPredicate Predicate to determine what classes to include from the main classpath (classes from the unloaded classpaths will be included automatically)

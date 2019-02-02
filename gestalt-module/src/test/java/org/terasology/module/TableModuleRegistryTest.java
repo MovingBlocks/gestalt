@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.terasology.module;
 
 import org.junit.Test;
-import org.reflections.Configuration;
 import org.reflections.Reflections;
 import org.reflections.util.ConfigurationBuilder;
 import org.terasology.module.resources.EmptyFileSource;
@@ -29,8 +28,6 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Immortius

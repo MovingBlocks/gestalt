@@ -1,4 +1,20 @@
 /*
+ * Copyright 2019 MovingBlocks
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * This is a Gradle build file:
  * - Gradle Homepage: http://gradle.org/
  * - Gradle Documentation: http://gradle.org/documentation
@@ -31,29 +47,29 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar', ':testpack:moduleD:jar'], type: Copy)
-task createModuleE(dependsOn: [':gestalt-module:copyModuleEInfo', ':gestalt-module:copyModuleELibs']) 
-task copyModuleELibs(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleD:jar'],type: Copy)
-task copyModuleEInfo(type: Copy) 
+task createModuleE(dependsOn: [':gestalt-module:copyModuleEInfo', ':gestalt-module:copyModuleELibs'])
+task copyModuleELibs(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleD:jar'], type: Copy)
+task copyModuleEInfo(type: Copy)
 task gatherModules(dependsOn: [':gestalt-module:gatherJarModules', ':gestalt-module:createModuleE'])
 
 copyModuleELibs {
-	from '../testpack/moduleA/build/libs'
-	from '../testpack/moduleD/build/libs'
-	into 'test-modules/moduleE/libs'
-	include('*.jar')
+    from '../testpack/moduleA/build/libs'
+    from '../testpack/moduleD/build/libs'
+    into 'test-modules/moduleE/libs'
+    include('*.jar')
 }
 
 copyModuleEInfo {
-	from '../testpack/moduleE'
-	into 'test-modules/moduleE'
-	include('*.json')
+    from '../testpack/moduleE'
+    into 'test-modules/moduleE'
+    include('*.json')
 }
 
 gatherJarModules {
     from '../testpack/moduleA/build/libs/'
     from '../testpack/moduleB/build/libs/'
     from '../testpack/moduleC/build/libs/'
-	from '../testpack/moduleD/build/libs/'
+    from '../testpack/moduleD/build/libs/'
     into 'test-modules'
     include('*.jar')
 }

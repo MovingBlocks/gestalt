@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
 package org.terasology.module.dependencyresolution;
 
 import com.google.common.base.Preconditions;
+
 import org.terasology.module.Module;
 
 import java.util.Set;
 
 /**
  * Provides the results of dependency resolution - whether it succeeded or not, and if it succeeded the set of compatible modules that were resolved.
+ *
  * @author Immortius
  */
 public class ResolutionResult {

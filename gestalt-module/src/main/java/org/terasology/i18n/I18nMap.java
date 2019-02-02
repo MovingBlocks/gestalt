@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package org.terasology.i18n;
 
 import com.google.common.collect.ImmutableMap;
 
-import javax.annotation.concurrent.Immutable;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+
+import javax.annotation.concurrent.Immutable;
 
 /**
  * I18nMap is a map of Strings by Locale, to support lookup fields that can have different values for different languages (internationalized fields).

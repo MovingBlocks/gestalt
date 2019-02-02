@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 MovingBlocks
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.terasology.module.resources;
 
 import android.support.annotation.NonNull;
@@ -39,6 +55,7 @@ public class DirectoryFileSource implements ModuleFileSource {
 
     /**
      * Creates a standard DirectoryFileSource, excluding all .class files from the given directory
+     *
      * @param directory The directory to read resources from
      */
     public DirectoryFileSource(File directory) {
@@ -47,7 +64,8 @@ public class DirectoryFileSource implements ModuleFileSource {
 
     /**
      * Creates a DirectoryFileSource
-     * @param directory The directory to read resources from
+     *
+     * @param directory     The directory to read resources from
      * @param contentFilter A predicate to filter which files are exposed
      */
     public DirectoryFileSource(File directory, Predicate<File> contentFilter) {
@@ -113,7 +131,7 @@ public class DirectoryFileSource implements ModuleFileSource {
                     return Arrays.asList(contents).stream().filter(x -> x.isDirectory()).map(x -> x.getName()).collect(Collectors.toSet());
                 }
             }
-        } catch(IOException e) {
+        } catch (IOException e) {
             logger.error("Failed to canonicalize path", e);
         }
         return Collections.emptySet();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.terasology.naming;
 
 import com.google.common.base.Strings;
+
 import org.terasology.naming.exception.VersionParseException;
 
 import java.util.Objects;
@@ -55,9 +56,9 @@ public final class Version implements Comparable<Version> {
     /**
      * Constructs a version with the given values
      *
-     * @param major The major version number (generally incremented for breaking changes)
-     * @param minor The minot version number (generally changes for non-breaking feature enhancements)
-     * @param patch The patch version number (generally changes for non-breaking bug fixes)
+     * @param major    The major version number (generally incremented for breaking changes)
+     * @param minor    The minot version number (generally changes for non-breaking feature enhancements)
+     * @param patch    The patch version number (generally changes for non-breaking bug fixes)
      * @param snapshot Whether this version is a snapshot (work in progress, not yet released)
      * @throws IllegalArgumentException if a version part is negative
      */
