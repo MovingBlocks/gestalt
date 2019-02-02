@@ -19,11 +19,14 @@ package org.terasology.module.sandbox;
 import java.security.Permission;
 import java.util.function.Predicate;
 
-public class PredicatePermissionSet implements PermissionProvider {
+/**
+ * A PermissionProvider that determines permitted classes via a predicate
+ */
+public class PredicatePermissionProvider implements PermissionProvider {
 
     private final Predicate<Class<?>> predicate;
 
-    public PredicatePermissionSet(Predicate<Class<?>> predicate) {
+    public PredicatePermissionProvider(Predicate<Class<?>> predicate) {
         this.predicate = predicate;
     }
 

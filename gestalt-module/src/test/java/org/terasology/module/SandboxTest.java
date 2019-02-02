@@ -56,7 +56,7 @@ public class SandboxTest {
     @Before
     public void setup() {
         registry = new TableModuleRegistry();
-        new ModulePathScanner().scan(registry, Paths.get("test-modules").toAbsolutePath());
+        new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
 
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");

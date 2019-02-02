@@ -118,7 +118,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
         ClassLoader lastClassLoader = apiClassLoader;
         List<Module> orderedModules = getModulesOrderedByDependencies();
-        Predicate<Class<?>> classpathModuleClassesPredicate = orderedModules.stream().map(x -> x.getClassPredicate()).reduce(x -> false, Predicate::or);
+        Predicate<Class<?>> classpathModuleClassesPredicate = orderedModules.stream().map(Module::getClassPredicate).reduce(x -> false, Predicate::or);
         for (final Module module : orderedModules) {
             if (!module.getClasspaths().isEmpty() && !hasClassContent(module)) {
                 ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, classLoaderSupplier, classpathModuleClassesPredicate);

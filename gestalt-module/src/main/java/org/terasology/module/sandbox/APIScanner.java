@@ -18,11 +18,10 @@ package org.terasology.module.sandbox;
 
 import com.google.common.reflect.Reflection;
 
-import org.terasology.module.Module;
-import org.terasology.module.ModuleRegistry;
+import org.reflections.Reflections;
 
 /**
- * Scans classpath modules for API annotated classes and packages, registering them with a ModuleSecurityManager.
+ * Scans a reflections manifest for API annotated classes and packages, registering them with a {@link StandardPermissionProviderFactory}.
  *
  * @author Immortius
  */
@@ -41,24 +40,12 @@ public class APIScanner {
     }
 
     /**
-     * Scans all modules in a registry that are on the class path, adding all packages and classes marked with the @API annotation into appropriate permission set(s).
-     * Permission sets will be created if necessary.
+     * Scans a reflections manifest, adding any class or package marked with the @API annotation into appropriate permission sets. Permission sets will be created if necessary.
      *
-     * @param registry The registry of modules to scan
+     * @param manifest The reflections manifest to scan
      */
-    public void scan(ModuleRegistry registry) {
-        for (Module module : registry) {
-            scan(module);
-        }
-    }
-
-    /**
-     * Scans a module, adding any class or package marked with the @API annotation into appropriate permission sets. Permission sets will be created if necessary.
-     *
-     * @param module The module to scan
-     */
-    public void scan(Module module) {
-        for (Class<?> apiClass : module.getModuleManifest().getTypesAnnotatedWith(API.class, true)) {
+    public void scan(Reflections manifest) {
+        for (Class<?> apiClass : manifest.getTypesAnnotatedWith(API.class, true)) {
             if (forClassLoader == apiClass.getClassLoader()) {
                 for (String permissionSetId : apiClass.getAnnotation(API.class).permissionSet()) {
                     PermissionSet permissionSet = permissionProviderFactory.getPermissionSet(permissionSetId);

@@ -20,13 +20,32 @@ import org.terasology.naming.Name;
 
 import java.io.IOException;
 
+/**
+ * Interface for ModuleClassLoader. This allows for different base class loaders (for example
+ * on jre and android).
+ */
 public interface ModuleClassLoader {
 
+    /**
+     * @return The id of the module producing this class loader
+     */
     Name getModuleId();
 
+    /**
+     * @return The class loader itself
+     */
     ClassLoader getClassLoader();
 
+    /**
+     * Closes this class loader (when relevant)
+     *
+     * @throws IOException If an exception occurs closing the classloader
+     */
     void close() throws IOException;
 
+    /**
+     * @return The PermissionProvider determining what classes from this module
+     * are allowed to do and access
+     */
     PermissionProvider getPermissionProvider();
 }
