@@ -17,13 +17,13 @@
 package org.terasology.assets.format;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
-import javax.annotation.concurrent.Immutable;
-import java.io.BufferedInputStream;
+import net.jcip.annotations.Immutable;
+
+import org.terasology.module.resources.ModuleFile;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -44,37 +44,28 @@ import java.util.Objects;
 @Immutable
 public class AssetDataFile {
 
-    private final Path path;
+    private final ModuleFile file;
 
     /**
-     * @param path The path of the AssetDataFile
+     * @param file The AssetDataFile
      */
-    public AssetDataFile(Path path) {
-        Preconditions.checkNotNull(path);
-        this.path = path;
+    public AssetDataFile(ModuleFile file) {
+        Preconditions.checkNotNull(file);
+        this.file = file;
     }
 
     /**
      * @return The path to the file (excluding file name) relative to the module
      */
     public List<String> getPath() {
-        List<String> result = Lists.newArrayListWithCapacity(path.getNameCount() - 1);
-        for (int i = 0; i < path.getNameCount() - 1; ++i) {
-            result.add(path.getName(i).toString());
-        }
-        return result;
+        return file.getPath();
     }
 
     /**
      * @return The name of the file (including extension)
      */
     public String getFilename() {
-        Path filename = path.getFileName();
-        if (filename != null) {
-            return filename.toString();
-        } else {
-            throw new IllegalStateException("AssetDataFile has empty path");
-        }
+        return file.getName();
     }
 
     /**
@@ -95,20 +86,17 @@ public class AssetDataFile {
      * @return A new buffered input stream.
      * @throws IOException If there was an error opening the file
      */
-    public BufferedInputStream openStream() throws IOException {
+    public InputStream openStream() throws IOException {
         try {
-            return AccessController.doPrivileged((PrivilegedExceptionAction<BufferedInputStream>) () -> {
-                Preconditions.checkState(Files.isRegularFile(path));
-                return new BufferedInputStream(Files.newInputStream(path));
-            });
+            return AccessController.doPrivileged((PrivilegedExceptionAction<InputStream>) file::open);
         } catch (PrivilegedActionException e) {
-            throw new IOException("Failed to open stream for '" + path + "'", e);
+            throw new IOException("Failed to open stream for '" + file + "'", e);
         }
     }
 
     @Override
     public String toString() {
-        return path.toAbsolutePath().toString();
+        return file.toString();
     }
 
     @Override
@@ -118,13 +106,13 @@ public class AssetDataFile {
         }
         if (obj instanceof AssetDataFile) {
             AssetDataFile other = (AssetDataFile) obj;
-            return Objects.equals(other.path, path);
+            return Objects.equals(other.file, file);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(path);
+        return Objects.hash(file);
     }
 }

@@ -18,7 +18,7 @@ package org.terasology.entitysystem.component;
 
 import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.module.ModuleEnvironment;

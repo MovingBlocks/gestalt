@@ -16,6 +16,8 @@
 
 package org.terasology.assets;
 
+import android.support.annotation.Nullable;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
@@ -27,14 +29,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
+
+import net.jcip.annotations.ThreadSafe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 import org.terasology.util.reflection.GenericsUtil;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.ref.PhantomReference;

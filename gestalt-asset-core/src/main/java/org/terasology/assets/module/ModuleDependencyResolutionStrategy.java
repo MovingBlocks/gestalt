@@ -16,15 +16,16 @@
 
 package org.terasology.assets.module;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
+
+import net.jcip.annotations.ThreadSafe;
+
 import org.terasology.assets.ResolutionStrategy;
 import org.terasology.assets.format.producer.ModuleDependencyProvider;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.Set;
 
 /**
@@ -42,12 +43,13 @@ public class ModuleDependencyResolutionStrategy implements ResolutionStrategy {
     /**
      * Creates a {@link ModuleDependencyResolutionStrategy} from a ModuleEnvironment. It is recommended to use a ModuleDependencyProvider instead as this will
      * allow for switching environments without creating a new resolution strategy.
+     *
      * @param environment The module environment to use to resolve an asset.
      */
     public ModuleDependencyResolutionStrategy(ModuleEnvironment environment) {
         this(new ModuleEnvironmentDependencyProvider(environment));
     }
-    
+
     /**
      * @param dependencyProvider The provider of dependency information
      */

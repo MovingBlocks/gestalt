@@ -67,7 +67,7 @@ class ModuleEnvironmentWatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleEnvironmentWatcher.class);
 
-    private final WatchService service;
+    private final WatchService service = null;
 
     private final Map<WatchKey, PathWatcher> pathWatchers = new MapMaker().concurrencyLevel(1).makeMap();
     private final Map<Path, WatchKey> watchKeys = new MapMaker().concurrencyLevel(1).makeMap();
@@ -83,20 +83,20 @@ class ModuleEnvironmentWatcher {
      * @throws IOException If there is an issue establishing the watch service
      */
     ModuleEnvironmentWatcher(ModuleEnvironment environment) throws IOException {
-        this.service = environment.getFileSystem().newWatchService();
-
-        for (Path rootPath : environment.getFileSystem().getRootDirectories()) {
-            try {
-                Module module = environment.get(new Name(rootPath.getName(0).toString()));
-                boolean canWatch = module.getLocations().stream().anyMatch(location -> FileSystems.getDefault().equals(location.getFileSystem()));
-                if (canWatch) {
-                    PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), service);
-                    watcher.onRegistered();
-                }
-            } catch (IOException e) {
-                logger.warn("Failed to establish change watch service for path '{}'", rootPath, e);
-            }
-        }
+//        this.service = environment.getFileSystem().newWatchService();
+//
+//        for (Path rootPath : environment.getFileSystem().getRootDirectories()) {
+//            try {
+//                Module module = environment.get(new Name(rootPath.getName(0).toString()));
+//                boolean canWatch = module.getLocations().stream().anyMatch(location -> FileSystems.getDefault().equals(location.getFileSystem()));
+//                if (canWatch) {
+//                    PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), service);
+//                    watcher.onRegistered();
+//                }
+//            } catch (IOException e) {
+//                logger.warn("Failed to establish change watch service for path '{}'", rootPath, e);
+//            }
+//        }
     }
 
     /**
@@ -456,23 +456,23 @@ class ModuleEnvironmentWatcher {
 
         @Override
         protected void onFileCreated(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-            logger.debug("Delta added: {}", target);
-            String folderName = target.getName(3).toString();
-            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileAdded, outChanged);
+//            logger.debug("Delta added: {}", target);
+//            String folderName = target.getName(3).toString();
+//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileAdded, outChanged);
         }
 
         @Override
         protected void onFileModified(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-            logger.debug("Delta modified: {}", target);
-            String folderName = target.getName(3).toString();
-            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileModified, outChanged);
+//            logger.debug("Delta modified: {}", target);
+//            String folderName = target.getName(3).toString();
+//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileModified, outChanged);
         }
 
         @Override
         protected void onFileDeleted(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-            logger.debug("Delta deleted: {}", target);
-            String folderName = target.getName(3).toString();
-            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileDeleted, outChanged);
+//            logger.debug("Delta deleted: {}", target);
+//            String folderName = target.getName(3).toString();
+//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileDeleted, outChanged);
         }
     }
 
@@ -497,19 +497,19 @@ class ModuleEnvironmentWatcher {
         @Override
         protected void onFileCreated(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset added: {}", target);
-            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileAdded, outChanged);
+//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileAdded, outChanged);
         }
 
         @Override
         protected void onFileModified(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset modified: {}", target);
-            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileModified, outChanged);
+//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileModified, outChanged);
         }
 
         @Override
         protected void onFileDeleted(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset deleted: {}", target);
-            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileDeleted, outChanged);
+//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileDeleted, outChanged);
         }
     }
 

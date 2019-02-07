@@ -16,12 +16,12 @@
 
 package org.terasology.assets;
 
+import android.support.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Modifier;
-import java.util.Optional;
 
 /**
  * DisposalHook holds the action to occur when an asset is disposed. This is handled outside of the asset class itself to allow disposal to occur after the asset has been

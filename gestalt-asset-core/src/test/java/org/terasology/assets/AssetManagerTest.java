@@ -22,18 +22,17 @@ import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.Context;
 import org.terasology.assets.management.ContextManager;
 import org.terasology.assets.management.MapAssetTypeManager;
-import org.terasology.assets.test.OptionalAnswer;
-import org.terasology.assets.test.Return;
-import org.terasology.assets.test.stubs.inheritance.AlternateAsset;
-import org.terasology.assets.test.stubs.inheritance.AlternateAssetData;
-import org.terasology.assets.test.stubs.inheritance.AlternateAssetFactory;
-import org.terasology.assets.test.stubs.inheritance.ChildAsset;
-import org.terasology.assets.test.stubs.inheritance.ChildAssetData;
-import org.terasology.assets.test.stubs.inheritance.ChildAssetFactory;
-import org.terasology.assets.test.stubs.inheritance.ParentAsset;
-import org.terasology.assets.test.stubs.text.Text;
-import org.terasology.assets.test.stubs.text.TextData;
-import org.terasology.assets.test.stubs.text.TextFactory;
+
+import virtualModules.test.stubs.inheritance.AlternateAsset;
+import virtualModules.test.stubs.inheritance.AlternateAssetData;
+import virtualModules.test.stubs.inheritance.AlternateAssetFactory;
+import virtualModules.test.stubs.inheritance.ChildAsset;
+import virtualModules.test.stubs.inheritance.ChildAssetData;
+import virtualModules.test.stubs.inheritance.ChildAssetFactory;
+import virtualModules.test.stubs.inheritance.ParentAsset;
+import virtualModules.test.stubs.text.Text;
+import virtualModules.test.stubs.text.TextData;
+import virtualModules.test.stubs.text.TextFactory;
 
 import java.util.Set;
 

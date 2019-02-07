@@ -18,11 +18,13 @@ package org.terasology.assets.format;
 
 import org.terasology.assets.AssetData;
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 import org.terasology.util.Varargs;
 import org.terasology.util.io.FileExtensionPathMatcher;
 
 import java.nio.file.PathMatcher;
+import java.util.function.Predicate;
 
 /**
  * A base implementation of {@link org.terasology.assets.format.AssetFileFormat AssetFileFormat} that will handle files with specified file extensions.
@@ -31,14 +33,18 @@ import java.nio.file.PathMatcher;
  */
 public abstract class AbstractAssetFileFormat<T extends AssetData> implements AssetFileFormat<T> {
 
-    private FileExtensionPathMatcher fileMatcher;
+    private Predicate<ModuleFile> fileMatcher;
 
     /**
      * @param fileExtension A file extension that this file format will handle
      * @param fileExtensions Additional file extensions that this file format will handle
      */
     public AbstractAssetFileFormat(String fileExtension, String... fileExtensions) {
-        this.fileMatcher = new FileExtensionPathMatcher(Varargs.combineToSet(fileExtension, fileExtensions));
+        this.fileMatcher = FileUtil.createFileExtensionPredicate(Varargs.combineToList(fileExtension, fileExtensions));
+    }
+
+    public AbstractAssetFileFormat(Predicate<ModuleFile> fileMatcher) {
+        this.fileMatcher = fileMatcher;
     }
 
     @Override
@@ -51,7 +57,7 @@ public abstract class AbstractAssetFileFormat<T extends AssetData> implements As
     }
 
     @Override
-    public PathMatcher getFileMatcher() {
+    public Predicate<ModuleFile> getFileMatcher() {
         return fileMatcher;
     }
 }

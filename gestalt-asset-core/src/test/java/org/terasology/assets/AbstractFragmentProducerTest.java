@@ -21,14 +21,13 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.AssetTypeManager;
-import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
-import org.terasology.assets.test.stubs.book.Book;
-import org.terasology.assets.test.stubs.book.BookData;
-import org.terasology.assets.test.stubs.book.BookFactory;
-import org.terasology.assets.test.stubs.book.BookFragmentDataProducer;
-import org.terasology.assets.test.stubs.text.Text;
-import org.terasology.assets.test.stubs.text.TextData;
-import org.terasology.assets.test.stubs.text.TextFactory;
+import virtualModules.test.stubs.book.Book;
+import virtualModules.test.stubs.book.BookData;
+import virtualModules.test.stubs.book.BookFactory;
+import virtualModules.test.stubs.book.BookFragmentDataProducer;
+import virtualModules.test.stubs.text.Text;
+import virtualModules.test.stubs.text.TextData;
+import virtualModules.test.stubs.text.TextFactory;
 
 import java.util.Optional;
 

@@ -20,23 +20,18 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
-import org.terasology.module.filesystem.ModuleFileSystemProvider;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 /**
  * ModuleAssetScanner scans a module environment for all available asset files, notifying relevant AssetFileDataProducers of their existence.
@@ -63,9 +58,9 @@ public class ModuleAssetScanner {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleAssetScanner.class);
 
-    private Cache<Module, PathCache> assetPathCache;
-    private Cache<Module, PathCache> overridePathCache;
-    private Cache<Module, PathCache> deltaPathCache;
+    private Cache<Module, CacheEntry> assetPathCache;
+    private Cache<Module, CacheEntry> overridePathCache;
+    private Cache<Module, CacheEntry> deltaPathCache;
 
     /**
      * Creates a ModuleAssetScanner with cacheSize 128
@@ -76,18 +71,19 @@ public class ModuleAssetScanner {
 
     /**
      * Creates a ModuleAssetScanner
+     *
      * @param cacheSize The number of modules to cache the file paths of. When scanning a module beyond this size limit the cache of the least recently used module will be dropped.
      */
     public ModuleAssetScanner(int cacheSize) {
-        assetPathCache = CacheBuilder.<Module, PathCache>newBuilder()
+        assetPathCache = CacheBuilder.<Module, CacheEntry>newBuilder()
                 .maximumSize(cacheSize)
                 .removalListener(notification -> logger.debug("Cleared cache of asset paths for {} - {}", notification.getKey(), notification.getCause()))
                 .build();
-        overridePathCache = CacheBuilder.<Module, PathCache>newBuilder()
+        overridePathCache = CacheBuilder.<Module, CacheEntry>newBuilder()
                 .maximumSize(cacheSize)
                 .removalListener(notification -> logger.debug("Cleared cache of override paths for {} - {}", notification.getKey(), notification.getCause()))
                 .build();
-        deltaPathCache = CacheBuilder.<Module, PathCache>newBuilder()
+        deltaPathCache = CacheBuilder.<Module, CacheEntry>newBuilder()
                 .maximumSize(cacheSize)
                 .removalListener(notification -> logger.debug("Cleared cache of delta paths for {} - {}", notification.getKey(), notification.getCause()))
                 .build();
@@ -95,8 +91,9 @@ public class ModuleAssetScanner {
 
     /**
      * Scans a module environment and adds all asset, override and delta files to the given producer
+     *
      * @param environment The environment to scan
-     * @param producer The producer to register available files to
+     * @param producer    The producer to register available files to
      */
     public void scan(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         scanForAssets(environment, producer);
@@ -112,19 +109,19 @@ public class ModuleAssetScanner {
         overridePathCache.invalidateAll();
         deltaPathCache.invalidateAll();
     }
-    
+
     private void scanForAssets(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         for (Module module : environment.getModulesOrderedByDependencies()) {
             try {
-                PathCache pathCache = assetPathCache.get(module, () -> {
-                    PathCache newCache = new PathCache();
-                    scanForPathCache(environment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), ASSET_FOLDER), newCache);
+                CacheEntry cacheEntry = assetPathCache.get(module, () -> {
+                    CacheEntry newCache = new CacheEntry();
+                    scanForPathCache(module, newCache, ASSET_FOLDER);
                     return newCache;
                 });
 
                 for (String folderName : producer.getFolderNames()) {
-                    for (Path path : pathCache.getPathsByRootFolder().get(new Name(folderName)).stream().map(t -> environment.getFileSystem().getPath(t)).collect(Collectors.toList())) {
-                        producer.assetFileAdded(path, module.getId(), module.getId());
+                    for (ModuleFile file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
+                        producer.assetFileAdded(file, module.getId(), module.getId());
                     }
                 }
             } catch (ExecutionException e) {
@@ -136,22 +133,18 @@ public class ModuleAssetScanner {
     private void scanForOverrides(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         for (Module module : environment.getModulesOrderedByDependencies()) {
             try {
-                PathCache pathCache = overridePathCache.get(module, () -> {
-                    PathCache newCache = new PathCache();
-                    Path overridePath = environment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), OVERRIDE_FOLDER);
-                    if (Files.isDirectory(overridePath)) {
-                        try (DirectoryStream<Path> moduleOverrides = Files.newDirectoryStream(overridePath)) {
-                            for (Path moduleDir : moduleOverrides) {
-                                scanForPathCache(moduleDir, newCache);
-                            }
-                        }
+                CacheEntry cacheEntry = overridePathCache.get(module, () -> {
+                    CacheEntry newCache = new CacheEntry();
+                    Set<String> subpaths = module.getResources().getSubpaths(OVERRIDE_FOLDER);
+                    for (String overrideModule : subpaths) {
+                        scanForPathCache(module, newCache, OVERRIDE_FOLDER, overrideModule);
                     }
                     return newCache;
                 });
 
                 for (String folderName : producer.getFolderNames()) {
-                    for (Path path : pathCache.getPathsByRootFolder().get(new Name(folderName)).stream().map(t -> environment.getFileSystem().getPath(t)).collect(Collectors.toList())) {
-                        producer.assetFileAdded(path, new Name(path.getName(2).toString()), module.getId());
+                    for (ModuleFile file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
+                        producer.assetFileAdded(file, new Name(file.getPath().get(1)), module.getId());
                     }
                 }
             } catch (ExecutionException e) {
@@ -163,22 +156,18 @@ public class ModuleAssetScanner {
     private void scanForDeltas(ModuleEnvironment environment, AssetFileDataProducer<?> producer) {
         for (Module module : environment.getModulesOrderedByDependencies()) {
             try {
-                PathCache pathCache = deltaPathCache.get(module, () -> {
-                    PathCache newCache = new PathCache();
-                    Path deltaPath = environment.getFileSystem().getPath(ModuleFileSystemProvider.ROOT, module.getId().toString(), DELTA_FOLDER);
-                    if (Files.isDirectory(deltaPath)) {
-                        try (DirectoryStream<Path> moduleOverrides = Files.newDirectoryStream(deltaPath)) {
-                            for (Path moduleDir : moduleOverrides) {
-                                scanForPathCache(moduleDir, newCache);
-                            }
-                        }
+                CacheEntry cacheEntry = deltaPathCache.get(module, () -> {
+                    CacheEntry newCache = new CacheEntry();
+                    Set<String> subpaths = module.getResources().getSubpaths(DELTA_FOLDER);
+                    for (String moduleDelta : subpaths) {
+                        scanForPathCache(module, newCache, DELTA_FOLDER, moduleDelta);
                     }
                     return newCache;
                 });
 
                 for (String folderName : producer.getFolderNames()) {
-                    for (Path path : pathCache.getPathsByRootFolder().get(new Name(folderName)).stream().map(t -> environment.getFileSystem().getPath(t)).collect(Collectors.toList())) {
-                        producer.deltaFileAdded(path, new Name(path.getName(2).toString()), module.getId());
+                    for (ModuleFile file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
+                        producer.deltaFileAdded(file, new Name(file.getPath().get(1)), module.getId());
                     }
                 }
             } catch (ExecutionException e) {
@@ -187,33 +176,28 @@ public class ModuleAssetScanner {
         }
     }
 
-    private void scanForPathCache(Path rootPath, PathCache cache) {
-        if (Files.exists(rootPath)) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(rootPath)) {
-                for (Path subpath : stream) {
-                    Name folderName = new Name(subpath.getFileName().toString());
-                    if (Files.isDirectory(subpath)) {
-                        Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-                            @Override
-                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                cache.getPathsByRootFolder().put(folderName, file.toString());
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("Failed to scan module path {}", rootPath, e);
+    private void scanForPathCache(Module originModule, CacheEntry cache, String... rootPath) {
+        for (String typeFolder : originModule.getResources().getSubpaths(rootPath)) {
+            Name type = new Name(typeFolder);
+            for (ModuleFile moduleFile : originModule.getResources().getFilesInPath(true, concat(rootPath, typeFolder))) {
+                cache.getPathsByRootFolder().put(type, moduleFile);
             }
         }
     }
 
-    private static class PathCache {
-        private ListMultimap<Name, String> pathsByFolder = ArrayListMultimap.create();
+    private String[] concat(String[] array, String item) {
+        String[] result = Arrays.copyOf(array, array.length + 1);
+        result[array.length] = item;
+        return result;
+    }
 
-        ListMultimap<Name, String> getPathsByRootFolder() {
+    private static class CacheEntry {
+        private ListMultimap<Name, ModuleFile> pathsByFolder = ArrayListMultimap.create();
+
+        ListMultimap<Name, ModuleFile> getPathsByRootFolder() {
             return pathsByFolder;
         }
     }
+
 
 }

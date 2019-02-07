@@ -18,11 +18,10 @@ package org.terasology.assets;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
-import org.terasology.assets.test.Return;
-import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
-import org.terasology.assets.test.stubs.text.Text;
-import org.terasology.assets.test.stubs.text.TextData;
-import org.terasology.assets.test.stubs.text.TextFactory;
+
+import virtualModules.test.stubs.text.Text;
+import virtualModules.test.stubs.text.TextData;
+import virtualModules.test.stubs.text.TextFactory;
 import org.terasology.naming.Name;
 
 import java.io.IOException;

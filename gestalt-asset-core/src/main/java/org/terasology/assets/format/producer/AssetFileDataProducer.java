@@ -25,6 +25,9 @@ import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.io.CharStreams;
+
+import net.jcip.annotations.ThreadSafe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetData;
@@ -34,13 +37,12 @@ import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -229,17 +231,12 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         return Optional.empty();
     }
 
-    private <V extends FileFormat> Optional<ResourceUrn> registerSource(Name module, Path target, Name providingModule,
+    private <V extends FileFormat> Optional<ResourceUrn> registerSource(Name module, ModuleFile target, Name providingModule,
                                                                         Collection<V> formats, RegisterSourceHandler<U, V> sourceHandler) {
-        Path filename = target.getFileName();
-        if (filename == null) {
-            logger.error("Missing filename for asset file");
-            return Optional.empty();
-        }
         for (V format : formats) {
-            if (format.getFileMatcher().matches(target)) {
+            if (format.getFileMatcher().test(target)) {
                 try {
-                    Name assetName = format.getAssetName(filename.toString());
+                    Name assetName = format.getAssetName(target.getName());
                     ResourceUrn urn = new ResourceUrn(module, assetName);
                     UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                     if (existing != null) {
@@ -256,23 +253,18 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
                     }
                     return Optional.empty();
                 } catch (InvalidAssetFilenameException e) {
-                    logger.warn("Invalid name for asset - {}", filename);
+                    logger.warn("Invalid name for asset - {}", target);
                 }
             }
         }
         return Optional.empty();
     }
 
-    private Optional<ResourceUrn> registerAssetDelta(Name module, Path target, Name providingModule) {
-        Path filename = target.getFileName();
-        if (filename == null) {
-            logger.error("Missing file name for asset delta for '{}'", target);
-            return Optional.empty();
-        }
+    private Optional<ResourceUrn> registerAssetDelta(Name module, ModuleFile target, Name providingModule) {
         for (AssetAlterationFileFormat<U> format : deltaFormats) {
-            if (format.getFileMatcher().matches(target)) {
+            if (format.getFileMatcher().test(target)) {
                 try {
-                    Name assetName = format.getAssetName(filename.toString());
+                    Name assetName = format.getAssetName(target.getName());
                     ResourceUrn urn = new ResourceUrn(module, assetName);
                     UnloadedAssetData<U> unloadedAssetData = unloadedAssetLookup.get(urn);
                     if (unloadedAssetData == null) {
@@ -283,7 +275,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
                         return Optional.of(urn);
                     }
                 } catch (InvalidAssetFilenameException e) {
-                    logger.error("Invalid file name '{}' for asset delta", target.getFileName(), e);
+                    logger.error("Invalid file name '{}' for asset delta", target, e);
                 }
             }
         }
@@ -291,13 +283,13 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> assetFileAdded(Path path, Name module, Name providingModule) {
-        if (path.getFileName().toString().endsWith(REDIRECT_EXTENSION)) {
-            processRedirectFile(path, module);
+    public Optional<ResourceUrn> assetFileAdded(ModuleFile file, Name module, Name providingModule) {
+        if (file.getName().endsWith(REDIRECT_EXTENSION)) {
+            processRedirectFile(file, module);
         } else {
-            Optional<ResourceUrn> urn = registerSource(module, path, providingModule, assetFormats, UnloadedAssetData::addSource);
+            Optional<ResourceUrn> urn = registerSource(module, file, providingModule, assetFormats, UnloadedAssetData::addSource);
             if (!urn.isPresent()) {
-                urn = registerSource(module, path, providingModule, supplementFormats, UnloadedAssetData::addSupplementSource);
+                urn = registerSource(module, file, providingModule, supplementFormats, UnloadedAssetData::addSupplementSource);
             }
             if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
                 return urn;
@@ -306,53 +298,45 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         return Optional.empty();
     }
 
-    private synchronized void processRedirectFile(Path file, Name moduleId) {
-        Path filename = file.getFileName();
-        if (filename != null) {
-            Name assetName = new Name(com.google.common.io.Files.getNameWithoutExtension(filename.toString()));
-            try (BufferedReader reader = Files.newBufferedReader(file, Charsets.UTF_8)) {
-                List<String> contents = CharStreams.readLines(reader);
-                if (contents.isEmpty()) {
-                    logger.error("Failed to read redirect '{}:{}' - empty", moduleId, assetName);
-                } else if (!ResourceUrn.isValid(contents.get(0))) {
-                    logger.error("Failed to read redirect '{}:{}' - '{}' is not a valid urn", moduleId, assetName, contents.get(0));
-                } else {
+    private synchronized void processRedirectFile(ModuleFile file, Name moduleId) {
+        Name assetName = new Name(com.google.common.io.Files.getNameWithoutExtension(file.getName()));
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.open(), Charsets.UTF_8))) {
+            List<String> contents = CharStreams.readLines(reader);
+            if (contents.isEmpty()) {
+                logger.error("Failed to read redirect '{}:{}' - empty", moduleId, assetName);
+            } else if (!ResourceUrn.isValid(contents.get(0))) {
+                logger.error("Failed to read redirect '{}:{}' - '{}' is not a valid urn", moduleId, assetName, contents.get(0));
+            } else {
 
-                    ResourceUrn fromUrn = new ResourceUrn(moduleId, assetName);
-                    ResourceUrn toUrn = new ResourceUrn(contents.get(0));
-                    if (redirectMap.containsKey(toUrn)) {
-                        toUrn = redirectMap.get(toUrn);
-                    }
-
-                    redirectMap.put(fromUrn, toUrn);
-                    redirectSourceMap.put(toUrn, fromUrn);
-                    for (ResourceUrn furtherFromUrn : redirectSourceMap.get(fromUrn)) {
-                        redirectMap.put(furtherFromUrn, toUrn);
-                        redirectSourceMap.put(toUrn, furtherFromUrn);
-                    }
-                    redirectSourceMap.removeAll(fromUrn);
-
-                    resolutionMap.put(assetName, moduleId);
+                ResourceUrn fromUrn = new ResourceUrn(moduleId, assetName);
+                ResourceUrn toUrn = new ResourceUrn(contents.get(0));
+                if (redirectMap.containsKey(toUrn)) {
+                    toUrn = redirectMap.get(toUrn);
                 }
-            } catch (IOException e) {
-                logger.error("Failed to read redirect '{}:{}'", moduleId, assetName, e);
+
+                redirectMap.put(fromUrn, toUrn);
+                redirectSourceMap.put(toUrn, fromUrn);
+                for (ResourceUrn furtherFromUrn : redirectSourceMap.get(fromUrn)) {
+                    redirectMap.put(furtherFromUrn, toUrn);
+                    redirectSourceMap.put(toUrn, furtherFromUrn);
+                }
+                redirectSourceMap.removeAll(fromUrn);
+
+                resolutionMap.put(assetName, moduleId);
             }
-        } else {
-            logger.error("Missing file name for redirect");
+        } catch (IOException e) {
+            logger.error("Failed to read redirect '{}:{}'", moduleId, assetName, e);
         }
     }
 
-    private Optional<ResourceUrn> getResourceUrn(Path target, Name module, Collection<? extends FileFormat> formats) {
-        Path filename = target.getFileName();
-        if (filename != null) {
-            for (FileFormat fileFormat : formats) {
-                if (fileFormat.getFileMatcher().matches(target)) {
-                    try {
-                        Name assetName = fileFormat.getAssetName(filename.toString());
-                        return Optional.of(new ResourceUrn(module, assetName));
-                    } catch (InvalidAssetFilenameException e) {
-                        logger.debug("Modified file does not have a valid asset name - '{}'", filename);
-                    }
+    private Optional<ResourceUrn> getResourceUrn(ModuleFile target, Name module, Collection<? extends FileFormat> formats) {
+        for (FileFormat fileFormat : formats) {
+            if (fileFormat.getFileMatcher().test(target)) {
+                try {
+                    Name assetName = fileFormat.getAssetName(target.getName());
+                    return Optional.of(new ResourceUrn(module, assetName));
+                } catch (InvalidAssetFilenameException e) {
+                    logger.debug("Modified file does not have a valid asset name - '{}'", target);
                 }
             }
         }
@@ -360,10 +344,10 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> assetFileModified(Path path, Name module, Name providingModule) {
-        Optional<ResourceUrn> urn = getResourceUrn(path, module, assetFormats);
+    public Optional<ResourceUrn> assetFileModified(ModuleFile file, Name module, Name providingModule) {
+        Optional<ResourceUrn> urn = getResourceUrn(file, module, assetFormats);
         if (!urn.isPresent()) {
-            urn = getResourceUrn(path, module, supplementFormats);
+            urn = getResourceUrn(file, module, supplementFormats);
         }
         if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
             return urn;
@@ -372,43 +356,40 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> assetFileDeleted(Path path, Name module, Name providingModule) {
-        Path filename = path.getFileName();
-        if (filename != null) {
-            for (AssetFileFormat<U> format : assetFormats) {
-                if (format.getFileMatcher().matches(path)) {
-                    try {
-                        Name assetName = format.getAssetName(filename.toString());
-                        ResourceUrn urn = new ResourceUrn(module, assetName);
-                        UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
-                        if (existing != null) {
-                            existing.removeSource(providingModule, format, path);
-                            if (existing.isValid()) {
-                                return Optional.of(urn);
-                            }
+    public Optional<ResourceUrn> assetFileDeleted(ModuleFile file, Name module, Name providingModule) {
+        for (AssetFileFormat<U> format : assetFormats) {
+            if (format.getFileMatcher().test(file)) {
+                try {
+                    Name assetName = format.getAssetName(file.getName());
+                    ResourceUrn urn = new ResourceUrn(module, assetName);
+                    UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
+                    if (existing != null) {
+                        existing.removeSource(providingModule, format, file);
+                        if (existing.isValid()) {
+                            return Optional.of(urn);
                         }
-                        return Optional.empty();
-                    } catch (InvalidAssetFilenameException e) {
-                        logger.debug("Deleted file does not have a valid file name - {}", path);
                     }
+                    return Optional.empty();
+                } catch (InvalidAssetFilenameException e) {
+                    logger.debug("Deleted file does not have a valid file name - {}", file);
                 }
             }
-            for (AssetAlterationFileFormat<U> format : supplementFormats) {
-                if (format.getFileMatcher().matches(path)) {
-                    try {
-                        Name assetName = format.getAssetName(filename.toString());
-                        ResourceUrn urn = new ResourceUrn(module, assetName);
-                        UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
-                        if (existing != null) {
-                            existing.removeSupplementSource(providingModule, format, path);
-                            if (existing.isValid()) {
-                                return Optional.of(urn);
-                            }
+        }
+        for (AssetAlterationFileFormat<U> format : supplementFormats) {
+            if (format.getFileMatcher().test(file)) {
+                try {
+                    Name assetName = format.getAssetName(file.getName());
+                    ResourceUrn urn = new ResourceUrn(module, assetName);
+                    UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
+                    if (existing != null) {
+                        existing.removeSupplementSource(providingModule, format, file);
+                        if (existing.isValid()) {
+                            return Optional.of(urn);
                         }
-                        return Optional.empty();
-                    } catch (InvalidAssetFilenameException e) {
-                        logger.debug("Deleted file does not have a valid file name - {}", path);
                     }
+                    return Optional.empty();
+                } catch (InvalidAssetFilenameException e) {
+                    logger.debug("Deleted file does not have a valid file name - {}", file);
                 }
             }
         }
@@ -416,8 +397,8 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> deltaFileAdded(Path path, Name module, Name providingModule) {
-        Optional<ResourceUrn> urn = registerAssetDelta(module, path, providingModule);
+    public Optional<ResourceUrn> deltaFileAdded(ModuleFile file, Name module, Name providingModule) {
+        Optional<ResourceUrn> urn = registerAssetDelta(module, file, providingModule);
         if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
             return urn;
         }
@@ -425,8 +406,8 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> deltaFileModified(Path path, Name module, Name providingModule) {
-        Optional<ResourceUrn> urn = getResourceUrn(path, module, deltaFormats);
+    public Optional<ResourceUrn> deltaFileModified(ModuleFile file, Name module, Name providingModule) {
+        Optional<ResourceUrn> urn = getResourceUrn(file, module, deltaFormats);
         if (urn.isPresent()) {
             if (unloadedAssetLookup.get(urn.get()).isValid()) {
                 return urn;
@@ -436,27 +417,22 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> deltaFileDeleted(Path path, Name module, Name providingModule) {
-        Path filename = path.getFileName();
-        if (filename == null) {
-            logger.error("Missing filename for deleted file");
-            return Optional.empty();
-        }
+    public Optional<ResourceUrn> deltaFileDeleted(ModuleFile file, Name module, Name providingModule) {
         for (AssetAlterationFileFormat<U> format : deltaFormats) {
-            if (format.getFileMatcher().matches(path)) {
+            if (format.getFileMatcher().test(file)) {
                 try {
-                    Name assetName = format.getAssetName(filename.toString());
+                    Name assetName = format.getAssetName(file.getName());
                     ResourceUrn urn = new ResourceUrn(module, assetName);
                     UnloadedAssetData<U> existing = unloadedAssetLookup.get(urn);
                     if (existing != null) {
-                        existing.removeDeltaSource(providingModule, format, path);
+                        existing.removeDeltaSource(providingModule, format, file);
                         if (existing.isValid()) {
                             return Optional.of(urn);
                         }
                     }
                     return Optional.empty();
                 } catch (InvalidAssetFilenameException e) {
-                    logger.debug("Deleted file does not have a valid file name - {}", path);
+                    logger.debug("Deleted file does not have a valid file name - {}", file);
                 }
             }
         }
@@ -487,7 +463,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
      * @param <U>
      */
     private interface RegisterSourceHandler<T extends AssetData, U extends FileFormat> {
-        boolean registerSource(UnloadedAssetData<T> source, Name providingModule, U format, Path input);
+        boolean registerSource(UnloadedAssetData<T> source, Name providingModule, U format, ModuleFile input);
     }
 
 }

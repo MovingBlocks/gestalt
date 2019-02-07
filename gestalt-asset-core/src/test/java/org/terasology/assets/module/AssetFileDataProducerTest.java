@@ -19,11 +19,10 @@ package org.terasology.assets.module;
 import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
-import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
-import org.terasology.assets.test.stubs.text.TextData;
-import org.terasology.assets.test.stubs.text.TextDeltaFileFormat;
-import org.terasology.assets.test.stubs.text.TextFileFormat;
-import org.terasology.assets.test.stubs.text.TextMetadataFileFormat;
+import virtualModules.test.stubs.text.TextData;
+import virtualModules.test.stubs.text.TextDeltaFileFormat;
+import virtualModules.test.stubs.text.TextFileFormat;
+import virtualModules.test.stubs.text.TextMetadataFileFormat;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
@@ -43,13 +42,6 @@ public class AssetFileDataProducerTest {
 
     private ModuleAssetScanner scanner = new ModuleAssetScanner();
 
-    private VirtualModuleEnvironmentFactory environmentFactory;
-
-    public AssetFileDataProducerTest() throws Exception {
-        environmentFactory = new VirtualModuleEnvironmentFactory("virtualModules", getClass());
-    }
-
-
     private AssetFileDataProducer<TextData> createProducer(ModuleEnvironment environment) {
         ModuleEnvironmentDependencyProvider dependencyProvider = new ModuleEnvironmentDependencyProvider(environment);
         AssetFileDataProducer<TextData> textDataModuleAssetDataProducer = new AssetFileDataProducer<>(dependencyProvider, FOLDER_NAME);
@@ -60,20 +52,20 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void getModulesProvidingWithNoMatch() throws Exception {
-        Set<Name> results = createProducer(environmentFactory.createEnvironment()).getModulesProviding(new Name("madeUpThing"));
+        Set<Name> results = createProducer(TestModulesUtil.createEnvironment()).getModulesProviding(new Name("madeUpThing"));
         assertTrue(results.isEmpty());
     }
 
     @Test
     public void getModulesProvidingWithSingleMatch() throws Exception {
-        Set<Name> results = createProducer(environmentFactory.createEnvironment()).getModulesProviding(URN.getResourceName());
+        Set<Name> results = createProducer(TestModulesUtil.createEnvironment()).getModulesProviding(URN.getResourceName());
         assertEquals(1, results.size());
         assertTrue(results.contains(URN.getModuleName()));
     }
 
     @Test
     public void resolveWithMultipleMatches() throws Exception {
-        AssetFileDataProducer<TextData> producer = createProducer(environmentFactory.createEnvironment(
+        AssetFileDataProducer<TextData> producer = createProducer(TestModulesUtil.createEnvironment(
                 "test",
                 "moduleA"));
 
@@ -85,19 +77,19 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void getMissingAsset() throws Exception {
-        assertFalse(createProducer(environmentFactory.createEmptyEnvironment()).getAssetData(URN).isPresent());
+        assertFalse(createProducer(TestModulesUtil.createEmptyEnvironment()).getAssetData(URN).isPresent());
     }
 
     @Test
     public void loadAssetFromFile() throws Exception {
-        Optional<TextData> assetData = createProducer(environmentFactory.createEnvironment()).getAssetData(URN);
+        Optional<TextData> assetData = createProducer(TestModulesUtil.createEnvironment()).getAssetData(URN);
         assertTrue(assetData.isPresent());
         assertEquals("Example text", assetData.get().getValue());
     }
 
     @Test
     public void loadWithOverride() throws Exception {
-        AssetFileDataProducer<TextData> moduleProducer = createProducer(environmentFactory.createEnvironment("test", "overrideA"));
+        AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("test", "overrideA"));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -106,7 +98,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void ignoreOverrideInDifferentTypeFolder() throws Exception {
-        AssetFileDataProducer<TextData> moduleProducer = createProducer(environmentFactory.createEnvironment("test", "overrideE"));
+        AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("test", "overrideE"));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
         assertTrue(assetData.isPresent());
@@ -115,7 +107,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void loadWithOverrideInDependencyChain() throws Exception {
-        AssetFileDataProducer<TextData> moduleProducer = createProducer(environmentFactory.createEnvironment("test",
+        AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("test",
                 "overrideA", "overrideB"));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
@@ -125,7 +117,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void loadWithOverrideInUnrelatedModulesUsesAlphabeticallyLast() throws Exception {
-        AssetFileDataProducer<TextData> moduleProducer = createProducer(environmentFactory.createEnvironment("test",
+        AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("test",
                 "overrideA", "overrideC"));
 
         Optional<TextData> assetData = moduleProducer.getAssetData(URN);
@@ -135,7 +127,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void loadWithDelta() throws Exception {
-        ModuleEnvironment environment = environmentFactory.createEnvironment("test", "deltaA");
+        ModuleEnvironment environment = TestModulesUtil.createEnvironment("test", "deltaA");
         AssetFileDataProducer<TextData> moduleProducer = createProducer(environment);
         moduleProducer.addDeltaFormat(new TextDeltaFileFormat());
         scanner.scan(environment, moduleProducer);
@@ -147,7 +139,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void loadWithDeltaUnrelatedToOverride() throws Exception {
-        ModuleEnvironment environment = environmentFactory.createEnvironment("test",
+        ModuleEnvironment environment = TestModulesUtil.createEnvironment("test",
                 "overrideA",
                 "deltaA");
         AssetFileDataProducer<TextData> moduleProducer = createProducer(environment);
@@ -161,7 +153,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void deltaDroppedBeforeOverride() throws Exception {
-        ModuleEnvironment environment = environmentFactory.createEnvironment("test",
+        ModuleEnvironment environment = TestModulesUtil.createEnvironment("test",
                 "deltaA",
                 "overrideD");
         AssetFileDataProducer<TextData> moduleProducer = createProducer(environment);
@@ -176,19 +168,19 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void redirects() throws Exception {
-        AssetFileDataProducer<TextData> moduleProducer = createProducer(environmentFactory.createEnvironment("redirectA"));
+        AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("redirectA"));
         assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:example")));
     }
 
     @Test
     public void chainedRedirects() throws Exception {
-        AssetFileDataProducer<TextData> moduleProducer = createProducer(environmentFactory.createEnvironment("redirectA"));
+        AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("redirectA"));
         assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:double")));
     }
 
     @Test
     public void handleRedirectResolution() throws Exception {
-        AssetFileDataProducer<TextData> moduleProducer = createProducer(environmentFactory.createEnvironment("redirectA"));
+        AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("redirectA"));
 
         Set<Name> results = moduleProducer.getModulesProviding(new Name("example"));
         assertEquals(1, results.size());
@@ -197,7 +189,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void applySupplements() throws Exception {
-        ModuleEnvironment environment = environmentFactory.createEnvironment("supplementA");
+        ModuleEnvironment environment = TestModulesUtil.createEnvironment("supplementA");
         AssetFileDataProducer<TextData> moduleProducer = createProducer(environment);
         moduleProducer.addSupplementFormat(new TextMetadataFileFormat());
         scanner.scan(environment, moduleProducer);
@@ -209,7 +201,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void overrideWithSupplement() throws Exception {
-        ModuleEnvironment environment = environmentFactory.createEnvironment("supplementA",
+        ModuleEnvironment environment = TestModulesUtil.createEnvironment("supplementA",
                 "overrideSupplement");
         AssetFileDataProducer<TextData> moduleProducer = createProducer(environment);
         moduleProducer.addSupplementFormat(new TextMetadataFileFormat());
@@ -222,7 +214,7 @@ public class AssetFileDataProducerTest {
 
     @Test
     public void orphanOverrideSupplementIgnored() throws Exception {
-        AssetFileDataProducer<TextData> moduleProducer = createProducer(environmentFactory.createEnvironment("moduleA",
+        AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("moduleA",
                 "overrideWithSupplementOnly"));
 
         Optional<TextData> data = moduleProducer.getAssetData(new ResourceUrn("moduleA:example"));

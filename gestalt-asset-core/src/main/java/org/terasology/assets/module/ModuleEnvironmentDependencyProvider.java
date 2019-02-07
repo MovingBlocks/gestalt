@@ -16,14 +16,14 @@
 
 package org.terasology.assets.module;
 
+import android.support.annotation.Nullable;
+
 import org.terasology.assets.format.producer.ModuleDependencyProvider;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A {@link ModuleDependencyProvider} that uses a module environment to obtain dependency information. This environment can be switched at runtime. It can also be null.
@@ -40,6 +40,7 @@ public class ModuleEnvironmentDependencyProvider implements ModuleDependencyProv
 
     /**
      * Creates a {@link ModuleEnvironmentDependencyProvider} with the provided environment
+     *
      * @param moduleEnvironment
      */
     public ModuleEnvironmentDependencyProvider(@Nullable ModuleEnvironment moduleEnvironment) {
@@ -48,6 +49,7 @@ public class ModuleEnvironmentDependencyProvider implements ModuleDependencyProv
 
     /**
      * Sets the module environment to use to obtain dependency information
+     *
      * @param moduleEnvironment
      */
     public void setModuleEnvironment(@Nullable ModuleEnvironment moduleEnvironment) {
