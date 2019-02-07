@@ -17,12 +17,11 @@
 package org.terasology.assets.format;
 
 import org.terasology.assets.AssetData;
-import org.terasology.assets.exceptions.InvalidAssetFilenameException;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 import org.terasology.util.Varargs;
-import org.terasology.util.io.FileExtensionPathMatcher;
 
-import java.nio.file.PathMatcher;
+import java.util.function.Predicate;
 
 /**
  * A base implementation of {@link org.terasology.assets.format.AssetAlterationFileFormat AssetAlterationFileFormat} that will handle files with specified file extensions.
@@ -32,18 +31,22 @@ import java.nio.file.PathMatcher;
  */
 public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> implements AssetAlterationFileFormat<T> {
 
-    private FileExtensionPathMatcher fileMatcher;
+    private Predicate<ModuleFile> fileMatcher;
 
     /**
-     * @param fileExtension A file extension that this file format will handle
+     * @param fileExtension  A file extension that this file format will handle
      * @param fileExtensions Additional file extensions that this file format will handle
      */
     public AbstractAssetAlterationFileFormat(String fileExtension, String... fileExtensions) {
-        this.fileMatcher = new FileExtensionPathMatcher(Varargs.combineToSet(fileExtension, fileExtensions));
+        this.fileMatcher = FileUtil.createFileExtensionPredicate(Varargs.combineToList(fileExtension, fileExtensions));
+    }
+
+    public AbstractAssetAlterationFileFormat(Predicate<ModuleFile> fileMatcher) {
+        this.fileMatcher = fileMatcher;
     }
 
     @Override
-    public Name getAssetName(String filename) throws InvalidAssetFilenameException {
+    public Name getAssetName(String filename) {
         int extensionStart = filename.lastIndexOf('.');
         if (extensionStart != -1) {
             return new Name(filename.substring(0, extensionStart));
@@ -52,7 +55,7 @@ public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> imp
     }
 
     @Override
-    public PathMatcher getFileMatcher() {
+    public Predicate<ModuleFile> getFileMatcher() {
         return fileMatcher;
     }
 }

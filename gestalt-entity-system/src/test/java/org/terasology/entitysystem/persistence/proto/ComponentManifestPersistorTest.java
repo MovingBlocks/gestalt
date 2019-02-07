@@ -18,7 +18,7 @@ package org.terasology.entitysystem.persistence.proto;
 
 import com.google.common.collect.Sets;
 import org.junit.Test;
-import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityRef;

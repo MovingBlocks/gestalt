@@ -5,10 +5,24 @@
  * - View tasks for this project: $ gradlew tasks
  */
 
+apply plugin: 'java-library'
+
 // Primary dependencies definition
 dependencies {
-    api project(":gestalt-util")
-    api project(":gestalt-module")
+    implementation project(":gestalt-util")
+    implementation project(":gestalt-module")
+
+    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'com.android.support:support-annotations:28.0.0'
+    implementation 'net.jcip:jcip-annotations:1.0'
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'ch.qos.logback:logback-classic:1.2.3'
+    testImplementation 'org.mockito:mockito-core:1.10.19'
+
 }
 
 description = 'Provides support for assets - binary resources that can be loaded from modules or procedurally generated at runtime.'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8

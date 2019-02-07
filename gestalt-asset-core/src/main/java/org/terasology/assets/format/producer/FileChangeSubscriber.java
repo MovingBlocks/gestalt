@@ -17,6 +17,7 @@
 package org.terasology.assets.format.producer;
 
 import org.terasology.assets.ResourceUrn;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
 import java.nio.file.Path;
@@ -32,55 +33,55 @@ public interface FileChangeSubscriber {
 
     /**
      * Notification that an asset file was added
-     * @param path The path of the asset file
+     * @param file The asset file
      * @param module The name of the module the file is for
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
-    Optional<ResourceUrn> assetFileAdded(Path path, Name module, Name providingModule);
+    Optional<ResourceUrn> assetFileAdded(ModuleFile file, Name module, Name providingModule);
 
     /**
      * Notification that an asset file was modified
-     * @param path The path of the asset file
+     * @param file The asset file
      * @param module The name of the module the file is for
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
-    Optional<ResourceUrn> assetFileModified(Path path, Name module, Name providingModule);
+    Optional<ResourceUrn> assetFileModified(ModuleFile file, Name module, Name providingModule);
 
     /**
      * Notification that an asset file was removed
-     * @param path The path of the asset file
+     * @param file The asset file
      * @param module The name of the module the file is for
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributed too, if any
      */
-    Optional<ResourceUrn> assetFileDeleted(Path path, Name module, Name providingModule);
+    Optional<ResourceUrn> assetFileDeleted(ModuleFile file, Name module, Name providingModule);
 
     /**
      * Notification that an delta file was added
-     * @param path The path of the delta file
+     * @param file The delta file
      * @param module The name of the module the file is for
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
-    Optional<ResourceUrn> deltaFileAdded(Path path, Name module, Name providingModule);
+    Optional<ResourceUrn> deltaFileAdded(ModuleFile file, Name module, Name providingModule);
 
     /**
      * Notification that an delta file was modified
-     * @param path The path of the delta file
+     * @param file The delta file
      * @param module The name of the module the file is for
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
-    Optional<ResourceUrn> deltaFileModified(Path path, Name module, Name providingModule);
+    Optional<ResourceUrn> deltaFileModified(ModuleFile file, Name module, Name providingModule);
 
     /**
      * Notification that an delta file was removed
-     * @param path The path of the delta file
+     * @param file The delta file
      * @param module The name of the module the file is for
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributed too, if any
      */
-    Optional<ResourceUrn> deltaFileDeleted(Path path, Name module, Name providingModule);
+    Optional<ResourceUrn> deltaFileDeleted(ModuleFile file, Name module, Name providingModule);
 }

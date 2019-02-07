@@ -17,9 +17,11 @@
 package org.terasology.assets;
 
 import com.google.common.base.Preconditions;
+
+import net.jcip.annotations.ThreadSafe;
+
 import org.terasology.module.sandbox.API;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.Optional;
 
 /**

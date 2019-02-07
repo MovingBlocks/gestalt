@@ -17,6 +17,9 @@
 package org.terasology.assets.format.producer;
 
 import com.google.common.collect.Lists;
+
+import net.jcip.annotations.ThreadSafe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetData;
@@ -25,9 +28,9 @@ import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -48,9 +51,9 @@ class UnloadedAssetData<T extends AssetData> {
 
     private final ModuleDependencyProvider moduleDependencies;
     private final ResourceUrn urn;
-    private final List<Source<AssetFileFormat<T>>> sources = Collections.synchronizedList(Lists.<Source<AssetFileFormat<T>>>newArrayList());
-    private final List<Source<AssetAlterationFileFormat<T>>> supplementSources = Collections.synchronizedList(Lists.<Source<AssetAlterationFileFormat<T>>>newArrayList());
-    private final List<Source<AssetAlterationFileFormat<T>>> deltaSources = Collections.synchronizedList(Lists.<Source<AssetAlterationFileFormat<T>>>newArrayList());
+    private final List<Source<AssetFileFormat<T>>> sources = Collections.synchronizedList(Lists.newArrayList());
+    private final List<Source<AssetAlterationFileFormat<T>>> supplementSources = Collections.synchronizedList(Lists.newArrayList());
+    private final List<Source<AssetAlterationFileFormat<T>>> deltaSources = Collections.synchronizedList(Lists.newArrayList());
 
     /**
      * @param urn                The urn of the asset this unloaded asset data corresponds to.
@@ -85,7 +88,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was added successfully.
      */
-    public boolean addSource(Name providingModule, AssetFileFormat<T> format, Path input) {
+    public boolean addSource(Name providingModule, AssetFileFormat<T> format, ModuleFile input) {
         if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides override for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -103,7 +106,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was removed - it will not be if it wasn't previously successfully removed.
      */
-    public boolean removeSource(Name providingModule, AssetFileFormat<T> format, Path input) {
+    public boolean removeSource(Name providingModule, AssetFileFormat<T> format, ModuleFile input) {
         return sources.remove(new Source<>(providingModule, format, new AssetDataFile(input)));
     }
 
@@ -115,7 +118,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was added successfully.
      */
-    public boolean addDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
+    public boolean addDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, ModuleFile input) {
         if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides delta for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -133,7 +136,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was removed - it will not be if the source was not added previously
      */
-    public boolean removeDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
+    public boolean removeDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, ModuleFile input) {
         return deltaSources.remove(new Source<>(providingModule, format, new AssetDataFile(input)));
     }
 
@@ -145,7 +148,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was added successfully.
      */
-    public boolean addSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
+    public boolean addSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, ModuleFile input) {
         if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides supplement for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -163,7 +166,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was removed - it will not be if the source was not added previously
      */
-    public boolean removeSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, Path input) {
+    public boolean removeSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, ModuleFile input) {
         return supplementSources.remove(new Source<>(providingModule, format, new AssetDataFile(input)));
     }
 
@@ -187,7 +190,7 @@ class UnloadedAssetData<T extends AssetData> {
                 }
             }
             synchronized (deltaSources) {
-                Collections.sort(deltaSources, new SourceComparator<AssetAlterationFileFormat<T>>(moduleDependencies.getModulesOrderedByDependency()));
+                deltaSources.sort(new SourceComparator<>(moduleDependencies.getModulesOrderedByDependency()));
                 for (Source<AssetAlterationFileFormat<T>> source : deltaSources) {
                     if (source.providingModule.equals(baseModule) || !moduleDependencies.dependencyExists(baseModule, source.providingModule)) {
                         source.format.apply(source.input, result);

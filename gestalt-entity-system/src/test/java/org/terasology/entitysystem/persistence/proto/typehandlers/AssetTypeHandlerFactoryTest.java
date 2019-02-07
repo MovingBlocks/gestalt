@@ -20,7 +20,7 @@ import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import org.terasology.assets.test.VirtualModuleEnvironmentFactory;
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.prefab.EntityRecipe;

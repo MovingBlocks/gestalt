@@ -42,7 +42,6 @@ public class CompositeFileSource implements ModuleFileSource {
      * @param sources Any additional file sources
      */
     public CompositeFileSource(ModuleFileSource source, ModuleFileSource... sources) {
-        Preconditions.checkNotNull(source);
         this.sources = Varargs.combineToList(source, sources);
     }
 
@@ -50,7 +49,6 @@ public class CompositeFileSource implements ModuleFileSource {
      * @param sources A non-empty list of file sources
      */
     public CompositeFileSource(List<ModuleFileSource> sources) {
-        Preconditions.checkArgument(!sources.isEmpty());
         this.sources = ImmutableList.copyOf(sources);
     }
 

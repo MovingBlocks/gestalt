@@ -18,6 +18,9 @@ package org.terasology.assets.management;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+
+import net.jcip.annotations.ThreadSafe;
+
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetType;
@@ -25,7 +28,6 @@ import org.terasology.assets.ResourceUrn;
 import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +56,7 @@ public final class AssetManager {
     }
 
     /**
-     * @param urn The urn of the asset to check. Must not be an instance urn
+     * @param urn  The urn of the asset to check. Must not be an instance urn
      * @param type The Asset class of interest
      * @return whether an asset is loaded with the given urn
      */

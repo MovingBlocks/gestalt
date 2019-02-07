@@ -24,13 +24,15 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimaps;
+
+import net.jcip.annotations.ThreadSafe;
+
 import org.reflections.ReflectionUtils;
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -99,12 +101,13 @@ public final class MapAssetTypeManager implements AssetTypeManager {
 
     /**
      * Adds an assetType. There must not be an existing asset type for the asset class managed by the asset type.
+     *
      * @param assetType
      */
     public synchronized void addAssetType(AssetType<?, ?> assetType) {
         Preconditions.checkNotNull(assetType);
         Preconditions.checkState(assetTypes.get(assetType.getAssetClass()) == null, "Asset type already registered for - " + assetType.getAssetClass().getSimpleName());
-        
+
         assetTypes.put(assetType.getAssetClass(), assetType);
         for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(assetType.getAssetClass(), (Predicate<Class<?>>) input -> Asset.class.isAssignableFrom(input) && input != Asset.class)) {
             subtypes.put((Class<? extends Asset>) parentType, assetType.getAssetClass());

@@ -19,11 +19,11 @@ package org.terasology.assets;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
 import org.terasology.assets.exceptions.InvalidUrnException;
 import org.terasology.module.sandbox.API;
 import org.terasology.naming.Name;
 
-import javax.annotation.Nonnull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,7 +54,8 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
 
     /**
      * Creates a urn with the module and resource name from the provided urn, but the fragment name provided. This urn will not be an instance urn.
-     * @param urn The urn to create this urn from
+     *
+     * @param urn          The urn to create this urn from
      * @param fragmentName The fragment name this urn should have
      */
     public ResourceUrn(ResourceUrn urn, String fragmentName) {
@@ -63,7 +64,8 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
 
     /**
      * Creates a urn with the module and resource name from the provided urn, but the fragment name provided. This urn will not be an instance urn.
-     * @param urn The urn to create this urn from
+     *
+     * @param urn          The urn to create this urn from
      * @param fragmentName The fragment name this urn should have
      */
     public ResourceUrn(ResourceUrn urn, Name fragmentName) {
@@ -72,9 +74,10 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
 
     /**
      * Creates a urn with the module and resource name from the provided urn, but the fragment name provided.
-     * @param urn The urn to create this urn from
+     *
+     * @param urn          The urn to create this urn from
      * @param fragmentName The fragment name this urn should have
-     * @param instance Whether this urn should be a fragment
+     * @param instance     Whether this urn should be a fragment
      */
     public ResourceUrn(ResourceUrn urn, String fragmentName, boolean instance) {
         this(urn, new Name(fragmentName), instance);
@@ -82,9 +85,10 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
 
     /**
      * Creates a urn with the module and resource name from the provided urn, but the fragment name provided.
-     * @param urn The urn to create this urn from
+     *
+     * @param urn          The urn to create this urn from
      * @param fragmentName The fragment name this urn should have
-     * @param instance Whether this urn should be a fragment
+     * @param instance     Whether this urn should be a fragment
      */
     public ResourceUrn(ResourceUrn urn, Name fragmentName, boolean instance) {
         this.moduleName = urn.getModuleName();
@@ -311,7 +315,7 @@ public final class ResourceUrn implements Comparable<ResourceUrn> {
     }
 
     @Override
-    public int compareTo(@Nonnull ResourceUrn o) {
+    public int compareTo(ResourceUrn o) {
         int result = moduleName.compareTo(o.getModuleName());
         if (result == 0) {
             result = resourceName.compareTo(o.getResourceName());

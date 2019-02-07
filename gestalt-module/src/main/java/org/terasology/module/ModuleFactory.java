@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -260,6 +261,35 @@ public class ModuleFactory {
             logger.error("Failed to gather class manifest for classpath module", e);
         }
         return manifest;
+    }
+
+    /**
+     * Creates a module from a package on the main classpath.
+     *
+     * @param packageName The package to create the module from, as a list of the parts of the package
+     * @return A module covering the contents of the package on the classpath
+     * @
+     */
+    public Module createPackageModule(String packageName) {
+        ModuleMetadata metadata = null;
+        List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));
+        for (Map.Entry<String, ModuleMetadataLoader> metadataEntries : moduleMetadataLoaderMap.entrySet()) {
+            String metadataResource = RESOURCE_PATH_JOINER.join(packageParts) + "/" + metadataEntries.getKey();
+            InputStream metadataStream = classLoader.getResourceAsStream(metadataResource);
+            if (metadataStream != null) {
+                try (Reader reader = new InputStreamReader(metadataStream)) {
+                    metadata = metadataEntries.getValue().read(reader);
+                    break;
+                } catch (IOException e) {
+                    logger.error("Failed to read metadata resource {}", metadataResource, e);
+                }
+            }
+        }
+
+        if (metadata != null) {
+            return createPackageModule(metadata, packageName);
+        }
+        throw new RuntimeException("Missing metadata for package module " + packageName);
     }
 
     /**

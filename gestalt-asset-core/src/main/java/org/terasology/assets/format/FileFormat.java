@@ -17,9 +17,11 @@
 package org.terasology.assets.format;
 
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
 import java.nio.file.PathMatcher;
+import java.util.function.Predicate;
 
 /**
  * Common base interface for all file formats.  A file format is used to load one or more files and either create or modify an
@@ -30,7 +32,7 @@ public interface FileFormat {
     /**
      * @return A path matcher that will filter for files relevant for this format.
      */
-    PathMatcher getFileMatcher();
+    Predicate<ModuleFile> getFileMatcher();
 
     /**
      * This method is use to obtain the name of the resource represented by the given filename. The ModuleAssetDataProducer will combine it with a module id to

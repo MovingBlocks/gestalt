@@ -23,7 +23,7 @@ dependencies {
     compile group: 'com.esotericsoftware', name: 'reflectasm', version: '1.11.0'
 	compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.0.0-beta-3'
     
-    jmh "ch.qos.logback:logback-classic:1.1.5"
+    testImplementation "ch.qos.logback:logback-classic:1.1.5"
 }
 
 description = 'Entity system.'
@@ -38,21 +38,4 @@ protobuf {
     // Download from repositories
     artifact = 'com.google.protobuf:protoc:3.0.0-beta-3'
   }
-}
-
-ideaModule.dependsOn test
-
-idea {
-    module {
-	    excludeDirs -= file("$buildDir")
-	    excludeDirs += file("$buildDir/classes")
-		excludeDirs += file("$buildDir/dependency-cache")
-		excludeDirs += file("$buildDir/extracted-include-protos")
-		excludeDirs += file("$buildDir/libs")
-		excludeDirs += file("$buildDir/reports")
-		excludeDirs += file("$buildDir/resources")
-		excludeDirs += file("$buildDir/test-results")
-		excludeDirs += file("$buildDir/tmp")
-        sourceDirs += file("${protobuf.generatedFilesBaseDir}/main/java")
-    }
 }

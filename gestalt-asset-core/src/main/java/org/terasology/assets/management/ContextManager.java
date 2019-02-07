@@ -31,12 +31,7 @@ import java.util.Deque;
 public final class ContextManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ContextManager.class);
-    private static final ThreadLocal<Deque<Name>> CONTEXT_STACK = new ThreadLocal<Deque<Name>>() {
-        @Override
-        protected Deque<Name> initialValue() {
-            return Queues.newArrayDeque();
-        }
-    };
+    private static final ThreadLocal<Deque<Name>> CONTEXT_STACK = ThreadLocal.withInitial(Queues::newArrayDeque);
 
     private ContextManager() {
     }
