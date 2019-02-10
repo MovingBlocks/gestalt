@@ -9,7 +9,7 @@
         </layout>
     </appender>
 
-    <logger name="org.terasology.assets" level="debug"
+    <logger name="org.terasology.assets" level="info"
             additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>

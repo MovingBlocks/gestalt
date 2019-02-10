@@ -17,12 +17,13 @@
 package org.terasology.module.resources;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import org.terasology.util.Varargs;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -82,5 +83,11 @@ public class CompositeFileSource implements ModuleFileSource {
     @Override
     public Iterator<ModuleFile> iterator() {
         return sources.stream().flatMap(x -> x.getFiles().stream()).iterator();
+    }
+
+    @Override
+    @RequiresApi(26)
+    public List<Path> getRootPaths() {
+        return sources.stream().flatMap(x -> x.getRootPaths().stream()).collect(Collectors.toList());
     }
 }

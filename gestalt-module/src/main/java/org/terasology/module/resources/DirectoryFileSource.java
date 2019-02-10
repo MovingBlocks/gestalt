@@ -17,6 +17,7 @@
 package org.terasology.module.resources;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -137,18 +139,24 @@ public class DirectoryFileSource implements ModuleFileSource {
         return Collections.emptySet();
     }
 
+    @Override
+    @RequiresApi(26)
+    public List<Path> getRootPaths() {
+        return Collections.singletonList(rootDirectory.toPath());
+    }
+
     @NonNull
     @Override
     public Iterator<ModuleFile> iterator() {
         return new DirectoryIterator(rootDirectory, rootDirectory, filter, true);
     }
 
-    private static class DirectoryFile implements ModuleFile {
+    public static class DirectoryFile implements ModuleFile {
 
         private final File baseDirectory;
         private final File file;
 
-        DirectoryFile(File file, File baseDirectory) {
+        public DirectoryFile(File file, File baseDirectory) {
             this.file = file;
             this.baseDirectory = baseDirectory;
         }

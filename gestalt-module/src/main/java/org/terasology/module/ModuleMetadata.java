@@ -54,7 +54,7 @@ public class ModuleMetadata {
      */
     public static final Set<String> RESERVED_IDS = ImmutableSet.of(ID, VERSION, DISPLAY_NAME, DESCRIPTION, DEPENDENCIES, REQUIRED_PERMISSIONS);
     private final Map<String, Object> extensions = Maps.newHashMap();
-    private Name id;
+    private Name id = Name.EMPTY;
     private Version version = Version.DEFAULT;
     private I18nMap displayName = new I18nMap("");
     private I18nMap description = new I18nMap("");
@@ -63,6 +63,12 @@ public class ModuleMetadata {
 
     public ModuleMetadata() {
     }
+
+    public ModuleMetadata(Name id, Version version) {
+        this.id = id;
+        this.version = version;
+    }
+
 
     /**
      * @return The identifier of the module
