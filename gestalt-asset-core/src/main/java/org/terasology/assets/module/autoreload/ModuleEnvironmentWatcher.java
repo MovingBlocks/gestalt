@@ -16,6 +16,8 @@
 
 package org.terasology.assets.module.autoreload;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedHashMultimap;
@@ -25,19 +27,22 @@ import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.format.producer.FileChangeSubscriber;
 import org.terasology.assets.module.ModuleAssetScanner;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.resources.DirectoryFileSource;
+import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,11 +68,12 @@ import java.util.concurrent.BlockingDeque;
  *
  * @author Immortius
  */
+@RequiresApi(26)
 class ModuleEnvironmentWatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleEnvironmentWatcher.class);
 
-    private final WatchService service = null;
+    private final WatchService service;
 
     private final Map<WatchKey, PathWatcher> pathWatchers = new MapMaker().concurrencyLevel(1).makeMap();
     private final Map<Path, WatchKey> watchKeys = new MapMaker().concurrencyLevel(1).makeMap();
@@ -83,20 +89,18 @@ class ModuleEnvironmentWatcher {
      * @throws IOException If there is an issue establishing the watch service
      */
     ModuleEnvironmentWatcher(ModuleEnvironment environment) throws IOException {
-//        this.service = environment.getFileSystem().newWatchService();
-//
-//        for (Path rootPath : environment.getFileSystem().getRootDirectories()) {
-//            try {
-//                Module module = environment.get(new Name(rootPath.getName(0).toString()));
-//                boolean canWatch = module.getLocations().stream().anyMatch(location -> FileSystems.getDefault().equals(location.getFileSystem()));
-//                if (canWatch) {
-//                    PathWatcher watcher = new RootPathWatcher(rootPath, module.getId(), service);
-//                    watcher.onRegistered();
-//                }
-//            } catch (IOException e) {
-//                logger.warn("Failed to establish change watch service for path '{}'", rootPath, e);
-//            }
-//        }
+        this(environment, FileSystems.getDefault());
+    }
+
+    ModuleEnvironmentWatcher(ModuleEnvironment environment, FileSystem fileSystem) throws IOException {
+        this.service = fileSystem.newWatchService();
+
+        for (Module module : environment.getModulesOrderedByDependencies()) {
+            for (Path path : module.getResources().getRootPaths()) {
+                PathWatcher watcher = new PathWatcher(path, path, service, new RootPathWatcher(module.getId()));
+                watcher.onRegistered();
+            }
+        }
     }
 
     /**
@@ -174,17 +178,16 @@ class ModuleEnvironmentWatcher {
      * Notifies subscribers of an asset file change
      *
      * @param folderName      The asset folder in which the changed asset resides
-     * @param target          The path of the file
+     * @param file            The file tha changed
      * @param module          The module the file contributes to
      * @param providingModule The module that provides the file
      * @param method          The subscription method to call to notify
      * @param outChanged      A map of asset types and their changed urns to add any modified resource urns to.
      */
-    private void notifySubscribers(String folderName, Path target, Name module, Name providingModule, SubscriptionMethod method,
+    private void notifySubscribers(String folderName, ModuleFile file, Name module, Name providingModule, SubscriptionMethod method,
                                    SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
         for (SubscriberInfo subscriber : subscribers.get(folderName)) {
-
-            Optional<ResourceUrn> urn = method.notify(subscriber.subscriber, target, module, providingModule);
+            Optional<ResourceUrn> urn = method.notify(subscriber.subscriber, file, module, providingModule);
             urn.ifPresent(resourceUrn -> outChanged.put(subscriber.type, resourceUrn));
         }
     }
@@ -206,19 +209,61 @@ class ModuleEnvironmentWatcher {
      * The form of a method to call to notify a subscriber of changes
      */
     private interface SubscriptionMethod {
-        Optional<ResourceUrn> notify(FileChangeSubscriber subscriber, Path path, Name module, Name providingModule);
+        Optional<ResourceUrn> notify(FileChangeSubscriber subscriber, ModuleFile file, Name module, Name providingModule);
+    }
+
+    private interface PathChangeListener {
+        /**
+         * Processes a path, potentially returning a path change listener
+         *
+         * @param subpath The path to process
+         * @return A new path watcher for the path
+         * @throws IOException If there was any issue processing the path
+         */
+        Optional<? extends PathChangeListener> processPath(String subpath) throws IOException;
+
+        /**
+         * Called when a file is created
+         *
+         * @param target     The created file
+         * @param outChanged The ResourceUrns of any assets affected
+         */
+        default void onFileCreated(ModuleFile target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        }
+
+        /**
+         * Called when a file is modified
+         *
+         * @param target     The modified file
+         * @param outChanged The ResourceUrns of any assets affected
+         */
+        default void onFileModified(ModuleFile target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        }
+
+        /**
+         * Called when a file is deleted
+         *
+         * @param target     The deleted file
+         * @param outChanged The ResourceUrns of any assets affected
+         */
+        default void onFileDeleted(ModuleFile target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        }
     }
 
     /**
      * A PathWatcher watches a path for changes, and reacts to those changes.
      */
-    private abstract class PathWatcher {
+    private final class PathWatcher {
         private Path watchedPath;
+        private Path rootPath;
         private WatchService watchService;
+        private PathChangeListener listener;
 
-        private PathWatcher(Path path, WatchService watchService) throws IOException {
+        private PathWatcher(Path path, Path rootPath, WatchService watchService, PathChangeListener listener) throws IOException {
             this.watchedPath = path;
             this.watchService = watchService;
+            this.rootPath = rootPath;
+            this.listener = listener;
             WatchKey key = path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE);
             if (key.isValid()) {
                 pathWatchers.put(key, this);
@@ -228,10 +273,6 @@ class ModuleEnvironmentWatcher {
 
         private Path getWatchedPath() {
             return watchedPath;
-        }
-
-        WatchService getWatchService() {
-            return watchService;
         }
 
         @SuppressWarnings("unchecked")
@@ -251,20 +292,25 @@ class ModuleEnvironmentWatcher {
                         logger.debug("New directory registered: {}", target);
                         onDirectoryCreated(target, changedAssets);
                     } else if (Files.isRegularFile(target)) {
-                        onFileCreated(target, changedAssets);
+                        logger.debug("New file registered: {}", target);
+                        DirectoryFileSource.DirectoryFile file = new DirectoryFileSource.DirectoryFile(target.toFile(), rootPath.toFile());
+                        listener.onFileCreated(file, changedAssets);
                     } else if (outDelayedEvents != null) {
                         outDelayedEvents.add(new DelayedEvent(event, this));
                     }
                 } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
                     if (Files.isRegularFile(target)) {
-                        onFileModified(target, changedAssets);
+                        logger.debug("File modified: {}", target);
+                        DirectoryFileSource.DirectoryFile file = new DirectoryFileSource.DirectoryFile(target.toFile(), rootPath.toFile());
+                        listener.onFileModified(file, changedAssets);
                     }
                 } else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
                     WatchKey key = watchKeys.remove(target);
                     if (key != null) {
                         pathWatchers.remove(key);
                     } else {
-                        onFileDeleted(target, changedAssets);
+                        DirectoryFileSource.DirectoryFile file = new DirectoryFileSource.DirectoryFile(target.toFile(), rootPath.toFile());
+                        listener.onFileDeleted(file, changedAssets);
                     }
                 }
             }
@@ -273,8 +319,11 @@ class ModuleEnvironmentWatcher {
 
         private void onDirectoryCreated(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             try {
-                Optional<? extends PathWatcher> pathWatcher = processPath(target);
-                pathWatcher.ifPresent(pathWatcher1 -> pathWatcher1.onCreated(outChanged));
+                String relativePath = watchedPath.relativize(target).getName(0).toString();
+                Optional<? extends PathChangeListener> pathChangeListener = listener.processPath(relativePath);
+                if (pathChangeListener.isPresent()) {
+                    new PathWatcher(target, rootPath, watchService, pathChangeListener.get()).onCreated(outChanged);
+                }
             } catch (IOException e) {
                 logger.error("Error registering path for change watching '{}'", getWatchedPath(), e);
             }
@@ -287,8 +336,12 @@ class ModuleEnvironmentWatcher {
             try (DirectoryStream<Path> contents = Files.newDirectoryStream(getWatchedPath())) {
                 for (Path path : contents) {
                     if (Files.isDirectory(path)) {
-                        Optional<? extends PathWatcher> pathWatcher = processPath(path);
-                        pathWatcher.ifPresent(PathWatcher::onRegistered);
+                        String relativePath = watchedPath.relativize(path).getName(0).toString();
+                        Optional<? extends PathChangeListener> pathChangeListener = listener.processPath(relativePath);
+                        if (pathChangeListener.isPresent()) {
+                            new PathWatcher(path, rootPath, watchService, pathChangeListener.get()).onRegistered();
+                            ;
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -307,209 +360,184 @@ class ModuleEnvironmentWatcher {
                     if (Files.isDirectory(path)) {
                         onDirectoryCreated(path, outChanged);
                     } else {
-                        onFileCreated(path, outChanged);
+                        listener.onFileCreated(new DirectoryFileSource.DirectoryFile(path.toFile(), rootPath.toFile()), outChanged);
                     }
                 }
             } catch (IOException e) {
                 logger.error("Error registering path for change watching '{}'", getWatchedPath(), e);
             }
         }
-
-        /**
-         * Processes a path within this path watcher
-         *
-         * @param target The path to process
-         * @return A new path watcher for the path
-         * @throws IOException If there was any issue processing the path
-         */
-        protected abstract Optional<? extends PathWatcher> processPath(Path target) throws IOException;
-
-        /**
-         * Called when a file is created
-         *
-         * @param target     The created file
-         * @param outChanged The ResourceUrns of any assets affected
-         */
-        protected void onFileCreated(Path target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-        }
-
-        /**
-         * Called when a file is modified
-         *
-         * @param target     The modified file
-         * @param outChanged The ResourceUrns of any assets affected
-         */
-        protected void onFileModified(Path target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-        }
-
-        /**
-         * Called when a file is deleted
-         *
-         * @param target     The deleted file
-         * @param outChanged The ResourceUrns of any assets affected
-         */
-        protected void onFileDeleted(Path target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-        }
     }
 
-    private class RootPathWatcher extends PathWatcher {
+    private class RootPathWatcher implements PathChangeListener {
 
         private Name module;
 
-        RootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
-            super(path, watchService);
+        RootPathWatcher(Name module) {
             this.module = module;
         }
 
         @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 2) {
-                switch (target.getName(1).toString()) {
-                    case ModuleAssetScanner.ASSET_FOLDER: {
-                        return Optional.of(new AssetRootPathWatcher(target, module, getWatchService()));
-                    }
-                    case ModuleAssetScanner.DELTA_FOLDER: {
-                        return Optional.of(new DeltaRootPathWatcher(target, module, getWatchService()));
-                    }
-                    case ModuleAssetScanner.OVERRIDE_FOLDER: {
-                        return Optional.of(new OverrideRootPathWatcher(target, module, getWatchService()));
-                    }
+        public Optional<? extends PathChangeListener> processPath(String target) throws IOException {
+            switch (target) {
+                case ModuleAssetScanner.ASSET_FOLDER: {
+                    return Optional.of(new AssetRootPathWatcher(module));
+                }
+                case ModuleAssetScanner.DELTA_FOLDER: {
+                    return Optional.of(new DeltaRootPathWatcher(module));
+                }
+                case ModuleAssetScanner.OVERRIDE_FOLDER: {
+                    return Optional.of(new OverrideRootPathWatcher(module));
                 }
             }
             return Optional.empty();
         }
     }
 
-    private class AssetRootPathWatcher extends PathWatcher {
+    private class AssetRootPathWatcher implements PathChangeListener {
 
         private Name module;
 
-        AssetRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
-            super(path, watchService);
+        AssetRootPathWatcher(Name module) {
             this.module = module;
         }
 
         @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 3) {
-                return Optional.of(new AssetPathWatcher(target, target.getName(2).toString(), module, module, getWatchService()));
-            }
-            return Optional.empty();
+        public Optional<? extends PathChangeListener> processPath(String target) {
+            return Optional.of(new AssetPathWatcher(target, module, module));
         }
     }
 
-    private class OverrideRootPathWatcher extends PathWatcher {
+    private class OverrideRootPathWatcher implements PathChangeListener {
 
         private Name module;
 
-        OverrideRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
-            super(path, watchService);
+        OverrideRootPathWatcher(Name module) {
             this.module = module;
         }
 
         @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 3) {
-                return Optional.of(new OverrideRootPathWatcher(target, module, getWatchService()));
-            } else if (target.getNameCount() == 4) {
-                return Optional.of(new AssetPathWatcher(target, target.getName(3).toString(), new Name(target.getName(2).toString()), module, getWatchService()));
-            }
-            return Optional.empty();
+        public Optional<? extends PathChangeListener> processPath(String target) {
+            return Optional.of(new OverrideModulePathWatcher(new Name(target), module));
         }
     }
 
-    private class DeltaRootPathWatcher extends PathWatcher {
+    private class OverrideModulePathWatcher implements PathChangeListener {
 
-        private Name module;
-
-        DeltaRootPathWatcher(Path path, Name module, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.module = module;
-        }
-
-        @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            if (target.getNameCount() == 3) {
-                return Optional.of(new DeltaRootPathWatcher(target, module, getWatchService()));
-            } else if (target.getNameCount() == 4) {
-                return Optional.of(new DeltaPathWatcher(target, new Name(target.getName(2).toString()), module, getWatchService()));
-            }
-            return Optional.empty();
-        }
-    }
-
-    private class DeltaPathWatcher extends PathWatcher {
-
-        private final Name providingModule;
-        private final Name module;
-
-        DeltaPathWatcher(Path path, Name module, Name providingModule, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.module = module;
-            this.providingModule = providingModule;
-        }
-
-        @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            return Optional.of(new DeltaPathWatcher(target, module, providingModule, getWatchService()));
-        }
-
-        @Override
-        protected void onFileCreated(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-//            logger.debug("Delta added: {}", target);
-//            String folderName = target.getName(3).toString();
-//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileAdded, outChanged);
-        }
-
-        @Override
-        protected void onFileModified(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-//            logger.debug("Delta modified: {}", target);
-//            String folderName = target.getName(3).toString();
-//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileModified, outChanged);
-        }
-
-        @Override
-        protected void onFileDeleted(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
-//            logger.debug("Delta deleted: {}", target);
-//            String folderName = target.getName(3).toString();
-//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::deltaFileDeleted, outChanged);
-        }
-    }
-
-    private class AssetPathWatcher extends PathWatcher {
-
-        private String folderName;
         private Name module;
         private Name providingModule;
 
-        AssetPathWatcher(Path path, String folderName, Name module, Name providingModule, WatchService watchService) throws IOException {
-            super(path, watchService);
-            this.folderName = folderName;
+        OverrideModulePathWatcher(Name module, Name providingModule) {
             this.module = module;
             this.providingModule = providingModule;
         }
 
         @Override
-        protected Optional<? extends PathWatcher> processPath(Path target) throws IOException {
-            return Optional.of(new AssetPathWatcher(target, folderName, module, providingModule, getWatchService()));
+        public Optional<? extends PathChangeListener> processPath(String target) {
+            return Optional.of(new AssetPathWatcher(target, module, providingModule));
+        }
+    }
+
+    private class DeltaRootPathWatcher implements PathChangeListener {
+
+        private Name module;
+
+        DeltaRootPathWatcher(Name module) {
+            this.module = module;
         }
 
         @Override
-        protected void onFileCreated(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public Optional<? extends PathChangeListener> processPath(String target) {
+            return Optional.of(new DeltaModulePathWatcher(new Name(target), module));
+        }
+    }
+
+    private class DeltaModulePathWatcher implements PathChangeListener {
+
+        private Name module;
+        private Name providingModule;
+
+        DeltaModulePathWatcher(Name module, Name providingModule) {
+            this.module = module;
+            this.providingModule = providingModule;
+        }
+
+        @Override
+        public Optional<? extends PathChangeListener> processPath(String target) {
+            return Optional.of(new DeltaPathWatcher(target, module, providingModule));
+        }
+    }
+
+    private class DeltaPathWatcher implements PathChangeListener {
+
+        private final Name module;
+        private final Name providingModule;
+        private final String assetType;
+
+
+        DeltaPathWatcher(String type, Name module, Name providingModule) {
+            this.module = module;
+            this.providingModule = providingModule;
+            this.assetType = type;
+        }
+
+        @Override
+        public Optional<? extends PathChangeListener> processPath(String target) throws IOException {
+            return Optional.of(this);
+        }
+
+        @Override
+        public void onFileCreated(ModuleFile file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+            logger.debug("Delta added: {}", file);
+            notifySubscribers(assetType, file, module, providingModule, FileChangeSubscriber::deltaFileAdded, outChanged);
+        }
+
+        @Override
+        public void onFileModified(ModuleFile file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+            logger.debug("Delta modified: {}", file);
+            notifySubscribers(assetType, file, module, providingModule, FileChangeSubscriber::deltaFileModified, outChanged);
+        }
+
+        @Override
+        public void onFileDeleted(ModuleFile file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+            logger.debug("Delta deleted: {}", file);
+            notifySubscribers(assetType, file, module, providingModule, FileChangeSubscriber::deltaFileDeleted, outChanged);
+        }
+    }
+
+    private class AssetPathWatcher implements PathChangeListener {
+
+        private String assetType;
+        private Name module;
+        private Name providingModule;
+
+        AssetPathWatcher(String assetType, Name module, Name providingModule) {
+            this.assetType = assetType;
+            this.module = module;
+            this.providingModule = providingModule;
+        }
+
+        @Override
+        public Optional<? extends PathChangeListener> processPath(String target) {
+            return Optional.of(this);
+        }
+
+        @Override
+        public void onFileCreated(ModuleFile target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset added: {}", target);
-//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileAdded, outChanged);
+            notifySubscribers(assetType, target, module, providingModule, FileChangeSubscriber::assetFileAdded, outChanged);
         }
 
         @Override
-        protected void onFileModified(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public void onFileModified(ModuleFile target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset modified: {}", target);
-//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileModified, outChanged);
+            notifySubscribers(assetType, target, module, providingModule, FileChangeSubscriber::assetFileModified, outChanged);
         }
 
         @Override
-        protected void onFileDeleted(Path target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public void onFileDeleted(ModuleFile target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset deleted: {}", target);
-//            notifySubscribers(folderName, target, module, providingModule, FileChangeSubscriber::assetFileDeleted, outChanged);
+            notifySubscribers(assetType, target, module, providingModule, FileChangeSubscriber::assetFileDeleted, outChanged);
         }
     }
 

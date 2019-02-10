@@ -16,10 +16,14 @@
 
 package org.terasology.module.resources;
 
+import android.support.annotation.RequiresApi;
+
 import org.terasology.util.Varargs;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -107,5 +111,14 @@ public interface ModuleFileSource extends Iterable<ModuleFile> {
      * @return A list of the immediate subpaths in the given path
      */
     Set<String> getSubpaths(List<String> fromPath);
+
+    /**
+     *
+     * @return A list of all the root paths of this file source, that
+     */
+    @RequiresApi(26)
+    default List<Path> getRootPaths() {
+        return Collections.emptyList();
+    }
 
 }
