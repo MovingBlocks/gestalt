@@ -10,7 +10,16 @@ import com.google.common.io.CharStreams;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.assets.Asset;
+import org.terasology.assets.AssetData;
+import org.terasology.assets.AssetType;
+import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.gestalt.android.AndroidModuleClassLoader;
+import org.terasology.gestalt.android.testbed.assettypes.Text;
+import org.terasology.gestalt.android.testbed.assettypes.TextData;
+import org.terasology.gestalt.android.testbed.assettypes.TextFactory;
+import org.terasology.gestalt.android.testbed.assettypes.TextFileFormat;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
@@ -32,6 +41,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class GestaltTestActivity extends AppCompatActivity {
@@ -66,14 +76,13 @@ public class GestaltTestActivity extends AppCompatActivity {
         ModulePathScanner pathScanner = new ModulePathScanner(factory);
         pathScanner.scan(moduleRegistry, getFilesDir());
 
-        //Policy.setPolicy(new ModuleSecurityPolicy());
         StandardPermissionProviderFactory permissionProviderFactory = new StandardPermissionProviderFactory();
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("org.terasology.test.api");
         ModuleEnvironment environment = new ModuleEnvironment(moduleRegistry, new WarnOnlyProviderFactory(permissionProviderFactory), (module, parent, permissionProvider) -> AndroidModuleClassLoader.create(module, parent, permissionProvider, getCodeCacheDir()));
 
 
-        displayText.append("-== Module Content ==-\n");
+        displayText.append("-== Module Content ==-\n\n");
         for (Module module : environment.getModulesOrderedByDependencies()) {
             displayText.append("==" + module.getId() + "==\n");
             for (ModuleFile moduleFile : module.getResources().getFiles()) {
@@ -108,7 +117,23 @@ public class GestaltTestActivity extends AppCompatActivity {
             }
         }
 
+        displayText.append("\n-== Module Assets ==-\n");
+        ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManager();
 
+        AssetType<Text, TextData> assetType = assetTypeManager.createAssetType(Text.class, new TextFactory(), "text");
+        assetTypeManager.getAssetFileDataProducer(assetType).addAssetFormat(new TextFileFormat());
+        assetTypeManager.switchEnvironment(environment);
+
+
+        for (ResourceUrn assetUrn : assetType.getAvailableAssetUrns()) {
+            assetType.getAsset(assetUrn).ifPresent(x -> {
+                displayText.append(assetUrn.toString())
+                        .append(" - \"")
+                        .append(x.getValue())
+                        .append("\"\n");
+            });
+        }
+        assetTypeManager.disposedUnusedAssets();
         text.setText(displayText);
     }
 

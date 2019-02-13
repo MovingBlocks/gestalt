@@ -1,0 +1,1 @@
+This text is from an asset in module PackageModuleA
