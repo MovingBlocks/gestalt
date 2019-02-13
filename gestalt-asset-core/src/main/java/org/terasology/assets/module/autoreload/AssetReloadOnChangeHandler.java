@@ -18,9 +18,9 @@ package org.terasology.assets.module.autoreload;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.SetMultimap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
@@ -28,7 +28,6 @@ import org.terasology.module.ModuleEnvironment;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,8 +52,9 @@ public class AssetReloadOnChangeHandler implements Closeable {
 
     /**
      * Registers a AssetType/AssetFileDataProducer pair to be notified of changes on the file system
+     *
      * @param assetType The AssetType
-     * @param producer The AssetFileDataProducer to notify of changes
+     * @param producer  The AssetFileDataProducer to notify of changes
      */
     public void addAssetType(AssetType<?, ?> assetType, AssetFileDataProducer<?> producer) {
         for (String folder : producer.getFolderNames()) {
@@ -64,6 +64,7 @@ public class AssetReloadOnChangeHandler implements Closeable {
 
     /**
      * Unregisters an asset type and all its producers from file change notifications
+     *
      * @param assetType The AssetType to unregister
      */
     public void removeAssetType(AssetType<?, ?> assetType) {
@@ -72,6 +73,7 @@ public class AssetReloadOnChangeHandler implements Closeable {
 
     /**
      * Processes and change events and reloads modified assets.
+     *
      * @throws IllegalStateException if the AssetReloadOnChangeHandler has been closed.
      */
     public void poll() {

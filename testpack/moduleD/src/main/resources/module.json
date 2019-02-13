@@ -1,6 +1,6 @@
 {
-    "id" : "ModuleD",
-    "version" : "1.0.0",
-    "displayName" : "Module D",
-    "description" : "This module tries to use non-permitted classes"
+  "id": "ModuleD",
+  "version": "1.0.0",
+  "displayName": "Module D",
+  "description": "This module tries to use non-permitted classes"
 }

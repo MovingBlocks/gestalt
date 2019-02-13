@@ -16,10 +16,7 @@
 
 package org.terasology.entitysystem.lifecycle;
 
-import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.event.Event;
-
-import java.util.Collection;
 
 /**
  *

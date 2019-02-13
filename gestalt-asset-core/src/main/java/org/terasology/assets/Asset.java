@@ -53,8 +53,8 @@ public abstract class Asset<T extends AssetData> {
 
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
-    private volatile boolean disposed;
     private final DisposalHook disposalHook = new DisposalHook();
+    private volatile boolean disposed;
 
     /**
      * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
@@ -73,8 +73,8 @@ public abstract class Asset<T extends AssetData> {
     /**
      * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
      *
-     * @param urn       The urn identifying the asset.
-     * @param assetType The asset type this asset belongs to.
+     * @param urn            The urn identifying the asset.
+     * @param assetType      The asset type this asset belongs to.
      * @param disposalAction The action to take when disposing this class.  The action registered to the disposal hook must not have a reference to asset -
      *                       this would prevent it being garbage collected. It must be a static inner class, or not contained in the asset class
      *                       (or an anonymous class defined in a static context). A warning will be logged if this is not the case.

@@ -22,7 +22,6 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
 import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.naming.Name;
-import org.terasology.util.Varargs;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,7 +66,7 @@ public final class TestModulesUtil {
         return createEnvironment("test");
     }
 
-    public static ModuleEnvironment createEnvironment(String ... modules) {
+    public static ModuleEnvironment createEnvironment(String... modules) {
         return createEnvironment(Arrays.asList(modules));
     }
 

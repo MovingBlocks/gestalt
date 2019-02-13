@@ -38,8 +38,9 @@ public class CoreEntityRef implements EntityRef {
 
     /**
      * Constructs an entity ref
+     *
      * @param referenceAdaptor The entityIdAccessor the referenced entity exists within
-     * @param id The id of the entity
+     * @param id               The id of the entity
      */
     public CoreEntityRef(ReferenceAdaptor referenceAdaptor, long id) {
         this.referenceAdaptor = referenceAdaptor;

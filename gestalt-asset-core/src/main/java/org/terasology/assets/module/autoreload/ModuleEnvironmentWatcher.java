@@ -193,19 +193,6 @@ class ModuleEnvironmentWatcher {
     }
 
     /**
-     * Information on a subscriber.
-     */
-    private static class SubscriberInfo {
-        final AssetType<?, ?> type;
-        final FileChangeSubscriber subscriber;
-
-        SubscriberInfo(AssetType<?, ?> type, FileChangeSubscriber subscriber) {
-            this.type = type;
-            this.subscriber = subscriber;
-        }
-    }
-
-    /**
      * The form of a method to call to notify a subscriber of changes
      */
     private interface SubscriptionMethod {
@@ -247,6 +234,33 @@ class ModuleEnvironmentWatcher {
          * @param outChanged The ResourceUrns of any assets affected
          */
         default void onFileDeleted(ModuleFile target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        }
+    }
+
+    /**
+     * Information on a subscriber.
+     */
+    private static class SubscriberInfo {
+        final AssetType<?, ?> type;
+        final FileChangeSubscriber subscriber;
+
+        SubscriberInfo(AssetType<?, ?> type, FileChangeSubscriber subscriber) {
+            this.type = type;
+            this.subscriber = subscriber;
+        }
+    }
+
+    private static class DelayedEvent {
+        private WatchEvent<?> event;
+        private PathWatcher watcher;
+
+        DelayedEvent(WatchEvent<?> event, PathWatcher watcher) {
+            this.event = event;
+            this.watcher = watcher;
+        }
+
+        SetMultimap<AssetType<?, ?>, ResourceUrn> replay() {
+            return watcher.update(Collections.singletonList(event), null);
         }
     }
 
@@ -538,20 +552,6 @@ class ModuleEnvironmentWatcher {
         public void onFileDeleted(ModuleFile target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset deleted: {}", target);
             notifySubscribers(assetType, target, module, providingModule, FileChangeSubscriber::assetFileDeleted, outChanged);
-        }
-    }
-
-    private static class DelayedEvent {
-        private WatchEvent<?> event;
-        private PathWatcher watcher;
-
-        DelayedEvent(WatchEvent<?> event, PathWatcher watcher) {
-            this.event = event;
-            this.watcher = watcher;
-        }
-
-        SetMultimap<AssetType<?, ?>, ResourceUrn> replay() {
-            return watcher.update(Collections.singletonList(event), null);
         }
     }
 

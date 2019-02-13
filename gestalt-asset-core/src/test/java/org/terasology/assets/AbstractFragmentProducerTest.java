@@ -18,9 +18,13 @@ package org.terasology.assets;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.Test;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.AssetTypeManager;
+
+import java.util.Optional;
+
 import virtualModules.test.stubs.book.Book;
 import virtualModules.test.stubs.book.BookData;
 import virtualModules.test.stubs.book.BookFactory;
@@ -28,8 +32,6 @@ import virtualModules.test.stubs.book.BookFragmentDataProducer;
 import virtualModules.test.stubs.text.Text;
 import virtualModules.test.stubs.text.TextData;
 import virtualModules.test.stubs.text.TextFactory;
-
-import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

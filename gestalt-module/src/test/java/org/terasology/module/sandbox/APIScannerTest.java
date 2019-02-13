@@ -18,15 +18,9 @@ package org.terasology.module.sandbox;
 
 import org.junit.Test;
 import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
-import org.terasology.module.Module;
-import org.terasology.module.ModuleFactory;
-import org.terasology.module.ModuleMetadata;
-import org.terasology.naming.Name;
-import org.terasology.naming.Version;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

@@ -32,7 +32,6 @@ import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -248,6 +247,25 @@ class UnloadedAssetData<T extends AssetData> {
     }
 
     /**
+     * A comparator for ordering sources by their providing module.
+     *
+     * @param <T> The type of the file format of the sources being ordered
+     */
+    private static class SourceComparator<T extends FileFormat> implements Comparator<Source<T>> {
+
+        private final List<Name> moduleOrdering;
+
+        public SourceComparator(List<Name> moduleOrdering) {
+            this.moduleOrdering = moduleOrdering;
+        }
+
+        @Override
+        public int compare(Source<T> o1, Source<T> o2) {
+            return moduleOrdering.indexOf(o1.providingModule) - moduleOrdering.indexOf(o2.providingModule);
+        }
+    }
+
+    /**
      * Determines the module and primary source that will provide the asset data.
      * <p>
      * The sources are first ordered by the module dependency order - this ensures consistent ordering. The first source determines the initial providing module. As the
@@ -293,25 +311,6 @@ class UnloadedAssetData<T extends AssetData> {
                 return format.load(urn, inputs);
             }
             return null;
-        }
-    }
-
-    /**
-     * A comparator for ordering sources by their providing module.
-     *
-     * @param <T> The type of the file format of the sources being ordered
-     */
-    private static class SourceComparator<T extends FileFormat> implements Comparator<Source<T>> {
-
-        private final List<Name> moduleOrdering;
-
-        public SourceComparator(List<Name> moduleOrdering) {
-            this.moduleOrdering = moduleOrdering;
-        }
-
-        @Override
-        public int compare(Source<T> o1, Source<T> o2) {
-            return moduleOrdering.indexOf(o1.providingModule) - moduleOrdering.indexOf(o2.providingModule);
         }
     }
 }

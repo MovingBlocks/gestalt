@@ -18,6 +18,7 @@ package org.terasology.entitysystem.persistence.proto;
 
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
+
 import org.junit.Test;
 import org.terasology.entitysystem.persistence.proto.exception.PersistenceException;
 import org.terasology.entitysystem.persistence.proto.typehandlers.StringHandler;
@@ -37,16 +38,14 @@ import static org.junit.Assert.assertEquals;
  */
 public class ProtoPersistenceTest {
 
+    private static final String TEST_STRING = "Test";
+    private static final List<String> TEST_LIST = Lists.newArrayList("One", "Two");
     private static Type STRING_LIST = new TypeToken<List<String>>() {
     }.getType();
     private static Type STRING_SUBTYPE_LIST = new TypeToken<List<? extends String>>() {
     }.getType();
     private static Type STRING_ARRAYLIST = new TypeToken<ArrayList<String>>() {
     }.getType();
-
-    private static final String TEST_STRING = "Test";
-    private static final List<String> TEST_LIST = Lists.newArrayList("One", "Two");
-
     private ProtoPersistence protoPersistence;
 
     public ProtoPersistenceTest() {

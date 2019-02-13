@@ -18,18 +18,16 @@ package org.terasology.entitysystem.persistence.proto.typehandlers.collections;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.reflection.ReflectionUtil;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  *

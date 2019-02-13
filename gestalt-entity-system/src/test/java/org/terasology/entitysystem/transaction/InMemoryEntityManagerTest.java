@@ -17,17 +17,15 @@
 package org.terasology.entitysystem.transaction;
 
 import com.google.common.collect.Sets;
+
 import org.junit.Test;
-import org.mockito.internal.matchers.Null;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.core.ProxyEntityRef;
-import org.terasology.entitysystem.transaction.exception.EntitySystemException;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
-import org.terasology.entitysystem.entity.inmemory.CoreEntityRef;
-import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
+import org.terasology.entitysystem.core.ProxyEntityRef;
+import org.terasology.entitysystem.entity.inmemory.CoreEntityRef;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.stubs.SecondComponent;
 import org.terasology.entitysystem.transaction.exception.RollbackException;
@@ -40,7 +38,6 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**

@@ -18,6 +18,7 @@ package org.terasology.entitysystem.component;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+
 import org.terasology.entitysystem.core.Component;
 
 import java.util.Collection;

@@ -24,6 +24,7 @@ import java.util.List;
 
 /**
  * An AssetFileFormat handles loading a file representation of an asset into the appropriate {@link org.terasology.assets.AssetData AssetData}.
+ *
  * @author Immortius
  */
 public interface AssetFileFormat<T extends AssetData> extends FileFormat {

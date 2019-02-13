@@ -27,13 +27,14 @@ public interface EntityPersistor {
 
     /**
      * It is expected that the entity is part of an entity manager with an active transaction
+     *
      * @param entity The entity to serialized
      * @return The protobuf serialized form of the entity
      */
     ProtoDatastore.EntityData.Builder serialize(EntityRef entity);
 
     /**
-     * @param data The protobuf serialized entity to deserialize
+     * @param data          The protobuf serialized entity to deserialize
      * @param entityManager The entity manager to deserialize the entity into. A transaction is expected to be active.
      * @return The deserialized entity
      */

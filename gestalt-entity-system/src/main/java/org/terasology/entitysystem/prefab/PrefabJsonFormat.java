@@ -27,6 +27,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.stream.JsonReader;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.ResourceUrn;
@@ -102,6 +103,74 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * A builder used to aid construction of {@link PrefabJsonFormat}
+     */
+    public static class Builder {
+        private final ModuleEnvironment moduleEnvironment;
+        private final ComponentManager componentManager;
+        private AssetManager assetManager;
+        private GsonBuilder gsonBuilder;
+
+        /**
+         * @param moduleEnvironment The module environment, used to discover available component types
+         * @param componentManager  The manager for components, used to construct and work with components
+         * @param assetManager      The asset manager, used to look up prefabs.
+         */
+        public Builder(ModuleEnvironment moduleEnvironment, ComponentManager componentManager, AssetManager assetManager) {
+            this.moduleEnvironment = moduleEnvironment;
+            this.componentManager = componentManager;
+            this.assetManager = assetManager;
+
+            gsonBuilder = new GsonBuilder()
+                    .setLenient()
+                    .enableComplexMapKeySerialization()
+                    .setDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+        }
+
+        /**
+         * Register a GSON type adapter. All the rules for {@link GsonBuilder}.registerTypeAdapter apply.
+         *
+         * @param type
+         * @param typeAdapter
+         * @return The builder.
+         */
+        public Builder registerTypeAdapter(Type type, Object typeAdapter) {
+            gsonBuilder.registerTypeAdapter(type, typeAdapter);
+            return this;
+        }
+
+        /**
+         * Register a GSON type hierarchy adapter. All the rules for {@link GsonBuilder}.registerTypeHierarchyAdapter apply.
+         *
+         * @param type
+         * @param typeAdapter
+         * @return The builder
+         */
+        public Builder registerTypeHierarchyAdapter(Class<?> type, Object typeAdapter) {
+            gsonBuilder.registerTypeHierarchyAdapter(type, typeAdapter);
+            return this;
+        }
+
+        /**
+         * Register a GSON type adapter factory. All the rules for {@link GsonBuilder}.registerTypeAdapterFactory apply.
+         *
+         * @param factory
+         * @return The builder
+         */
+        public Builder registerTypeAdapterFactory(TypeAdapterFactory factory) {
+            gsonBuilder.registerTypeAdapterFactory(factory);
+            return this;
+        }
+
+        /**
+         * @return The new PrefabJsonFormat.
+         */
+        public PrefabJsonFormat create() {
+            return new PrefabJsonFormat(moduleEnvironment, componentManager, assetManager, gsonBuilder);
         }
     }
 
@@ -252,70 +321,5 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
             propertyAccessor.set(component, gson.fromJson(value.get(name), propertyAccessor.getPropertyType()));
         }
 
-    }
-
-    /**
-     * A builder used to aid construction of {@link PrefabJsonFormat}
-     */
-    public static class Builder {
-        private final ModuleEnvironment moduleEnvironment;
-        private final ComponentManager componentManager;
-        private AssetManager assetManager;
-        private GsonBuilder gsonBuilder;
-
-        /**
-         * @param moduleEnvironment The module environment, used to discover available component types
-         * @param componentManager The manager for components, used to construct and work with components
-         * @param assetManager The asset manager, used to look up prefabs.
-         */
-        public Builder(ModuleEnvironment moduleEnvironment, ComponentManager componentManager, AssetManager assetManager) {
-            this.moduleEnvironment = moduleEnvironment;
-            this.componentManager = componentManager;
-            this.assetManager = assetManager;
-
-            gsonBuilder = new GsonBuilder()
-                    .setLenient()
-                    .enableComplexMapKeySerialization()
-                    .setDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-        }
-
-        /**
-         * Register a GSON type adapter. All the rules for {@link GsonBuilder}.registerTypeAdapter apply.
-         * @param type
-         * @param typeAdapter
-         * @return The builder.
-         */
-        public Builder registerTypeAdapter(Type type, Object typeAdapter) {
-            gsonBuilder.registerTypeAdapter(type, typeAdapter);
-            return this;
-        }
-
-        /**
-         * Register a GSON type hierarchy adapter. All the rules for {@link GsonBuilder}.registerTypeHierarchyAdapter apply.
-         * @param type
-         * @param typeAdapter
-         * @return The builder
-         */
-        public Builder registerTypeHierarchyAdapter(Class<?> type, Object typeAdapter) {
-            gsonBuilder.registerTypeHierarchyAdapter(type, typeAdapter);
-            return this;
-        }
-
-        /**
-         * Register a GSON type adapter factory. All the rules for {@link GsonBuilder}.registerTypeAdapterFactory apply.
-         * @param factory
-         * @return The builder
-         */
-        public Builder registerTypeAdapterFactory(TypeAdapterFactory factory) {
-            gsonBuilder.registerTypeAdapterFactory(factory);
-            return this;
-        }
-
-        /**
-         * @return The new PrefabJsonFormat.
-         */
-        public PrefabJsonFormat create() {
-            return new PrefabJsonFormat(moduleEnvironment, componentManager, assetManager, gsonBuilder);
-        }
     }
 }

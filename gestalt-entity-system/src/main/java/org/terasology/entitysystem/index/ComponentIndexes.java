@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.index;
 
 import com.google.common.base.Preconditions;
+
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.transaction.TransactionManager;
@@ -33,7 +34,7 @@ public final class ComponentIndexes {
     private ComponentIndexes() {
     }
 
-    public static Index createComponentIndex(TransactionManager transactionManager, EntityManager entityManager, Class<? extends Component> firstComponentType, Class<? extends Component> ... additionalComponentTypes) {
+    public static Index createComponentIndex(TransactionManager transactionManager, EntityManager entityManager, Class<? extends Component> firstComponentType, Class<? extends Component>... additionalComponentTypes) {
         return createComponentIndex(transactionManager, entityManager, Varargs.combineToSet(firstComponentType, additionalComponentTypes));
     }
 

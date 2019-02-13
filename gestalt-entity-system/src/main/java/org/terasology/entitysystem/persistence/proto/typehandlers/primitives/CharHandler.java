@@ -17,13 +17,12 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers.primitives;
 
 import com.google.common.collect.Lists;
+
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -66,7 +65,7 @@ public class CharHandler implements ProtoTypeHandler<Character> {
     public List<Character> deserializeCollection(ProtoDatastore.Value value, Type type, ProtoContext context) {
         if (value.getStringCount() > 0) {
             List<Character> result = Lists.newArrayListWithCapacity(value.getString(0).length());
-            for (char c : value.getString(0).toCharArray())  {
+            for (char c : value.getString(0).toCharArray()) {
                 result.add(c);
             }
             return result;

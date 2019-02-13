@@ -21,12 +21,12 @@
  * The main classes of the asset system are:
  * </p>
  * <ul>
- *     <li>AssetType, a manager for a type of Asset</li>
- *     <li>Asset, a fully loaded asset. This should be subclassed for each type of asset</li>
- *     <li>ResourceUrn, the identifier for an asset</li>
- *     <li>AssetData, an implementation independent representation of an asset. This should be subclassed for each type of asset</li>
- *     <li>AssetDataProducer, a provider of AssetData</li>
- *     <li>AssetFactory, that converts an AssetData into  full blown Asset</li>
+ * <li>AssetType, a manager for a type of Asset</li>
+ * <li>Asset, a fully loaded asset. This should be subclassed for each type of asset</li>
+ * <li>ResourceUrn, the identifier for an asset</li>
+ * <li>AssetData, an implementation independent representation of an asset. This should be subclassed for each type of asset</li>
+ * <li>AssetDataProducer, a provider of AssetData</li>
+ * <li>AssetFactory, that converts an AssetData into  full blown Asset</li>
  * </ul>
  */
 package org.terasology.assets;

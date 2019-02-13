@@ -25,6 +25,7 @@ import java.lang.annotation.Target;
 /**
  * Annotation to mark an event handler to be prioritised before one or more event handlers, to be used with {@link ReceiveEvent}.
  * Can be applied to a class, in which case it applies to all event receiving method in the class, or to individual methods.
+ *
  * @see ReceiveEvent
  */
 @Retention(RetentionPolicy.RUNTIME)

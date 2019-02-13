@@ -19,6 +19,7 @@ package org.terasology.entitysystem.persistence.proto.typehandlers.collections;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+
 import org.junit.Test;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.proto.typehandlers.StringHandler;

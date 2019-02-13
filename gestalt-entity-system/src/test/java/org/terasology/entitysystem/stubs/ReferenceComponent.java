@@ -28,9 +28,9 @@ public interface ReferenceComponent extends Component {
 
     EntityRef getReference();
 
-    List<EntityRef> getReferences();
-
     void setReference(EntityRef ref);
+
+    List<EntityRef> getReferences();
 
     void setReferences(List<EntityRef> references);
 }

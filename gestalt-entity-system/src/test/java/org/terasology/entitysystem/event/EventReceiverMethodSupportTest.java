@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.event;
 
 import com.google.common.collect.Sets;
+
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.terasology.entitysystem.core.EntityRef;
@@ -30,8 +31,6 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -253,7 +252,7 @@ public class EventReceiverMethodSupportTest {
         public SecondComponent comp;
 
         @ReceiveEvent(components = {SampleComponent.class})
-        public EventResult onEvent(TestEvent event, EntityRef entity,  SecondComponent comp) {
+        public EventResult onEvent(TestEvent event, EntityRef entity, SecondComponent comp) {
             this.lastEvent = event;
             this.lastEntity = entity;
             this.comp = comp;

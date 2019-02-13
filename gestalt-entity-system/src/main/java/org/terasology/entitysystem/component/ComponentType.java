@@ -53,8 +53,9 @@ public final class ComponentType<T extends Component> {
 
     /**
      * Copies a component onto anothing component
+     *
      * @param from The component to copy from
-     * @param to The component to copy to
+     * @param to   The component to copy to
      * @return The updated to component
      */
     public T copy(T from, T to) {

@@ -16,14 +16,15 @@
 
 package virtualModules.test.stubs.extensions;
 
-import org.terasology.assets.format.AssetDataFile;
-import org.terasology.assets.format.AbstractAssetFileFormat;
-import org.terasology.assets.module.annotations.RegisterAssetFileFormat;
-import virtualModules.test.stubs.text.TextData;
 import org.terasology.assets.ResourceUrn;
+import org.terasology.assets.format.AbstractAssetFileFormat;
+import org.terasology.assets.format.AssetDataFile;
+import org.terasology.assets.module.annotations.RegisterAssetFileFormat;
 
 import java.io.IOException;
 import java.util.List;
+
+import virtualModules.test.stubs.text.TextData;
 
 /**
  * @author Immortius

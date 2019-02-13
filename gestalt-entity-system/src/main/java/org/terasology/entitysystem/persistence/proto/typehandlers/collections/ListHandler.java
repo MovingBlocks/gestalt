@@ -17,12 +17,12 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers.collections;
 
 import com.google.common.collect.Lists;
+
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.reflection.ReflectionUtil;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 

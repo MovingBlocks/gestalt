@@ -19,6 +19,7 @@ package org.terasology.entitysystem.persistence.proto;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+
 import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.PropertyAccessor;
 import org.terasology.entitysystem.core.Component;
@@ -41,20 +42,21 @@ public class ComponentMetadata<T extends Component> {
 
     /**
      * Constructs the metadata for a component. The field id mapping will be generated for all fields, if the component type is available.
-     * @param id The id of the component
+     *
+     * @param id     The id of the component
      * @param module The module providing the component
-     * @param name The name of the component
-     * @param type The type of the component (or null if not available)
+     * @param name   The name of the component
+     * @param type   The type of the component (or null if not available)
      */
     public ComponentMetadata(int id, Name module, Name name, ComponentType<T> type) {
         this(id, module, name, type, Collections.emptyMap());
     }
 
     /**
-     * @param id The id of the component
-     * @param module The module providing the component
-     * @param name The name of the component
-     * @param type The type of the component (or null if not available)
+     * @param id               The id of the component
+     * @param module           The module providing the component
+     * @param name             The name of the component
+     * @param type             The type of the component (or null if not available)
      * @param existingFieldIds Any existing field id mappings. Id mappings will be generated for any fields not part of this map.
      */
     public ComponentMetadata(int id, Name module, Name name, ComponentType<T> type, Map<Integer, String> existingFieldIds) {
@@ -85,6 +87,7 @@ public class ComponentMetadata<T extends Component> {
 
     /**
      * This is the shortened name for the component, which will be used when looking up the component type.
+     *
      * @return The name of the component.
      */
     public Name getName() {
@@ -93,6 +96,7 @@ public class ComponentMetadata<T extends Component> {
 
     /**
      * This is the module providing the component. This will be used when looking up the component type.
+     *
      * @return The module providing the component.
      */
     public Name getModule() {
@@ -107,7 +111,6 @@ public class ComponentMetadata<T extends Component> {
     }
 
     /**
-     *
      * @param field The field to get the id for
      * @return The id for the field.
      * @throws IllegalArgumentException If the component doesn't have a field with the given name.

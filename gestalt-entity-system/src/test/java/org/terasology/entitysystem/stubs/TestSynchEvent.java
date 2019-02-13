@@ -23,7 +23,7 @@ import org.terasology.entitysystem.event.Synchronous;
  *
  */
 @Synchronous
-public class TestSynchEvent implements Event{
+public class TestSynchEvent implements Event {
     private final String value;
 
     public TestSynchEvent(String value) {

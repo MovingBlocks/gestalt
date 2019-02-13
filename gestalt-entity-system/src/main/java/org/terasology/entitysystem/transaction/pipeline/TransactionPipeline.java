@@ -18,9 +18,9 @@ package org.terasology.entitysystem.transaction.pipeline;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.transaction.exception.EntitySystemException;
 import org.terasology.entitysystem.transaction.exception.PostCommitException;
 import org.terasology.entitysystem.transaction.exception.RollbackException;
 

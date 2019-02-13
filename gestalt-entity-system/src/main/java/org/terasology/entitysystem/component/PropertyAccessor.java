@@ -23,6 +23,7 @@ import java.util.function.Function;
 
 /**
  * Property accessor encapsulates information on a property, and the ability to access the property.
+ *
  * @param <T> The type this property belongs to
  * @param <U> The type of this property
  */
@@ -35,11 +36,12 @@ public class PropertyAccessor<T, U> {
 
     /**
      * Constructs a property accessor
-     * @param name The name of the property
-     * @param owningClass The class that contains the property
+     *
+     * @param name         The name of the property
+     * @param owningClass  The class that contains the property
      * @param propertyType The type of the property
-     * @param getter A method to get the property
-     * @param setter A method to set the property
+     * @param getter       A method to get the property
+     * @param setter       A method to set the property
      */
     public PropertyAccessor(String name, Class<T> owningClass, Type propertyType, Function<T, U> getter, BiConsumer<T, U> setter) {
         this.name = name;
@@ -92,7 +94,7 @@ public class PropertyAccessor<T, U> {
 
     /**
      * @param instance The instance to set the value of a property of
-     * @param value The value to set the property to
+     * @param value    The value to set the property to
      */
     public void set(T instance, U value) {
         setter.accept(instance, value);

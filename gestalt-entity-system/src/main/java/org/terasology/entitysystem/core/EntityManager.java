@@ -16,12 +16,13 @@
 
 package org.terasology.entitysystem.core;
 
-import gnu.trove.TLongCollection;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.naming.Name;
 
 import java.util.Iterator;
 import java.util.Map;
+
+import gnu.trove.TLongCollection;
 
 /**
  * EntityManager is the core of the entity system.
@@ -58,10 +59,11 @@ public interface EntityManager {
 
     /**
      * Creates entities based on a prefab
+     *
      * @param prefab The prefab to create entities from
      * @return A map of EntityRefs created, by the name of the entity prefab.
      */
-    Map<Name,EntityRef> createEntities(Prefab prefab);
+    Map<Name, EntityRef> createEntities(Prefab prefab);
 
     /**
      * @return An iterator over all entities. Note that entities could be deleted between when they are fetched and when they are accessed. This iterator is otherwise
@@ -70,6 +72,7 @@ public interface EntityManager {
     Iterator<EntityRef> allEntities();
 
     // TODO: Remove?
+
     /**
      * @return The value of the next entity id
      */

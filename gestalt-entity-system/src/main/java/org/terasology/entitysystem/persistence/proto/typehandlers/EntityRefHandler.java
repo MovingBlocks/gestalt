@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers;
 
 import com.google.common.collect.Lists;
+
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;

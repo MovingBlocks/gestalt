@@ -18,6 +18,7 @@ package org.terasology.entitysystem.prefab;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+
 import org.terasology.assets.AssetData;
 import org.terasology.assets.ResourceUrn;
 
@@ -40,6 +41,7 @@ public class PrefabData implements AssetData {
 
     /**
      * Sets the identity of the root entity id.
+     *
      * @param rootEntityId The new root entity id. This must correspond to a recipe that is part of the prefab data.
      */
     public void setRootEntityId(ResourceUrn rootEntityId) {

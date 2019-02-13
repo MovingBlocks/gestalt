@@ -22,6 +22,10 @@ import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
+
+import java.util.List;
+import java.util.Optional;
+
 import virtualModules.test.stubs.extensions.ExtensionAsset;
 import virtualModules.test.stubs.extensions.ExtensionDataProducer;
 import virtualModules.test.stubs.extensions.ExtensionDeltaFileFormat;
@@ -35,9 +39,6 @@ import virtualModules.test.stubs.inheritance.ParentAsset;
 import virtualModules.test.stubs.text.Text;
 import virtualModules.test.stubs.text.TextData;
 import virtualModules.test.stubs.text.TextFactory;
-
-import java.util.List;
-import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

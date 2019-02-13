@@ -17,7 +17,6 @@
 package org.terasology.entitysystem.persistence.proto;
 
 import org.junit.Test;
-import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityRef;
@@ -30,6 +29,8 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
+
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 
 import static org.junit.Assert.assertEquals;
 

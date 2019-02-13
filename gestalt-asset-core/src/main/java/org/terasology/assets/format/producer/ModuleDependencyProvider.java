@@ -19,7 +19,6 @@ package org.terasology.assets.format.producer;
 import org.terasology.naming.Name;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Interface for a provider of information on the dependencies between modules.
@@ -28,7 +27,7 @@ public interface ModuleDependencyProvider {
 
     /**
      * @param fromModule The proposed module with a dependency
-     * @param onModule The proposed module that is depended on
+     * @param onModule   The proposed module that is depended on
      * @return Whether fromModule has a dependency on onModule
      */
     boolean dependencyExists(Name fromModule, Name onModule);

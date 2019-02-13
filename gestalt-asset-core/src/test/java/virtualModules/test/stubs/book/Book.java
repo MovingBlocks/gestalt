@@ -17,6 +17,7 @@
 package virtualModules.test.stubs.book;
 
 import com.google.common.collect.ImmutableList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;

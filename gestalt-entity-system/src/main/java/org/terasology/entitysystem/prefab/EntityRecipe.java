@@ -18,6 +18,7 @@ package org.terasology.entitysystem.prefab;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+
 import org.terasology.assets.ResourceUrn;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityRef;
@@ -78,9 +79,10 @@ public class EntityRecipe implements EntityRef {
 
     /**
      * Adds a component to the recipe.
+     *
      * @param componentType The type of the component
-     * @param component The component
-     * @param <T> The type of the component
+     * @param component     The component
+     * @param <T>           The type of the component
      */
     public synchronized <T extends Component> void add(Class<T> componentType, T component) {
         this.componentMap = new TypeKeyedMap<>(ImmutableMap.<Class<? extends Component>, Component>builder().putAll(componentMap.getInner()).put(componentType, component).build());
@@ -88,6 +90,7 @@ public class EntityRecipe implements EntityRef {
 
     /**
      * Removes a component from the recipe.
+     *
      * @param componentType The type of the component to remove
      */
     public synchronized void remove(Class<? extends Component> componentType) {

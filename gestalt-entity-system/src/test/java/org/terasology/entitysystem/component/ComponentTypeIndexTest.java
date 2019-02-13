@@ -18,13 +18,14 @@ package org.terasology.entitysystem.component;
 
 import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
-import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
 import java.util.Optional;
+
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 
 import static org.junit.Assert.assertEquals;
 

@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers;
 
 import com.google.common.reflect.TypeToken;
+
 import org.terasology.assets.Asset;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.entitysystem.persistence.proto.ProtoContext;

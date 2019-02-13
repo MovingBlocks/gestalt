@@ -18,6 +18,7 @@ package org.terasology.entitysystem.persistence.proto.typehandlers.primitives;
 
 import com.google.common.reflect.TypeToken;
 import com.google.protobuf.ByteString;
+
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandlerFactory;

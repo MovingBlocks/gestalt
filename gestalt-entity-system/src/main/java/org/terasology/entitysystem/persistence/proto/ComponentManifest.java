@@ -19,8 +19,7 @@ package org.terasology.entitysystem.persistence.proto;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
+
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.component.ComponentType;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
@@ -33,6 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 /**
  * Holds information on components, for use during serialization and deserialization. Primarily this is the mapping between component indexes used in serialized formats, and
  * the Component type this represents.
@@ -40,15 +42,15 @@ import java.util.Optional;
 public class ComponentManifest {
 
     private final ModuleEnvironment moduleEnvironment;
-    private ComponentManager componentManager;
-    private int nextComponentId;
     private final List<ComponentMetadata<?>> componentInfo;
     private final Map<Class<? extends Component>, ComponentMetadata<?>> componentInfoByType;
     private final TIntObjectMap<ComponentMetadata> componentInfoById;
+    private ComponentManager componentManager;
+    private int nextComponentId;
 
     /**
      * @param moduleEnvironment The active moduleEnvironment. Used to determine what module a component type belongs to
-     * @param componentManager The active componentManager. Used to obtain the ComponentType for a given component
+     * @param componentManager  The active componentManager. Used to obtain the ComponentType for a given component
      */
     public ComponentManifest(ModuleEnvironment moduleEnvironment, ComponentManager componentManager) {
         this.moduleEnvironment = moduleEnvironment;
@@ -60,6 +62,7 @@ public class ComponentManifest {
 
     /**
      * Adds component metadata to the manifest.
+     *
      * @param metadata The metadata to add
      * @param <T>
      * @throws IllegalArgumentException If the id or component type in the metadata has already been used in the manifest

@@ -26,5 +26,5 @@ public interface TransactionInterceptor {
      *
      * @param context The context of the transaction occurring.
      */
-    void handle(TransactionContext context) ;
+    void handle(TransactionContext context);
 }

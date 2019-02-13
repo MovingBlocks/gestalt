@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.Asset;
@@ -487,12 +488,12 @@ public class ModuleAwareAssetTypeManager implements Closeable, AssetTypeManager 
             return extension;
         }
 
-        void setFileProducer(AssetFileDataProducer fileProducer) {
-            this.fileProducer = fileProducer;
-        }
-
         AssetFileDataProducer<?> getFileProducer() {
             return fileProducer;
+        }
+
+        void setFileProducer(AssetFileDataProducer fileProducer) {
+            this.fileProducer = fileProducer;
         }
 
         @SuppressWarnings("unchecked")

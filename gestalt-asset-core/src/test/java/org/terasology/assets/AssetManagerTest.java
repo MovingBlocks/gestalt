@@ -17,11 +17,14 @@
 package org.terasology.assets;
 
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.Test;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.Context;
 import org.terasology.assets.management.ContextManager;
 import org.terasology.assets.management.MapAssetTypeManager;
+
+import java.util.Set;
 
 import virtualModules.test.stubs.inheritance.AlternateAsset;
 import virtualModules.test.stubs.inheritance.AlternateAssetData;
@@ -33,8 +36,6 @@ import virtualModules.test.stubs.inheritance.ParentAsset;
 import virtualModules.test.stubs.text.Text;
 import virtualModules.test.stubs.text.TextData;
 import virtualModules.test.stubs.text.TextFactory;
-
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

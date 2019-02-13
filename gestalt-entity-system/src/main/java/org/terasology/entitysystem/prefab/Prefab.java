@@ -17,11 +17,11 @@
 package org.terasology.entitysystem.prefab;
 
 import com.google.common.collect.ImmutableMap;
+
 import org.terasology.assets.Asset;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.exceptions.InvalidAssetDataException;
-import org.w3c.dom.Entity;
 
 import java.util.Map;
 
@@ -67,7 +67,9 @@ public class Prefab extends Asset<PrefabData> {
     /**
      * @return The root entity recipe
      */
-    public EntityRecipe getRootEntity() { return recipes.get(rootEntityId); }
+    public EntityRecipe getRootEntity() {
+        return recipes.get(rootEntityId);
+    }
 
     /**
      * @return The map of all the entity recipes in the prefab. This is immutable.

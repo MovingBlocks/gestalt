@@ -19,11 +19,12 @@ package virtualModules.test.stubs.book;
 import org.terasology.assets.AbstractFragmentDataProducer;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
-import virtualModules.test.stubs.text.TextData;
 
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+
+import virtualModules.test.stubs.text.TextData;
 
 /**
  * @author Immortius

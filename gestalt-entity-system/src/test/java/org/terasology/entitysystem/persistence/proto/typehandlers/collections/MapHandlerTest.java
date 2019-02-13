@@ -19,6 +19,7 @@ package org.terasology.entitysystem.persistence.proto.typehandlers.collections;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+
 import org.junit.Test;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.proto.typehandlers.StringHandler;
@@ -28,7 +29,6 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**

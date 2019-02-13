@@ -42,8 +42,8 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
     private EntityStore entityStore;
 
     /**
-     * @param entityStore The entity store to commit changes to
-     * @param entityManager The entity manager
+     * @param entityStore      The entity store to commit changes to
+     * @param entityManager    The entity manager
      * @param componentManager The component manager
      */
     public CommitEntityInterceptor(EntityStore entityStore, EntityManager entityManager, ComponentManager componentManager) {
@@ -66,6 +66,7 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
 
     /**
      * Applies any changes to entities
+     *
      * @param context
      */
     private void applyEntityUpdates(TransactionContext context) {
@@ -104,6 +105,7 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
 
     /**
      * Create and save new entities.
+     *
      * @param context
      */
     private void createNewEntities(TransactionContext context) {
@@ -137,6 +139,7 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
 
     /**
      * Replace {@link ProxyEntityRef}s in a component with the actual EntityRef that is proxied.
+     *
      * @param component
      */
     @SuppressWarnings("unchecked")

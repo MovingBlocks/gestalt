@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.ResourceUrn;
@@ -46,13 +47,12 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
  * The central class for persisting to protobuf. Allows the registration of type handlers, which will then be used when persisting objects. Implements ProtoContext, which
  * it passes itself to type handlers as.
-  */
+ */
 public class ProtoPersistence implements ProtoContext {
 
     private static final Logger logger = LoggerFactory.getLogger(ProtoPersistence.class);
@@ -76,15 +76,16 @@ public class ProtoPersistence implements ProtoContext {
     /**
      * Creates a ProtoPersistence pre-registered with handlers for
      * <ul>
-     *     <li>Primitives</li>
-     *     <li>Primitve boxed types</li>
-     *     <li>String</li>
-     *     <li>Arrays</li>
-     *     <li>Lists</li>
-     *     <li>Maps</li>
-     *     <li>Sets</li>
-     *     <li>ResourceUrns</li>
+     * <li>Primitives</li>
+     * <li>Primitve boxed types</li>
+     * <li>String</li>
+     * <li>Arrays</li>
+     * <li>Lists</li>
+     * <li>Maps</li>
+     * <li>Sets</li>
+     * <li>ResourceUrns</li>
      * </ul>
+     *
      * @return A ProtoPersistence with handlers set up for common types
      */
     public static ProtoPersistence create() {
@@ -121,8 +122,9 @@ public class ProtoPersistence implements ProtoContext {
 
     /**
      * Registers a type handler for use when persisting a specified type
+     *
      * @param handler The handler to register
-     * @param type The type the handler should be used for
+     * @param type    The type the handler should be used for
      * @param <T>
      */
     public <T> void addTypeHandler(ProtoTypeHandler<T> handler, Type type) {
@@ -135,8 +137,9 @@ public class ProtoPersistence implements ProtoContext {
 
     /**
      * Registers a type handler for use when persisting a specified class
+     *
      * @param handler The handler to register
-     * @param type The type the handler should be used for
+     * @param type    The type the handler should be used for
      * @param <T>
      */
     public <T> void addTypeHandler(ProtoTypeHandler<T> handler, Class type) {
@@ -146,6 +149,7 @@ public class ProtoPersistence implements ProtoContext {
     /**
      * Adds a type handler factory. When a type is encountered with no existing handler, each type handler factory is asked (in order of registration) to provide a handler
      * for the type
+     *
      * @param factory The factory to register
      */
     public void addTypeHandlerFactory(ProtoTypeHandlerFactory factory) {
@@ -262,8 +266,9 @@ public class ProtoPersistence implements ProtoContext {
 
     /**
      * Sets a table of id->string value mappings, for use during persistence
+     *
      * @param tableId The id of the table to set
-     * @param table The values for the table
+     * @param table   The values for the table
      */
     public void setLookupTable(String tableId, BiMap<Integer, String> table) {
         lookupTables.put(tableId, HashBiMap.create(table));
