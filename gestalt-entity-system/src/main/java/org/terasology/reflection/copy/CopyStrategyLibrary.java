@@ -16,6 +16,7 @@
 package org.terasology.reflection.copy;
 
 import com.google.common.collect.Maps;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.reflection.MappedContainer;
@@ -56,6 +57,7 @@ public class CopyStrategyLibrary {
 
     /**
      * This constructor is not public, as it allows the direct setting of an internal field without a save copy.
+     *
      * @param strategies must not be used after it has been passed to this constructor.
      */
     private CopyStrategyLibrary(Map<Class<?>, CopyStrategy<?>> strategies, ReflectFactory reflectFactory) {
@@ -159,7 +161,7 @@ public class CopyStrategyLibrary {
     /**
      * @return a copy of the this library that uses the specified stategy for the specified type.
      */
-    public <T>  CopyStrategyLibrary createCopyOfLibraryWithStrategy(Class<T> type, CopyStrategy<T> strategy) {
+    public <T> CopyStrategyLibrary createCopyOfLibraryWithStrategy(Class<T> type, CopyStrategy<T> strategy) {
         Map<Class<?>, CopyStrategy<?>> newStrategies = Maps.newHashMap(strategies);
         newStrategies.put(type, strategy);
         return new CopyStrategyLibrary(newStrategies, this.reflectFactory);

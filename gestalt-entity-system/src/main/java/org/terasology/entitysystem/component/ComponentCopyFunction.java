@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.component;
 
 import com.google.common.collect.Lists;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.core.Component;

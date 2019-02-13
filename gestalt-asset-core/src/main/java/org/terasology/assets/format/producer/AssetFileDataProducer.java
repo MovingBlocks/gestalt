@@ -83,7 +83,6 @@ import java.util.Set;
  * all modules.
  * </p>
  *
- *
  * @author Immortius
  */
 @ThreadSafe
@@ -112,8 +111,8 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     /**
      * Creates a ModuleAssetDataProducer
      *
-     * @param dependencyProvider  Provider of information on module dependencies
-     * @param folderNames         The subfolders that contains files relevant to the asset data this producer loads
+     * @param dependencyProvider Provider of information on module dependencies
+     * @param folderNames        The subfolders that contains files relevant to the asset data this producer loads
      */
     public AssetFileDataProducer(ModuleDependencyProvider dependencyProvider,
                                  String... folderNames) {
@@ -123,8 +122,8 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     /**
      * Creates a ModuleAssetDataProducer
      *
-     * @param dependencyProvider  Provider of information on module dependencies
-     * @param folderNames         The subfolders that contains files relevant to the asset data this producer loads
+     * @param dependencyProvider Provider of information on module dependencies
+     * @param folderNames        The subfolders that contains files relevant to the asset data this producer loads
      */
     public AssetFileDataProducer(ModuleDependencyProvider dependencyProvider,
                                  Collection<String> folderNames) {

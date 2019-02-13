@@ -40,7 +40,7 @@ public class ResourceUrnHandler implements ProtoTypeHandler<ResourceUrn> {
     public ResourceUrn deserialize(ProtoDatastore.Value value, Type type, ProtoContext context) {
         String stringUrn = context.deserialize(value, String.class);
         if (stringUrn.isEmpty()) {
-           return null;
+            return null;
         }
         return new ResourceUrn(stringUrn);
     }

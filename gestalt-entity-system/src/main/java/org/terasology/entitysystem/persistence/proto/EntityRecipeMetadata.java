@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.persistence.proto;
 
 import com.google.common.collect.ImmutableMap;
+
 import org.terasology.assets.ResourceUrn;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.prefab.EntityRecipe;
@@ -36,8 +37,9 @@ public class EntityRecipeMetadata {
 
     /**
      * Constructs EntityRecipeMetadata for an available recipe.
-     * @param id The id of the EntityRecipe
-     * @param urn The urn of the EntityRecipe
+     *
+     * @param id     The id of the EntityRecipe
+     * @param urn    The urn of the EntityRecipe
      * @param recipe The EntityRecipe
      */
     public EntityRecipeMetadata(int id, ResourceUrn urn, EntityRecipe recipe) {
@@ -49,8 +51,9 @@ public class EntityRecipeMetadata {
 
     /**
      * Constructs EntityRecipeMetadata for an unavailable recipe, with a map of components.
-     * @param id The id of the EntityRecipe
-     * @param urn The urn of the EntityRecipe
+     *
+     * @param id         The id of the EntityRecipe
+     * @param urn        The urn of the EntityRecipe
      * @param components The last known components of the recipe
      */
     public EntityRecipeMetadata(int id, ResourceUrn urn, TypeKeyedMap<Component> components) {

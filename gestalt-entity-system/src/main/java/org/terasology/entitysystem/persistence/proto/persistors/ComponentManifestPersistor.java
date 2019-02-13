@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.persistence.proto.persistors;
 
 import com.google.common.collect.Maps;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.ResourceUrn;

@@ -5,7 +5,7 @@
  * - View tasks for this project: $ gradlew tasks
  */
 
-buildscript {   
+buildscript {
     repositories {
         google()
         jcenter()
@@ -22,7 +22,7 @@ allprojects {
     repositories {
         google()
         jcenter()
-		maven {
+        maven {
             url "http://artifactory.terasology.org/artifactory/repo"
         }
         mavenLocal()
@@ -35,7 +35,7 @@ description = 'A set of libraries providing core capabilities for games and game
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
- 
+
 /*configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.startsWith("module") }) {
     apply plugin: 'checkstyle'
     apply plugin: 'pmd'

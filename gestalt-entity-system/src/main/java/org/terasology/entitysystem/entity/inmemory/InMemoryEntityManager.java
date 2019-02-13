@@ -18,8 +18,7 @@ package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import gnu.trove.TLongCollection;
-import gnu.trove.iterator.TLongIterator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.ResourceUrn;
@@ -49,6 +48,9 @@ import org.terasology.util.collection.TypeKeyedMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+
+import gnu.trove.TLongCollection;
+import gnu.trove.iterator.TLongIterator;
 
 /**
  *

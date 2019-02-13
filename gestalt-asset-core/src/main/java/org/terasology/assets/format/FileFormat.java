@@ -20,12 +20,12 @@ import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
-import java.nio.file.PathMatcher;
 import java.util.function.Predicate;
 
 /**
  * Common base interface for all file formats.  A file format is used to load one or more files and either create or modify an
  * {@link org.terasology.assets.AssetData AssetData}.
+ *
  * @author Immortius
  */
 public interface FileFormat {
@@ -37,6 +37,7 @@ public interface FileFormat {
     /**
      * This method is use to obtain the name of the resource represented by the given filename. The ModuleAssetDataProducer will combine it with a module id to
      * determine the complete ResourceUrn.
+     *
      * @param filename The filename of an asset, including extension
      * @return The asset name corresponding to the given filename
      * @throws org.terasology.assets.exceptions.InvalidAssetFilenameException if the filename is not valid for this format.

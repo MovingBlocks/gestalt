@@ -21,10 +21,9 @@ import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
-import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
-import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.transaction.TransactionManager;
@@ -79,8 +78,6 @@ public class EntityRefHandlerTest {
         long id = ref.getId();
         assertEquals(id, context.deserialize(context.serialize(ref, EntityRef.class).build(), EntityRef.class).getId());
     }
-
-
 
 
 }

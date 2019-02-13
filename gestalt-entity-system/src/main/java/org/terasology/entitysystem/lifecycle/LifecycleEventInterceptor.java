@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.lifecycle;
 
 import com.google.common.collect.Sets;
+
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.entity.inmemory.EntityState;

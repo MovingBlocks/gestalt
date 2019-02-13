@@ -17,6 +17,7 @@
 package org.terasology.assets.management;
 
 import com.google.common.collect.Queues;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.naming.Name;
@@ -26,6 +27,7 @@ import java.util.Deque;
 /**
  * ContextManager provides the ability to set the module context in which a thread is currently running, and this context can be checked. In the asset system this
  * is used to have the current context influence the resolution of assets.
+ *
  * @author Immortius
  */
 public final class ContextManager {
@@ -46,6 +48,7 @@ public final class ContextManager {
 
     /**
      * Sets the current context and returns a resource that should be closed when the context ends.
+     *
      * @param moduleId The name of the module to make the current context
      * @return A Context object that should be closed when the context ends. This will restore the preceding context if any.
      */

@@ -19,15 +19,16 @@ package org.terasology.assets.module;
 import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
-import virtualModules.test.stubs.text.TextData;
-import virtualModules.test.stubs.text.TextDeltaFileFormat;
-import virtualModules.test.stubs.text.TextFileFormat;
-import virtualModules.test.stubs.text.TextMetadataFileFormat;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 
 import java.util.Optional;
 import java.util.Set;
+
+import virtualModules.test.stubs.text.TextData;
+import virtualModules.test.stubs.text.TextDeltaFileFormat;
+import virtualModules.test.stubs.text.TextFileFormat;
+import virtualModules.test.stubs.text.TextMetadataFileFormat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

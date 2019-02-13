@@ -17,16 +17,17 @@
 package org.terasology.assets;
 
 import com.google.common.collect.ImmutableSet;
-import org.junit.Test;
 
-import virtualModules.test.stubs.text.Text;
-import virtualModules.test.stubs.text.TextData;
-import virtualModules.test.stubs.text.TextFactory;
+import org.junit.Test;
 import org.terasology.naming.Name;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
+
+import virtualModules.test.stubs.text.Text;
+import virtualModules.test.stubs.text.TextData;
+import virtualModules.test.stubs.text.TextFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

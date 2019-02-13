@@ -19,6 +19,7 @@ package org.terasology.entitysystem.component.module;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
+
 import org.terasology.assets.ResolutionStrategy;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.ContextManager;
@@ -51,7 +52,7 @@ public class ComponentTypeIndex {
     }
 
     /**
-     * @param environment The module environment providing components
+     * @param environment        The module environment providing components
      * @param resolutionStrategy The strategy for resolving the module to use when multiple module options are available.
      */
     public ComponentTypeIndex(ModuleEnvironment environment, ResolutionStrategy resolutionStrategy) {
@@ -86,7 +87,7 @@ public class ComponentTypeIndex {
     }
 
     /**
-     * @param name The name of the component
+     * @param name          The name of the component
      * @param moduleContext The module context to resolve within, or Name#EMPTY
      * @return The component type, or Optional#empty
      */
@@ -103,6 +104,7 @@ public class ComponentTypeIndex {
 
     /**
      * Finds a component, using the current context from {@link ContextManager} if any
+     *
      * @param name The name of the component
      * @return The component type, or Optional#empty
      */
@@ -113,6 +115,7 @@ public class ComponentTypeIndex {
     /**
      * Resolves a string to a component type. The string may be a resource urn, or just the name of a component. If it is the name of a component
      * then it will be resolved in the current context from {@link ContextManager} if any
+     *
      * @param identity Either a ResourceUrn or just the name of a component
      * @return The component type, or Optional#empty
      */

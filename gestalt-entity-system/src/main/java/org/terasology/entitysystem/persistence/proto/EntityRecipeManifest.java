@@ -17,34 +17,28 @@
 package org.terasology.entitysystem.persistence.proto;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
+
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
-import org.terasology.entitysystem.component.ComponentType;
-import org.terasology.entitysystem.persistence.proto.ComponentMetadata;
-import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.prefab.EntityRecipe;
 import org.terasology.entitysystem.prefab.Prefab;
-import org.terasology.module.ModuleEnvironment;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 /**
  * Holds information on Entity Recipes for use during serialization and deserialization. Primarily this includes the mapping between recipe ids and the recipes themselves.
  */
 public class EntityRecipeManifest {
     private final AssetManager assetManager;
-    private int nextRecipeId;
     private final TIntObjectMap<EntityRecipeMetadata> metadataById = new TIntObjectHashMap<>();
     private final Map<ResourceUrn, EntityRecipeMetadata> metadataByUrn = new LinkedHashMap<>();
+    private int nextRecipeId;
 
     /**
      * @param assetManager The asset manager to resolve EntityRecipes from
@@ -55,6 +49,7 @@ public class EntityRecipeManifest {
 
     /**
      * Registers the metadata for an EntityRecipe
+     *
      * @param metadata The metadata on an entity recipe to add.
      * @throws IllegalArgumentException If the id or urn of the metadata have previously been registered
      */
@@ -73,6 +68,7 @@ public class EntityRecipeManifest {
     /**
      * Gets the metadata for an entity recipe with a specific urn. If the entity recipe is not in the manifest but is available in the asset manager then the metadata
      * is created and assigned an id.
+     *
      * @param urn The urn of the entity recipe
      * @return The metadata for the entity recipe, or Optional::absent if it is not available.
      */

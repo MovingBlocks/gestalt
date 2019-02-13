@@ -26,41 +26,46 @@ public interface ComponentManager {
 
     /**
      * Create an instance of a component of the given type
+     *
      * @param type The type of the component
-     * @param <T> The type of the component
+     * @param <T>  The type of the component
      * @return A new instance of the component
      */
     <T extends Component> T create(Class<T> type);
 
     /**
      * Creates a new instance that is a copy of an existing component instance
+     *
      * @param instance The component to copy
-     * @param <T> The type of the component
+     * @param <T>      The type of the component
      * @return A new instance of the component
      */
     <T extends Component> T copy(T instance);
 
     /**
      * Copies the values from one component to another component. These components must be of the same type.
+     *
      * @param from The component to copy from
-     * @param to The component to copy to
-     * @param <T> The type of the components
+     * @param to   The component to copy to
+     * @param <T>  The type of the components
      * @return The component that was copied into
      */
     <T extends Component> T copy(T from, T to);
 
     /**
      * Provides a ComponentType, allowing for reflection like operations.
+     *
      * @param type The type of component
-     * @param <T> The type of component
+     * @param <T>  The type of component
      * @return The ComponentType for the given type of component.
      */
     <T extends Component> ComponentType<T> getType(Class<T> type);
 
     /**
      * Provides a ComponentType, allowing for reflection like operations.
+     *
      * @param instance An instance of component
-     * @param <T> The type of component
+     * @param <T>      The type of component
      * @return The ComponentType for the given type of component.
      */
     <T extends Component> ComponentType<T> getType(T instance);

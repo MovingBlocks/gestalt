@@ -17,8 +17,8 @@
 package org.terasology.entitysystem.entity.inmemory;
 
 import com.google.common.collect.Sets;
+
 import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.transaction.pipeline.UpdateAction;
 import org.terasology.util.collection.TypeKeyedMap;
 
@@ -57,6 +57,10 @@ public class EntityState {
 
     public int getRevision() {
         return revision;
+    }
+
+    public void setRevision(int revision) {
+        this.revision = revision;
     }
 
     public <T extends Component> Optional<T> getOriginalComponent(Class<T> type) {
@@ -104,9 +108,5 @@ public class EntityState {
         } else {
             return UpdateAction.UPDATE;
         }
-    }
-
-    public void setRevision(int revision) {
-        this.revision = revision;
     }
 }

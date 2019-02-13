@@ -22,7 +22,6 @@ import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityRef;
@@ -34,6 +33,8 @@ import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Optional;
+
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

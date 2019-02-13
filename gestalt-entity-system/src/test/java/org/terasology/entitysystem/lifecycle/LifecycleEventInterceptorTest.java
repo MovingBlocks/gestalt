@@ -18,6 +18,7 @@ package org.terasology.entitysystem.lifecycle;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.terasology.entitysystem.component.CodeGenComponentManager;

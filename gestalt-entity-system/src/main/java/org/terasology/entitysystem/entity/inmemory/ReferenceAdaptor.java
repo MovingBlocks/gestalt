@@ -17,17 +17,11 @@
 package org.terasology.entitysystem.entity.inmemory;
 
 import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.transaction.exception.ComponentAlreadyExistsException;
 import org.terasology.entitysystem.transaction.exception.ComponentDoesNotExistException;
-import org.terasology.entitysystem.prefab.Prefab;
-import org.terasology.naming.Name;
 import org.terasology.util.collection.TypeKeyedMap;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * The interface for low-level entity transactions, working directly with entity ids. This is intended for use by entity refs.
@@ -61,9 +55,9 @@ interface ReferenceAdaptor {
      * This component is a "live view" - any changes to the component will be saved when the transaction is committed. Getting a component multiple times will
      * retrieve the same component, unless it is removed and a new component of that type added to an entity within the same transaction.
      *
-     * @param entityId The id of the entity to retrieve the component from.
+     * @param entityId      The id of the entity to retrieve the component from.
      * @param componentType The type of the component to retrieve
-     * @param <T> The type of the component to retrieve
+     * @param <T>           The type of the component to retrieve
      * @return An optional containing the requested component, if the entity has a component of that type
      * @throws IllegalStateException If no transaction is active
      */
@@ -82,23 +76,23 @@ interface ReferenceAdaptor {
      * This component is a "live view" - any changes to the component will be saved when the transaction is committed. Getting a component multiple times will
      * retrieve the same component, unless it is removed and a new component of that type added to an entity within the same transaction.
      *
-     * @param entityId The id of the entity to add the component to
+     * @param entityId      The id of the entity to add the component to
      * @param componentType The type of the component to add
-     * @param <T> The type of the component to add
+     * @param <T>           The type of the component to add
      * @return The added component
      * @throws ComponentAlreadyExistsException if the entity already has this component
-     * @throws IllegalStateException If no transaction is active
+     * @throws IllegalStateException           If no transaction is active
      */
     <T extends Component> T addComponent(long entityId, Class<T> componentType);
 
     /**
      * Removes a component from an entity
      *
-     * @param entityId The id of the entity to add the component to
+     * @param entityId      The id of the entity to add the component to
      * @param componentType The type of the component to remove
-     * @param <T> The type of the component to remove
+     * @param <T>           The type of the component to remove
      * @throws ComponentDoesNotExistException if the entity does not have this component
-     * @throws IllegalStateException If no transaction is active
+     * @throws IllegalStateException          If no transaction is active
      */
     <T extends Component> void removeComponent(long entityId, Class<T> componentType);
 

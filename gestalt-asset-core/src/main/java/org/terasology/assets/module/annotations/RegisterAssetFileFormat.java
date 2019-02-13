@@ -30,6 +30,7 @@ import java.lang.annotation.Target;
  * <p>
  * By default the AssetFileFormat must have an empty constructor, or one taking an AssetManager
  * </p>
+ *
  * @author Immortius
  */
 @API

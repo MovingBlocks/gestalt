@@ -18,6 +18,7 @@ package org.terasology.assets.exceptions;
 
 /**
  * Thrown to indicate a string is not a valid ResourceUrn.
+ *
  * @author Immortius
  */
 public class InvalidUrnException extends RuntimeException {

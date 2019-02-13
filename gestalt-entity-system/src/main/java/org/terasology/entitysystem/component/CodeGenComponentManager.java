@@ -23,15 +23,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtConstructor;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.CtNewConstructor;
-import javassist.CtNewMethod;
-import javassist.NotFoundException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.core.Component;
@@ -49,6 +41,16 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtConstructor;
+import javassist.CtField;
+import javassist.CtMethod;
+import javassist.CtNewConstructor;
+import javassist.CtNewMethod;
+import javassist.NotFoundException;
+
 /**
  * A ComponentManager that generates component implementation classes. This expect component interfaces to define properties with getter and setter methods -
  */
@@ -61,13 +63,10 @@ public class CodeGenComponentManager implements ComponentManager {
 
     private static final Joiner BOOLEAN_AND_JOINER = Joiner.on(" && ");
     private static final Joiner COMMA_JOINER = Joiner.on(", ");
-
+    private final TypeLibrary typeLibrary;
     private Map<Class<? extends Component>, ComponentType> componentMetadataLookup = new MapMaker().concurrencyLevel(4).makeMap();
-
     private ClassPool pool;
     private URLClassLoader targetLoader;
-
-    private final TypeLibrary typeLibrary;
 
     public CodeGenComponentManager(TypeLibrary typeLibrary) {
         this.typeLibrary = typeLibrary;
@@ -146,7 +145,7 @@ public class CodeGenComponentManager implements ComponentManager {
                 try {
                     T componentInstance = implementationClass.newInstance();
                     supplier = () -> componentInstance;
-                } catch (InstantiationException|IllegalAccessException e) {
+                } catch (InstantiationException | IllegalAccessException e) {
                     throw new RuntimeException("Error generating singleton component '" + type.getName() + "'", e);
                 }
             } else {

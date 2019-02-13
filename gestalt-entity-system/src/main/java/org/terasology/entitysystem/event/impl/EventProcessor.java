@@ -19,6 +19,7 @@ package org.terasology.entitysystem.event.impl;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.core.Component;
@@ -27,11 +28,12 @@ import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventHandler;
 import org.terasology.entitysystem.event.EventResult;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * The core event processing logic. When an event is sent against an entity, the EventProcessor propagates the event through an ordered list of relevant event handlers,

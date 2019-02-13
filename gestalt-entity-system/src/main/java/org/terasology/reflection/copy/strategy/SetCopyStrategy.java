@@ -16,6 +16,7 @@
 package org.terasology.reflection.copy.strategy;
 
 import com.google.common.collect.Sets;
+
 import org.terasology.reflection.copy.CopyStrategy;
 
 import java.util.Set;

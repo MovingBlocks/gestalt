@@ -16,9 +16,6 @@
 
 package org.terasology.entitysystem.index;
 
-import gnu.trove.TCollections;
-import gnu.trove.set.TLongSet;
-import gnu.trove.set.hash.TLongHashSet;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
@@ -36,6 +33,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
+
+import gnu.trove.TCollections;
+import gnu.trove.set.TLongSet;
+import gnu.trove.set.hash.TLongHashSet;
 
 /**
  *

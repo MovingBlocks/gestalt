@@ -48,19 +48,19 @@ public class ModuleEnvironmentDependencyProvider implements ModuleDependencyProv
     }
 
     /**
+     * @return The module environment currently being used
+     */
+    public ModuleEnvironment getModuleEnvironment() {
+        return moduleEnvironment;
+    }
+
+    /**
      * Sets the module environment to use to obtain dependency information
      *
      * @param moduleEnvironment
      */
     public void setModuleEnvironment(@Nullable ModuleEnvironment moduleEnvironment) {
         this.moduleEnvironment = moduleEnvironment;
-    }
-
-    /**
-     * @return The module environment currently being used
-     */
-    public ModuleEnvironment getModuleEnvironment() {
-        return moduleEnvironment;
     }
 
     @Override

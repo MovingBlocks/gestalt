@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.core;
 
 import com.google.common.base.Preconditions;
+
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Optional;
@@ -25,7 +26,7 @@ import java.util.Set;
 /**
  * A proxy entity ref wraps another entity ref - which can be changed. This allows for a new entity ref to be returned, and then later switched to a real entity ref after
  * the current transaction is committed (or switched to a {@link NullEntityRef} if the transaction is rolled back.
- *
+ * <p>
  * Note that a proxy entity ref is not 'equals' to the entity it is proxy for - as the entity ref it is a proxy for can change. If the ProxyEntityRef took identity from
  * what it proxied this would cause issues using them within Sets or as keys for Maps.
  */
@@ -50,6 +51,7 @@ public class ProxyEntityRef implements EntityRef {
 
     /**
      * Changes the reference to proxy.
+     *
      * @param ref The new reference to proxy
      */
     public void setActualRef(EntityRef ref) {

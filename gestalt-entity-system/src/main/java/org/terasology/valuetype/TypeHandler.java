@@ -25,8 +25,8 @@ import java.util.function.Function;
  */
 public class TypeHandler<T> {
 
-    private Type type;
     private final Function<T, T> copyFunction;
+    private Type type;
 
     public TypeHandler(Class<T> type, Function<T, T> copyFunction) {
         this.type = type;

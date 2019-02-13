@@ -19,6 +19,7 @@ package org.terasology.entitysystem.persistence.proto.typehandlers.primitives;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.SignedBytes;
 import com.google.protobuf.ByteString;
+
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;

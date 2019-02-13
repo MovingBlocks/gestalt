@@ -16,12 +16,13 @@
 
 package org.terasology.entitysystem.entity.inmemory;
 
-import gnu.trove.iterator.TLongIterator;
-import gnu.trove.iterator.TLongObjectIterator;
 import org.terasology.entitysystem.core.Component;
 
 import java.util.Collection;
 import java.util.Set;
+
+import gnu.trove.iterator.TLongIterator;
+import gnu.trove.iterator.TLongObjectIterator;
 
 /**
  *

@@ -34,6 +34,7 @@ import java.lang.annotation.Target;
  * <p>
  * By default the AssetDataProducer must have an empty constructor, or one taking an AssetManager
  * </p>
+ *
  * @author Immortius
  */
 @API

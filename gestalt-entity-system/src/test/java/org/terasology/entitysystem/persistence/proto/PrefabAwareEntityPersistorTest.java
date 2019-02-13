@@ -22,17 +22,16 @@ import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.persistors.EntityPersistor;
 import org.terasology.entitysystem.persistence.proto.persistors.PrefabAwareEntityPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.prefab.EntityRecipe;
+import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.entitysystem.prefab.PrefabData;
 import org.terasology.entitysystem.prefab.PrefabJsonFormat;
@@ -45,6 +44,8 @@ import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Optional;
+
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

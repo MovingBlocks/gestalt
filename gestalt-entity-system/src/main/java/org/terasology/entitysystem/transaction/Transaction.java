@@ -18,8 +18,6 @@ package org.terasology.entitysystem.transaction;
 
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 
-import java.util.ConcurrentModificationException;
-
 /**
  *
  */

@@ -23,6 +23,7 @@ import java.io.IOException;
 /**
  * An AssetAlterationFileFormat handles loading a file providing additional information or modifications to an asset
  * and applying it to an appropriate {@link org.terasology.assets.AssetData AssetData}.
+ *
  * @author Immortius
  */
 public interface AssetAlterationFileFormat<T extends AssetData> extends FileFormat {

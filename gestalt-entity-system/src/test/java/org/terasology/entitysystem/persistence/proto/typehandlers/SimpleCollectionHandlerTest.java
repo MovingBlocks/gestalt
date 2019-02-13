@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers;
 
 import com.google.common.collect.Lists;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -49,6 +50,13 @@ public class SimpleCollectionHandlerTest {
     private final ProtoPersistence context = ProtoPersistence.create();
 
 
+    public SimpleCollectionHandlerTest(Collection<Object> input, Collection<Object> output, Type type, ProtoTypeHandler handler) {
+        this.input = input;
+        this.output = output;
+        this.handler = handler;
+        this.type = type;
+    }
+
     @Parameterized.Parameters(name = "{0} - {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -79,13 +87,6 @@ public class SimpleCollectionHandlerTest {
                 {Arrays.asList('a', 'b', 'c'), Arrays.asList('a', 'b', 'c'), Character.class, new CharHandler()},
 
         });
-    }
-
-    public SimpleCollectionHandlerTest(Collection<Object> input, Collection<Object> output, Type type, ProtoTypeHandler handler) {
-        this.input = input;
-        this.output = output;
-        this.handler = handler;
-        this.type = type;
     }
 
     @Test

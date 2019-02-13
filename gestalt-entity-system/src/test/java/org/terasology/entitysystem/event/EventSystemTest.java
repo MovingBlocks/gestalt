@@ -17,9 +17,8 @@
 package org.terasology.entitysystem.event;
 
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.Test;
-import org.mockito.internal.verification.api.VerificationData;
-import org.mockito.verification.VerificationMode;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.event.impl.EventProcessor;
@@ -49,16 +48,14 @@ import static org.mockito.Mockito.when;
 public abstract class EventSystemTest {
 
     private static final String EVENT_VALUE = "Test";
-
+    TestSynchEvent synchEvent = new TestSynchEvent(EVENT_VALUE);
+    TestEvent asynchEvent = new TestEvent(EVENT_VALUE);
     private EntityRef entity = mock(EntityRef.class);
     private TransactionManager transactionManager = mock(TransactionManager.class);
     private EventProcessor eventProcessor = mock(EventProcessor.class);
     private EventSystem eventSystem;
     private TransactionPipeline pipeline = new TransactionPipeline();
-
     private Set<Class<? extends Component>> triggeringComponents = ImmutableSet.of(SampleComponent.class, SecondComponent.class);
-    TestSynchEvent synchEvent = new TestSynchEvent(EVENT_VALUE);
-    TestEvent asynchEvent = new TestEvent(EVENT_VALUE);
 
     public EventSystemTest() {
         when(transactionManager.getPipeline()).thenReturn(pipeline);
@@ -162,7 +159,7 @@ public abstract class EventSystemTest {
 
     @Test
     public void sendAsyncEventHeldUntilCurrentTransactionCommitted() throws Exception {
-        when (transactionManager.isActive()).thenReturn(true);
+        when(transactionManager.isActive()).thenReturn(true);
 
         TransactionContext context = new TransactionContext();
         when(transactionManager.getContext()).thenReturn(context);
@@ -187,7 +184,7 @@ public abstract class EventSystemTest {
 
     @Test
     public void sendAsyncEventDiscardedIfTransactionRolledBack() throws Exception {
-        when (transactionManager.isActive()).thenReturn(true);
+        when(transactionManager.isActive()).thenReturn(true);
         TransactionContext context = new TransactionContext();
         when(transactionManager.getContext()).thenReturn(context);
         pipeline.begin(context);
@@ -212,7 +209,7 @@ public abstract class EventSystemTest {
 
     @Test
     public void sendAsyncEventPreservedButNotSentOverDurationOfInnerTransaction() throws Exception {
-        when (transactionManager.isActive()).thenReturn(true);
+        when(transactionManager.isActive()).thenReturn(true);
         TransactionContext outerContext = new TransactionContext();
         when(transactionManager.getContext()).thenReturn(outerContext);
         pipeline.begin(outerContext);

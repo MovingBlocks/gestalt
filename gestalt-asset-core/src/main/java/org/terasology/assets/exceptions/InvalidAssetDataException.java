@@ -18,6 +18,7 @@ package org.terasology.assets.exceptions;
 
 /**
  * Thrown to indicate when asset data was not valid for loading or reloading an asset
+ *
  * @author Immortius
  */
 public class InvalidAssetDataException extends RuntimeException {

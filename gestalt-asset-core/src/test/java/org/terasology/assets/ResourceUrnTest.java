@@ -18,8 +18,8 @@ package org.terasology.assets;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.terasology.naming.Name;
 import org.terasology.assets.exceptions.InvalidUrnException;
+import org.terasology.naming.Name;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

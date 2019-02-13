@@ -20,21 +20,22 @@ import org.terasology.assets.ResourceUrn;
 import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 
-import java.nio.file.Path;
 import java.util.Optional;
 
 /**
  * Interface for subscribing for notification of file changes, for either asset files, or delta files.
  * <p>
  * This support asset files (which includes overrides and supplemental files) and delta files
+ *
  * @author Immortius
  */
 public interface FileChangeSubscriber {
 
     /**
      * Notification that an asset file was added
-     * @param file The asset file
-     * @param module The name of the module the file is for
+     *
+     * @param file            The asset file
+     * @param module          The name of the module the file is for
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
@@ -42,8 +43,9 @@ public interface FileChangeSubscriber {
 
     /**
      * Notification that an asset file was modified
-     * @param file The asset file
-     * @param module The name of the module the file is for
+     *
+     * @param file            The asset file
+     * @param module          The name of the module the file is for
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
@@ -51,8 +53,9 @@ public interface FileChangeSubscriber {
 
     /**
      * Notification that an asset file was removed
-     * @param file The asset file
-     * @param module The name of the module the file is for
+     *
+     * @param file            The asset file
+     * @param module          The name of the module the file is for
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributed too, if any
      */
@@ -60,8 +63,9 @@ public interface FileChangeSubscriber {
 
     /**
      * Notification that an delta file was added
-     * @param file The delta file
-     * @param module The name of the module the file is for
+     *
+     * @param file            The delta file
+     * @param module          The name of the module the file is for
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
@@ -69,8 +73,9 @@ public interface FileChangeSubscriber {
 
     /**
      * Notification that an delta file was modified
-     * @param file The delta file
-     * @param module The name of the module the file is for
+     *
+     * @param file            The delta file
+     * @param module          The name of the module the file is for
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
@@ -78,8 +83,9 @@ public interface FileChangeSubscriber {
 
     /**
      * Notification that an delta file was removed
-     * @param file The delta file
-     * @param module The name of the module the file is for
+     *
+     * @param file            The delta file
+     * @param module          The name of the module the file is for
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributed too, if any
      */

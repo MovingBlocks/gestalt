@@ -17,8 +17,8 @@
 package org.terasology.entitysystem.lifecycle;
 
 import com.google.common.collect.ImmutableMap;
+
 import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.event.Event;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collection;

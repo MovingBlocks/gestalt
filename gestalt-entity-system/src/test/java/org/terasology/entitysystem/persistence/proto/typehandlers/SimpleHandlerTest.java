@@ -48,6 +48,13 @@ public class SimpleHandlerTest {
     private final ProtoPersistence context = ProtoPersistence.create();
 
 
+    public SimpleHandlerTest(Object input, Object output, Type type, ProtoTypeHandler handler) {
+        this.input = input;
+        this.output = output;
+        this.handler = handler;
+        this.type = type;
+    }
+
     @Parameterized.Parameters(name = "{0} - {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -83,13 +90,6 @@ public class SimpleHandlerTest {
                 {'a', 'a', Character.class, new CharHandler()},
 
         });
-    }
-
-    public SimpleHandlerTest(Object input, Object output, Type type, ProtoTypeHandler handler) {
-        this.input = input;
-        this.output = output;
-        this.handler = handler;
-        this.type = type;
     }
 
     @Test

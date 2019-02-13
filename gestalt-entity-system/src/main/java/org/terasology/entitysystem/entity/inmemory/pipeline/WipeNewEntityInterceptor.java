@@ -16,11 +16,11 @@
 
 package org.terasology.entitysystem.entity.inmemory.pipeline;
 
+import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
 import org.terasology.entitysystem.entity.inmemory.NewEntityState;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
-import org.terasology.entitysystem.core.NullEntityRef;
 
 /**
  * This TransactionInterceptor changes any proxy entity refs for new entities to point to {@link NullEntityRef} instead. This cleans up after a rollback.

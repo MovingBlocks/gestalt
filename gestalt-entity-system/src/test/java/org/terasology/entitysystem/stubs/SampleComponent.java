@@ -20,8 +20,10 @@ import org.terasology.entitysystem.core.Component;
 
 public interface SampleComponent extends Component {
     String getName();
+
     void setName(String value);
 
     String getDescription();
+
     void setDescription(String description);
 }

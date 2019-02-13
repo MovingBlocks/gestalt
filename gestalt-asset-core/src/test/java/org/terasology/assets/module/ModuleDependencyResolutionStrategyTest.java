@@ -17,6 +17,7 @@
 package org.terasology.assets.module;
 
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.Test;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;

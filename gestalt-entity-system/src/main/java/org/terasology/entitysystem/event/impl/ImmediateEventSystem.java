@@ -19,16 +19,16 @@ package org.terasology.entitysystem.event.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventResult;
 import org.terasology.entitysystem.event.Synchronous;
 import org.terasology.entitysystem.transaction.TransactionManager;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.ConcurrentModificationException;
 import java.util.Set;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Basic event system implementation that immediately processes all event on the thread that sent them.

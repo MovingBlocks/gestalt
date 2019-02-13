@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers.collections;
 
 import com.google.common.collect.Sets;
+
 import org.terasology.entitysystem.persistence.proto.ProtoContext;
 import org.terasology.entitysystem.persistence.proto.ProtoTypeHandler;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;

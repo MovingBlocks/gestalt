@@ -18,8 +18,8 @@ package org.terasology.entitysystem.entity.inmemory;
 
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.util.collection.TypeKeyedMap;
 
 /**

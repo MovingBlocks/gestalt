@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.event;
 
 import com.google.common.collect.Sets;
+
 import org.junit.After;
 import org.junit.Test;
 import org.terasology.entitysystem.component.CodeGenComponentManager;

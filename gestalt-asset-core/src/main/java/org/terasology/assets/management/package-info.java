@@ -18,9 +18,9 @@
  * This package provides classes for managing assets and asset types at a high level.
  * Particularly noteworthy:
  * <ul>
- *     <li>AssetTypeManager - manages asset types</li>
- *     <li>MapAssetTypeManager - a simple implementation of AssetTypeManager</li>
- *     <li>AssetManager - a simple facade for for working with Assets of all types.</li>
+ * <li>AssetTypeManager - manages asset types</li>
+ * <li>MapAssetTypeManager - a simple implementation of AssetTypeManager</li>
+ * <li>AssetManager - a simple facade for for working with Assets of all types.</li>
  * </ul>
  */
 package org.terasology.assets.management;

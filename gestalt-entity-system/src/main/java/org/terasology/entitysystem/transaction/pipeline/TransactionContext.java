@@ -36,7 +36,7 @@ public class TransactionContext {
         }
         return result;
     }
-    
+
     public <T> Optional<T> getAttachment(Class<T> type) {
         return Optional.ofNullable(attachments.get(type));
     }

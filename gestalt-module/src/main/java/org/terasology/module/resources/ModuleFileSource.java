@@ -113,7 +113,6 @@ public interface ModuleFileSource extends Iterable<ModuleFile> {
     Set<String> getSubpaths(List<String> fromPath);
 
     /**
-     *
      * @return A list of all the root paths of this file source, that
      */
     @RequiresApi(26)

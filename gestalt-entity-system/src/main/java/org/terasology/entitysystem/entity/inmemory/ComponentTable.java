@@ -19,6 +19,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
+import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.core.Component;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
+
 import gnu.trove.TCollections;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TLongIterator;
@@ -31,15 +42,6 @@ import gnu.trove.map.hash.TLongIntHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.core.Component;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A table for storing entities and components. Focused on allowing iteration across a components of a given type
@@ -171,7 +173,8 @@ public class ComponentTable implements EntityStore {
             if (entityMap != null) {
                 Component removed = entityMap.remove(entityId);
                 if (removed != null) {
-                    int remainingComps = numComponents.adjustOrPutValue(entityId, -1, 0);;
+                    int remainingComps = numComponents.adjustOrPutValue(entityId, -1, 0);
+                    ;
                     if (remainingComps == 0) {
                         numComponents.remove(entityId);
                         revisions.remove(entityId);

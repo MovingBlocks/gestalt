@@ -25,10 +25,9 @@ import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
-import org.terasology.entitysystem.entity.inmemory.NewEntityRef;
-import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.stubs.ReferenceComponent;
 import org.terasology.entitysystem.stubs.SampleComponent;
 import org.terasology.entitysystem.transaction.TransactionManager;
@@ -40,7 +39,6 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**

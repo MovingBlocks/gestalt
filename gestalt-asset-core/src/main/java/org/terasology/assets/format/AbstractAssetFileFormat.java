@@ -21,14 +21,13 @@ import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.module.resources.ModuleFile;
 import org.terasology.naming.Name;
 import org.terasology.util.Varargs;
-import org.terasology.util.io.FileExtensionPathMatcher;
 
-import java.nio.file.PathMatcher;
 import java.util.function.Predicate;
 
 /**
  * A base implementation of {@link org.terasology.assets.format.AssetFileFormat AssetFileFormat} that will handle files with specified file extensions.
  * The name of the corresponding asset is assumed to be the non-extension part of the file name.
+ *
  * @author Immortius
  */
 public abstract class AbstractAssetFileFormat<T extends AssetData> implements AssetFileFormat<T> {
@@ -36,7 +35,7 @@ public abstract class AbstractAssetFileFormat<T extends AssetData> implements As
     private Predicate<ModuleFile> fileMatcher;
 
     /**
-     * @param fileExtension A file extension that this file format will handle
+     * @param fileExtension  A file extension that this file format will handle
      * @param fileExtensions Additional file extensions that this file format will handle
      */
     public AbstractAssetFileFormat(String fileExtension, String... fileExtensions) {

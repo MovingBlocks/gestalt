@@ -20,13 +20,14 @@ import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.annotations.RegisterAssetDataProducer;
-import virtualModules.test.stubs.text.TextData;
 import org.terasology.naming.Name;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+
+import virtualModules.test.stubs.text.TextData;
 
 /**
  * @author Immortius

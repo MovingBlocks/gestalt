@@ -23,8 +23,10 @@ import org.terasology.entitysystem.core.Component;
  */
 public interface SecondComponent extends Component {
     String getName();
+
     void setName(String name);
 
     String getDescription();
+
     void setDescription(String description);
 }

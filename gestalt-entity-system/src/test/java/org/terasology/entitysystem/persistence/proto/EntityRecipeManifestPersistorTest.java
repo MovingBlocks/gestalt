@@ -17,13 +17,13 @@
 package org.terasology.entitysystem.persistence.proto;
 
 import com.google.common.collect.Sets;
+
 import org.junit.Test;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
@@ -38,6 +38,8 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
+
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

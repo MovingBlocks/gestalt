@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
-import virtualModules.test.VirtualModuleEnvironmentFactory;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.prefab.EntityRecipe;
@@ -30,6 +29,8 @@ import org.terasology.module.ModuleEnvironment;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
+
+import virtualModules.test.VirtualModuleEnvironmentFactory;
 
 import static org.junit.Assert.assertEquals;
 

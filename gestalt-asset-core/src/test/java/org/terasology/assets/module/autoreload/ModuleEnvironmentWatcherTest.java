@@ -45,7 +45,6 @@ import virtualModules.test.stubs.text.Text;
 import virtualModules.test.stubs.text.TextData;
 import virtualModules.test.stubs.text.TextFactory;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class ModuleEnvironmentWatcherTest {
