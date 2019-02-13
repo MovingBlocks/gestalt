@@ -54,9 +54,9 @@ public class CompositeFileSource implements ModuleFileSource {
     }
 
     @Override
-    public Optional<ModuleFile> getFile(List<String> filepath) {
+    public Optional<FileReference> getFile(List<String> filepath) {
         for (ModuleFileSource source : sources) {
-            Optional<ModuleFile> result = source.getFile(filepath);
+            Optional<FileReference> result = source.getFile(filepath);
             if (result.isPresent()) {
                 return result;
             }
@@ -65,12 +65,12 @@ public class CompositeFileSource implements ModuleFileSource {
     }
 
     @Override
-    public Collection<ModuleFile> getFiles() {
+    public Collection<FileReference> getFiles() {
         return sources.stream().flatMap(x -> x.getFiles().stream()).collect(Collectors.toList());
     }
 
     @Override
-    public Collection<ModuleFile> getFilesInPath(boolean recursive, List<String> path) {
+    public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
         return sources.stream().flatMap(x -> x.getFilesInPath(recursive, path).stream()).collect(Collectors.toList());
     }
 
@@ -81,7 +81,7 @@ public class CompositeFileSource implements ModuleFileSource {
 
     @NonNull
     @Override
-    public Iterator<ModuleFile> iterator() {
+    public Iterator<FileReference> iterator() {
         return sources.stream().flatMap(x -> x.getFiles().stream()).iterator();
     }
 

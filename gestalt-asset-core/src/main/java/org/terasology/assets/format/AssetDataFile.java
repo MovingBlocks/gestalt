@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 
 import net.jcip.annotations.Immutable;
 
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,12 +44,12 @@ import java.util.Objects;
 @Immutable
 public class AssetDataFile {
 
-    private final ModuleFile file;
+    private final FileReference file;
 
     /**
      * @param file The AssetDataFile
      */
-    public AssetDataFile(ModuleFile file) {
+    public AssetDataFile(FileReference file) {
         Preconditions.checkNotNull(file);
         this.file = file;
     }

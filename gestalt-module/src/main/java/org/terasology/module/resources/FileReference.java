@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * A handle describing and providing access to a file from a {@link ModuleFileSource}
  */
-public interface ModuleFile {
+public interface FileReference {
 
     /**
      * @return The name of the file

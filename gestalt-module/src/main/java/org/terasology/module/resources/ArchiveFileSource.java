@@ -50,7 +50,7 @@ public class ArchiveFileSource implements ModuleFileSource {
     private static final String PATH_SEPARATOR = "/";
     private static final Joiner PATH_JOINER = Joiner.on(PATH_SEPARATOR);
 
-    private final Map<String, ModuleFile> contents = Maps.newLinkedHashMap();
+    private final Map<String, FileReference> contents = Maps.newLinkedHashMap();
     private final SetMultimap<List<String>, String> subpaths = HashMultimap.create();
 
     /**
@@ -84,7 +84,7 @@ public class ArchiveFileSource implements ModuleFileSource {
                         subpaths.put(pathParts.subList(0, pathParts.size() - 1), pathParts.get(pathParts.size() - 1));
                     }
                 } else if (entry.getName().startsWith(basePath)) {
-                    ArchiveFile archiveFile = new ArchiveFile(file, entry.getName(), basePath);
+                    ArchiveFileReference archiveFile = new ArchiveFileReference(file, entry.getName(), basePath);
                     if (contentsFilter.test(archiveFile.getName())) {
                         contents.put(entry.getName().substring(basePath.length()), archiveFile);
                     }
@@ -104,17 +104,17 @@ public class ArchiveFileSource implements ModuleFileSource {
     }
 
     @Override
-    public Optional<ModuleFile> getFile(List<String> filepath) {
+    public Optional<FileReference> getFile(List<String> filepath) {
         return Optional.ofNullable(contents.get(PATH_JOINER.join(filepath)));
     }
 
     @Override
-    public Collection<ModuleFile> getFiles() {
+    public Collection<FileReference> getFiles() {
         return Collections.unmodifiableCollection(contents.values());
     }
 
     @Override
-    public Collection<ModuleFile> getFilesInPath(boolean recursive, List<String> path) {
+    public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
         String basePath = buildPathString(path);
         return contents.entrySet().stream()
                 .filter(x -> x.getKey().startsWith(basePath) && (recursive || !x.getKey().substring(basePath.length()).contains(PATH_SEPARATOR)))
@@ -128,17 +128,17 @@ public class ArchiveFileSource implements ModuleFileSource {
 
     @NonNull
     @Override
-    public Iterator<ModuleFile> iterator() {
+    public Iterator<FileReference> iterator() {
         return contents.values().iterator();
     }
 
-    private static class ArchiveFile implements ModuleFile {
+    private static class ArchiveFileReference implements FileReference {
 
         private File zipFile;
         private String internalFile;
         private String basePath;
 
-        ArchiveFile(File zipFile, String internalFile, String basePath) {
+        ArchiveFileReference(File zipFile, String internalFile, String basePath) {
             this.zipFile = zipFile;
             this.internalFile = internalFile;
             this.basePath = basePath;
@@ -187,8 +187,8 @@ public class ArchiveFileSource implements ModuleFileSource {
             if (o == this) {
                 return true;
             }
-            if (o instanceof ArchiveFile) {
-                ArchiveFile other = (ArchiveFile) o;
+            if (o instanceof ArchiveFileReference) {
+                ArchiveFileReference other = (ArchiveFileReference) o;
                 return Objects.equals(zipFile, other.zipFile) && Objects.equals(internalFile, other.internalFile) && Objects.equals(basePath, other.basePath);
             }
             return false;

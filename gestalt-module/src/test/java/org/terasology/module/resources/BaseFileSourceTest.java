@@ -56,8 +56,8 @@ public abstract class BaseFileSourceTest {
     public void listFiles() {
         Set<String> expected = Sets.newHashSet("readme.txt", "test.resource", "another.resource", "some.resource");
         Set<String> actual = Sets.newLinkedHashSet();
-        for (ModuleFile moduleFile : getFileSource()) {
-            actual.add(moduleFile.toString());
+        for (FileReference fileReference : getFileSource()) {
+            actual.add(fileReference.toString());
         }
         assertEquals(expected, actual);
     }
@@ -66,8 +66,8 @@ public abstract class BaseFileSourceTest {
     public void listFilesInPath() {
         List<String> expected = Lists.newArrayList("test.resource");
         List<String> actual = Lists.newArrayList();
-        for (ModuleFile moduleFile : getFileSource().getFilesInPath(false, "subfolder")) {
-            actual.add(moduleFile.toString());
+        for (FileReference fileReference : getFileSource().getFilesInPath(false, "subfolder")) {
+            actual.add(fileReference.toString());
         }
         assertEquals(expected, actual);
     }
@@ -76,8 +76,8 @@ public abstract class BaseFileSourceTest {
     public void listFilesInPathRecursive() {
         Set<String> expected = Sets.newHashSet("test.resource", "another.resource");
         Set<String> actual = Sets.newLinkedHashSet();
-        for (ModuleFile moduleFile : getFileSource().getFilesInPath(true, "subfolder")) {
-            actual.add(moduleFile.toString());
+        for (FileReference fileReference : getFileSource().getFilesInPath(true, "subfolder")) {
+            actual.add(fileReference.toString());
         }
         assertEquals(expected, actual);
     }
@@ -86,8 +86,8 @@ public abstract class BaseFileSourceTest {
     public void listFilesInNonexistentPath() {
         Set<String> expected = Collections.emptySet();
         Set<String> actual = Sets.newLinkedHashSet();
-        for (ModuleFile moduleFile : getFileSource().getFilesInPath(true, "notafolder")) {
-            actual.add(moduleFile.toString());
+        for (FileReference fileReference : getFileSource().getFilesInPath(true, "notafolder")) {
+            actual.add(fileReference.toString());
         }
         assertEquals(expected, actual);
     }
@@ -96,29 +96,29 @@ public abstract class BaseFileSourceTest {
     public void listFilesBreakingDirectoryStructureFails() {
         List<String> expected = Lists.newArrayList();
         List<String> actual = Lists.newArrayList();
-        for (ModuleFile moduleFile : getFileSource().getFilesInPath(true, "..")) {
-            actual.add(moduleFile.toString());
+        for (FileReference fileReference : getFileSource().getFilesInPath(true, "..")) {
+            actual.add(fileReference.toString());
         }
         assertEquals(expected, actual);
     }
 
     @Test
     public void getNonexistentFile() {
-        Optional<ModuleFile> file = getFileSource().getFile("missing.jpg");
+        Optional<FileReference> file = getFileSource().getFile("missing.jpg");
         assertFalse(file.isPresent());
     }
 
     @Test
     public void getFileBreakingDirectoryStructureFails() {
-        Optional<ModuleFile> file = getFileSource().getFile("..", "hidden.txt");
+        Optional<FileReference> file = getFileSource().getFile("..", "hidden.txt");
         assertFalse(file.isPresent());
     }
 
     @Test
     public void getExistentFile() throws IOException {
-        Optional<ModuleFile> file = getFileSource().getFile("subfolder", "test.resource");
+        Optional<FileReference> file = getFileSource().getFile("subfolder", "test.resource");
         assertTrue(file.isPresent());
-        ModuleFile fullFile = file.get();
+        FileReference fullFile = file.get();
 
         assertEquals(Lists.newArrayList("subfolder"), fullFile.getPath());
         try (Reader reader = new InputStreamReader(fullFile.open(), Charsets.UTF_8)) {

@@ -81,12 +81,12 @@ public class DirectoryFileSource implements ModuleFileSource {
     }
 
     @Override
-    public Collection<ModuleFile> getFiles() {
+    public Collection<FileReference> getFiles() {
         return Lists.newArrayList(new DirectoryIterator(rootDirectory, rootDirectory, filter, true));
     }
 
     @Override
-    public Optional<ModuleFile> getFile(List<String> filepath) {
+    public Optional<FileReference> getFile(List<String> filepath) {
         File file = buildFilePath(filepath);
         try {
             if (!file.getCanonicalPath().startsWith(rootDirectory.getPath())) {
@@ -96,7 +96,7 @@ public class DirectoryFileSource implements ModuleFileSource {
             return Optional.empty();
         }
         if (file.isFile() && filter.test(file)) {
-            return Optional.of(new DirectoryFile(file, rootDirectory));
+            return Optional.of(new DirectoryFileReference(file, rootDirectory));
         }
         return Optional.empty();
     }
@@ -110,7 +110,7 @@ public class DirectoryFileSource implements ModuleFileSource {
     }
 
     @Override
-    public Collection<ModuleFile> getFilesInPath(boolean recursive, List<String> path) {
+    public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
         File dir = buildFilePath(path);
         try {
             if (!dir.getCanonicalPath().startsWith(rootDirectory.getPath())) {
@@ -147,16 +147,16 @@ public class DirectoryFileSource implements ModuleFileSource {
 
     @NonNull
     @Override
-    public Iterator<ModuleFile> iterator() {
+    public Iterator<FileReference> iterator() {
         return new DirectoryIterator(rootDirectory, rootDirectory, filter, true);
     }
 
-    public static class DirectoryFile implements ModuleFile {
+    public static class DirectoryFileReference implements FileReference {
 
         private final File baseDirectory;
         private final File file;
 
-        public DirectoryFile(File file, File baseDirectory) {
+        public DirectoryFileReference(File file, File baseDirectory) {
             this.file = file;
             this.baseDirectory = baseDirectory;
         }
@@ -199,18 +199,18 @@ public class DirectoryFileSource implements ModuleFileSource {
             if (o == this) {
                 return true;
             }
-            if (o instanceof DirectoryFile) {
-                DirectoryFile other = (DirectoryFile) o;
+            if (o instanceof DirectoryFileReference) {
+                DirectoryFileReference other = (DirectoryFileReference) o;
                 return Objects.equals(other.file, this.file);
             }
             return false;
         }
     }
 
-    private static class DirectoryIterator implements Iterator<ModuleFile> {
+    private static class DirectoryIterator implements Iterator<FileReference> {
 
         private Deque<File> files = Queues.newArrayDeque();
-        private ModuleFile next;
+        private FileReference next;
         private Predicate<File> filter;
         private boolean recursive;
         private File rootDirectory;
@@ -230,7 +230,7 @@ public class DirectoryFileSource implements ModuleFileSource {
                 if (file.isDirectory() && recursive) {
                     addDirectoryContentsToQueue(file);
                 } else if (file.isFile() && filter.test(file)) {
-                    next = new DirectoryFile(file, rootDirectory);
+                    next = new DirectoryFileReference(file, rootDirectory);
                 }
             }
         }
@@ -248,8 +248,8 @@ public class DirectoryFileSource implements ModuleFileSource {
         }
 
         @Override
-        public ModuleFile next() {
-            ModuleFile result = next;
+        public FileReference next() {
+            FileReference result = next;
             findNext();
             return result;
         }

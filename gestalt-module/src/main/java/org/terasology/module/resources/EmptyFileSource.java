@@ -29,12 +29,12 @@ import java.util.Set;
 public class EmptyFileSource implements ModuleFileSource {
 
     @Override
-    public Optional<ModuleFile> getFile(List<String> filepath) {
+    public Optional<FileReference> getFile(List<String> filepath) {
         return Optional.empty();
     }
 
     @Override
-    public Collection<ModuleFile> getFilesInPath(boolean recursive, List<String> path) {
+    public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
         return Collections.emptyList();
     }
 
@@ -44,7 +44,7 @@ public class EmptyFileSource implements ModuleFileSource {
     }
 
     @Override
-    public Iterator<ModuleFile> iterator() {
+    public Iterator<FileReference> iterator() {
         return Collections.emptyIterator();
     }
 }

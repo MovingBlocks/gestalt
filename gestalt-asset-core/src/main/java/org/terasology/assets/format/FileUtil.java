@@ -16,7 +16,7 @@
 
 package org.terasology.assets.format;
 
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -26,8 +26,8 @@ public final class FileUtil {
     private FileUtil() {
     }
 
-    public static Predicate<ModuleFile> createFileExtensionPredicate(List<String> extensions) {
-        return extensions.stream().map(x -> "." + x).map(x -> (Predicate<ModuleFile>) moduleFile -> moduleFile.getName().endsWith(x)).reduce(x -> false, Predicate::or);
+    public static Predicate<FileReference> createFileExtensionPredicate(List<String> extensions) {
+        return extensions.stream().map(x -> "." + x).map(x -> (Predicate<FileReference>) moduleFile -> moduleFile.getName().endsWith(x)).reduce(x -> false, Predicate::or);
     }
 
 

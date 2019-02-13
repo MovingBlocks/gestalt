@@ -17,7 +17,7 @@
 package org.terasology.assets.format.producer;
 
 import org.terasology.assets.ResourceUrn;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.naming.Name;
 
 import java.util.Optional;
@@ -39,7 +39,7 @@ public interface FileChangeSubscriber {
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
-    Optional<ResourceUrn> assetFileAdded(ModuleFile file, Name module, Name providingModule);
+    Optional<ResourceUrn> assetFileAdded(FileReference file, Name module, Name providingModule);
 
     /**
      * Notification that an asset file was modified
@@ -49,7 +49,7 @@ public interface FileChangeSubscriber {
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
-    Optional<ResourceUrn> assetFileModified(ModuleFile file, Name module, Name providingModule);
+    Optional<ResourceUrn> assetFileModified(FileReference file, Name module, Name providingModule);
 
     /**
      * Notification that an asset file was removed
@@ -59,7 +59,7 @@ public interface FileChangeSubscriber {
      * @param providingModule The name of the module providing the asset file
      * @return The ResourceUrn of the resource the file contributed too, if any
      */
-    Optional<ResourceUrn> assetFileDeleted(ModuleFile file, Name module, Name providingModule);
+    Optional<ResourceUrn> assetFileDeleted(FileReference file, Name module, Name providingModule);
 
     /**
      * Notification that an delta file was added
@@ -69,7 +69,7 @@ public interface FileChangeSubscriber {
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
-    Optional<ResourceUrn> deltaFileAdded(ModuleFile file, Name module, Name providingModule);
+    Optional<ResourceUrn> deltaFileAdded(FileReference file, Name module, Name providingModule);
 
     /**
      * Notification that an delta file was modified
@@ -79,7 +79,7 @@ public interface FileChangeSubscriber {
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributes too, if any
      */
-    Optional<ResourceUrn> deltaFileModified(ModuleFile file, Name module, Name providingModule);
+    Optional<ResourceUrn> deltaFileModified(FileReference file, Name module, Name providingModule);
 
     /**
      * Notification that an delta file was removed
@@ -89,5 +89,5 @@ public interface FileChangeSubscriber {
      * @param providingModule The name of the module providing the delta file
      * @return The ResourceUrn of the resource the file contributed too, if any
      */
-    Optional<ResourceUrn> deltaFileDeleted(ModuleFile file, Name module, Name providingModule);
+    Optional<ResourceUrn> deltaFileDeleted(FileReference file, Name module, Name providingModule);
 }

@@ -52,20 +52,20 @@ public class AssetFileDataProducerTest {
     }
 
     @Test
-    public void getModulesProvidingWithNoMatch() throws Exception {
+    public void getModulesProvidingWithNoMatch() {
         Set<Name> results = createProducer(TestModulesUtil.createEnvironment()).getModulesProviding(new Name("madeUpThing"));
         assertTrue(results.isEmpty());
     }
 
     @Test
-    public void getModulesProvidingWithSingleMatch() throws Exception {
+    public void getModulesProvidingWithSingleMatch() {
         Set<Name> results = createProducer(TestModulesUtil.createEnvironment()).getModulesProviding(URN.getResourceName());
         assertEquals(1, results.size());
         assertTrue(results.contains(URN.getModuleName()));
     }
 
     @Test
-    public void resolveWithMultipleMatches() throws Exception {
+    public void resolveWithMultipleMatches() {
         AssetFileDataProducer<TextData> producer = createProducer(TestModulesUtil.createEnvironment(
                 "test",
                 "moduleA"));
@@ -168,19 +168,19 @@ public class AssetFileDataProducerTest {
     }
 
     @Test
-    public void redirects() throws Exception {
+    public void redirects() {
         AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("redirectA"));
         assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:example")));
     }
 
     @Test
-    public void chainedRedirects() throws Exception {
+    public void chainedRedirects() {
         AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("redirectA"));
         assertEquals(new ResourceUrn("redirectA:real"), moduleProducer.redirect(new ResourceUrn("redirectA:double")));
     }
 
     @Test
-    public void handleRedirectResolution() throws Exception {
+    public void handleRedirectResolution() {
         AssetFileDataProducer<TextData> moduleProducer = createProducer(TestModulesUtil.createEnvironment("redirectA"));
 
         Set<Name> results = moduleProducer.getModulesProviding(new Name("example"));

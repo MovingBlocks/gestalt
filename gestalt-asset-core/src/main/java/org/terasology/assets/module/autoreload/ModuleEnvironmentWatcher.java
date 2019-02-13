@@ -37,7 +37,7 @@ import org.terasology.assets.module.ModuleAssetScanner;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.resources.DirectoryFileSource;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.naming.Name;
 
 import java.io.IOException;
@@ -184,7 +184,7 @@ class ModuleEnvironmentWatcher {
      * @param method          The subscription method to call to notify
      * @param outChanged      A map of asset types and their changed urns to add any modified resource urns to.
      */
-    private void notifySubscribers(String folderName, ModuleFile file, Name module, Name providingModule, SubscriptionMethod method,
+    private void notifySubscribers(String folderName, FileReference file, Name module, Name providingModule, SubscriptionMethod method,
                                    SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
         for (SubscriberInfo subscriber : subscribers.get(folderName)) {
             Optional<ResourceUrn> urn = method.notify(subscriber.subscriber, file, module, providingModule);
@@ -196,7 +196,7 @@ class ModuleEnvironmentWatcher {
      * The form of a method to call to notify a subscriber of changes
      */
     private interface SubscriptionMethod {
-        Optional<ResourceUrn> notify(FileChangeSubscriber subscriber, ModuleFile file, Name module, Name providingModule);
+        Optional<ResourceUrn> notify(FileChangeSubscriber subscriber, FileReference file, Name module, Name providingModule);
     }
 
     private interface PathChangeListener {
@@ -215,7 +215,7 @@ class ModuleEnvironmentWatcher {
          * @param target     The created file
          * @param outChanged The ResourceUrns of any assets affected
          */
-        default void onFileCreated(ModuleFile target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        default void onFileCreated(FileReference target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
         }
 
         /**
@@ -224,7 +224,7 @@ class ModuleEnvironmentWatcher {
          * @param target     The modified file
          * @param outChanged The ResourceUrns of any assets affected
          */
-        default void onFileModified(ModuleFile target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        default void onFileModified(FileReference target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
         }
 
         /**
@@ -233,7 +233,7 @@ class ModuleEnvironmentWatcher {
          * @param target     The deleted file
          * @param outChanged The ResourceUrns of any assets affected
          */
-        default void onFileDeleted(ModuleFile target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        default void onFileDeleted(FileReference target, final SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
         }
     }
 
@@ -307,7 +307,7 @@ class ModuleEnvironmentWatcher {
                         onDirectoryCreated(target, changedAssets);
                     } else if (Files.isRegularFile(target)) {
                         logger.debug("New file registered: {}", target);
-                        DirectoryFileSource.DirectoryFile file = new DirectoryFileSource.DirectoryFile(target.toFile(), rootPath.toFile());
+                        DirectoryFileSource.DirectoryFileReference file = new DirectoryFileSource.DirectoryFileReference(target.toFile(), rootPath.toFile());
                         listener.onFileCreated(file, changedAssets);
                     } else if (outDelayedEvents != null) {
                         outDelayedEvents.add(new DelayedEvent(event, this));
@@ -315,7 +315,7 @@ class ModuleEnvironmentWatcher {
                 } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
                     if (Files.isRegularFile(target)) {
                         logger.debug("File modified: {}", target);
-                        DirectoryFileSource.DirectoryFile file = new DirectoryFileSource.DirectoryFile(target.toFile(), rootPath.toFile());
+                        DirectoryFileSource.DirectoryFileReference file = new DirectoryFileSource.DirectoryFileReference(target.toFile(), rootPath.toFile());
                         listener.onFileModified(file, changedAssets);
                     }
                 } else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
@@ -323,7 +323,7 @@ class ModuleEnvironmentWatcher {
                     if (key != null) {
                         pathWatchers.remove(key);
                     } else {
-                        DirectoryFileSource.DirectoryFile file = new DirectoryFileSource.DirectoryFile(target.toFile(), rootPath.toFile());
+                        DirectoryFileSource.DirectoryFileReference file = new DirectoryFileSource.DirectoryFileReference(target.toFile(), rootPath.toFile());
                         listener.onFileDeleted(file, changedAssets);
                     }
                 }
@@ -374,7 +374,7 @@ class ModuleEnvironmentWatcher {
                     if (Files.isDirectory(path)) {
                         onDirectoryCreated(path, outChanged);
                     } else {
-                        listener.onFileCreated(new DirectoryFileSource.DirectoryFile(path.toFile(), rootPath.toFile()), outChanged);
+                        listener.onFileCreated(new DirectoryFileSource.DirectoryFileReference(path.toFile(), rootPath.toFile()), outChanged);
                     }
                 }
             } catch (IOException e) {
@@ -501,19 +501,19 @@ class ModuleEnvironmentWatcher {
         }
 
         @Override
-        public void onFileCreated(ModuleFile file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public void onFileCreated(FileReference file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Delta added: {}", file);
             notifySubscribers(assetType, file, module, providingModule, FileChangeSubscriber::deltaFileAdded, outChanged);
         }
 
         @Override
-        public void onFileModified(ModuleFile file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public void onFileModified(FileReference file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Delta modified: {}", file);
             notifySubscribers(assetType, file, module, providingModule, FileChangeSubscriber::deltaFileModified, outChanged);
         }
 
         @Override
-        public void onFileDeleted(ModuleFile file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public void onFileDeleted(FileReference file, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Delta deleted: {}", file);
             notifySubscribers(assetType, file, module, providingModule, FileChangeSubscriber::deltaFileDeleted, outChanged);
         }
@@ -537,19 +537,19 @@ class ModuleEnvironmentWatcher {
         }
 
         @Override
-        public void onFileCreated(ModuleFile target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public void onFileCreated(FileReference target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset added: {}", target);
             notifySubscribers(assetType, target, module, providingModule, FileChangeSubscriber::assetFileAdded, outChanged);
         }
 
         @Override
-        public void onFileModified(ModuleFile target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public void onFileModified(FileReference target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset modified: {}", target);
             notifySubscribers(assetType, target, module, providingModule, FileChangeSubscriber::assetFileModified, outChanged);
         }
 
         @Override
-        public void onFileDeleted(ModuleFile target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
+        public void onFileDeleted(FileReference target, SetMultimap<AssetType<?, ?>, ResourceUrn> outChanged) {
             logger.debug("Asset deleted: {}", target);
             notifySubscribers(assetType, target, module, providingModule, FileChangeSubscriber::assetFileDeleted, outChanged);
         }

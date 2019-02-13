@@ -37,7 +37,7 @@ import org.terasology.assets.exceptions.InvalidAssetFilenameException;
 import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.naming.Name;
 
 import java.io.BufferedReader;
@@ -230,7 +230,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         return Optional.empty();
     }
 
-    private <V extends FileFormat> Optional<ResourceUrn> registerSource(Name module, ModuleFile target, Name providingModule,
+    private <V extends FileFormat> Optional<ResourceUrn> registerSource(Name module, FileReference target, Name providingModule,
                                                                         Collection<V> formats, RegisterSourceHandler<U, V> sourceHandler) {
         for (V format : formats) {
             if (format.getFileMatcher().test(target)) {
@@ -259,7 +259,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         return Optional.empty();
     }
 
-    private Optional<ResourceUrn> registerAssetDelta(Name module, ModuleFile target, Name providingModule) {
+    private Optional<ResourceUrn> registerAssetDelta(Name module, FileReference target, Name providingModule) {
         for (AssetAlterationFileFormat<U> format : deltaFormats) {
             if (format.getFileMatcher().test(target)) {
                 try {
@@ -282,7 +282,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> assetFileAdded(ModuleFile file, Name module, Name providingModule) {
+    public Optional<ResourceUrn> assetFileAdded(FileReference file, Name module, Name providingModule) {
         if (file.getName().endsWith(REDIRECT_EXTENSION)) {
             processRedirectFile(file, module);
         } else {
@@ -297,7 +297,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         return Optional.empty();
     }
 
-    private synchronized void processRedirectFile(ModuleFile file, Name moduleId) {
+    private synchronized void processRedirectFile(FileReference file, Name moduleId) {
         Name assetName = new Name(com.google.common.io.Files.getNameWithoutExtension(file.getName()));
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.open(), Charsets.UTF_8))) {
             List<String> contents = CharStreams.readLines(reader);
@@ -328,7 +328,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
         }
     }
 
-    private Optional<ResourceUrn> getResourceUrn(ModuleFile target, Name module, Collection<? extends FileFormat> formats) {
+    private Optional<ResourceUrn> getResourceUrn(FileReference target, Name module, Collection<? extends FileFormat> formats) {
         for (FileFormat fileFormat : formats) {
             if (fileFormat.getFileMatcher().test(target)) {
                 try {
@@ -343,7 +343,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> assetFileModified(ModuleFile file, Name module, Name providingModule) {
+    public Optional<ResourceUrn> assetFileModified(FileReference file, Name module, Name providingModule) {
         Optional<ResourceUrn> urn = getResourceUrn(file, module, assetFormats);
         if (!urn.isPresent()) {
             urn = getResourceUrn(file, module, supplementFormats);
@@ -355,7 +355,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> assetFileDeleted(ModuleFile file, Name module, Name providingModule) {
+    public Optional<ResourceUrn> assetFileDeleted(FileReference file, Name module, Name providingModule) {
         for (AssetFileFormat<U> format : assetFormats) {
             if (format.getFileMatcher().test(file)) {
                 try {
@@ -396,7 +396,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> deltaFileAdded(ModuleFile file, Name module, Name providingModule) {
+    public Optional<ResourceUrn> deltaFileAdded(FileReference file, Name module, Name providingModule) {
         Optional<ResourceUrn> urn = registerAssetDelta(module, file, providingModule);
         if (urn.isPresent() && unloadedAssetLookup.get(urn.get()).isValid()) {
             return urn;
@@ -405,7 +405,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> deltaFileModified(ModuleFile file, Name module, Name providingModule) {
+    public Optional<ResourceUrn> deltaFileModified(FileReference file, Name module, Name providingModule) {
         Optional<ResourceUrn> urn = getResourceUrn(file, module, deltaFormats);
         if (urn.isPresent()) {
             if (unloadedAssetLookup.get(urn.get()).isValid()) {
@@ -416,7 +416,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
     }
 
     @Override
-    public Optional<ResourceUrn> deltaFileDeleted(ModuleFile file, Name module, Name providingModule) {
+    public Optional<ResourceUrn> deltaFileDeleted(FileReference file, Name module, Name providingModule) {
         for (AssetAlterationFileFormat<U> format : deltaFormats) {
             if (format.getFileMatcher().test(file)) {
                 try {
@@ -462,7 +462,7 @@ public class AssetFileDataProducer<U extends AssetData> implements AssetDataProd
      * @param <U>
      */
     private interface RegisterSourceHandler<T extends AssetData, U extends FileFormat> {
-        boolean registerSource(UnloadedAssetData<T> source, Name providingModule, U format, ModuleFile input);
+        boolean registerSource(UnloadedAssetData<T> source, Name providingModule, U format, FileReference input);
     }
 
 }

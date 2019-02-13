@@ -28,7 +28,7 @@ import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
 import org.terasology.module.ModuleMetadata;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.naming.Name;
 import org.terasology.naming.Version;
@@ -53,7 +53,6 @@ public class ModuleEnvironmentWatcherTest {
 
     @Test
     public void test() throws IOException {
-        logger.debug("TEST");
         Path tempDirectory = Files.createTempDirectory("gestalt-test");
         ModuleMetadata metadata = new ModuleMetadata(new Name("test"), Version.DEFAULT);
         Module module = new ModuleFactory().createDirectoryModule(metadata, tempDirectory.toFile());
@@ -61,37 +60,37 @@ public class ModuleEnvironmentWatcherTest {
         ModuleEnvironmentWatcher watcher = new ModuleEnvironmentWatcher(environment);
         FileChangeSubscriber subscriber = new FileChangeSubscriber() {
             @Override
-            public Optional<ResourceUrn> assetFileAdded(ModuleFile file, Name module, Name providingModule) {
+            public Optional<ResourceUrn> assetFileAdded(FileReference file, Name module, Name providingModule) {
                 logger.info("Asset File added: {}:{} by {}", module, file, providingModule);
                 return Optional.of(new ResourceUrn(module, new Name(file.getName())));
             }
 
             @Override
-            public Optional<ResourceUrn> assetFileModified(ModuleFile file, Name module, Name providingModule) {
+            public Optional<ResourceUrn> assetFileModified(FileReference file, Name module, Name providingModule) {
                 logger.info("Asset File modified: {}:{} by {}", module, file, providingModule);
                 return Optional.of(new ResourceUrn(module, new Name(file.getName())));
             }
 
             @Override
-            public Optional<ResourceUrn> assetFileDeleted(ModuleFile file, Name module, Name providingModule) {
+            public Optional<ResourceUrn> assetFileDeleted(FileReference file, Name module, Name providingModule) {
                 logger.info("Asset File deleted: {}:{} by {}", module, file, providingModule);
                 return Optional.empty();
             }
 
             @Override
-            public Optional<ResourceUrn> deltaFileAdded(ModuleFile file, Name module, Name providingModule) {
+            public Optional<ResourceUrn> deltaFileAdded(FileReference file, Name module, Name providingModule) {
                 logger.info("Delta File added: {}:{} by {}", module, file, providingModule);
                 return Optional.empty();
             }
 
             @Override
-            public Optional<ResourceUrn> deltaFileModified(ModuleFile file, Name module, Name providingModule) {
+            public Optional<ResourceUrn> deltaFileModified(FileReference file, Name module, Name providingModule) {
                 logger.info("Delta File modified: {}:{} by {}", module, file, providingModule);
                 return Optional.empty();
             }
 
             @Override
-            public Optional<ResourceUrn> deltaFileDeleted(ModuleFile file, Name module, Name providingModule) {
+            public Optional<ResourceUrn> deltaFileDeleted(FileReference file, Name module, Name providingModule) {
                 logger.info("Delta File deleted: {}:{} by {}", module, file, providingModule);
                 return Optional.empty();
             }

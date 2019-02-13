@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.naming.Name;
 
 import java.util.Arrays;
@@ -120,7 +120,7 @@ public class ModuleAssetScanner {
                 });
 
                 for (String folderName : producer.getFolderNames()) {
-                    for (ModuleFile file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
+                    for (FileReference file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
                         producer.assetFileAdded(file, module.getId(), module.getId());
                     }
                 }
@@ -143,7 +143,7 @@ public class ModuleAssetScanner {
                 });
 
                 for (String folderName : producer.getFolderNames()) {
-                    for (ModuleFile file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
+                    for (FileReference file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
                         producer.assetFileAdded(file, new Name(file.getPath().get(1)), module.getId());
                     }
                 }
@@ -166,7 +166,7 @@ public class ModuleAssetScanner {
                 });
 
                 for (String folderName : producer.getFolderNames()) {
-                    for (ModuleFile file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
+                    for (FileReference file : cacheEntry.getPathsByRootFolder().get(new Name(folderName))) {
                         producer.deltaFileAdded(file, new Name(file.getPath().get(1)), module.getId());
                     }
                 }
@@ -179,8 +179,8 @@ public class ModuleAssetScanner {
     private void scanForPathCache(Module originModule, CacheEntry cache, String... rootPath) {
         for (String typeFolder : originModule.getResources().getSubpaths(rootPath)) {
             Name type = new Name(typeFolder);
-            for (ModuleFile moduleFile : originModule.getResources().getFilesInPath(true, concat(rootPath, typeFolder))) {
-                cache.getPathsByRootFolder().put(type, moduleFile);
+            for (FileReference fileReference : originModule.getResources().getFilesInPath(true, concat(rootPath, typeFolder))) {
+                cache.getPathsByRootFolder().put(type, fileReference);
             }
         }
     }
@@ -192,9 +192,9 @@ public class ModuleAssetScanner {
     }
 
     private static class CacheEntry {
-        private ListMultimap<Name, ModuleFile> pathsByFolder = ArrayListMultimap.create();
+        private ListMultimap<Name, FileReference> pathsByFolder = ArrayListMultimap.create();
 
-        ListMultimap<Name, ModuleFile> getPathsByRootFolder() {
+        ListMultimap<Name, FileReference> getPathsByRootFolder() {
             return pathsByFolder;
         }
     }

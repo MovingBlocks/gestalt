@@ -26,8 +26,6 @@ import com.google.common.io.CharStreams;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.assets.Asset;
-import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
@@ -42,7 +40,7 @@ import org.terasology.module.ModuleFactory;
 import org.terasology.module.ModuleMetadata;
 import org.terasology.module.ModulePathScanner;
 import org.terasology.module.TableModuleRegistry;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.module.sandbox.WarnOnlyProviderFactory;
 import org.terasology.naming.Name;
@@ -57,7 +55,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class GestaltTestActivity extends AppCompatActivity {
@@ -101,10 +98,10 @@ public class GestaltTestActivity extends AppCompatActivity {
         displayText.append("-== Module Content ==-\n\n");
         for (Module module : environment.getModulesOrderedByDependencies()) {
             displayText.append("==" + module.getId() + "==\n");
-            for (ModuleFile moduleFile : module.getResources().getFiles()) {
-                displayText.append("+ " + moduleFile.getName() + "\n");
-                if (moduleFile.getName().endsWith(".asset")) {
-                    try (Reader reader = new InputStreamReader(moduleFile.open())) {
+            for (FileReference fileReference : module.getResources().getFiles()) {
+                displayText.append("+ " + fileReference.getName() + "\n");
+                if (fileReference.getName().endsWith(".asset")) {
+                    try (Reader reader = new InputStreamReader(fileReference.open())) {
                         displayText.append("  '");
                         displayText.append(CharStreams.toString(reader));
                         displayText.append("'\n");

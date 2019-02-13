@@ -407,7 +407,7 @@ public class ModuleFactory {
     }
 
     /**
-     * Creates a module for a path, depending on whether it is a directory or a file.
+     * Creates a module for a path, which can be a directory or an archive (zip/jar) file
      *
      * @param path     The path to create a module for.
      * @param metadata The metadata describing the module.
@@ -425,7 +425,7 @@ public class ModuleFactory {
      * Creates a module from a path, determining whether it is an archive (jar or zip) or directory and handling it appropriately. A module metadata file will be loaded and
      * to determine the module's id, version and other details.
      *
-     * @param path
+     * @param path The path locating the module
      * @return The loaded module
      * @throws IOException If the module fails to load, including if the module metadata file cannot be found or loaded.
      */

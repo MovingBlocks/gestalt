@@ -79,15 +79,15 @@ public class ClasspathFileSource implements ModuleFileSource {
     }
 
     @Override
-    public Optional<ModuleFile> getFile(List<String> filepath) {
+    public Optional<FileReference> getFile(List<String> filepath) {
         String path = basePath + CLASS_PATH_JOINER.join(filepath);
-        return manifest.getResources(x -> true).stream().filter(path::equals).<ModuleFile>map(x -> new ClasspathSourceFile(x, extractSubpath(x), classLoader)).findAny();
+        return manifest.getResources(x -> true).stream().filter(path::equals).<FileReference>map(x -> new ClasspathSourceFileReference(x, extractSubpath(x), classLoader)).findAny();
     }
 
     @Override
-    public Collection<ModuleFile> getFilesInPath(boolean recursive, List<String> path) {
+    public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
         String fullPath = buildPathString(path);
-        return manifest.getResources(x -> true).stream().filter(x -> x.startsWith(fullPath) && (recursive || !x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR))).map(x -> new ClasspathSourceFile(x, extractSubpath(x), classLoader)).collect(Collectors.toList());
+        return manifest.getResources(x -> true).stream().filter(x -> x.startsWith(fullPath) && (recursive || !x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR))).map(x -> new ClasspathSourceFileReference(x, extractSubpath(x), classLoader)).collect(Collectors.toList());
     }
 
     @Override
@@ -115,17 +115,17 @@ public class ClasspathFileSource implements ModuleFileSource {
 
     @NonNull
     @Override
-    public Iterator<ModuleFile> iterator() {
+    public Iterator<FileReference> iterator() {
         return getFiles().iterator();
     }
 
-    private static class ClasspathSourceFile implements ModuleFile {
+    private static class ClasspathSourceFileReference implements FileReference {
 
         private final String path;
         private final String subpath;
         private final ClassLoader classLoader;
 
-        ClasspathSourceFile(String resourcePath, String subpath, ClassLoader classLoader) {
+        ClasspathSourceFileReference(String resourcePath, String subpath, ClassLoader classLoader) {
             this.path = resourcePath;
             this.subpath = subpath;
             this.classLoader = classLoader;
@@ -162,8 +162,8 @@ public class ClasspathFileSource implements ModuleFileSource {
             if (o == this) {
                 return true;
             }
-            if (o instanceof ClasspathSourceFile) {
-                ClasspathSourceFile other = (ClasspathSourceFile) o;
+            if (o instanceof ClasspathSourceFileReference) {
+                ClasspathSourceFileReference other = (ClasspathSourceFileReference) o;
                 return Objects.equals(other.path, path) && Objects.equals(other.classLoader, classLoader);
             }
             return false;

@@ -28,7 +28,7 @@ import org.terasology.assets.format.AssetAlterationFileFormat;
 import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.format.AssetFileFormat;
 import org.terasology.assets.format.FileFormat;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.naming.Name;
 
 import java.io.IOException;
@@ -87,7 +87,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was added successfully.
      */
-    public boolean addSource(Name providingModule, AssetFileFormat<T> format, ModuleFile input) {
+    public boolean addSource(Name providingModule, AssetFileFormat<T> format, FileReference input) {
         if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides override for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -105,7 +105,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was removed - it will not be if it wasn't previously successfully removed.
      */
-    public boolean removeSource(Name providingModule, AssetFileFormat<T> format, ModuleFile input) {
+    public boolean removeSource(Name providingModule, AssetFileFormat<T> format, FileReference input) {
         return sources.remove(new Source<>(providingModule, format, new AssetDataFile(input)));
     }
 
@@ -117,7 +117,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was added successfully.
      */
-    public boolean addDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, ModuleFile input) {
+    public boolean addDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, FileReference input) {
         if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides delta for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -135,7 +135,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was removed - it will not be if the source was not added previously
      */
-    public boolean removeDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, ModuleFile input) {
+    public boolean removeDeltaSource(Name providingModule, AssetAlterationFileFormat<T> format, FileReference input) {
         return deltaSources.remove(new Source<>(providingModule, format, new AssetDataFile(input)));
     }
 
@@ -147,7 +147,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was added successfully.
      */
-    public boolean addSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, ModuleFile input) {
+    public boolean addSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, FileReference input) {
         if (!providingModule.equals(urn.getModuleName()) && !moduleDependencies.dependencyExists(providingModule, urn.getModuleName())) {
             logger.warn("Module '{}' provides supplement for non-dependency '{}' - {}", providingModule, urn.getModuleName(), urn);
             return false;
@@ -165,7 +165,7 @@ class UnloadedAssetData<T extends AssetData> {
      * @param input           The path of the source
      * @return Whether the source was removed - it will not be if the source was not added previously
      */
-    public boolean removeSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, ModuleFile input) {
+    public boolean removeSupplementSource(Name providingModule, AssetAlterationFileFormat<T> format, FileReference input) {
         return supplementSources.remove(new Source<>(providingModule, format, new AssetDataFile(input)));
     }
 
