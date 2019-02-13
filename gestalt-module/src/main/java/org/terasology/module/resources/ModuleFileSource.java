@@ -45,7 +45,7 @@ import java.util.Set;
  * directory or file. For example, if the ModuleFileSource is reading from a directory
  * "content/stuff/blurg", this would be represented as the path ["content", "stuff", "blurg"]
  */
-public interface ModuleFileSource extends Iterable<ModuleFile> {
+public interface ModuleFileSource extends Iterable<FileReference> {
 
     /**
      * Obtain the handle to a specific file. The file path should be provided as one or more
@@ -55,7 +55,7 @@ public interface ModuleFileSource extends Iterable<ModuleFile> {
      * @param morePath More path to the file
      * @return The requested file, or {@link Optional#empty()} if it doesn't exist
      */
-    default Optional<ModuleFile> getFile(String path, String... morePath) {
+    default Optional<FileReference> getFile(String path, String... morePath) {
         return getFile(Varargs.combineToList(path, morePath));
     }
 
@@ -65,12 +65,12 @@ public interface ModuleFileSource extends Iterable<ModuleFile> {
      * @param filepath The path to the file. Should not be empty
      * @return The requested file, or {@link Optional#empty()} if it doesn't exist
      */
-    Optional<ModuleFile> getFile(List<String> filepath);
+    Optional<FileReference> getFile(List<String> filepath);
 
     /**
      * @return A collection of all files provided by this ModuleFileSource
      */
-    default Collection<ModuleFile> getFiles() {
+    default Collection<FileReference> getFiles() {
         return getFilesInPath(true);
     }
 
@@ -81,7 +81,7 @@ public interface ModuleFileSource extends Iterable<ModuleFile> {
      * @param path      The path to search
      * @return A collection of handles to all files in the give path
      */
-    default Collection<ModuleFile> getFilesInPath(boolean recursive, String... path) {
+    default Collection<FileReference> getFilesInPath(boolean recursive, String... path) {
         return getFilesInPath(recursive, Arrays.asList(path));
     }
 
@@ -92,7 +92,7 @@ public interface ModuleFileSource extends Iterable<ModuleFile> {
      * @param path      The path to search
      * @return A collection of handles to all files in the give path
      */
-    Collection<ModuleFile> getFilesInPath(boolean recursive, List<String> path);
+    Collection<FileReference> getFilesInPath(boolean recursive, List<String> path);
 
     /**
      * Finds all subpaths in the given path

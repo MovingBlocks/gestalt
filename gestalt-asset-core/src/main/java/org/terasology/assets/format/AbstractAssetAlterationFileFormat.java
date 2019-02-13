@@ -17,7 +17,7 @@
 package org.terasology.assets.format;
 
 import org.terasology.assets.AssetData;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.naming.Name;
 import org.terasology.util.Varargs;
 
@@ -31,7 +31,7 @@ import java.util.function.Predicate;
  */
 public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> implements AssetAlterationFileFormat<T> {
 
-    private Predicate<ModuleFile> fileMatcher;
+    private Predicate<FileReference> fileMatcher;
 
     /**
      * @param fileExtension  A file extension that this file format will handle
@@ -41,7 +41,7 @@ public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> imp
         this.fileMatcher = FileUtil.createFileExtensionPredicate(Varargs.combineToList(fileExtension, fileExtensions));
     }
 
-    public AbstractAssetAlterationFileFormat(Predicate<ModuleFile> fileMatcher) {
+    public AbstractAssetAlterationFileFormat(Predicate<FileReference> fileMatcher) {
         this.fileMatcher = fileMatcher;
     }
 
@@ -55,7 +55,7 @@ public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> imp
     }
 
     @Override
-    public Predicate<ModuleFile> getFileMatcher() {
+    public Predicate<FileReference> getFileMatcher() {
         return fileMatcher;
     }
 }

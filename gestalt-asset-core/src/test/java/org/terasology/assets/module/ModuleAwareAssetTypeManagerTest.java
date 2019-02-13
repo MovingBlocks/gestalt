@@ -17,6 +17,7 @@
 package org.terasology.assets.module;
 
 import org.junit.Test;
+import org.terasology.assets.AssetData;
 import org.terasology.assets.AssetDataProducer;
 import org.terasology.assets.AssetFactory;
 import org.terasology.assets.AssetType;
@@ -106,21 +107,21 @@ public class ModuleAwareAssetTypeManagerTest {
     }
 
     @Test
-    public void setEnvironmentTriggersLoadOfExtensionAssetType() throws Exception {
+    public void setEnvironmentTriggersLoadOfExtensionAssetType() {
         assertFalse(assetTypeManager.getAssetType(ExtensionAsset.class).isPresent());
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         assertTrue(assetTypeManager.getAssetType(ExtensionAsset.class).isPresent());
     }
 
     @Test
-    public void extensionAssetTypeRemovedOnEnvironmentChange() throws Exception {
+    public void extensionAssetTypeRemovedOnEnvironmentChange() {
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         assetTypeManager.switchEnvironment(TestModulesUtil.createEmptyEnvironment());
         assertFalse(assetTypeManager.getAssetType(ExtensionAsset.class).isPresent());
     }
 
     @Test
-    public void setEnvironmentTriggersLoadOfExtensionProducers() throws Exception {
+    public void setEnvironmentTriggersLoadOfExtensionProducers() {
         assetTypeManager.createAssetType(Text.class, new TextFactory());
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         assertEquals(2, assetTypeManager.getAssetType(Text.class).get().getProducers().size());
@@ -128,7 +129,7 @@ public class ModuleAwareAssetTypeManagerTest {
     }
 
     @Test
-    public void extensionProducerRemovedOnEnvironmentUnload() throws Exception {
+    public void extensionProducerRemovedOnEnvironmentUnload() {
         assetTypeManager.createAssetType(Text.class, new TextFactory());
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         assertEquals(2, assetTypeManager.getAssetType(Text.class).get().getProducers().size());
@@ -137,7 +138,7 @@ public class ModuleAwareAssetTypeManagerTest {
     }
 
     @Test
-    public void setEnvironmentTriggersLoadOfExtensionFormats() throws Exception {
+    public void setEnvironmentTriggersLoadOfExtensionFormats() {
         assetTypeManager.createAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         AssetFileDataProducer<TextData> moduleProducer = (AssetFileDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
@@ -146,7 +147,7 @@ public class ModuleAwareAssetTypeManagerTest {
     }
 
     @Test
-    public void extensionFormatRemovedOnEnvironmentChange() throws Exception {
+    public void extensionFormatRemovedOnEnvironmentChange() {
         assetTypeManager.createAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         assetTypeManager.switchEnvironment(TestModulesUtil.createEmptyEnvironment());
@@ -155,7 +156,7 @@ public class ModuleAwareAssetTypeManagerTest {
     }
 
     @Test
-    public void setEnvironmentTriggersLoadOfExtensionSupplementalFormats() throws Exception {
+    public void setEnvironmentTriggersLoadOfExtensionSupplementalFormats() {
         assetTypeManager.createAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         AssetFileDataProducer<TextData> moduleProducer = (AssetFileDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
@@ -164,7 +165,7 @@ public class ModuleAwareAssetTypeManagerTest {
     }
 
     @Test
-    public void extensionSupplementalFormatRemovedOnEnvironmentChange() throws Exception {
+    public void extensionSupplementalFormatRemovedOnEnvironmentChange() {
         assetTypeManager.createAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         assetTypeManager.switchEnvironment(TestModulesUtil.createEmptyEnvironment());
@@ -173,7 +174,7 @@ public class ModuleAwareAssetTypeManagerTest {
     }
 
     @Test
-    public void setEnvironmentTriggersLoadOfExtensionDeltaFormats() throws Exception {
+    public void setEnvironmentTriggersLoadOfExtensionDeltaFormats() {
         assetTypeManager.createAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         AssetFileDataProducer<TextData> moduleProducer = (AssetFileDataProducer<TextData>) assetTypeManager.getAssetType(Text.class).get().getProducers().get(0);
@@ -182,7 +183,7 @@ public class ModuleAwareAssetTypeManagerTest {
     }
 
     @Test
-    public void extensionDeltaFormatRemovedOnEnvironmentChange() throws Exception {
+    public void extensionDeltaFormatRemovedOnEnvironmentChange() {
         assetTypeManager.createAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.switchEnvironment(TestModulesUtil.createEnvironment());
         assetTypeManager.switchEnvironment(TestModulesUtil.createEmptyEnvironment());
@@ -198,8 +199,10 @@ public class ModuleAwareAssetTypeManagerTest {
         assetTypeManager.createAssetType(AlternateAsset.class, alternativeAssetFactory);
         assetTypeManager.switchEnvironment(TestModulesUtil.createEmptyEnvironment());
 
-        List<AssetType<? extends ParentAsset, ?>> assetTypes = (List<AssetType<? extends ParentAsset, ?>>) assetTypeManager.getAssetTypes(ParentAsset.class);
+        List<AssetType<? extends ParentAsset, ?>> assetTypes = assetTypeManager.getAssetTypes(ParentAsset.class);
         assertEquals(2, assetTypes.size());
+        AssetType<? extends ParentAsset, ? extends AssetData> assetType = assetTypes.get(0);
+        Class<?> assetClass = assetType.getAssetClass();
         assertEquals(AlternateAsset.class, assetTypes.get(0).getAssetClass());
         assertEquals(AlternateAsset.class, assetTypes.get(0).getAssetClass());
         assertEquals(ChildAsset.class, assetTypes.get(1).getAssetClass());

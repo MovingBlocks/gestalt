@@ -17,7 +17,7 @@
 package org.terasology.assets.format;
 
 import org.terasology.assets.exceptions.InvalidAssetFilenameException;
-import org.terasology.module.resources.ModuleFile;
+import org.terasology.module.resources.FileReference;
 import org.terasology.naming.Name;
 
 import java.util.function.Predicate;
@@ -32,7 +32,7 @@ public interface FileFormat {
     /**
      * @return A path matcher that will filter for files relevant for this format.
      */
-    Predicate<ModuleFile> getFileMatcher();
+    Predicate<FileReference> getFileMatcher();
 
     /**
      * This method is use to obtain the name of the resource represented by the given filename. The ModuleAssetDataProducer will combine it with a module id to
