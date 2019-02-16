@@ -48,8 +48,8 @@ import org.terasology.valuetype.TypeLibrary;
 import java.util.Collections;
 import java.util.Optional;
 
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
+import modules.test.components.Sample;
+import modules.test.components.Second;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -112,7 +112,7 @@ public class PrefabAwareEntityPersistorTest {
     public void persistTrivialEntity() {
         originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity();
-        SampleComponent component = entity.addComponent(SampleComponent.class);
+        Sample component = entity.addComponent(Sample.class);
         component.setName(NAME);
         component.setDescription(DESCRIPTION);
         originalTransaction.commit();
@@ -122,7 +122,7 @@ public class PrefabAwareEntityPersistorTest {
         finalTransaction.begin();
         assertEquals(entity.getId(), finalEntity.getId());
 
-        SampleComponent comp = finalEntity.getComponent(SampleComponent.class).orElseThrow(RuntimeException::new);
+        Sample comp = finalEntity.getComponent(Sample.class).orElseThrow(RuntimeException::new);
         assertEquals(NAME, comp.getName());
         assertEquals(DESCRIPTION, comp.getDescription());
     }
@@ -138,7 +138,7 @@ public class PrefabAwareEntityPersistorTest {
         finalTransaction.begin();
         assertEquals(entity.getId(), finalEntity.getId());
 
-        SampleComponent comp = finalEntity.getComponent(SampleComponent.class).orElseThrow(RuntimeException::new);
+        Sample comp = finalEntity.getComponent(Sample.class).orElseThrow(RuntimeException::new);
         assertEquals(NAME, comp.getName());
         assertEquals(DESCRIPTION, comp.getDescription());
     }
@@ -154,13 +154,13 @@ public class PrefabAwareEntityPersistorTest {
         ProtoDatastore.EntityData data = persistor.serialize(entity).build();
         originalTransaction.rollback();
 
-        prefab.getRootEntity().getComponent(SampleComponent.class).orElseThrow(AssertionError::new).setName(ALTERED_NAME);
+        prefab.getRootEntity().getComponent(Sample.class).orElseThrow(AssertionError::new).setName(ALTERED_NAME);
 
         finalTransaction.begin();
         EntityRef finalEntity = persistor.deserialize(data, finalEntityManager);
         assertEquals(entity.getId(), finalEntity.getId());
 
-        SampleComponent comp = finalEntity.getComponent(SampleComponent.class).orElseThrow(RuntimeException::new);
+        Sample comp = finalEntity.getComponent(Sample.class).orElseThrow(RuntimeException::new);
         assertEquals(ALTERED_NAME, comp.getName());
     }
 
@@ -169,9 +169,9 @@ public class PrefabAwareEntityPersistorTest {
         PrefabData prefabData = new PrefabData();
         EntityRecipe recipe = new EntityRecipe(TEMP_ENTITY_RECIPE_URN);
 
-        SampleComponent comp = componentManager.create(SampleComponent.class);
+        Sample comp = componentManager.create(Sample.class);
         comp.setName(NAME);
-        recipe.add(SampleComponent.class, comp);
+        recipe.add(Sample.class, comp);
 
         prefabData.addEntityRecipe(recipe);
         Prefab prefab = assetManager.loadAsset(TEMP_PREFAB_URN, prefabData, Prefab.class);
@@ -189,7 +189,7 @@ public class PrefabAwareEntityPersistorTest {
         EntityRef finalEntity = persistor.deserialize(data, finalEntityManager);
         assertEquals(entity.getId(), finalEntity.getId());
 
-        SampleComponent finalComp = finalEntity.getComponent(SampleComponent.class).orElseThrow(AssertionError::new);
+        Sample finalComp = finalEntity.getComponent(Sample.class).orElseThrow(AssertionError::new);
         assertEquals(comp, finalComp);
     }
 
@@ -197,15 +197,15 @@ public class PrefabAwareEntityPersistorTest {
     public void persistRemovedComponents() {
         originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity(assetManager.getAsset(EXISTING_PREFAB_URN, Prefab.class).orElseThrow(AssertionError::new));
-        entity.addComponent(SecondComponent.class);
-        entity.removeComponent(SampleComponent.class);
+        entity.addComponent(Second.class);
+        entity.removeComponent(Sample.class);
         originalTransaction.commit();
 
         EntityRef finalEntity = persist(entity);
 
         finalTransaction.begin();
-        assertFalse(finalEntity.getComponent(SampleComponent.class).isPresent());
-        assertTrue(finalEntity.getComponent(SecondComponent.class).isPresent());
+        assertFalse(finalEntity.getComponent(Sample.class).isPresent());
+        assertTrue(finalEntity.getComponent(Second.class).isPresent());
     }
 
     // persist restores / drops CreatedFromPrefabComponent as needed

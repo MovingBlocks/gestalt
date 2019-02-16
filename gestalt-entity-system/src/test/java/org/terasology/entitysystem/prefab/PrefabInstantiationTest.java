@@ -35,8 +35,8 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
 
-import modules.test.ReferenceComponent;
-import modules.test.SampleComponent;
+import modules.test.components.Reference;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -84,14 +84,14 @@ public class PrefabInstantiationTest {
     private void createMultiPrefab() {
         PrefabData prefabData = new PrefabData();
         EntityRecipe secondEntityRecipe = new EntityRecipe(SECOND_ENTITY_URN);
-        SampleComponent sampleComponent = componentManager.create(SampleComponent.class);
+        Sample sampleComponent = componentManager.create(Sample.class);
         sampleComponent.setName(TEST_NAME);
-        secondEntityRecipe.add(SampleComponent.class, sampleComponent);
+        secondEntityRecipe.add(Sample.class, sampleComponent);
         prefabData.addEntityRecipe(secondEntityRecipe);
         EntityRecipe rootEntityRecipe = new EntityRecipe(MULTI_PREFAB_ROOT_ENTITY_URN);
-        ReferenceComponent referenceComponent = componentManager.create(ReferenceComponent.class);
+        Reference referenceComponent = componentManager.create(Reference.class);
         referenceComponent.setReference(secondEntityRecipe);
-        rootEntityRecipe.add(ReferenceComponent.class, referenceComponent);
+        rootEntityRecipe.add(Reference.class, referenceComponent);
         prefabData.addEntityRecipe(rootEntityRecipe);
         prefabData.setRootEntityId(MULTI_PREFAB_ROOT_ENTITY_URN);
 
@@ -101,9 +101,9 @@ public class PrefabInstantiationTest {
     private void createCompositePrefab() {
         PrefabData prefabData = new PrefabData();
         EntityRecipe rootEntityRecipe = new EntityRecipe(COMPOSITE_PREFAB_ROOT_ENTITY_URN);
-        ReferenceComponent referenceComponent = componentManager.create(ReferenceComponent.class);
+        Reference referenceComponent = componentManager.create(Reference.class);
         referenceComponent.setReference(new PrefabRef(singlePrefab));
-        rootEntityRecipe.add(ReferenceComponent.class, referenceComponent);
+        rootEntityRecipe.add(Reference.class, referenceComponent);
         prefabData.addEntityRecipe(rootEntityRecipe);
         prefabData.setRootEntityId(COMPOSITE_PREFAB_ROOT_ENTITY_URN);
 
@@ -113,9 +113,9 @@ public class PrefabInstantiationTest {
     private void createSinglePrefab() {
         PrefabData prefabData = new PrefabData();
         EntityRecipe entityRecipe = new EntityRecipe(SINGLE_PREFAB_ROOT_ENTITY_URN);
-        SampleComponent sampleComponent = componentManager.create(SampleComponent.class);
+        Sample sampleComponent = componentManager.create(Sample.class);
         sampleComponent.setName(TEST_NAME);
-        entityRecipe.add(SampleComponent.class, sampleComponent);
+        entityRecipe.add(Sample.class, sampleComponent);
         prefabData.addEntityRecipe(entityRecipe);
         prefabData.setRootEntityId(SINGLE_PREFAB_ROOT_ENTITY_URN);
 
@@ -137,18 +137,18 @@ public class PrefabInstantiationTest {
     @Test
     public void simplePrefab() {
         EntityRef entity = entityManager.createEntity(singlePrefab);
-        assertTrue(entity.getComponent(SampleComponent.class).isPresent());
-        assertEquals(TEST_NAME, entity.getComponent(SampleComponent.class).get().getName());
+        assertTrue(entity.getComponent(Sample.class).isPresent());
+        assertEquals(TEST_NAME, entity.getComponent(Sample.class).get().getName());
     }
 
     @Test
     public void prefabWithMultipleEntities() {
         EntityRef entity = entityManager.createEntity(multiPrefab);
-        assertTrue(entity.getComponent(ReferenceComponent.class).isPresent());
-        EntityRef secondEntity = entity.getComponent(ReferenceComponent.class).get().getReference();
+        assertTrue(entity.getComponent(Reference.class).isPresent());
+        EntityRef secondEntity = entity.getComponent(Reference.class).get().getReference();
         assertFalse(secondEntity instanceof EntityRecipe);
-        assertTrue(secondEntity.getComponent(SampleComponent.class).isPresent());
-        assertEquals(TEST_NAME, secondEntity.getComponent(SampleComponent.class).get().getName());
+        assertTrue(secondEntity.getComponent(Sample.class).isPresent());
+        assertEquals(TEST_NAME, secondEntity.getComponent(Sample.class).get().getName());
     }
 
     @Test
@@ -156,23 +156,23 @@ public class PrefabInstantiationTest {
         PrefabData prefabData = new PrefabData();
         EntityRecipe entityRecipe = new EntityRecipe(SINGLE_PREFAB_ROOT_ENTITY_URN);
         EntityRecipe secondEntityRecipe = new EntityRecipe(SECOND_ENTITY_URN);
-        ReferenceComponent referenceComponent = componentManager.create(ReferenceComponent.class);
+        Reference referenceComponent = componentManager.create(Reference.class);
         referenceComponent.setReference(secondEntityRecipe);
-        entityRecipe.add(ReferenceComponent.class, referenceComponent);
+        entityRecipe.add(Reference.class, referenceComponent);
         prefabData.addEntityRecipe(entityRecipe);
         prefabData.setRootEntityId(SINGLE_PREFAB_ROOT_ENTITY_URN);
 
         singlePrefab = assetManager.loadAsset(SINGLE_PREFAB_URN, prefabData, Prefab.class);
 
         EntityRef entity = entityManager.createEntity(singlePrefab);
-        ReferenceComponent component = entity.getComponent(ReferenceComponent.class).get();
+        Reference component = entity.getComponent(Reference.class).get();
         assertEquals(NullEntityRef.get(), component.getReference());
     }
 
     @Test
     public void prefabReferencingAnotherPrefabInstantiatesBoth() {
         EntityRef entityRef = entityManager.createEntity(compositePrefab);
-        EntityRef otherEntity = entityRef.getComponent(ReferenceComponent.class).orElseThrow(() -> new RuntimeException("No reference component")).getReference();
+        EntityRef otherEntity = entityRef.getComponent(Reference.class).orElseThrow(() -> new RuntimeException("No reference component")).getReference();
         assertEquals(ProxyEntityRef.class, otherEntity.getClass());
     }
 

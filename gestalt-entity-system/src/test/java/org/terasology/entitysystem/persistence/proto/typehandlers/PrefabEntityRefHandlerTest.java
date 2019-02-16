@@ -28,7 +28,7 @@ import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.valuetype.TypeLibrary;
 
-import modules.test.SampleComponent;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 
@@ -60,7 +60,7 @@ public class PrefabEntityRefHandlerTest {
     public void handleCoreEntityRef() {
         transactionManager.begin();
         EntityRef ref = entityManager.createEntity();
-        ref.addComponent(SampleComponent.class);
+        ref.addComponent(Sample.class);
         transactionManager.commit();
 
         ref = ((ProxyEntityRef) ref).getActualRef();
@@ -72,7 +72,7 @@ public class PrefabEntityRefHandlerTest {
     public void handleNewEntityRef() {
         transactionManager.begin();
         EntityRef ref = entityManager.createEntity();
-        ref.addComponent(SampleComponent.class);
+        ref.addComponent(Sample.class);
         transactionManager.commit();
 
         assertEquals(((ProxyEntityRef) ref).getActualRef(), context.deserialize(context.serialize(ref, EntityRef.class).build(), EntityRef.class));

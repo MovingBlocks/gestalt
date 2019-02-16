@@ -27,8 +27,8 @@ import org.terasology.entitysystem.event.impl.EventReceiverMethodSupport;
 import java.util.Collections;
 import java.util.Optional;
 
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
+import modules.test.components.Sample;
+import modules.test.components.Second;
 import modules.test.TestEvent;
 
 import static org.junit.Assert.assertEquals;
@@ -68,7 +68,7 @@ public class EventReceiverMethodSupportTest {
         EventReceiverMethodSupport.register(receiver, builder);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
-        verify(builder).addHandler(captor.capture(), eq(FilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(SampleComponent.class)));
+        verify(builder).addHandler(captor.capture(), eq(FilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class)));
 
         TestEvent event = new TestEvent("test");
         captor.getValue().onEvent(event, entity);
@@ -83,7 +83,7 @@ public class EventReceiverMethodSupportTest {
         EventReceiverMethodSupport.register(receiver, builder);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
-        verify(builder).addHandler(captor.capture(), eq(MultiFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(SampleComponent.class, SecondComponent.class)));
+        verify(builder).addHandler(captor.capture(), eq(MultiFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class, Second.class)));
 
         TestEvent event = new TestEvent("test");
         captor.getValue().onEvent(event, entity);
@@ -98,12 +98,12 @@ public class EventReceiverMethodSupportTest {
         EventReceiverMethodSupport.register(receiver, builder);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
-        verify(builder).addHandler(captor.capture(), eq(MixedFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(SampleComponent.class, SecondComponent.class)));
+        verify(builder).addHandler(captor.capture(), eq(MixedFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class, Second.class)));
 
         TestEvent event = new TestEvent("test");
 
-        SecondComponent comp = mock(SecondComponent.class);
-        when(entity.getComponent(SecondComponent.class)).thenReturn(Optional.of(comp));
+        Second comp = mock(Second.class);
+        when(entity.getComponent(Second.class)).thenReturn(Optional.of(comp));
         captor.getValue().onEvent(event, entity);
         assertEquals(event, receiver.lastEvent);
         assertEquals(entity, receiver.lastEntity);
@@ -225,7 +225,7 @@ public class EventReceiverMethodSupportTest {
         public TestEvent lastEvent;
         public EntityRef lastEntity;
 
-        @ReceiveEvent(components = SampleComponent.class)
+        @ReceiveEvent(components = Sample.class)
         public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
             this.lastEntity = entity;
@@ -238,7 +238,7 @@ public class EventReceiverMethodSupportTest {
         public TestEvent lastEvent;
         public EntityRef lastEntity;
 
-        @ReceiveEvent(components = {SampleComponent.class, SecondComponent.class})
+        @ReceiveEvent(components = {Sample.class, Second.class})
         public EventResult onEvent(TestEvent event, EntityRef entity) {
             this.lastEvent = event;
             this.lastEntity = entity;
@@ -250,10 +250,10 @@ public class EventReceiverMethodSupportTest {
 
         public TestEvent lastEvent;
         public EntityRef lastEntity;
-        public SecondComponent comp;
+        public Second comp;
 
-        @ReceiveEvent(components = {SampleComponent.class})
-        public EventResult onEvent(TestEvent event, EntityRef entity, SecondComponent comp) {
+        @ReceiveEvent(components = {Sample.class})
+        public EventResult onEvent(TestEvent event, EntityRef entity, Second comp) {
             this.lastEvent = event;
             this.lastEntity = entity;
             this.comp = comp;

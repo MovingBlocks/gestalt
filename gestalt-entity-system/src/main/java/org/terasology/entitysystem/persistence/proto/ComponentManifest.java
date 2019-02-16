@@ -76,9 +76,7 @@ public class ComponentManifest {
 
         componentInfo.add(metadata);
         componentInfoById.put(metadata.getId(), metadata);
-        if (componentType.isPresent()) {
-            componentInfoByType.put(componentType.get().getComponentClass(), metadata);
-        }
+        componentType.ifPresent(tComponentType -> componentInfoByType.put(tComponentType.getComponentClass(), metadata));
         if (metadata.getId() >= nextComponentId) {
             nextComponentId = metadata.getId() + 1;
         }
@@ -95,9 +93,6 @@ public class ComponentManifest {
         ComponentMetadata<T> componentMetadata = (ComponentMetadata<T>) componentInfoByType.get(type);
         if (componentMetadata == null) {
             String name = type.getSimpleName();
-            if (name.endsWith(ComponentTypeIndex.COMPONENT_SUFFIX)) {
-                name = name.substring(0, name.length() - ComponentTypeIndex.COMPONENT_SUFFIX.length());
-            }
 
             componentMetadata = new ComponentMetadata<>(nextComponentId++, moduleEnvironment.getModuleProviding(type), new Name(name), componentManager.getType(type));
             addComponentMetadata(componentMetadata);

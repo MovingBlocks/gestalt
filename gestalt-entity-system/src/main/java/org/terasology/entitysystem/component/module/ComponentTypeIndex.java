@@ -38,8 +38,6 @@ import java.util.Set;
  */
 public class ComponentTypeIndex {
 
-    public static final String COMPONENT_SUFFIX = "Component";
-
     private final Map<ResourceUrn, Class<? extends Component>> componentIndexByUrn;
     private final SetMultimap<Name, Name> modulesProvidingComponentsIndex;
     private final ResolutionStrategy resolutionStrategy;
@@ -62,11 +60,6 @@ public class ComponentTypeIndex {
         for (Class<? extends Component> componentType : environment.getSubtypesOf(Component.class, (x) -> (x != Component.class && x.isInterface()))) {
             Name module = environment.getModuleProviding(componentType);
             indexUrn(module, componentType.getSimpleName(), componentType, componentByUrnBuilder, modulesProvidingComponentsBuilder);
-
-            if (componentType.getSimpleName().endsWith(COMPONENT_SUFFIX)) {
-                String basicName = componentType.getSimpleName().substring(0, componentType.getSimpleName().length() - COMPONENT_SUFFIX.length());
-                indexUrn(module, basicName, componentType, componentByUrnBuilder, modulesProvidingComponentsBuilder);
-            }
         }
         this.componentIndexByUrn = componentByUrnBuilder.build();
         this.modulesProvidingComponentsIndex = modulesProvidingComponentsBuilder.build();

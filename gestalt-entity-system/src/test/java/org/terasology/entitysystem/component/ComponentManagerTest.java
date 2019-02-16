@@ -19,8 +19,8 @@ package org.terasology.entitysystem.component;
 import org.junit.Test;
 import org.terasology.valuetype.TypeLibrary;
 
-import modules.test.ComponentInterface;
-import modules.test.EmptyComponent;
+import modules.test.components.ComponentInterface;
+import modules.test.components.Empty;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -86,7 +86,7 @@ public class ComponentManagerTest {
     public void constructEmptyComponent() {
         TypeLibrary typeLibrary = new TypeLibrary();
         CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
-        EmptyComponent instance = library.create(EmptyComponent.class);
+        Empty instance = library.create(Empty.class);
         assertNotNull(instance);
     }
 
@@ -94,8 +94,8 @@ public class ComponentManagerTest {
     public void emptyComponentsSingletons() {
         TypeLibrary typeLibrary = new TypeLibrary();
         CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
-        EmptyComponent instance = library.create(EmptyComponent.class);
-        EmptyComponent instance2 = library.create(EmptyComponent.class);
+        Empty instance = library.create(Empty.class);
+        Empty instance2 = library.create(Empty.class);
         assertSame(instance, instance2);
     }
 }

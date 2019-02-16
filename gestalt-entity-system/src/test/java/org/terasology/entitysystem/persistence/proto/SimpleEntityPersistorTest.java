@@ -34,7 +34,7 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
 
-import modules.test.SampleComponent;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 
@@ -71,7 +71,7 @@ public class SimpleEntityPersistorTest {
     public void serializeTrivialEntity() {
         originalTransaction.begin();
         EntityRef entity = originalEntityManager.createEntity();
-        SampleComponent component = entity.addComponent(SampleComponent.class);
+        Sample component = entity.addComponent(Sample.class);
         component.setName(NAME);
         component.setDescription(DESCRIPTION);
         originalTransaction.commit();
@@ -85,7 +85,7 @@ public class SimpleEntityPersistorTest {
         finalTransaction.begin();
         assertEquals(entity.getId(), finalEntity.getId());
 
-        SampleComponent comp = finalEntity.getComponent(SampleComponent.class).orElseThrow(RuntimeException::new);
+        Sample comp = finalEntity.getComponent(Sample.class).orElseThrow(RuntimeException::new);
         assertEquals(NAME, comp.getName());
         assertEquals(DESCRIPTION, comp.getDescription());
     }

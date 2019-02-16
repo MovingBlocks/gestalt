@@ -37,8 +37,8 @@ import org.terasology.valuetype.TypeLibrary;
 import java.util.Collections;
 import java.util.Optional;
 
-import modules.test.ReferenceComponent;
-import modules.test.SampleComponent;
+import modules.test.components.Reference;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -97,8 +97,8 @@ public class PrefabJsonFormatTest {
         assertEquals(1, prefab.getEntityRecipes().size());
         assertTrue(prefab.getEntityRecipes().containsKey(rootUrn));
         assertEquals(1, prefab.getEntityRecipes().get(rootUrn).getComponents().size());
-        assertTrue(prefab.getEntityRecipes().get(rootUrn).getComponent(SampleComponent.class).isPresent());
-        assertEquals(TEST_NAME, prefab.getEntityRecipes().get(rootUrn).getComponent(SampleComponent.class).get().getName());
+        assertTrue(prefab.getEntityRecipes().get(rootUrn).getComponent(Sample.class).isPresent());
+        assertEquals(TEST_NAME, prefab.getEntityRecipes().get(rootUrn).getComponent(Sample.class).get().getName());
     }
 
     @Test
@@ -111,8 +111,8 @@ public class PrefabJsonFormatTest {
         assertEquals(1, prefab.getEntityRecipes().size());
         assertTrue(prefab.getEntityRecipes().containsKey(rootUrn));
         assertEquals(1, prefab.getEntityRecipes().get(rootUrn).getComponents().size());
-        assertTrue(prefab.getEntityRecipes().get(rootUrn).getComponent(SampleComponent.class).isPresent());
-        assertEquals(TEST_NAME, prefab.getEntityRecipes().get(rootUrn).getComponent(SampleComponent.class).get().getName());
+        assertTrue(prefab.getEntityRecipes().get(rootUrn).getComponent(Sample.class).isPresent());
+        assertEquals(TEST_NAME, prefab.getEntityRecipes().get(rootUrn).getComponent(Sample.class).get().getName());
     }
 
     @Test
@@ -130,15 +130,15 @@ public class PrefabJsonFormatTest {
 
         EntityRecipe secondEntity = prefab.getEntityRecipes().get(secondUrn);
         assertEquals(1, secondEntity.getComponents().size());
-        assertTrue(secondEntity.getComponent(SampleComponent.class).isPresent());
-        assertEquals(TEST_NAME_2, secondEntity.getComponent(SampleComponent.class).get().getName());
+        assertTrue(secondEntity.getComponent(Sample.class).isPresent());
+        assertEquals(TEST_NAME_2, secondEntity.getComponent(Sample.class).get().getName());
 
         EntityRecipe rootEntity = prefab.getEntityRecipes().get(rootUrn);
         assertEquals(2, rootEntity.getComponents().size());
-        assertTrue(rootEntity.getComponent(SampleComponent.class).isPresent());
-        assertEquals(TEST_NAME, rootEntity.getComponent(SampleComponent.class).get().getName());
-        assertTrue(rootEntity.getComponent(ReferenceComponent.class).isPresent());
-        assertEquals(secondEntity, rootEntity.getComponent(ReferenceComponent.class).get().getReference());
+        assertTrue(rootEntity.getComponent(Sample.class).isPresent());
+        assertEquals(TEST_NAME, rootEntity.getComponent(Sample.class).get().getName());
+        assertTrue(rootEntity.getComponent(Reference.class).isPresent());
+        assertEquals(secondEntity, rootEntity.getComponent(Reference.class).get().getReference());
     }
 
     @Test
@@ -175,7 +175,7 @@ public class PrefabJsonFormatTest {
         assertTrue(result.isPresent());
         Prefab prefab = result.get();
 
-        ReferenceComponent referenceComponent = prefab.getEntityRecipes().get(prefab.getRootEntityUrn()).getComponent(ReferenceComponent.class).orElseThrow(() -> new RuntimeException("Expected ReferenceComponent"));
+        Reference referenceComponent = prefab.getEntityRecipes().get(prefab.getRootEntityUrn()).getComponent(Reference.class).orElseThrow(() -> new RuntimeException("Expected Reference"));
         assertTrue(referenceComponent.getReference() instanceof PrefabRef);
         assertEquals(SINGLE_URN, ((PrefabRef) referenceComponent.getReference()).getPrefab().getUrn());
     }
@@ -186,7 +186,7 @@ public class PrefabJsonFormatTest {
         assertTrue(result.isPresent());
         Prefab prefab = result.get();
         EntityRecipe recipe = prefab.getRootEntity();
-        SampleComponent sample = recipe.getComponent(SampleComponent.class).orElseThrow(() -> new RuntimeException("Expected SampleComponent"));
+        Sample sample = recipe.getComponent(Sample.class).orElseThrow(() -> new RuntimeException("Expected Sample"));
         assertEquals(TEST_NAME, sample.getName());
         assertEquals("New Description", sample.getDescription());
     }
@@ -197,7 +197,7 @@ public class PrefabJsonFormatTest {
         assertTrue(result.isPresent());
         Prefab prefab = result.get();
         EntityRecipe rootEntity = prefab.getRootEntity();
-        ReferenceComponent component = rootEntity.getComponent(ReferenceComponent.class).orElseThrow(() -> new RuntimeException("Expected ReferenceComponent"));
+        Reference component = rootEntity.getComponent(Reference.class).orElseThrow(() -> new RuntimeException("Expected Reference"));
         assertEquals(3, component.getReferences().size());
     }
 
