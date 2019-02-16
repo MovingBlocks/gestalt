@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
 package org.terasology.entitysystem.component;
 
 import org.junit.Test;
+import org.terasology.valuetype.TypeLibrary;
+
 import modules.test.ComponentInterface;
 import modules.test.EmptyComponent;
-import org.terasology.valuetype.TypeLibrary;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

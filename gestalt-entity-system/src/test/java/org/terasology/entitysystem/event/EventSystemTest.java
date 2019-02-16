@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,6 @@ import org.junit.Test;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.event.impl.EventProcessor;
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
-import modules.test.TestEvent;
-import modules.test.TestSynchEvent;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionPipeline;
@@ -33,6 +29,11 @@ import org.terasology.entitysystem.transaction.pipeline.TransactionPipeline;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Set;
+
+import modules.test.SampleComponent;
+import modules.test.SecondComponent;
+import modules.test.TestEvent;
+import modules.test.TestSynchEvent;
 
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
-import modules.test.SampleComponent;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.valuetype.TypeLibrary;
+
+import modules.test.SampleComponent;
 
 import static org.junit.Assert.assertEquals;
 

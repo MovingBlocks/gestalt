@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
-import modules.test.SampleComponent;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
@@ -32,6 +31,8 @@ import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
+
+import modules.test.SampleComponent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

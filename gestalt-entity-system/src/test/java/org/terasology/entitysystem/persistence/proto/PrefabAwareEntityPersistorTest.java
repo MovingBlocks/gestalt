@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,6 @@ import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.entitysystem.prefab.PrefabData;
 import org.terasology.entitysystem.prefab.PrefabJsonFormat;
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
@@ -49,6 +47,9 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
 import java.util.Optional;
+
+import modules.test.SampleComponent;
+import modules.test.SecondComponent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
