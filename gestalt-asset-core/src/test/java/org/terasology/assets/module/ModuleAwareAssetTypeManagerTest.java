@@ -57,7 +57,7 @@ public class ModuleAwareAssetTypeManagerTest {
 
     public static final ResourceUrn URN = new ResourceUrn("test", "example");
 
-    private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManager();
+    private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManagerImpl();
 
     @Test
     public void registerAssetType() {

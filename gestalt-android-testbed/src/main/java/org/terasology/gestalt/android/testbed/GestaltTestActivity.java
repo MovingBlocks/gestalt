@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
+import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
 import org.terasology.gestalt.android.AndroidModuleClassLoader;
 import org.terasology.gestalt.android.testbed.assettypes.Text;
 import org.terasology.gestalt.android.testbed.assettypes.TextData;
@@ -131,7 +132,7 @@ public class GestaltTestActivity extends AppCompatActivity {
         }
 
         displayText.append("\n-== Module Assets ==-\n");
-        ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManager();
+        ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManagerImpl();
 
         AssetType<Text, TextData> assetType = assetTypeManager.createAssetType(Text.class, new TextFactory(), "text");
         assetTypeManager.getAssetFileDataProducer(assetType).addAssetFormat(new TextFileFormat());

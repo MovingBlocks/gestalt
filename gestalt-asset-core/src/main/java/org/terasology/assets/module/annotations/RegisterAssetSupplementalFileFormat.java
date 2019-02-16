@@ -16,7 +16,7 @@
 
 package org.terasology.assets.module.annotations;
 
-import org.terasology.assets.module.ModuleAwareAssetTypeManager;
+import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
 import org.terasology.module.sandbox.API;
 
 import java.lang.annotation.ElementType;
@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a {@link org.terasology.assets.format.AssetAlterationFileFormat AssetAlterationFileFormat} to be automatically registered by
- * {@link ModuleAwareAssetTypeManager ModuleAwareAssetTypeManager} on environment change to handle asset supplemental data files.
+ * {@link ModuleAwareAssetTypeManagerImpl ModuleAwareAssetTypeManager} on environment change to handle asset supplemental data files.
  * Supplemental data files are common across multiple file formats. For example, textures may support both '.png' and '.bmp' files (with one AssetFormat for each),
  * but also support secondary '.info' file that provides additional information such as the runtime compression or clamping technique to use. Supplemental file formats
  * support this use case.

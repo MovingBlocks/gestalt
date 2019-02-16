@@ -16,6 +16,8 @@
 
 package org.terasology.assets.module.autoreload;
 
+import android.support.annotation.RequiresApi;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.SetMultimap;
 
@@ -36,6 +38,7 @@ import java.util.Map;
  * <p>AssetReloadOnChangeHandler should be closed when no longer needed - such as when the module environment is being shut down - so that its file system handles can
  * be cleaned up</p>
  */
+@RequiresApi(26)
 public class AssetReloadOnChangeHandler implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetReloadOnChangeHandler.class);

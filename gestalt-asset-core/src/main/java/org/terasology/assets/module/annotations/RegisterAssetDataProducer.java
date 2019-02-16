@@ -16,7 +16,7 @@
 
 package org.terasology.assets.module.annotations;
 
-import org.terasology.assets.module.ModuleAwareAssetTypeManager;
+import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
 import org.terasology.module.sandbox.API;
 
 import java.lang.annotation.ElementType;
@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a {@link org.terasology.assets.AssetDataProducer AssetDataProducer} to be automatically registered by
- * {@link ModuleAwareAssetTypeManager ModuleAwareAssetTypeManager} on environment change.
+ * {@link ModuleAwareAssetTypeManagerImpl ModuleAwareAssetTypeManager} on environment change.
  * This can be used to procedurally generate assets based on a ResourceUrn.
  * <p>
  * For example, an AssetDataProducer may handle resource urns like "engine:color#FF00FF" to provide a texture with that color.
