@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.core.Component;
@@ -33,8 +35,6 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
-
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * A basic implementation of EventSystem. {@link Synchronous} events are processed immediately, other events are only processed when processEvents is called.

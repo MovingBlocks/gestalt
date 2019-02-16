@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.stubs;
+package modules.test;
 
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
-
-import java.util.List;
+import org.terasology.entitysystem.event.Event;
+import org.terasology.entitysystem.event.Synchronous;
 
 /**
  *
  */
-public interface ReferenceComponent extends Component {
+@Synchronous
+public class TestSynchEvent implements Event {
+    private final String value;
 
-    EntityRef getReference();
+    public TestSynchEvent(String value) {
+        this.value = value;
+    }
 
-    void setReference(EntityRef ref);
-
-    List<EntityRef> getReferences();
-
-    void setReferences(List<EntityRef> references);
+    public String getValue() {
+        return value;
+    }
 }

@@ -25,7 +25,7 @@ import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
-import org.terasology.entitysystem.stubs.SampleComponent;
+import modules.test.SampleComponent;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.valuetype.TypeLibrary;
 

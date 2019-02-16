@@ -23,14 +23,17 @@ import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.persistors.EntityPersistor;
 import org.terasology.entitysystem.persistence.proto.persistors.SimpleEntityPersistor;
-import org.terasology.entitysystem.stubs.SampleComponent;
+import modules.test.SampleComponent;
 import org.terasology.entitysystem.transaction.TransactionManager;
+import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.ModuleFactory;
+import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
-import virtualModules.test.VirtualModuleEnvironmentFactory;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
@@ -49,9 +52,9 @@ public class SimpleEntityPersistorTest {
     private InMemoryEntityManager finalEntityManager;
 
     public SimpleEntityPersistorTest() throws Exception {
-        ModuleEnvironment moduleEnvironment;
-        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
-        moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
+        ModuleFactory factory = new ModuleFactory();
+        Module module = factory.createPackageModule("modules.test");
+        ModuleEnvironment moduleEnvironment = new ModuleEnvironment(Collections.singletonList(module), new PermitAllPermissionProviderFactory());
 
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));

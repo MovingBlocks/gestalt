@@ -24,6 +24,7 @@ import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
+import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
@@ -33,13 +34,16 @@ import org.terasology.entitysystem.prefab.EntityRecipe;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.entitysystem.prefab.PrefabData;
 import org.terasology.entitysystem.prefab.PrefabJsonFormat;
-import org.terasology.entitysystem.stubs.SampleComponent;
+import modules.test.SampleComponent;
+import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.ModuleFactory;
+import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
-import virtualModules.test.VirtualModuleEnvironmentFactory;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -58,7 +62,7 @@ public class EntityRecipeManifestPersistorTest {
     private EntityRecipeManifestPersistor persistor;
     private ProtoPersistence context = ProtoPersistence.create();
 
-    private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManager();
+    private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManagerImpl();
     private AssetManager assetManager = new AssetManager(assetTypeManager);
 
     private EntityRecipeManifest manifest = new EntityRecipeManifest(assetManager);
@@ -70,9 +74,10 @@ public class EntityRecipeManifestPersistorTest {
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         componentManager = new CodeGenComponentManager(typeLibrary);
 
-        ModuleEnvironment moduleEnvironment;
-        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
-        moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
+        ModuleFactory factory = new ModuleFactory();
+        Module module = factory.createPackageModule("modules.test");
+        ModuleEnvironment moduleEnvironment = new ModuleEnvironment(Collections.singletonList(module), new PermitAllPermissionProviderFactory());
+
         AssetType<Prefab, PrefabData> prefabAssetType = assetTypeManager.createAssetType(Prefab.class, Prefab::new, "prefabs");
         AssetFileDataProducer<PrefabData> prefabDataProducer = assetTypeManager.getAssetFileDataProducer(prefabAssetType);
         prefabDataProducer.addAssetFormat(new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());

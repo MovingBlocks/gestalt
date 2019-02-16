@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.stubs;
+package modules.test;
 
-import org.terasology.entitysystem.event.Event;
-import org.terasology.entitysystem.event.Synchronous;
+import org.terasology.entitysystem.core.Component;
 
-/**
- *
- */
-@Synchronous
-public class TestSynchEvent implements Event {
-    private final String value;
+public interface SampleComponent extends Component {
+    String getName();
 
-    public TestSynchEvent(String value) {
-        this.value = value;
-    }
+    void setName(String value);
 
-    public String getValue() {
-        return value;
-    }
+    String getDescription();
+
+    void setDescription(String description);
 }

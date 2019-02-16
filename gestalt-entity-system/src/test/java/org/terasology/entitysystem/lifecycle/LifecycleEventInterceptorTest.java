@@ -30,7 +30,7 @@ import org.terasology.entitysystem.entity.inmemory.EntityState;
 import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventSystem;
-import org.terasology.entitysystem.stubs.SampleComponent;
+import modules.test.SampleComponent;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.valuetype.TypeLibrary;
 

@@ -17,15 +17,18 @@
 package org.terasology.entitysystem.component;
 
 import org.junit.Test;
+import org.reflections.util.ClasspathHelper;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
-import org.terasology.entitysystem.stubs.SampleComponent;
+import modules.test.SampleComponent;
+import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.ModuleFactory;
+import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.naming.Name;
 
+import java.util.Collections;
 import java.util.Optional;
-
-import virtualModules.test.VirtualModuleEnvironmentFactory;
 
 import static org.junit.Assert.assertEquals;
 
@@ -37,8 +40,9 @@ public class ComponentTypeIndexTest {
     private ComponentTypeIndex index;
 
     public ComponentTypeIndexTest() throws Exception {
-        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
-        ModuleEnvironment moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
+        ModuleFactory factory = new ModuleFactory(ClasspathHelper.staticClassLoader());
+        Module module = factory.createPackageModule("modules.test");
+        ModuleEnvironment moduleEnvironment = new ModuleEnvironment(Collections.singletonList(module), new PermitAllPermissionProviderFactory());
         index = new ComponentTypeIndex(moduleEnvironment);
     }
 
