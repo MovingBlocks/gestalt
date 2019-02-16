@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,17 @@ import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.event.impl.EventProcessor;
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
-import modules.test.TestChildEvent;
-import modules.test.TestEvent;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
+
+import modules.test.SampleComponent;
+import modules.test.SecondComponent;
+import modules.test.TestChildEvent;
+import modules.test.TestEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;

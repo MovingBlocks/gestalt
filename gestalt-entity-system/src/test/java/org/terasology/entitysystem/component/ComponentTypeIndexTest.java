@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.reflections.util.ClasspathHelper;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.entitysystem.component.module.ComponentTypeIndex;
-import modules.test.SampleComponent;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
@@ -29,6 +28,8 @@ import org.terasology.naming.Name;
 
 import java.util.Collections;
 import java.util.Optional;
+
+import modules.test.SampleComponent;
 
 import static org.junit.Assert.assertEquals;
 

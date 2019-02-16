@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,13 @@ import org.mockito.ArgumentCaptor;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.event.impl.EventProcessorBuilder;
 import org.terasology.entitysystem.event.impl.EventReceiverMethodSupport;
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
-import modules.test.TestEvent;
 
 import java.util.Collections;
 import java.util.Optional;
+
+import modules.test.SampleComponent;
+import modules.test.SecondComponent;
+import modules.test.TestEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,12 @@ import org.terasology.entitysystem.entity.inmemory.EntityState;
 import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventSystem;
-import modules.test.SampleComponent;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
+
+import modules.test.SampleComponent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
