@@ -23,9 +23,9 @@ import org.mockito.ArgumentCaptor;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.event.impl.EventProcessorBuilder;
 import org.terasology.entitysystem.event.impl.EventReceiverMethodSupport;
-import org.terasology.entitysystem.stubs.SampleComponent;
-import org.terasology.entitysystem.stubs.SecondComponent;
-import org.terasology.entitysystem.stubs.TestEvent;
+import modules.test.SampleComponent;
+import modules.test.SecondComponent;
+import modules.test.TestEvent;
 
 import java.util.Collections;
 import java.util.Optional;

@@ -22,19 +22,22 @@ import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
+import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
 import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.stubs.ReferenceComponent;
-import org.terasology.entitysystem.stubs.SampleComponent;
+import modules.test.ReferenceComponent;
+import modules.test.SampleComponent;
+import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
+import org.terasology.module.ModuleFactory;
+import org.terasology.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.valuetype.ImmutableCopy;
 import org.terasology.valuetype.TypeHandler;
 import org.terasology.valuetype.TypeLibrary;
 
+import java.util.Collections;
 import java.util.Optional;
-
-import virtualModules.test.VirtualModuleEnvironmentFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -64,12 +67,13 @@ public class PrefabJsonFormatTest {
 
     private ComponentManager componentManager;
 
-    private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManager();
+    private ModuleAwareAssetTypeManager assetTypeManager = new ModuleAwareAssetTypeManagerImpl();
     private AssetManager assetManager = new AssetManager(assetTypeManager);
 
     public PrefabJsonFormatTest() throws Exception {
-        VirtualModuleEnvironmentFactory virtualModuleEnvironmentFactory = new VirtualModuleEnvironmentFactory(getClass());
-        moduleEnvironment = virtualModuleEnvironmentFactory.createEnvironment();
+        ModuleFactory factory = new ModuleFactory();
+        Module module = factory.createPackageModule("modules.test");
+        ModuleEnvironment moduleEnvironment = new ModuleEnvironment(Collections.singletonList(module), new PermitAllPermissionProviderFactory());
 
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));

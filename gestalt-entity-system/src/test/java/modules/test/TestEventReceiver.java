@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,25 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.stubs;
+package modules.test;
 
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.event.EventResult;
+import org.terasology.entitysystem.event.ReceiveEvent;
 
 /**
  *
  */
-public interface SecondComponent extends Component {
-    String getName();
+public class TestEventReceiver {
 
-    void setName(String name);
+    public boolean called = false;
+    public SampleComponent component;
 
-    String getDescription();
+    @ReceiveEvent
+    public EventResult testEventListener(TestEvent event, EntityRef entity, SampleComponent sample) {
+        called = true;
+        component = sample;
+        return EventResult.COMPLETE;
+    }
 
-    void setDescription(String description);
 }

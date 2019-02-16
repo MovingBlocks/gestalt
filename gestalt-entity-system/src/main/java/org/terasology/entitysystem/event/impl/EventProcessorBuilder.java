@@ -176,7 +176,7 @@ public class EventProcessorBuilder {
     private SetMultimap<Class<? extends Event>, Class<? extends Event>> buildEventHierarchy() {
         SetMultimap<Class<? extends Event>, Class<? extends Event>> childEventLookup = HashMultimap.create();
         for (Class eventClass : eventClasses) {
-            for (Class parent : ReflectionUtils.getAllSuperTypes(eventClass, Predicates.assignableFrom(Event.class))) {
+            for (Class parent : ReflectionUtils.getAllSuperTypes(eventClass, Predicates.subtypeOf(Event.class))) {
                 if (!Event.class.equals(parent)) {
                     childEventLookup.put(parent, eventClass);
                 }

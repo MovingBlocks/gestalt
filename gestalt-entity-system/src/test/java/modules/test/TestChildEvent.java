@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.stubs;
-
-import org.terasology.entitysystem.core.Component;
+package modules.test;
 
 /**
  *
  */
-public interface EmptyComponent extends Component {
+public class TestChildEvent extends TestEvent {
+    public TestChildEvent(String value) {
+        super(value);
+    }
 }

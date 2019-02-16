@@ -1,0 +1,6 @@
+{
+  "id": "Test",
+  "version": "1.0.0",
+  "displayName": "Test",
+  "description": "This module contains test classes and assets for gestalt-entity-system"
+}
