@@ -32,7 +32,7 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
 
-import modules.test.SampleComponent;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -59,51 +59,51 @@ public class ComponentPersistorTest {
 
     @Test
     public void persistComponent() {
-        SampleComponent component = componentManager.create(SampleComponent.class);
+        Sample component = componentManager.create(Sample.class);
         component.setName("Test Name");
         component.setDescription("Test Description");
 
         ProtoDatastore.ComponentData componentData = persistor.serialize(component).build();
         Component deserialized = persistor.deserialize(componentData).orElseThrow(RuntimeException::new);
-        assertTrue(deserialized instanceof SampleComponent);
-        SampleComponent deserializedSampleComp = (SampleComponent) deserialized;
+        assertTrue(deserialized instanceof Sample);
+        Sample deserializedSampleComp = (Sample) deserialized;
         assertEquals(component.getName(), deserializedSampleComp.getName());
         assertEquals(component.getDescription(), deserializedSampleComp.getDescription());
     }
 
     @Test
     public void persistComponentDelta() {
-        SampleComponent baseComponent = componentManager.create(SampleComponent.class);
+        Sample baseComponent = componentManager.create(Sample.class);
         baseComponent.setName("Test Name");
         baseComponent.setDescription("Test Description");
 
-        SampleComponent component = componentManager.create(SampleComponent.class);
+        Sample component = componentManager.create(Sample.class);
         component.setName("New Name");
         component.setDescription("Test Description");
 
         ProtoDatastore.ComponentData componentData = persistor.serializeDelta(baseComponent, component).build();
         Component deserialized = persistor.deserializeOnto(componentData, componentManager.copy(baseComponent));
-        assertTrue(deserialized instanceof SampleComponent);
-        SampleComponent deserializedSampleComp = (SampleComponent) deserialized;
+        assertTrue(deserialized instanceof Sample);
+        Sample deserializedSampleComp = (Sample) deserialized;
         assertEquals(component.getName(), deserializedSampleComp.getName());
         assertEquals(component.getDescription(), deserializedSampleComp.getDescription());
     }
 
     @Test
     public void persistComponentDeltaWithChangedBase() {
-        SampleComponent baseComponent = componentManager.create(SampleComponent.class);
+        Sample baseComponent = componentManager.create(Sample.class);
         baseComponent.setName("Test Name");
         baseComponent.setDescription("Test Description");
 
-        SampleComponent component = componentManager.create(SampleComponent.class);
+        Sample component = componentManager.create(Sample.class);
         component.setName("New Name");
         component.setDescription("Test Description");
 
         ProtoDatastore.ComponentData componentData = persistor.serializeDelta(baseComponent, component).build();
         baseComponent.setDescription("Meow");
         Component deserialized = persistor.deserializeOnto(componentData, componentManager.copy(baseComponent));
-        assertTrue(deserialized instanceof SampleComponent);
-        SampleComponent deserializedSampleComp = (SampleComponent) deserialized;
+        assertTrue(deserialized instanceof Sample);
+        Sample deserializedSampleComp = (Sample) deserialized;
         assertEquals(component.getName(), deserializedSampleComp.getName());
         assertEquals("Meow", deserializedSampleComp.getDescription());
     }

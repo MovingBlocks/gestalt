@@ -44,7 +44,7 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
 
-import modules.test.SampleComponent;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -89,10 +89,10 @@ public class EntityRecipeManifestPersistorTest {
 
         entityRecipeFromPrefab = assetManager.getAsset(PREFAB_URN, Prefab.class).get().getEntityRecipes().get(ENTITY_RECIPE_URN);
         entityRecipeUnresolvable = new EntityRecipe(UNRESOLVABLE_RECIPE_URN);
-        SampleComponent comp = componentManager.create(SampleComponent.class);
+        Sample comp = componentManager.create(Sample.class);
         comp.setName("Fake");
         comp.setDescription("Fakey fake");
-        entityRecipeUnresolvable.add(SampleComponent.class, comp);
+        entityRecipeUnresolvable.add(Sample.class, comp);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class EntityRecipeManifestPersistorTest {
         EntityRecipe entityRecipeFromPrefab = assetManager.getAsset(PREFAB_URN, Prefab.class).get().getEntityRecipes().get(ENTITY_RECIPE_URN);
         manifest.addEntityRecipeMetadata(new EntityRecipeMetadata(ID, ENTITY_RECIPE_URN, entityRecipeFromPrefab));
         ProtoDatastore.EntityRecipeManifestData serializedManifest = persistor.serialize(manifest).build();
-        entityRecipeFromPrefab.getComponent(SampleComponent.class).get().setName("Altered Name");
+        entityRecipeFromPrefab.getComponent(Sample.class).get().setName("Altered Name");
         EntityRecipeManifest finalManifest = persistor.deserialize(serializedManifest);
         EntityRecipeMetadata entityRecipeMetadata = finalManifest.getEntityRecipeMetadata(ID).orElseThrow(AssertionError::new);
 

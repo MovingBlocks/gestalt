@@ -20,16 +20,18 @@ import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.event.EventResult;
 import org.terasology.entitysystem.event.ReceiveEvent;
 
+import modules.test.components.Sample;
+
 /**
  *
  */
 public class TestEventReceiver {
 
     public boolean called = false;
-    public SampleComponent component;
+    public Sample component;
 
     @ReceiveEvent
-    public EventResult testEventListener(TestEvent event, EntityRef entity, SampleComponent sample) {
+    public EventResult testEventListener(TestEvent event, EntityRef entity, Sample sample) {
         called = true;
         component = sample;
         return EventResult.COMPLETE;

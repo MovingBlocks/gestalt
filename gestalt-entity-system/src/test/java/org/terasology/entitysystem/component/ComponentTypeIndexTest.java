@@ -29,7 +29,7 @@ import org.terasology.naming.Name;
 import java.util.Collections;
 import java.util.Optional;
 
-import modules.test.SampleComponent;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 
@@ -49,26 +49,22 @@ public class ComponentTypeIndexTest {
 
     @Test
     public void findComponentWithFullUrn() {
-        assertEquals(Optional.of(SampleComponent.class), index.find(new ResourceUrn("Test:SampleComponent")));
+        assertEquals(Optional.of(Sample.class), index.find(new ResourceUrn("Test:Sample")));
     }
 
     @Test
     public void findComponentWithStringUrn() {
-        assertEquals(Optional.of(SampleComponent.class), index.find("Test:SampleComponent"));
+        assertEquals(Optional.of(Sample.class), index.find("Test:Sample"));
     }
 
     @Test
     public void findComponentWithNameAlone() {
-        assertEquals(Optional.of(SampleComponent.class), index.find(new Name("SampleComponent")));
+        assertEquals(Optional.of(Sample.class), index.find(new Name("Sample")));
     }
 
     @Test
     public void findComponentWithStringName() {
-        assertEquals(Optional.of(SampleComponent.class), index.find("SampleComponent"));
+        assertEquals(Optional.of(Sample.class), index.find("Sample"));
     }
 
-    @Test
-    public void findComponentWithNameWithoutSuffix() {
-        assertEquals(Optional.of(SampleComponent.class), index.find("Sample"));
-    }
 }

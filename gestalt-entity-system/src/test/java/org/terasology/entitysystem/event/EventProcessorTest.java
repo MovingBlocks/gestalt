@@ -32,8 +32,8 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
 
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
+import modules.test.components.Sample;
+import modules.test.components.Second;
 import modules.test.TestChildEvent;
 import modules.test.TestEvent;
 
@@ -69,7 +69,7 @@ public class EventProcessorTest {
     public void startup() {
         transactionManager.begin();
         testEntity = entityManager.createEntity();
-        SampleComponent comp = testEntity.addComponent(SampleComponent.class);
+        Sample comp = testEntity.addComponent(Sample.class);
         comp.setName(TEST_NAME);
         transactionManager.commit();
 
@@ -87,7 +87,7 @@ public class EventProcessorTest {
     public void eventHandlerReceivesEvent() {
         EventHandler<TestEvent> handler = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder().addHandler(handler, TestEvent.class, SampleComponent.class).build();
+        eventProcessor = EventProcessor.newBuilder().addHandler(handler, TestEvent.class, Sample.class).build();
 
         assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity));
 
@@ -101,8 +101,8 @@ public class EventProcessorTest {
         when(handler.onEvent(event, testEntity)).thenReturn(EventResult.CANCEL);
         when(handler2.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handler, TestEvent.class, SampleComponent.class)
-                .addHandler(handler2, TestEvent.class, SampleComponent.class).build();
+                .addHandler(handler, TestEvent.class, Sample.class)
+                .addHandler(handler2, TestEvent.class, Sample.class).build();
 
         assertEquals(EventResult.CANCEL, eventProcessor.send(event, testEntity));
 
@@ -117,8 +117,8 @@ public class EventProcessorTest {
         when(handler.onEvent(event, testEntity)).thenReturn(EventResult.COMPLETE);
         when(handler2.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handler, TestEvent.class, SampleComponent.class)
-                .addHandler(handler2, TestEvent.class, SampleComponent.class).build();
+                .addHandler(handler, TestEvent.class, Sample.class)
+                .addHandler(handler2, TestEvent.class, Sample.class).build();
 
         assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity));
 
@@ -131,7 +131,7 @@ public class EventProcessorTest {
         EventHandler<TestEvent> handler = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handler, TestEvent.class, SecondComponent.class).build();
+                .addHandler(handler, TestEvent.class, Second.class).build();
 
         assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity));
 
@@ -140,7 +140,7 @@ public class EventProcessorTest {
 
     @Test
     public void triggeringComponentsRestrictsReceivers() {
-        testEntity.addComponent(SecondComponent.class);
+        testEntity.addComponent(Second.class);
 
         EventHandler<TestEvent> sampleHandler = mock(EventHandler.class);
         when(sampleHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
@@ -148,10 +148,10 @@ public class EventProcessorTest {
         EventHandler<TestEvent> secondHandler = mock(EventHandler.class);
         when(secondHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
-                .addHandler(sampleHandler, TestEvent.class, SampleComponent.class)
-                .addHandler(secondHandler, TestEvent.class, SecondComponent.class).build();
+                .addHandler(sampleHandler, TestEvent.class, Sample.class)
+                .addHandler(secondHandler, TestEvent.class, Second.class).build();
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity, Sets.newHashSet(SampleComponent.class)));
+        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity, Sets.newHashSet(Sample.class)));
 
         verify(sampleHandler).onEvent(event, testEntity);
         verifyNoMoreInteractions(secondHandler);
@@ -166,10 +166,10 @@ public class EventProcessorTest {
         EventHandler<TestEvent> secondHandler = mock(EventHandler.class);
         when(secondHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
-                .addHandler(sampleHandler, TestEvent.class, SampleComponent.class)
-                .addHandler(secondHandler, TestEvent.class, SecondComponent.class).build();
+                .addHandler(sampleHandler, TestEvent.class, Sample.class)
+                .addHandler(secondHandler, TestEvent.class, Second.class).build();
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity, Sets.newHashSet(SecondComponent.class)));
+        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity, Sets.newHashSet(Second.class)));
 
         verifyNoMoreInteractions(sampleHandler);
         verify(secondHandler).onEvent(event, testEntity);
@@ -182,8 +182,8 @@ public class EventProcessorTest {
         when(handlerA.onEvent(event, testEntity)).thenReturn(EventResult.CANCEL);
         when(handlerB.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handlerA, TestEvent.class, SampleComponent.class)
-                .addHandler(handlerB, TestEvent.class, SampleComponent.class).orderBefore(handlerA.getClass()).build();
+                .addHandler(handlerA, TestEvent.class, Sample.class)
+                .addHandler(handlerB, TestEvent.class, Sample.class).orderBefore(handlerA.getClass()).build();
 
         assertEquals(EventResult.CANCEL, eventProcessor.send(event, testEntity));
 
@@ -197,7 +197,7 @@ public class EventProcessorTest {
         eventProcessor = EventProcessor.newBuilder()
                 .addEventClass(TestEvent.class)
                 .addEventClass(TestChildEvent.class)
-                .addHandler(handler, TestEvent.class, SampleComponent.class)
+                .addHandler(handler, TestEvent.class, Sample.class)
                 .build();
         assertEquals(EventResult.COMPLETE, eventProcessor.send(childEvent, testEntity));
 
@@ -212,8 +212,8 @@ public class EventProcessorTest {
         when(handlerA.onEvent(event, testEntity)).thenThrow(new RuntimeException());
         when(handlerB.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
         eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handlerA, TestEvent.class, SampleComponent.class)
-                .addHandler(handlerB, TestEvent.class, SampleComponent.class).orderBefore(handlerA.getClass()).build();
+                .addHandler(handlerA, TestEvent.class, Sample.class)
+                .addHandler(handlerB, TestEvent.class, Sample.class).orderBefore(handlerA.getClass()).build();
 
         assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity));
 

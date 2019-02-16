@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package modules.test;
+package modules.test.components;
 
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityRef;
@@ -24,7 +24,7 @@ import java.util.List;
 /**
  *
  */
-public interface ReferenceComponent extends Component {
+public interface Reference extends Component {
 
     EntityRef getReference();
 

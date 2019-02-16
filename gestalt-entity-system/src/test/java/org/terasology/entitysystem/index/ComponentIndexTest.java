@@ -30,8 +30,8 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
 
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
+import modules.test.components.Sample;
+import modules.test.components.Second;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -50,7 +50,7 @@ public class ComponentIndexTest {
         TypeLibrary typeLibrary = new TypeLibrary();
         typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary), transactionManager);
-        componentIndex = ComponentIndexes.createComponentIndex(transactionManager, entityManager, SampleComponent.class);
+        componentIndex = ComponentIndexes.createComponentIndex(transactionManager, entityManager, Sample.class);
     }
 
     @Before
@@ -68,7 +68,7 @@ public class ComponentIndexTest {
     @Test
     public void newEntityNoComponentNotInIndex() {
         EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SecondComponent.class);
+        entity.addComponent(Second.class);
         transactionManager.commit();
         assertFalse(componentIndex.contains(entity));
     }
@@ -76,7 +76,7 @@ public class ComponentIndexTest {
     @Test
     public void newEntityWithComponentInIndex() {
         EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
+        entity.addComponent(Sample.class);
         transactionManager.commit();
         assertTrue(componentIndex.contains(entity));
     }
@@ -84,12 +84,12 @@ public class ComponentIndexTest {
     @Test
     public void entityWithComponentRemovedIsRemovedFromIndex() {
         EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
+        entity.addComponent(Sample.class);
         transactionManager.commit();
 
         transactionManager.begin();
-        entity.addComponent(SecondComponent.class);
-        entity.removeComponent(SampleComponent.class);
+        entity.addComponent(Second.class);
+        entity.removeComponent(Sample.class);
         transactionManager.commit();
         assertFalse(componentIndex.contains(entity));
     }
@@ -97,11 +97,11 @@ public class ComponentIndexTest {
     @Test
     public void entityWithComponentAddedIsAddedToIndex() {
         EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SecondComponent.class);
+        entity.addComponent(Second.class);
         transactionManager.commit();
 
         transactionManager.begin();
-        entity.addComponent(SampleComponent.class);
+        entity.addComponent(Sample.class);
         transactionManager.commit();
         assertTrue(componentIndex.contains(entity));
     }

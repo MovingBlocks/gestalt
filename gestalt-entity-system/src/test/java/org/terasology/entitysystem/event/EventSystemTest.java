@@ -30,8 +30,8 @@ import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Set;
 
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
+import modules.test.components.Sample;
+import modules.test.components.Second;
 import modules.test.TestEvent;
 import modules.test.TestSynchEvent;
 
@@ -56,7 +56,7 @@ public abstract class EventSystemTest {
     private EventProcessor eventProcessor = mock(EventProcessor.class);
     private EventSystem eventSystem;
     private TransactionPipeline pipeline = new TransactionPipeline();
-    private Set<Class<? extends Component>> triggeringComponents = ImmutableSet.of(SampleComponent.class, SecondComponent.class);
+    private Set<Class<? extends Component>> triggeringComponents = ImmutableSet.of(Sample.class, Second.class);
 
     public EventSystemTest() {
         when(transactionManager.getPipeline()).thenReturn(pipeline);

@@ -35,7 +35,7 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
 
-import modules.test.SampleComponent;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -65,7 +65,7 @@ public class LifecycleEventInterceptorTest {
     public void sendOnAddedEventForNewComponents() {
         EntityState entityState = new EntityState(1, 1, Collections.emptyList(), Collections.emptyList());
         systemState.addState(entityState);
-        SampleComponent comp = componentManager.create(SampleComponent.class);
+        Sample comp = componentManager.create(Sample.class);
         comp.setName("Name");
         entityState.addComponent(comp);
 
@@ -76,19 +76,19 @@ public class LifecycleEventInterceptorTest {
         lifecycleEventInterceptor.handle(context);
 
         ArgumentCaptor<Event> eventCapturer = ArgumentCaptor.forClass(Event.class);
-        verify(mockEventSystem).send(eventCapturer.capture(), eq(entityRef), eq(Sets.newHashSet(SampleComponent.class)));
+        verify(mockEventSystem).send(eventCapturer.capture(), eq(entityRef), eq(Sets.newHashSet(Sample.class)));
 
         assertTrue(eventCapturer.getValue() instanceof OnAdded);
         OnAdded onAddedEvent = (OnAdded) eventCapturer.getValue();
-        assertEquals(comp, onAddedEvent.getComponent(SampleComponent.class));
+        assertEquals(comp, onAddedEvent.getComponent(Sample.class));
     }
 
     @Test
     public void sendOnRemovedEventForRemovedComponents() {
-        SampleComponent originalComp = componentManager.create(SampleComponent.class);
+        Sample originalComp = componentManager.create(Sample.class);
         EntityState entityState = new EntityState(1, 1, Lists.newArrayList(originalComp), Lists.newArrayList(originalComp));
         systemState.addState(entityState);
-        entityState.removeComponent(SampleComponent.class);
+        entityState.removeComponent(Sample.class);
 
         EntityRef entityRef = new CoreEntityRef(null, 1);
         when(mockEntityManager.getEntity(1)).thenReturn(entityRef);
@@ -97,18 +97,18 @@ public class LifecycleEventInterceptorTest {
         lifecycleEventInterceptor.handle(context);
 
         ArgumentCaptor<Event> eventCapturer = ArgumentCaptor.forClass(Event.class);
-        verify(mockEventSystem).send(eventCapturer.capture(), eq(entityRef), eq(Sets.newHashSet(SampleComponent.class)));
+        verify(mockEventSystem).send(eventCapturer.capture(), eq(entityRef), eq(Sets.newHashSet(Sample.class)));
 
         assertTrue(eventCapturer.getValue() instanceof OnRemoved);
         OnRemoved onRemovedEvent = (OnRemoved) eventCapturer.getValue();
-        assertEquals(originalComp, onRemovedEvent.getComponent(SampleComponent.class));
+        assertEquals(originalComp, onRemovedEvent.getComponent(Sample.class));
     }
 
     @Test
     public void sendOnChangedEventForUpdatedComponents() {
-        SampleComponent originalComp = componentManager.create(SampleComponent.class);
+        Sample originalComp = componentManager.create(Sample.class);
         originalComp.setName("Name");
-        SampleComponent workingComp = componentManager.create(SampleComponent.class);
+        Sample workingComp = componentManager.create(Sample.class);
         workingComp.setName("NewName");
         EntityState entityState = new EntityState(1, 1, Lists.newArrayList(originalComp), Lists.newArrayList(workingComp));
         systemState.addState(entityState);
@@ -120,11 +120,11 @@ public class LifecycleEventInterceptorTest {
         lifecycleEventInterceptor.handle(context);
 
         ArgumentCaptor<Event> eventCapturer = ArgumentCaptor.forClass(Event.class);
-        verify(mockEventSystem).send(eventCapturer.capture(), eq(entityRef), eq(Sets.newHashSet(SampleComponent.class)));
+        verify(mockEventSystem).send(eventCapturer.capture(), eq(entityRef), eq(Sets.newHashSet(Sample.class)));
 
         assertTrue(eventCapturer.getValue() instanceof OnChanged);
         OnChanged onChangedEvent = (OnChanged) eventCapturer.getValue();
-        assertEquals(originalComp, onChangedEvent.getBeforeComponent(SampleComponent.class));
-        assertEquals(workingComp, onChangedEvent.getAfterComponent(SampleComponent.class));
+        assertEquals(originalComp, onChangedEvent.getBeforeComponent(Sample.class));
+        assertEquals(workingComp, onChangedEvent.getAfterComponent(Sample.class));
     }
 }

@@ -28,8 +28,8 @@ import org.terasology.valuetype.TypeLibrary;
 import java.io.IOException;
 import java.util.Optional;
 
-import modules.test.SampleComponent;
-import modules.test.SecondComponent;
+import modules.test.components.Sample;
+import modules.test.components.Second;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -71,7 +71,7 @@ public class BasicEntityTest {
     public void createEntity() {
         EntityRef entity = entityManager.createEntity();
         assertNotNull(entity);
-        entity.addComponent(SampleComponent.class);
+        entity.addComponent(Sample.class);
         transactionManager.commit();
         transactionManager.begin();
         assertTrue(entity.isPresent());
@@ -95,13 +95,13 @@ public class BasicEntityTest {
     @Test
     public void retrieveComponentFromEntity() {
         EntityRef entity = entityManager.createEntity();
-        SampleComponent component = entity.addComponent(SampleComponent.class);
+        Sample component = entity.addComponent(Sample.class);
         component.setName("Name");
         component.setDescription("Description");
         transactionManager.commit();
 
         transactionManager.begin();
-        Optional<SampleComponent> retrievedComponent = entity.getComponent(SampleComponent.class);
+        Optional<Sample> retrievedComponent = entity.getComponent(Sample.class);
         assertTrue(retrievedComponent.isPresent());
         assertEquals(component.getName(), retrievedComponent.get().getName());
         assertEquals(component.getDescription(), retrievedComponent.get().getDescription());
@@ -110,17 +110,17 @@ public class BasicEntityTest {
     @Test
     public void updateComponent() {
         EntityRef entity = entityManager.createEntity();
-        SampleComponent sampleComponent = entity.addComponent(SampleComponent.class);
+        Sample sampleComponent = entity.addComponent(Sample.class);
         sampleComponent.setName(TEST_NAME);
         transactionManager.commit();
 
         transactionManager.begin();
-        Optional<SampleComponent> component = entity.getComponent(SampleComponent.class);
+        Optional<Sample> component = entity.getComponent(Sample.class);
         component.get().setName(TEST_NAME_2);
         transactionManager.commit();
 
         transactionManager.begin();
-        Optional<SampleComponent> finalComp = entity.getComponent(SampleComponent.class);
+        Optional<Sample> finalComp = entity.getComponent(Sample.class);
         assertTrue(finalComp.isPresent());
         assertEquals(TEST_NAME_2, finalComp.get().getName());
     }
@@ -128,22 +128,22 @@ public class BasicEntityTest {
     @Test
     public void changesInOriginalComponentDoesNotChangeStoredComponent() {
         EntityRef entity = entityManager.createEntity();
-        SampleComponent component = entity.addComponent(SampleComponent.class);
+        Sample component = entity.addComponent(Sample.class);
         transactionManager.commit();
 
         transactionManager.begin();
         component.setName("New Name");
-        assertNotEquals(component.getName(), entity.getComponent(SampleComponent.class).get().getName());
+        assertNotEquals(component.getName(), entity.getComponent(Sample.class).get().getName());
     }
 
     @Test
     public void changesInRetrievedComponentDoesNotChangeStoredComponent() {
         EntityRef entity = entityManager.createEntity();
-        SampleComponent component = entity.addComponent(SampleComponent.class);
+        Sample component = entity.addComponent(Sample.class);
         transactionManager.commit();
 
         transactionManager.begin();
-        SampleComponent retrievedComponent = entity.getComponent(SampleComponent.class).get();
+        Sample retrievedComponent = entity.getComponent(Sample.class).get();
         retrievedComponent.setName("New Name");
         assertNotEquals(component.getName(), retrievedComponent.getName());
         transactionManager.commit();
@@ -153,13 +153,13 @@ public class BasicEntityTest {
     @Test
     public void addComponent() throws Exception {
         EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
-        SecondComponent secondComponent = entity.addComponent(SecondComponent.class);
-        secondComponent.setName(TEST_NAME);
+        entity.addComponent(Sample.class);
+        Second second = entity.addComponent(Second.class);
+        second.setName(TEST_NAME);
         transactionManager.commit();
 
         transactionManager.begin();
-        Optional<SecondComponent> finalComp = entity.getComponent(SecondComponent.class);
+        Optional<Second> finalComp = entity.getComponent(Second.class);
         assertTrue(finalComp.isPresent());
         assertEquals(TEST_NAME, finalComp.get().getName());
     }
@@ -167,29 +167,29 @@ public class BasicEntityTest {
     @Test
     public void removeComponent() {
         EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
-        entity.addComponent(SecondComponent.class);
+        entity.addComponent(Sample.class);
+        entity.addComponent(Second.class);
         transactionManager.commit();
 
         transactionManager.begin();
-        entity.removeComponent(SecondComponent.class);
-        assertFalse(entity.getComponent(SecondComponent.class).isPresent());
+        entity.removeComponent(Second.class);
+        assertFalse(entity.getComponent(Second.class).isPresent());
         transactionManager.commit();
         transactionManager.begin();
-        assertFalse(entity.getComponent(SecondComponent.class).isPresent());
+        assertFalse(entity.getComponent(Second.class).isPresent());
     }
 
     @Test
     public void removeComponentDuringInitialTransaction() {
         EntityRef entity = entityManager.createEntity();
-        entity.addComponent(SampleComponent.class);
-        entity.addComponent(SecondComponent.class);
-        entity.removeComponent(SecondComponent.class);
-        assertFalse(entity.getComponent(SecondComponent.class).isPresent());
+        entity.addComponent(Sample.class);
+        entity.addComponent(Second.class);
+        entity.removeComponent(Second.class);
+        assertFalse(entity.getComponent(Second.class).isPresent());
         transactionManager.commit();
 
         transactionManager.begin();
-        assertFalse(entity.getComponent(SecondComponent.class).isPresent());
+        assertFalse(entity.getComponent(Second.class).isPresent());
     }
 
     @Test

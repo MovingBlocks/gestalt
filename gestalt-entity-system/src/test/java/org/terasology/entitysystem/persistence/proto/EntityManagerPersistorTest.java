@@ -34,7 +34,7 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
 
-import modules.test.SampleComponent;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -74,7 +74,7 @@ public class EntityManagerPersistorTest {
         EntityManager entityManager = new InMemoryEntityManager(componentManager, initialTransactionManager);
         initialTransactionManager.begin();
         EntityRef entity = entityManager.createEntity();
-        SampleComponent sampleComponent = entity.addComponent(SampleComponent.class);
+        Sample sampleComponent = entity.addComponent(Sample.class);
         sampleComponent.setName(NAME);
         sampleComponent.setDescription(DESCRIPTION);
         initialTransactionManager.commit();
@@ -85,8 +85,8 @@ public class EntityManagerPersistorTest {
         EntityRef newEntity = newEntityManager.getEntity(entity.getId());
         finalTransactionManager.begin();
         assertTrue(newEntity.isPresent());
-        assertTrue(newEntity.getComponent(SampleComponent.class).isPresent());
-        assertEquals(NAME, newEntity.getComponent(SampleComponent.class).get().getName());
-        assertEquals(DESCRIPTION, newEntity.getComponent(SampleComponent.class).get().getDescription());
+        assertTrue(newEntity.getComponent(Sample.class).isPresent());
+        assertEquals(NAME, newEntity.getComponent(Sample.class).get().getName());
+        assertEquals(DESCRIPTION, newEntity.getComponent(Sample.class).get().getDescription());
     }
 }

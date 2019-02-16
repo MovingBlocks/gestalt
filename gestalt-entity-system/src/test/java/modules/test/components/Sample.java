@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package modules.test;
+package modules.test.components;
 
 import org.terasology.entitysystem.core.Component;
 
-/**
- *
- */
-public interface SecondComponent extends Component {
+public interface Sample extends Component {
     String getName();
 
-    void setName(String name);
+    void setName(String value);
 
     String getDescription();
 

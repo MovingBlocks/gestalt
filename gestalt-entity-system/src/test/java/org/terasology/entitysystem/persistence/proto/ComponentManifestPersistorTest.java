@@ -35,7 +35,7 @@ import org.terasology.valuetype.TypeLibrary;
 
 import java.util.Collections;
 
-import modules.test.SampleComponent;
+import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -59,7 +59,7 @@ public class ComponentManifestPersistorTest {
         ComponentManifestPersistor persistor = new ComponentManifestPersistor(moduleEnvironment, componentManager);
 
         ComponentManifest manifest = new ComponentManifest(moduleEnvironment, componentManager);
-        ComponentMetadata<SampleComponent> metadata = new ComponentMetadata<>(1, new Name("Test"), new Name("Sample"), componentManager.getType(SampleComponent.class));
+        ComponentMetadata<Sample> metadata = new ComponentMetadata<>(1, new Name("Test"), new Name("Sample"), componentManager.getType(Sample.class));
         manifest.addComponentMetadata(metadata);
         ProtoDatastore.ComponentManifestData manifestData = persistor.serialize(manifest).build();
         ComponentManifest finalManifest = persistor.deserialize(manifestData);
@@ -68,7 +68,7 @@ public class ComponentManifestPersistorTest {
         assertNotNull(finalManifest.getComponentMetadata(1));
         ComponentMetadata<?> componentMetadata = finalManifest.getComponentMetadata(1).orElseThrow(AssertionError::new);
         assertEquals(new Name("Sample"), componentMetadata.getName());
-        assertEquals(componentManager.getType(SampleComponent.class), componentMetadata.getComponentType().orElseThrow(IllegalStateException::new));
+        assertEquals(componentManager.getType(Sample.class), componentMetadata.getComponentType().orElseThrow(IllegalStateException::new));
 
         assertEquals(Sets.newLinkedHashSet(manifest.getComponentMetadata(1).get().allFields()), Sets.newLinkedHashSet(componentMetadata.allFields()));
 
