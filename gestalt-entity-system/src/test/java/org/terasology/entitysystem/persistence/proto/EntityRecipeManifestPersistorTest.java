@@ -25,8 +25,8 @@ import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
-import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.component.StandardComponentManager;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
 import org.terasology.entitysystem.persistence.proto.persistors.EntityRecipeManifestPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
@@ -71,9 +71,7 @@ public class EntityRecipeManifestPersistorTest {
     private EntityRecipe entityRecipeUnresolvable;
 
     public EntityRecipeManifestPersistorTest() throws Exception {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
-        componentManager = new CodeGenComponentManager(typeLibrary);
+        componentManager = new StandardComponentManager();
 
         ModuleFactory factory = new ModuleFactory();
         Module module = factory.createPackageModule("modules.test");

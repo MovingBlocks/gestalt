@@ -123,10 +123,10 @@ public class ComponentTable implements EntityStore {
         ReentrantLock lock = locks[selectLock(entityId)];
         lock.lock();
         try {
-            TLongObjectMap<Component> entityMap = store.get(component.getType());
+            TLongObjectMap<Component> entityMap = store.get(component.getClass());
             if (entityMap == null) {
                 entityMap = TCollections.synchronizedMap(new TLongObjectHashMap<>());
-                store.put(component.getType(), entityMap);
+                store.put(component.getClass(), entityMap);
             }
             revisions.adjustOrPutValue(entityId, 1, 1);
             boolean added = entityMap.putIfAbsent(entityId, componentManager.copy(component)) == null;
@@ -144,7 +144,7 @@ public class ComponentTable implements EntityStore {
         ReentrantLock lock = locks[selectLock(entityId)];
         lock.lock();
         try {
-            TLongObjectMap<Component> entityMap = store.get(component.getType());
+            TLongObjectMap<Component> entityMap = store.get(component.getClass());
             if (entityMap == null) {
                 return false;
             }
@@ -215,7 +215,8 @@ public class ComponentTable implements EntityStore {
         for (TLongObjectMap<Component> componentMap : store.values()) {
             Component comp = componentMap.get(entityId);
             if (comp != null) {
-                components.add(componentManager.copy(comp));
+                Component copy = componentManager.copy(comp);
+                components.add(copy);
             }
         }
         return components;

@@ -16,32 +16,43 @@
 
 package org.terasology.entitysystem.component;
 
+import com.google.common.base.Preconditions;
+
 import org.terasology.entitysystem.core.Component;
 
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * ComponentType provides type information for a component, including reflection-like functionality to create, copy and access the properties of a component instance.
  */
 public final class ComponentType<T extends Component> {
-    private final Class<T> interfaceType;
+    private final Class<T> type;
     private final Supplier<T> constructor;
-    private final ComponentPropertyInfo<T> type;
-    private final ComponentCopyFunction<T> copyStrategy;
+    private final Function<T, T> copyConstructor;
+    private final BiConsumer<T, T> copyMethod;
+    private final ComponentPropertyInfo<T> propertyInfo;
+
 
     /**
-     * Creates a component type
      *
-     * @param constructor   A supplier that will construct an instance of this component type
-     * @param interfaceType The type of the interface of this component
-     * @param propertyInfo  The property info for this type
-     * @param copyStrategy  The function for copying a component
+     * @param type The type of the component
+     * @param constructor A supplier that creates a new instance of the component
+     * @param copyConstructor A function that create a new instance of the component, copying another component
+     * @param copyMethod Method that takes a source and target component and copies all properties from source to target.
+     * @param propertyInfo Information on all properties of the component type
      */
-    public ComponentType(Supplier<T> constructor, Class<T> interfaceType, ComponentPropertyInfo<T> propertyInfo, ComponentCopyFunction<T> copyStrategy) {
+    public ComponentType(Class<T> type, Supplier<T> constructor, Function<T, T> copyConstructor, BiConsumer<T, T> copyMethod, ComponentPropertyInfo<T> propertyInfo) {
+        Preconditions.checkNotNull(type);
+        Preconditions.checkNotNull(constructor);
+        Preconditions.checkNotNull(copyConstructor);
+        Preconditions.checkNotNull(copyMethod);
+        this.type = type;
         this.constructor = constructor;
-        this.interfaceType = interfaceType;
-        this.type = propertyInfo;
-        this.copyStrategy = copyStrategy;
+        this.copyConstructor = copyConstructor;
+        this.copyMethod = copyMethod;
+        this.propertyInfo = propertyInfo;
     }
 
     /**
@@ -52,28 +63,37 @@ public final class ComponentType<T extends Component> {
     }
 
     /**
-     * Copies a component onto anothing component
+     * @param original The component to copy
+     * @return A new copy of the original component
+     */
+    public T createCopy(T original) {
+        return copyConstructor.apply(original);
+    }
+
+    /**
+     * Copies a component onto another component
      *
      * @param from The component to copy from
      * @param to   The component to copy to
      * @return The updated to component
      */
     public T copy(T from, T to) {
-        return copyStrategy.apply(from, to);
+        copyMethod.accept(from, to);
+        return to;
     }
 
     /**
-     * @return The type of component this the ComponentType is for
+     * @return The propertyInfo of component this the ComponentType is for
      */
     public Class<T> getComponentClass() {
-        return interfaceType;
+        return type;
     }
 
     /**
-     * @return Information on the properties of the component type.
+     * @return Information on the properties of the component propertyInfo.
      */
     public ComponentPropertyInfo<T> getPropertyInfo() {
-        return type;
+        return propertyInfo;
     }
 
 }

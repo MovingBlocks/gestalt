@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Lookup components via a combination of their module name and simple class name (with or without the 'Component' suffix if present),
+ * Lookup components via a combination of their module name and simple class name
  * as a ResourceUrn (fragment names and instance flags ignored).
  */
 public class ComponentTypeIndex {
@@ -57,7 +57,7 @@ public class ComponentTypeIndex {
         this.resolutionStrategy = resolutionStrategy;
         ImmutableMap.Builder<ResourceUrn, Class<? extends Component>> componentByUrnBuilder = ImmutableMap.builder();
         ImmutableSetMultimap.Builder<Name, Name> modulesProvidingComponentsBuilder = ImmutableSetMultimap.builder();
-        for (Class<? extends Component> componentType : environment.getSubtypesOf(Component.class, (x) -> (x != Component.class && x.isInterface()))) {
+        for (Class<? extends Component> componentType : environment.getSubtypesOf(Component.class, (x) -> (x != Component.class && !x.isInterface()))) {
             Name module = environment.getModuleProviding(componentType);
             indexUrn(module, componentType.getSimpleName(), componentType, componentByUrnBuilder, modulesProvidingComponentsBuilder);
         }

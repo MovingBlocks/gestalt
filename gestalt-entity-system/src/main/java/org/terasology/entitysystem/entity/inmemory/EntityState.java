@@ -45,8 +45,8 @@ public class EntityState {
     public EntityState(long id, int revision, Collection<Component> originalComponents, Collection<Component> workingComponents) {
         this.id = id;
         this.revision = revision;
-        this.originalComponents = new TypeKeyedMap<>(originalComponents.stream().collect(Collectors.toMap(Component::getType, (x) -> x)));
-        this.workingComponents = new TypeKeyedMap<>(workingComponents.stream().collect(Collectors.toMap(Component::getType, (x) -> x)));
+        this.originalComponents = new TypeKeyedMap<>(originalComponents.stream().collect(Collectors.toMap(Component::getClass, (x) -> x)));
+        this.workingComponents = new TypeKeyedMap<>(workingComponents.stream().collect(Collectors.toMap(Component::getClass, (x) -> x)));
         this.involvedComponents = Sets.newLinkedHashSetWithExpectedSize(originalComponents.size());
         this.involvedComponents.addAll(this.originalComponents.keySet());
     }
@@ -80,8 +80,8 @@ public class EntityState {
     }
 
     public void addComponent(Component component) {
-        workingComponents.getInner().put(component.getType(), component);
-        involvedComponents.add(component.getType());
+        workingComponents.getInner().put(component.getClass(), component);
+        involvedComponents.add(component.getClass());
     }
 
     public <T extends Component> T removeComponent(Class<T> type) {

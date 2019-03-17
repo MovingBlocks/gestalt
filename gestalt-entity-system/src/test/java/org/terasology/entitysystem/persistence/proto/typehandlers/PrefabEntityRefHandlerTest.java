@@ -17,8 +17,8 @@
 package org.terasology.entitysystem.persistence.proto.typehandlers;
 
 import org.junit.Test;
-import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.component.StandardComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
@@ -44,8 +44,7 @@ public class PrefabEntityRefHandlerTest {
 
     public PrefabEntityRefHandlerTest() {
         transactionManager = new TransactionManager();
-        TypeLibrary typeLibrary = new TypeLibrary();
-        componentManager = new CodeGenComponentManager(typeLibrary);
+        componentManager = new StandardComponentManager();
         entityManager = new InMemoryEntityManager(componentManager, transactionManager);
         context.addTypeHandler(new EntityRefHandler(entityManager), EntityRef.class);
     }

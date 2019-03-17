@@ -19,7 +19,7 @@ package org.terasology.entitysystem.transaction;
 import com.google.common.collect.Sets;
 
 import org.junit.Test;
-import org.terasology.entitysystem.component.CodeGenComponentManager;
+import org.terasology.entitysystem.component.StandardComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
@@ -51,10 +51,8 @@ public class InMemoryEntityManagerTest {
     private EntityManager entityManager;
 
     public InMemoryEntityManagerTest() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
         transactionManager = new TransactionManager();
-        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary), transactionManager);
+        entityManager = new InMemoryEntityManager(new StandardComponentManager(), transactionManager);
     }
 
     @Test

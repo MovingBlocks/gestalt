@@ -21,5 +21,15 @@ import org.terasology.entitysystem.core.Component;
 /**
  *
  */
-public interface Empty extends Component {
+public final class Empty implements Component {
+
+    public Empty() {
+    }
+
+    public Empty(Empty other) {
+        copy(other);
+    }
+
+    public void copy(Empty other) {
+    }
 }
