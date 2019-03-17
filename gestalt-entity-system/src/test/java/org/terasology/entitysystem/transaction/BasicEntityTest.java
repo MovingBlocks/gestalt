@@ -17,7 +17,7 @@
 package org.terasology.entitysystem.transaction;
 
 import org.junit.Test;
-import org.terasology.entitysystem.component.CodeGenComponentManager;
+import org.terasology.entitysystem.component.StandardComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
@@ -50,9 +50,7 @@ public class BasicEntityTest {
 
 
     public BasicEntityTest() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
-        entityManager = new InMemoryEntityManager(new CodeGenComponentManager(typeLibrary), transactionManager);
+        entityManager = new InMemoryEntityManager(new StandardComponentManager(), transactionManager);
     }
 
     @org.junit.Before

@@ -35,13 +35,13 @@ public class OnChanged extends LifecycleEvent {
         super(revision);
         ImmutableMap.Builder<Class<? extends Component>, Component> beforeBuilder = ImmutableMap.builder();
         for (Component component : beforeComponents) {
-            beforeBuilder.put(component.getType(), component);
+            beforeBuilder.put(component.getClass(), component);
         }
         this.beforeComponents = new TypeKeyedMap<>(beforeBuilder.build());
 
         ImmutableMap.Builder<Class<? extends Component>, Component> afterBuilder = ImmutableMap.builder();
         for (Component component : afterComponents) {
-            afterBuilder.put(component.getType(), component);
+            afterBuilder.put(component.getClass(), component);
         }
         this.afterComponents = new TypeKeyedMap<>(afterBuilder.build());
     }

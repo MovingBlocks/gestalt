@@ -17,8 +17,8 @@
 package org.terasology.entitysystem.persistence.proto;
 
 import org.junit.Test;
-import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.component.StandardComponentManager;
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
@@ -51,9 +51,7 @@ public class ComponentPersistorTest {
         Module module = factory.createPackageModule("modules.test");
         ModuleEnvironment moduleEnvironment = new ModuleEnvironment(Collections.singletonList(module), new PermitAllPermissionProviderFactory());
 
-        TypeLibrary typeLibrary = new TypeLibrary();
-        typeLibrary.addHandler(new TypeHandler<>(String.class, ImmutableCopy.create()));
-        componentManager = new CodeGenComponentManager(typeLibrary);
+        componentManager = new StandardComponentManager();
         persistor = new ComponentPersistor(context, new ComponentManifest(moduleEnvironment, componentManager));
     }
 

@@ -102,7 +102,7 @@ public class EventReceiverMethodSupportTest {
 
         TestEvent event = new TestEvent("test");
 
-        Second comp = mock(Second.class);
+        Second comp = new Second();
         when(entity.getComponent(Second.class)).thenReturn(Optional.of(comp));
         captor.getValue().onEvent(event, entity);
         assertEquals(event, receiver.lastEvent);

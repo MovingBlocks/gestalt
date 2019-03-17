@@ -21,8 +21,8 @@ import com.google.common.collect.Sets;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.terasology.entitysystem.component.CodeGenComponentManager;
 import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.component.StandardComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.CoreEntityRef;
@@ -56,8 +56,7 @@ public class LifecycleEventInterceptorTest {
     private EntitySystemState systemState = new EntitySystemState();
 
     public LifecycleEventInterceptorTest() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        componentManager = new CodeGenComponentManager(typeLibrary);
+        componentManager = new StandardComponentManager();
         context.attach(EntitySystemState.class, systemState);
     }
 

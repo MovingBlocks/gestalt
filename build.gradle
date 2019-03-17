@@ -22,10 +22,11 @@ allprojects {
     repositories {
         google()
         jcenter()
+        mavenLocal()
         maven {
             url "http://artifactory.terasology.org/artifactory/repo"
         }
-        mavenLocal()
+
     }
 }
 

@@ -39,7 +39,7 @@ public class OnDeactivated extends LifecycleEvent {
         super(revision);
         ImmutableMap.Builder<Class<? extends Component>, Component> builder = ImmutableMap.builder();
         for (Component component : components) {
-            builder.put(component.getType(), component);
+            builder.put(component.getClass(), component);
         }
         this.components = new TypeKeyedMap<>(builder.build());
     }

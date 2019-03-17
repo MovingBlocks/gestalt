@@ -80,7 +80,7 @@ public class EntityRecipeManifestPersistor {
             logger.info("Failed to resolve entity recipe '{}', loading preserved components instead.", urn);
             TypeKeyedMap<Component> components = new TypeKeyedMap<>();
             for (ProtoDatastore.ComponentData componentData : entityRecipe.getComponentList()) {
-                componentPersistor.deserialize(componentData).ifPresent(component -> components.put((Class) component.getType(), component));
+                componentPersistor.deserialize(componentData).ifPresent(component -> components.put((Class) component.getClass(), component));
             }
 
             return new EntityRecipeMetadata(id, urn, components);

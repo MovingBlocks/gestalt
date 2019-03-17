@@ -19,14 +19,11 @@ package org.terasology.entitysystem.core;
 /**
  * A component is an element that can be added to an entity. A component holds data, and implies a feature or behavior of the entity.
  * <p>
- * This is the base interface for all components. To define a component, create a new interface extending this interface and add properties (getter and setters) for any data
- * the component should contain.
+ * All components should be concrete final objects implementing component and its methods, and having both an empty constructor and a copy method as a minimum.
+ * If a copy constructor is available it will be used too.
+ * Components should not inherit other components, and there is generally no reason to have common interfaces or abstract base types shared by components -
+ * such desires generally suggest that there is another component that should be created.
  */
 public interface Component {
-
-    /**
-     * @return The interface type of the component
-     */
-    Class<? extends Component> getType();
 
 }

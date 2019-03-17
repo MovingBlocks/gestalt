@@ -22,12 +22,26 @@ import org.terasology.entitysystem.core.Component;
 /**
  * Component indicating an entity was generated from an entity recipe
  */
-public interface GeneratedFromEntityRecipeComponent extends Component {
+public final class GeneratedFromEntityRecipeComponent implements Component {
+
+    private ResourceUrn entityRecipe;
 
     /**
-     * @return The Urn of the EntityRecipe that this entity was generated from
+     * @return The URN of the EntityRecipe that this entity was generated from
      */
-    ResourceUrn getEntityRecipe();
+    public ResourceUrn getEntityRecipe() {
+        return entityRecipe;
+    }
 
-    void setEntityRecipe(ResourceUrn entityRecipeUrn);
+    /**
+     * Sets the URN of the recipe this entity was generated from
+     * @param entityRecipe
+     */
+    public void setEntityRecipe(ResourceUrn entityRecipe) {
+        this.entityRecipe = entityRecipe;
+    }
+
+    public void copy(GeneratedFromEntityRecipeComponent other) {
+        this.entityRecipe = other.entityRecipe;
+    }
 }

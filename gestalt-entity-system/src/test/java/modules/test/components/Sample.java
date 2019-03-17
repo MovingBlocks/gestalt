@@ -18,12 +18,55 @@ package modules.test.components;
 
 import org.terasology.entitysystem.core.Component;
 
-public interface Sample extends Component {
-    String getName();
+import java.util.Objects;
 
-    void setName(String value);
+public final class Sample implements Component {
+    private String name = "";
+    private String description = "";
 
-    String getDescription();
+    public Sample() {
 
-    void setDescription(String description);
+    }
+
+    public Sample(Sample other) {
+        copy(other);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void copy(Sample other) {
+        this.name = other.name;
+        this.description = other.description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof Sample) {
+            Sample other = (Sample) o;
+            return Objects.equals(this.name, other.name) && Objects.equals(this.description, other.description);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, description);
+    }
 }

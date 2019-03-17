@@ -144,7 +144,7 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
      */
     @SuppressWarnings("unchecked")
     private void cleanUpEntityRefs(Component component) {
-        ComponentType<?> type = componentManager.getType(component.getType());
+        ComponentType<?> type = componentManager.getType(component.getClass());
         for (PropertyAccessor property : type.getPropertyInfo().getPropertiesOfType(EntityRef.class)) {
             Object o = property.get(component);
             if (o instanceof ProxyEntityRef) {

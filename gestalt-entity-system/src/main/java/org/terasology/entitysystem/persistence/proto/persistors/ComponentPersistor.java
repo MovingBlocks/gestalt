@@ -50,7 +50,7 @@ public class ComponentPersistor {
 
 
     public <T extends Component> ProtoDatastore.ComponentData.Builder serialize(T component) {
-        ComponentMetadata<T> componentMetadata = manifest.getComponentMetadata(component.getType());
+        ComponentMetadata<T> componentMetadata = manifest.getComponentMetadata(component.getClass());
         ProtoDatastore.ComponentData.Builder builder = ProtoDatastore.ComponentData.newBuilder();
         builder.setTypeIndex(componentMetadata.getId());
         Optional<ComponentType<T>> componentType = componentMetadata.getComponentType();
@@ -64,7 +64,7 @@ public class ComponentPersistor {
     }
 
     public <T extends Component> ProtoDatastore.ComponentData.Builder serializeDelta(T baseComponent, T component) {
-        ComponentMetadata<T> componentMetadata = manifest.getComponentMetadata(component.getType());
+        ComponentMetadata<T> componentMetadata = manifest.getComponentMetadata(component.getClass());
         ProtoDatastore.ComponentData.Builder builder = ProtoDatastore.ComponentData.newBuilder();
         builder.setTypeIndex(componentMetadata.getId());
         Optional<ComponentType<T>> componentType = componentMetadata.getComponentType();
@@ -99,7 +99,7 @@ public class ComponentPersistor {
 
         ComponentMetadata<?> componentMetadata = manifest.getComponentMetadata(data.getTypeIndex()).orElseThrow(() -> new PersistenceException("No information found for component with index '" + data.getTypeIndex() + "'"));
         Optional<? extends ComponentType<?>> componentType = componentMetadata.getComponentType();
-        if (componentType.isPresent() && target.getType().equals(componentType.get().getComponentClass())) {
+        if (componentType.isPresent() && target.getClass().equals(componentType.get().getComponentClass())) {
             for (int i = 0; i < data.getFieldIdCount(); ++i) {
                 PropertyAccessor fieldAccessor = componentMetadata.getFieldAccessor(data.getFieldId(i));
                 fieldAccessor.set(target, context.deserialize(data.getFieldValues(i), fieldAccessor.getPropertyType()));

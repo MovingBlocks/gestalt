@@ -17,9 +17,8 @@
 package org.terasology.entitysystem.component;
 
 import org.junit.Test;
-import org.terasology.valuetype.TypeLibrary;
 
-import modules.test.components.ComponentInterface;
+import modules.test.components.BasicComponent;
 import modules.test.components.Empty;
 
 import static org.junit.Assert.assertEquals;
@@ -33,67 +32,35 @@ public class ComponentManagerTest {
 
     @Test
     public void constructComponent() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
-        ComponentInterface instance = library.create(ComponentInterface.class);
+        StandardComponentManager library = new StandardComponentManager();
+        BasicComponent instance = library.create(BasicComponent.class);
         assertNotNull(instance);
         instance.setName("World");
         assertEquals("World", instance.getName());
-        ComponentType<ComponentInterface> typeInfo = library.getType(ComponentInterface.class);
-        PropertyAccessor<ComponentInterface, String> property = (PropertyAccessor<ComponentInterface, String>) typeInfo.getPropertyInfo().getProperty("name").get();
+        ComponentType<BasicComponent> typeInfo = library.getType(BasicComponent.class);
+        PropertyAccessor<BasicComponent, String> property = (PropertyAccessor<BasicComponent, String>) typeInfo.getPropertyInfo().getProperty("name").get();
         property.set(instance, "Blue");
         assertEquals("Blue", property.get(instance));
     }
 
     @Test
-    public void constructComponentEquals() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
-        ComponentInterface instance = library.create(ComponentInterface.class);
-        assertNotNull(instance);
-        instance.setName("World");
-
-        ComponentInterface instance2 = library.create(ComponentInterface.class);
-        instance2.setName("World");
-
-        assertEquals(instance, instance2);
-    }
-
-    @Test
-    public void constructComponentHashCode() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
-        ComponentInterface instance = library.create(ComponentInterface.class);
-        assertNotNull(instance);
-        instance.setName("World");
-
-        ComponentInterface instance2 = library.create(ComponentInterface.class);
-        instance2.setName("World");
-
-        assertEquals(instance.hashCode(), instance2.hashCode());
-    }
-
-    @Test
     public void constructComponentGetType() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
-        ComponentInterface instance = library.create(ComponentInterface.class);
+        StandardComponentManager library = new StandardComponentManager();
+        BasicComponent instance = library.create(BasicComponent.class);
         assertNotNull(instance);
-        assertEquals(ComponentInterface.class, instance.getType());
+        assertEquals(BasicComponent.class, instance.getClass());
     }
 
     @Test
     public void constructEmptyComponent() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
+        StandardComponentManager library = new StandardComponentManager();
         Empty instance = library.create(Empty.class);
         assertNotNull(instance);
     }
 
     @Test
     public void emptyComponentsSingletons() {
-        TypeLibrary typeLibrary = new TypeLibrary();
-        CodeGenComponentManager library = new CodeGenComponentManager(typeLibrary);
+        StandardComponentManager library = new StandardComponentManager();
         Empty instance = library.create(Empty.class);
         Empty instance2 = library.create(Empty.class);
         assertSame(instance, instance2);

@@ -16,21 +16,67 @@
 
 package modules.test.components;
 
+import com.google.common.collect.Lists;
+
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.core.NullEntityRef;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *
  */
-public interface Reference extends Component {
+public final class Reference implements Component {
 
-    EntityRef getReference();
+    private EntityRef reference = NullEntityRef.get();
+    private List<EntityRef> references = Lists.newArrayList();
 
-    void setReference(EntityRef ref);
+    public Reference() {
 
-    List<EntityRef> getReferences();
+    }
 
-    void setReferences(List<EntityRef> references);
+    public Reference(Reference other) {
+        copy(other);
+    }
+
+    public EntityRef getReference() {
+        return reference;
+    }
+
+    public void setReference(EntityRef ref) {
+        this.reference = ref;
+    }
+
+    public List<EntityRef> getReferences() {
+        return Collections.unmodifiableList(references);
+    }
+
+    void setReferences(List<EntityRef> references) {
+        this.references.clear();
+        this.references.addAll(references);
+    }
+    public void copy(Reference other) {
+        setReferences(other.references);
+        this.reference = other.reference;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof Reference) {
+            Reference other = (Reference) o;
+            return Objects.equals(this.reference, other.reference) && Objects.equals(this.references, other.references);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(reference, references);
+    }
 }

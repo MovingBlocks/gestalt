@@ -23,15 +23,15 @@ import java.util.Objects;
 /**
  *
  */
-public final class Second implements Component {
+public final class BasicComponent implements Component {
     private String name = "";
     private String description = "";
 
-    public Second() {
+    public BasicComponent() {
 
     }
 
-    public Second(Second other) {
+    public BasicComponent(BasicComponent other) {
         copy(other);
     }
 
@@ -51,7 +51,7 @@ public final class Second implements Component {
         this.description = description;
     }
 
-    public void copy(Second other) {
+    public void copy(BasicComponent other) {
         this.name = other.name;
         this.description = other.description;
     }
@@ -61,8 +61,8 @@ public final class Second implements Component {
         if (o == this) {
             return true;
         }
-        if (o instanceof Second) {
-            Second other = (Second) o;
+        if (o instanceof BasicComponent) {
+            BasicComponent other = (BasicComponent) o;
             return Objects.equals(this.name, other.name) && Objects.equals(this.description, other.description);
         }
         return false;
