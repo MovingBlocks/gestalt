@@ -103,10 +103,10 @@ public class EntityState {
             }
         } else if (working == null) {
             return UpdateAction.REMOVE;
-        } else if (Objects.equals(original, working)) {
-            return UpdateAction.NONE;
-        } else {
+        } else if (working.isDirty()) {
             return UpdateAction.UPDATE;
+        } else {
+            return UpdateAction.NONE;
         }
     }
 }

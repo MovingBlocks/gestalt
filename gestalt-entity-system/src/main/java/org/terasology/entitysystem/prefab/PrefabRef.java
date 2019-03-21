@@ -77,6 +77,11 @@ public class PrefabRef implements EntityRef {
     }
 
     @Override
+    public <T extends Component> T addComponent(T component) {
+        throw new UnsupportedOperationException("Cannot add components to a PrefabRef");
+    }
+
+    @Override
     public <T extends Component> void removeComponent(Class<T> componentType) {
         throw new UnsupportedOperationException("Cannot remove components from a PrefabRef");
     }

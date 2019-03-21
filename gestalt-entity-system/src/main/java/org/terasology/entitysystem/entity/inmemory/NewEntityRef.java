@@ -81,6 +81,17 @@ public class NewEntityRef implements EntityRef {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Component> T addComponent(T component) {
+        if (state.getComponents().get(component.getClass()) != null) {
+            throw new ComponentAlreadyExistsException("Entity already has a component of type " + component.getClass().getSimpleName());
+        }
+        T componentCopy = componentManager.copy(component);
+        state.getComponents().put(componentCopy);
+        return componentCopy;
+    }
+
+    @Override
     public <T extends Component> void removeComponent(Class<T> componentType) {
         if (state.getComponents().remove(componentType) == null) {
             throw new ComponentDoesNotExistException("Entity does not have a component of type " + componentType.getSimpleName());

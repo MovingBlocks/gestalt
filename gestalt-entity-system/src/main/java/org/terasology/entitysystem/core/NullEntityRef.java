@@ -74,6 +74,11 @@ public final class NullEntityRef implements EntityRef {
     }
 
     @Override
+    public <T extends Component> T addComponent(T component) {
+        throw new IllegalStateException("Cannot add component as referenced entity does not exist");
+    }
+
+    @Override
     public <T extends Component> void removeComponent(Class<T> componentType) {
     }
 

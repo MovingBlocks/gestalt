@@ -152,6 +152,17 @@ public class InMemoryEntityManager implements EntityManager, ReferenceAdaptor {
     }
 
     @Override
+    public <T extends Component> T addComponent(long entityId, T component) {
+        EntityState entityState = getEntityState(entityId);
+        if (entityState.getComponent(component.getClass()).isPresent()) {
+            throw new ComponentAlreadyExistsException("Entity " + entityId + " already has a component of type " + component.getClass().getSimpleName());
+        }
+        T newComp = componentManager.copy(component);
+        entityState.addComponent(newComp);
+        return newComp;
+    }
+
+    @Override
     public <T extends Component> void removeComponent(long entityId, Class<T> componentType) {
         EntityState entityState = getEntityState(entityId);
         if (!entityState.getComponent(componentType).isPresent()) {
@@ -175,7 +186,7 @@ public class InMemoryEntityManager implements EntityManager, ReferenceAdaptor {
 
             for (TypeKeyedMap.Entry<? extends Component> entry : entityRecipe.getComponents().entrySet()) {
                 Component component = entity.addComponent(entry.getKey());
-                componentManager.copy(entry.getValue(), component);
+                component.copy(entry.getValue());
                 processReferences(componentManager.getType(entry.getKey()), component, entityRecipe.getIdentifier(), result);
             }
         }

@@ -114,6 +114,11 @@ public class EntityRecipe implements EntityRef {
         throw new UnsupportedOperationException("Components cannot be added to an entity prefab in this way - use EntityRecipe::add instead");
     }
 
+    @Override
+    public <T extends Component> T addComponent(T component) {
+        throw new UnsupportedOperationException("Components cannot be added to an entity prefab in this way - use EntityRecipe::add instead");
+    }
+
     // RemoveComponent is unsupported, to avoid accidentally modifying an EntityPrefab in core entity processing.
     @Override
     public <T extends Component> void removeComponent(Class<T> componentType) {

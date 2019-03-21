@@ -26,4 +26,21 @@ package org.terasology.entitysystem.core;
  */
 public interface Component {
 
+    /**
+     * @return Whether the component has been altered within the current context
+     */
+    boolean isDirty();
+
+    /**
+     * Sets whether the component is dirty. Generally shouldn't need to be called, used by
+     * the entity manager to reset dirty as needed.
+     * @param dirty Whether the component is dirty
+     */
+    void setDirty(boolean dirty);
+
+    /**
+     * Copies the values from another component. This is expected to be of the same type.
+     * @param other The component to copy
+     */
+    void copy(Component other);
 }

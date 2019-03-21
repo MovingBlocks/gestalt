@@ -30,6 +30,16 @@ public final class Empty implements Component {
         copy(other);
     }
 
-    public void copy(Empty other) {
+    public void copy(Component other) {
+    }
+
+    @Override
+    public void setDirty(boolean dirty) {
+
+    }
+
+    @Override
+    public boolean isDirty() {
+        return false;
     }
 }

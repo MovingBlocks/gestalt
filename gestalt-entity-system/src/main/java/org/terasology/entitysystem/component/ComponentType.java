@@ -31,7 +31,6 @@ public final class ComponentType<T extends Component> {
     private final Class<T> type;
     private final Supplier<T> constructor;
     private final Function<T, T> copyConstructor;
-    private final BiConsumer<T, T> copyMethod;
     private final ComponentPropertyInfo<T> propertyInfo;
 
 
@@ -40,18 +39,15 @@ public final class ComponentType<T extends Component> {
      * @param type The type of the component
      * @param constructor A supplier that creates a new instance of the component
      * @param copyConstructor A function that create a new instance of the component, copying another component
-     * @param copyMethod Method that takes a source and target component and copies all properties from source to target.
      * @param propertyInfo Information on all properties of the component type
      */
-    public ComponentType(Class<T> type, Supplier<T> constructor, Function<T, T> copyConstructor, BiConsumer<T, T> copyMethod, ComponentPropertyInfo<T> propertyInfo) {
+    public ComponentType(Class<T> type, Supplier<T> constructor, Function<T, T> copyConstructor, ComponentPropertyInfo<T> propertyInfo) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(constructor);
         Preconditions.checkNotNull(copyConstructor);
-        Preconditions.checkNotNull(copyMethod);
         this.type = type;
         this.constructor = constructor;
         this.copyConstructor = copyConstructor;
-        this.copyMethod = copyMethod;
         this.propertyInfo = propertyInfo;
     }
 
@@ -68,18 +64,6 @@ public final class ComponentType<T extends Component> {
      */
     public T createCopy(T original) {
         return copyConstructor.apply(original);
-    }
-
-    /**
-     * Copies a component onto another component
-     *
-     * @param from The component to copy from
-     * @param to   The component to copy to
-     * @return The updated to component
-     */
-    public T copy(T from, T to) {
-        copyMethod.accept(from, to);
-        return to;
     }
 
     /**

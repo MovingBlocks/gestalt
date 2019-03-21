@@ -24,6 +24,8 @@ import java.util.Objects;
  *
  */
 public final class BasicComponent implements Component {
+    private boolean dirty;
+
     private String name = "";
     private String description = "";
 
@@ -41,6 +43,7 @@ public final class BasicComponent implements Component {
 
     public void setName(String name) {
         this.name = name;
+        this.dirty = true;
     }
 
     public String getDescription() {
@@ -49,11 +52,24 @@ public final class BasicComponent implements Component {
 
     public void setDescription(String description) {
         this.description = description;
+        this.dirty = true;
     }
 
-    public void copy(BasicComponent other) {
+    public void copy(Component o) {
+        BasicComponent other = (BasicComponent) o;
         this.name = other.name;
         this.description = other.description;
+        this.dirty = true;
+    }
+
+    @Override
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    @Override
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
     }
 
     @Override

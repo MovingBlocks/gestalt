@@ -43,16 +43,6 @@ public interface ComponentManager {
     <T extends Component> T copy(T instance);
 
     /**
-     * Copies the values from one component to another component. These components must be of the same type.
-     *
-     * @param from The component to copy from
-     * @param to   The component to copy to
-     * @param <T>  The type of the components
-     * @return The component that was copied into
-     */
-    <T extends Component> T copy(T from, T to);
-
-    /**
      * Provides a ComponentType, allowing for reflection like operations.
      *
      * @param type The type of component

@@ -86,6 +86,21 @@ interface ReferenceAdaptor {
     <T extends Component> T addComponent(long entityId, Class<T> componentType);
 
     /**
+     * Adds a copy of a component to an entity, returning it.
+     * <p>
+     * This component is a "live view" - any changes to the component will be saved when the transaction is committed. Getting a component multiple times will
+     * retrieve the same component, unless it is removed and a new component of that type added to an entity within the same transaction.
+     *
+     * @param entityId      The id of the entity to add the component to
+     * @param component     The component to add
+     * @param <T>           The type of the component to add
+     * @return The added component
+     * @throws ComponentAlreadyExistsException if the entity already has this component
+     * @throws IllegalStateException           If no transaction is active
+     */
+    <T extends Component> T addComponent(long entityId, T component);
+
+    /**
      * Removes a component from an entity
      *
      * @param entityId      The id of the entity to add the component to

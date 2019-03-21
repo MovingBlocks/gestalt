@@ -139,7 +139,7 @@ public class PrefabAwareEntityPersistor implements EntityPersistor {
 
     private void copyBaseComponents(EntityRecipeMetadata base, EntityRef entity) {
         for (TypeKeyedMap.Entry<? extends Component> entry : base.getComponents().entrySet()) {
-            componentManager.copy(entry.getValue(), entity.addComponent(entry.getKey()));
+            entity.addComponent(entry.getValue());
         }
     }
 
