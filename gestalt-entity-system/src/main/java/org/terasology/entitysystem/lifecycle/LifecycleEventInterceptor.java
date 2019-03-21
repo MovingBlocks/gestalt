@@ -50,7 +50,6 @@ public class LifecycleEventInterceptor implements TransactionInterceptor {
             for (EntityState entityState : entitySystemState.getEntityStates()) {
                 Set<Class<? extends Component>> addedComponentTypes = Sets.newLinkedHashSet();
                 Set<Class<? extends Component>> updatedComponentTypes = Sets.newLinkedHashSet();
-                Set<Class<? extends Component>> removedComponentTypes = Sets.newLinkedHashSet();
 
                 for (Class<? extends Component> componentType : entityState.getInvolvedComponents()) {
                     switch (entityState.getUpdateAction(componentType)) {
@@ -60,10 +59,6 @@ public class LifecycleEventInterceptor implements TransactionInterceptor {
                         break;
                         case UPDATE: {
                             updatedComponentTypes.add(componentType);
-                        }
-                        break;
-                        case REMOVE: {
-                            removedComponentTypes.add(componentType);
                         }
                         break;
                         default:
@@ -84,12 +79,12 @@ public class LifecycleEventInterceptor implements TransactionInterceptor {
                                 entityManager.getEntity(entityState.getId()),
                                 updatedComponentTypes);
                     }
-                    if (!removedComponentTypes.isEmpty()) {
+                    if (!entityState.getRemovedComponents().isEmpty()) {
                         eventSystem.send(factories.getRemovedFactoryEvent().apply(
                                 entityState.getRevision(),
-                                removedComponentTypes.stream().map((t) -> entityState.getOriginalComponent(t).get()).collect(Collectors.toList())),
+                                entityState.getRemovedComponents().values()),
                                 entityManager.getEntity(entityState.getId()),
-                                removedComponentTypes);
+                                entityState.getRemovedComponents().keySet());
                     }
                 }
             }

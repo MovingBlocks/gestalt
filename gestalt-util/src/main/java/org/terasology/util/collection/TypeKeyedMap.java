@@ -176,6 +176,10 @@ public class TypeKeyedMap<T> {
         return inner;
     }
 
+    public void putAll(TypeKeyedMap<T> other) {
+        inner.putAll(other.inner);
+    }
+
     @FunctionalInterface
     public interface EntryConsumer<T> {
         <U extends T> void accept(Class<U> type, U value);

@@ -16,9 +16,11 @@
 
 package org.terasology.entitysystem.entity.inmemory;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.core.NullEntityRef;
 import org.terasology.entitysystem.transaction.pipeline.UpdateAction;
 import org.terasology.util.collection.TypeKeyedMap;
 
@@ -38,17 +40,15 @@ public class EntityState {
 
     private long id;
     private int revision;
-    private Set<Class<? extends Component>> involvedComponents;
-    private TypeKeyedMap<Component> originalComponents;
+    private Set<Class<? extends Component>> originalComponentTypes;
     private TypeKeyedMap<Component> workingComponents;
+    private TypeKeyedMap<Component> removedComponents = new TypeKeyedMap<>();
 
     public EntityState(long id, int revision, Collection<Component> originalComponents, Collection<Component> workingComponents) {
         this.id = id;
         this.revision = revision;
-        this.originalComponents = new TypeKeyedMap<>(originalComponents.stream().collect(Collectors.toMap(Component::getClass, (x) -> x)));
         this.workingComponents = new TypeKeyedMap<>(workingComponents.stream().collect(Collectors.toMap(Component::getClass, (x) -> x)));
-        this.involvedComponents = Sets.newLinkedHashSetWithExpectedSize(originalComponents.size());
-        this.involvedComponents.addAll(this.originalComponents.keySet());
+        this.originalComponentTypes = ImmutableSet.copyOf(this.workingComponents.keySet());
     }
 
     public long getId() {
@@ -63,10 +63,6 @@ public class EntityState {
         this.revision = revision;
     }
 
-    public <T extends Component> Optional<T> getOriginalComponent(Class<T> type) {
-        return Optional.ofNullable(originalComponents.get(type));
-    }
-
     public <T extends Component> Optional<T> getComponent(Class<T> type) {
         return Optional.ofNullable(workingComponents.get(type));
     }
@@ -76,37 +72,41 @@ public class EntityState {
     }
 
     public Set<Class<? extends Component>> getInvolvedComponents() {
-        return Collections.unmodifiableSet(involvedComponents);
+        return Sets.union(workingComponents.keySet(), removedComponents.keySet());
     }
 
     public void addComponent(Component component) {
         workingComponents.getInner().put(component.getClass(), component);
-        involvedComponents.add(component.getClass());
+        removedComponents.remove(component.getClass());
     }
 
     public <T extends Component> T removeComponent(Class<T> type) {
-        return workingComponents.remove(type);
+        T removed = workingComponents.remove(type);
+        if (removed != null && originalComponentTypes.contains(type)) {
+            removedComponents.put(type, removed);
+        }
+        return removed;
     }
 
     public void delete() {
+        removedComponents.putAll(workingComponents);
+        removedComponents.keySet().removeIf(x -> !originalComponentTypes.contains(x));
         workingComponents.clear();
     }
 
     public UpdateAction getUpdateAction(Class<? extends Component> type) {
-        Component original = originalComponents.get(type);
-        Component working = workingComponents.get(type);
-        if (original == null) {
-            if (working == null) {
-                return UpdateAction.NONE;
-            } else {
-                return UpdateAction.ADD;
-            }
-        } else if (working == null) {
+        if (removedComponents.containsKey(type)) {
             return UpdateAction.REMOVE;
-        } else if (working.isDirty()) {
-            return UpdateAction.UPDATE;
-        } else {
-            return UpdateAction.NONE;
         }
+        else if (!originalComponentTypes.contains(type)) {
+            return UpdateAction.ADD;
+        } else if (workingComponents.get(type).isDirty()) {
+            return UpdateAction.UPDATE;
+        }
+        return UpdateAction.NONE;
+    }
+
+    public TypeKeyedMap<Component> getRemovedComponents() {
+        return removedComponents;
     }
 }
