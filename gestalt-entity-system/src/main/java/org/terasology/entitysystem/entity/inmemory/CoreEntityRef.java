@@ -91,6 +91,11 @@ public class CoreEntityRef implements EntityRef {
     }
 
     @Override
+    public <T extends Component> T addComponent(T component) {
+        return referenceAdaptor.addComponent(id, component);
+    }
+
+    @Override
     public void delete() {
         getComponentTypes().forEach(this::removeComponent);
     }

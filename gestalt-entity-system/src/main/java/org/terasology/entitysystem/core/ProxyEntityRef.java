@@ -95,6 +95,11 @@ public class ProxyEntityRef implements EntityRef {
     }
 
     @Override
+    public <T extends Component> T addComponent(T component) {
+        return ref.addComponent(component);
+    }
+
+    @Override
     public <T extends Component> void removeComponent(Class<T> componentType) {
         ref.removeComponent(componentType);
     }

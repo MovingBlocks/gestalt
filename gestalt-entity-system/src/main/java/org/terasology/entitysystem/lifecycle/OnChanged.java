@@ -28,43 +28,28 @@ import java.util.Collections;
  *
  */
 public class OnChanged extends LifecycleEvent {
-    private TypeKeyedMap<Component> beforeComponents;
-    private TypeKeyedMap<Component> afterComponents;
+    private TypeKeyedMap<Component> components;
 
-    public OnChanged(int revision, Collection<Component> beforeComponents, Collection<Component> afterComponents) {
+    public OnChanged(int revision, Collection<Component> components) {
         super(revision);
-        ImmutableMap.Builder<Class<? extends Component>, Component> beforeBuilder = ImmutableMap.builder();
-        for (Component component : beforeComponents) {
-            beforeBuilder.put(component.getClass(), component);
-        }
-        this.beforeComponents = new TypeKeyedMap<>(beforeBuilder.build());
 
-        ImmutableMap.Builder<Class<? extends Component>, Component> afterBuilder = ImmutableMap.builder();
-        for (Component component : afterComponents) {
-            afterBuilder.put(component.getClass(), component);
+        ImmutableMap.Builder<Class<? extends Component>, Component> builder = ImmutableMap.builder();
+        for (Component component : components) {
+            builder.put(component.getClass(), component);
         }
-        this.afterComponents = new TypeKeyedMap<>(afterBuilder.build());
+        this.components = new TypeKeyedMap<>(builder.build());
     }
 
-    public OnChanged(int revision, TypeKeyedMap<Component> beforeComponents, TypeKeyedMap<Component> afterComponents) {
+    public OnChanged(int revision, TypeKeyedMap<Component> components) {
         super(revision);
-        this.beforeComponents = new TypeKeyedMap<>(Collections.unmodifiableMap(beforeComponents.getInner()));
-        this.afterComponents = new TypeKeyedMap<>(Collections.unmodifiableMap(afterComponents.getInner()));
+        this.components = new TypeKeyedMap<>(Collections.unmodifiableMap(components.getInner()));
     }
 
-    public TypeKeyedMap<Component> getBeforeComponents() {
-        return beforeComponents;
-    }
-
-    public <T extends Component> T getBeforeComponent(Class<T> type) {
-        return beforeComponents.get(type);
-    }
-
-    public TypeKeyedMap<Component> getAfterComponents() {
-        return afterComponents;
+    public TypeKeyedMap<Component> getComponents() {
+        return components;
     }
 
     public <T extends Component> T getAfterComponent(Class<T> type) {
-        return afterComponents.get(type);
+        return components.get(type);
     }
 }

@@ -22,9 +22,9 @@ import android.support.annotation.Nullable;
 import com.esotericsoftware.reflectasm.MethodAccess;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Converter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -47,7 +46,7 @@ public class StandardComponentManager implements ComponentManager {
 
     private static final Logger logger = LoggerFactory.getLogger(StandardComponentManager.class);
     private static final Converter<String, String> TO_LOWER_CAMEL = CaseFormat.UPPER_CAMEL.converterTo(CaseFormat.LOWER_CAMEL);
-    private static final String COPY_METHOD_NAME = "copy";
+    private static final Set<String> IGNORE_PROPERTIES = ImmutableSet.of("Dirty");
 
     private Map<Class<?>, ComponentType<?>> componentTypes = Maps.newLinkedHashMap();
 
@@ -62,12 +61,6 @@ public class StandardComponentManager implements ComponentManager {
     public <T extends Component> T copy(T instance) {
         ComponentType<T> typeInfo = getType(instance);
         return typeInfo.createCopy(instance);
-    }
-
-    @Override
-    public <T extends Component> T copy(T from, T to) {
-        ComponentType<T> typeInfo = getType(from);
-        return typeInfo.copy(from, to);
     }
 
     @Override
@@ -94,24 +87,18 @@ public class StandardComponentManager implements ComponentManager {
             return createSingletonComponentType(type);
         }
 
-        BiConsumer<T, T> copyMethod = getCopyMethod(type, methodAccess);
-        if (copyMethod == null) {
-            logger.error("Component {} missing copy method", type);
-            return null;
-        }
-
         Supplier<T> emptyConstructor = getEmptyConstructor(type);
         if (emptyConstructor == null) {
             logger.error("Component {} missing empty constructor", type);
             return null;
         }
 
-        Function<T, T> copyConstructor = getCopyConstructor(type, copyMethod, emptyConstructor);
-        return new ComponentType<>(type, emptyConstructor, copyConstructor, copyMethod, new ComponentPropertyInfo<>(propertyAccessors));
+        Function<T, T> copyConstructor = getCopyConstructor(type, emptyConstructor);
+        return new ComponentType<>(type, emptyConstructor, copyConstructor, new ComponentPropertyInfo<>(propertyAccessors));
     }
 
     @NonNull
-    private <T extends Component> Function<T, T> getCopyConstructor(Class<T> type, BiConsumer<T, T> copyMethod, Supplier<T> emptyConstructor) {
+    private <T extends Component> Function<T, T> getCopyConstructor(Class<T> type, Supplier<T> emptyConstructor) {
         Function<T, T> copyConstructor;
         try {
             Constructor<T> constructor = type.getDeclaredConstructor(type);
@@ -125,7 +112,7 @@ public class StandardComponentManager implements ComponentManager {
         } catch (NoSuchMethodException e) {
             copyConstructor = (T from) -> {
                 T result = emptyConstructor.get();
-                copyMethod.accept(from, result);
+                result.copy(from);
                 return result;
             };
         }
@@ -152,23 +139,10 @@ public class StandardComponentManager implements ComponentManager {
     }
 
     @Nullable
-    private <T extends Component> BiConsumer<T, T> getCopyMethod(Class<T> type, MethodAccess methodAccess) {
-        BiConsumer<T, T> copyMethod;
-        try {
-            int copyIndex = methodAccess.getIndex(COPY_METHOD_NAME, type);
-            copyMethod = (from, to) -> methodAccess.invoke(to, copyIndex, from);
-        } catch (IllegalArgumentException e) {
-            // No copy method
-            return null;
-        }
-        return copyMethod;
-    }
-
-    @Nullable
     private <T extends Component> ComponentType<T> createSingletonComponentType(Class<T> type) {
         try {
             T instance = type.newInstance();
-            return new ComponentType<>(type, () -> instance, t -> instance, (x, y) -> {}, new ComponentPropertyInfo<>(Collections.emptySet()));
+            return new ComponentType<>(type, () -> instance, t -> instance, new ComponentPropertyInfo<>(Collections.emptySet()));
         } catch (InstantiationException | IllegalAccessException e) {
             logger.error("Component lacks an empty constructor: {}", type, e);
             return null;
@@ -181,6 +155,9 @@ public class StandardComponentManager implements ComponentManager {
         for (Method method : componentType.getDeclaredMethods()) {
             if (method.getGenericReturnType() == Void.TYPE && method.getName().startsWith("set") && method.getParameterCount() == 1) {
                 String propertyName = method.getName().substring(3);
+                if (IGNORE_PROPERTIES.contains(propertyName)) {
+                    continue;
+                }
                 Type propertyType = method.getGenericParameterTypes()[0];
 
                 String getterMethodName;

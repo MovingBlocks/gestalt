@@ -52,6 +52,6 @@ public class LifecycleEventFactories {
     }
 
     public interface ChangedEventFactory {
-        Event create(int revision, Collection<Component> beforeComponents, Collection<Component> afterComponents);
+        Event create(int revision, Collection<Component> components);
     }
 }

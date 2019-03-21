@@ -150,7 +150,7 @@ public class ComponentTable implements EntityStore {
             }
             Component existingComponent = entityMap.get(entityId);
             if (existingComponent != null) {
-                componentManager.copy(component, existingComponent);
+                existingComponent.copy(component);
                 revisions.increment(entityId);
                 return true;
             }

@@ -79,6 +79,16 @@ public interface EntityRef {
     <T extends Component> T addComponent(Class<T> componentType);
 
     /**
+     * Adds a copy of the component to an EntityRef, returning it
+     *
+     * @param component     The component to add a copy of
+     * @param <T>           The type of the component to add
+     * @return The added component
+     * @throws ComponentAlreadyExistsException if the entity already has this component
+     */
+    <T extends Component> T addComponent(T component);
+
+    /**
      * Removes a component from the EntityRef
      *
      * @param componentType The type of the component to remove

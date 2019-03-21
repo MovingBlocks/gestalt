@@ -16,6 +16,8 @@
 
 package org.terasology.util.collection;
 
+import android.support.annotation.NonNull;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -111,6 +113,17 @@ public class TypeKeyedMap<T> {
     }
 
     /**
+     * Adds a value to the map, against its own type
+     * @param value The value to add
+     * @param <U> The type of value
+     * @return The previous value associated with the key
+     */
+    @SuppressWarnings("unchecked")
+    public <U extends T> U put(U value) {
+        return (U) inner.put((Class<U>) value.getClass(), value);
+    }
+
+    /**
      * Removes a key and its associated value from the map.
      *
      * @param key
@@ -145,6 +158,7 @@ public class TypeKeyedMap<T> {
     /**
      * @return A collection of all entries in the map. This is a live view - changes to the set will change the map.
      */
+    @SuppressWarnings("unchecked")
     public Set<Entry<? extends T>> entrySet() {
         return new EntrySet(inner.entrySet());
     }
@@ -190,16 +204,20 @@ public class TypeKeyedMap<T> {
             return innerSet.contains(o);
         }
 
+        @NonNull
         @Override
+        @SuppressWarnings("unchecked")
         public Iterator<Entry<T>> iterator() {
             return new EntrySetIterator(innerSet.iterator());
         }
 
+        @NonNull
         @Override
         public Object[] toArray() {
             return innerSet.toArray();
         }
 
+        @NonNull
         @Override
         public <T> T[] toArray(T[] a) {
             return innerSet.toArray(a);
@@ -254,6 +272,7 @@ public class TypeKeyedMap<T> {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public Entry<? extends T> next() {
             Map.Entry<Class<? extends T>, T> next = inner.next();
             return new Entry(next);

@@ -80,7 +80,6 @@ public class LifecycleEventInterceptor implements TransactionInterceptor {
                     if (!updatedComponentTypes.isEmpty()) {
                         eventSystem.send(factories.getUpdatedEventFactory().create(
                                 entityState.getRevision(),
-                                updatedComponentTypes.stream().map((t) -> entityState.getOriginalComponent(t).get()).collect(Collectors.toList()),
                                 updatedComponentTypes.stream().map((t) -> entityState.getComponent(t).get()).collect(Collectors.toList())),
                                 entityManager.getEntity(entityState.getId()),
                                 updatedComponentTypes);

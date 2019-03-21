@@ -24,6 +24,8 @@ import org.terasology.entitysystem.core.Component;
  */
 public final class GeneratedFromEntityRecipeComponent implements Component {
 
+    private boolean dirty;
+
     private ResourceUrn entityRecipe;
 
     /**
@@ -39,9 +41,21 @@ public final class GeneratedFromEntityRecipeComponent implements Component {
      */
     public void setEntityRecipe(ResourceUrn entityRecipe) {
         this.entityRecipe = entityRecipe;
+        dirty = true;
     }
 
-    public void copy(GeneratedFromEntityRecipeComponent other) {
-        this.entityRecipe = other.entityRecipe;
+    @Override
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    @Override
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
+    }
+
+    public void copy(Component other) {
+        this.entityRecipe = ((GeneratedFromEntityRecipeComponent)other).entityRecipe;
+        dirty = true;
     }
 }

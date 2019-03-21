@@ -123,7 +123,6 @@ public class LifecycleEventInterceptorTest {
 
         assertTrue(eventCapturer.getValue() instanceof OnChanged);
         OnChanged onChangedEvent = (OnChanged) eventCapturer.getValue();
-        assertEquals(originalComp, onChangedEvent.getBeforeComponent(Sample.class));
         assertEquals(workingComp, onChangedEvent.getAfterComponent(Sample.class));
     }
 }
