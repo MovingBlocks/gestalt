@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * TypeKeyedMap is a specialized map wrapper for use when the key of the map is a the class that the value implements. It more strongly enforces that values must be
@@ -51,7 +52,16 @@ public class TypeKeyedMap<T> {
     }
 
     /**
-     * Constructs a TypeKeyedMap, using the provided implementing map
+     * Constructs a type keyed map over a collection of values.
+     * @param values The values to include in the map
+     */
+    public TypeKeyedMap(Collection<T> values) {
+        inner = Maps.newLinkedHashMapWithExpectedSize(values.size());
+        values.forEach(this::put);
+    }
+
+    /**
+     * Constructs a TypeKeyedMap, encapsulating (not copying) the provided implementing map
      *
      * @param baseMap The map to encapsulate
      */

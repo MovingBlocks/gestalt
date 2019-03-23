@@ -71,32 +71,21 @@ public class CommitEntityInterceptor implements TransactionInterceptor {
      */
     private void applyEntityUpdates(TransactionContext context) {
         for (EntityState entityState : getState(context).getEntityStates()) {
-            for (Class<? extends Component> componentType : entityState.getInvolvedComponents()) {
-                switch (entityState.getUpdateAction(componentType)) {
-                    case ADD: {
-                        Component component = entityState.getComponent(componentType).get();
-                        cleanUpEntityRefs(component);
-                        if (!entityStore.add(entityState.getId(), component)) {
-                            throw new RuntimeException("Entity state does not match expected.");
-                        }
-                        break;
-                    }
-                    case UPDATE: {
-                        Component component = entityState.getComponent(componentType).get();
-                        cleanUpEntityRefs(component);
-                        if (!entityStore.update(entityState.getId(), component)) {
-                            throw new RuntimeException("Entity state does not match expected.");
-                        }
-                        break;
-                    }
-                    case REMOVE: {
-                        if (entityStore.remove(entityState.getId(), componentType) == null) {
-                            throw new RuntimeException("Entity state does not match expected.");
-                        }
-                        break;
-                    }
-                    default:
-                        break;
+            for (Component component : entityState.getAddedComponents().values()) {
+                cleanUpEntityRefs(component);
+                if (!entityStore.add(entityState.getId(), component)) {
+                    throw new RuntimeException("Entity state does not match expected.");
+                }
+            }
+            for (Component component : entityState.getUpdatedComponents().values()) {
+                cleanUpEntityRefs(component);
+                if (!entityStore.update(entityState.getId(), component)) {
+                    throw new RuntimeException("Entity state does not match expected.");
+                }
+            }
+            for (Component component : entityState.getRemovedComponents().values()) {
+                if (entityStore.remove(entityState.getId(), component.getClass()) == null) {
+                    throw new RuntimeException("Entity state does not match expected.");
                 }
             }
             entityState.setRevision(entityStore.getEntityRevision(entityState.getId()));

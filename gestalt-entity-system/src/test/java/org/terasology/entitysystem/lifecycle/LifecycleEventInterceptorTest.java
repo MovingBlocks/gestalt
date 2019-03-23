@@ -62,7 +62,7 @@ public class LifecycleEventInterceptorTest {
 
     @Test
     public void sendOnAddedEventForNewComponents() {
-        EntityState entityState = new EntityState(1, 1, Collections.emptyList(), Collections.emptyList());
+        EntityState entityState = new EntityState(1, 1, Collections.emptyList());
         systemState.addState(entityState);
         Sample comp = componentManager.create(Sample.class);
         comp.setName("Name");
@@ -85,7 +85,7 @@ public class LifecycleEventInterceptorTest {
     @Test
     public void sendOnRemovedEventForRemovedComponents() {
         Sample originalComp = componentManager.create(Sample.class);
-        EntityState entityState = new EntityState(1, 1, Lists.newArrayList(originalComp), Lists.newArrayList(originalComp));
+        EntityState entityState = new EntityState(1, 1, Lists.newArrayList(originalComp));
         systemState.addState(entityState);
         entityState.removeComponent(Sample.class);
 
@@ -109,7 +109,7 @@ public class LifecycleEventInterceptorTest {
         originalComp.setName("Name");
         Sample workingComp = componentManager.create(Sample.class);
         workingComp.setName("NewName");
-        EntityState entityState = new EntityState(1, 1, Lists.newArrayList(originalComp), Lists.newArrayList(workingComp));
+        EntityState entityState = new EntityState(1, 1, Lists.newArrayList(workingComp));
         systemState.addState(entityState);
 
         EntityRef entityRef = new CoreEntityRef(null, 1);

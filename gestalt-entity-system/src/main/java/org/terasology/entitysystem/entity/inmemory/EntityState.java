@@ -20,13 +20,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.NullEntityRef;
-import org.terasology.entitysystem.transaction.pipeline.UpdateAction;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,12 +39,13 @@ public class EntityState {
     private int revision;
     private Set<Class<? extends Component>> originalComponentTypes;
     private TypeKeyedMap<Component> workingComponents;
+    private TypeKeyedMap<Component> addedComponents = new TypeKeyedMap<>();
     private TypeKeyedMap<Component> removedComponents = new TypeKeyedMap<>();
 
-    public EntityState(long id, int revision, Collection<Component> originalComponents, Collection<Component> workingComponents) {
+    public EntityState(long id, int revision, Collection<Component> components) {
         this.id = id;
         this.revision = revision;
-        this.workingComponents = new TypeKeyedMap<>(workingComponents.stream().collect(Collectors.toMap(Component::getClass, (x) -> x)));
+        this.workingComponents = new TypeKeyedMap<>(components);
         this.originalComponentTypes = ImmutableSet.copyOf(this.workingComponents.keySet());
     }
 
@@ -78,12 +76,17 @@ public class EntityState {
     public void addComponent(Component component) {
         workingComponents.getInner().put(component.getClass(), component);
         removedComponents.remove(component.getClass());
+        if (!originalComponentTypes.contains(component.getClass())) {
+            addedComponents.put(component);
+        }
     }
 
     public <T extends Component> T removeComponent(Class<T> type) {
         T removed = workingComponents.remove(type);
         if (removed != null && originalComponentTypes.contains(type)) {
             removedComponents.put(type, removed);
+        } else {
+            addedComponents.remove(type);
         }
         return removed;
     }
@@ -92,18 +95,17 @@ public class EntityState {
         removedComponents.putAll(workingComponents);
         removedComponents.keySet().removeIf(x -> !originalComponentTypes.contains(x));
         workingComponents.clear();
+        addedComponents.clear();
     }
 
-    public UpdateAction getUpdateAction(Class<? extends Component> type) {
-        if (removedComponents.containsKey(type)) {
-            return UpdateAction.REMOVE;
-        }
-        else if (!originalComponentTypes.contains(type)) {
-            return UpdateAction.ADD;
-        } else if (workingComponents.get(type).isDirty()) {
-            return UpdateAction.UPDATE;
-        }
-        return UpdateAction.NONE;
+    public TypeKeyedMap<Component> getUpdatedComponents() {
+        TypeKeyedMap<Component> result = new TypeKeyedMap<>();
+        workingComponents.values().stream().filter(x -> !addedComponents.containsKey(x.getClass())).filter(Component::isDirty).forEach(result::put);
+        return result;
+    }
+
+    public TypeKeyedMap<Component> getAddedComponents() {
+        return addedComponents;
     }
 
     public TypeKeyedMap<Component> getRemovedComponents() {

@@ -16,6 +16,8 @@
 
 package org.terasology.entitysystem.index;
 
+import android.support.annotation.NonNull;
+
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
@@ -129,6 +131,7 @@ public class GenericIndex implements Index {
         return entities.contains(entity.getId());
     }
 
+    @NonNull
     @Override
     public Iterator<EntityRef> iterator() {
         return entityManager.getEntities(entities).iterator();
