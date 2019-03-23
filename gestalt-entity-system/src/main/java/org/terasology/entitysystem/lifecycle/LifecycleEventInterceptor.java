@@ -16,8 +16,6 @@
 
 package org.terasology.entitysystem.lifecycle;
 
-import com.google.common.collect.Sets;
-
 import org.terasology.entitysystem.core.Component;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.entity.inmemory.EntityState;
@@ -25,9 +23,7 @@ import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
 import org.terasology.entitysystem.event.EventSystem;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;
-
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.terasology.util.collection.TypeKeyedMap;
 
 /**
  * Lifecycle Event Handler sends events based on changes to entities during the transaction.
@@ -48,44 +44,32 @@ public class LifecycleEventInterceptor implements TransactionInterceptor {
         LifecycleEventFactories factories = context.getAttachment(LifecycleEventFactories.class).orElse(DEFAULT_EVENT_FACTORIES);
         context.getAttachment(EntitySystemState.class).ifPresent((entitySystemState) -> {
             for (EntityState entityState : entitySystemState.getEntityStates()) {
-                Set<Class<? extends Component>> addedComponentTypes = Sets.newLinkedHashSet();
-                Set<Class<? extends Component>> updatedComponentTypes = Sets.newLinkedHashSet();
+                TypeKeyedMap<Component> addedComponents = entityState.getAddedComponents();
+                if (!addedComponents.isEmpty()) {
+                    eventSystem.send(
+                            factories.getAddedEventFactory().apply(
+                                    entityState.getRevision(),
+                                    addedComponents.values()),
+                            entityManager.getEntity(entityState.getId()),
+                            addedComponents.keySet());
+                }
 
-                for (Class<? extends Component> componentType : entityState.getInvolvedComponents()) {
-                    switch (entityState.getUpdateAction(componentType)) {
-                        case ADD: {
-                            addedComponentTypes.add(componentType);
-                        }
-                        break;
-                        case UPDATE: {
-                            updatedComponentTypes.add(componentType);
-                        }
-                        break;
-                        default:
-                    }
+                TypeKeyedMap<Component> updatedComponents = entityState.getUpdatedComponents();
+                if (!updatedComponents.isEmpty()) {
+                    eventSystem.send(factories.getUpdatedEventFactory().create(
+                            entityState.getRevision(),
+                            updatedComponents.values()),
+                            entityManager.getEntity(entityState.getId()),
+                            updatedComponents.keySet());
+                }
 
-                    if (!addedComponentTypes.isEmpty()) {
-                        eventSystem.send(
-                                factories.getAddedEventFactory().apply(
-                                        entityState.getRevision(),
-                                        addedComponentTypes.stream().map((t) -> entityState.getComponent(t).get()).collect(Collectors.toList())),
-                                entityManager.getEntity(entityState.getId()),
-                                addedComponentTypes);
-                    }
-                    if (!updatedComponentTypes.isEmpty()) {
-                        eventSystem.send(factories.getUpdatedEventFactory().create(
-                                entityState.getRevision(),
-                                updatedComponentTypes.stream().map((t) -> entityState.getComponent(t).get()).collect(Collectors.toList())),
-                                entityManager.getEntity(entityState.getId()),
-                                updatedComponentTypes);
-                    }
-                    if (!entityState.getRemovedComponents().isEmpty()) {
-                        eventSystem.send(factories.getRemovedFactoryEvent().apply(
-                                entityState.getRevision(),
-                                entityState.getRemovedComponents().values()),
-                                entityManager.getEntity(entityState.getId()),
-                                entityState.getRemovedComponents().keySet());
-                    }
+                TypeKeyedMap<Component> removedComponents = entityState.getRemovedComponents();
+                if (!removedComponents.isEmpty()) {
+                    eventSystem.send(factories.getRemovedFactoryEvent().apply(
+                            entityState.getRevision(),
+                            removedComponents.values()),
+                            entityManager.getEntity(entityState.getId()),
+                            entityState.getRemovedComponents().keySet());
                 }
             }
         });

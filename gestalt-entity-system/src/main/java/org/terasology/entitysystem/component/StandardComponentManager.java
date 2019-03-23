@@ -113,6 +113,7 @@ public class StandardComponentManager implements ComponentManager {
             copyConstructor = (T from) -> {
                 T result = emptyConstructor.get();
                 result.copy(from);
+                result.setDirty(false);
                 return result;
             };
         }
