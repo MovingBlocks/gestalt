@@ -19,14 +19,11 @@ package org.terasology.entitysystem.index;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.terasology.entitysystem.component.StandardComponentManager;
+import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.transaction.TransactionManager;
-import org.terasology.valuetype.ImmutableCopy;
-import org.terasology.valuetype.TypeHandler;
-import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
 
@@ -47,7 +44,7 @@ public class ComponentIndexTest {
 
 
     public ComponentIndexTest() {
-        entityManager = new InMemoryEntityManager(new StandardComponentManager(), transactionManager);
+        entityManager = new InMemoryEntityManager(new ComponentManager(), transactionManager);
         componentIndex = ComponentIndexes.createComponentIndex(transactionManager, entityManager, Sample.class);
     }
 

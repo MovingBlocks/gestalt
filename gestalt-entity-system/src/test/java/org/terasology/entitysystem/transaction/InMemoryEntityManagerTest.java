@@ -19,7 +19,7 @@ package org.terasology.entitysystem.transaction;
 import com.google.common.collect.Sets;
 
 import org.junit.Test;
-import org.terasology.entitysystem.component.StandardComponentManager;
+import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
@@ -27,9 +27,6 @@ import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.entity.inmemory.CoreEntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.transaction.exception.RollbackException;
-import org.terasology.valuetype.ImmutableCopy;
-import org.terasology.valuetype.TypeHandler;
-import org.terasology.valuetype.TypeLibrary;
 
 import java.util.ConcurrentModificationException;
 import java.util.Optional;
@@ -52,7 +49,7 @@ public class InMemoryEntityManagerTest {
 
     public InMemoryEntityManagerTest() {
         transactionManager = new TransactionManager();
-        entityManager = new InMemoryEntityManager(new StandardComponentManager(), transactionManager);
+        entityManager = new InMemoryEntityManager(new ComponentManager(), transactionManager);
     }
 
     @Test

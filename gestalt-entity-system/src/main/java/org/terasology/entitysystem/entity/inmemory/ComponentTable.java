@@ -257,8 +257,7 @@ public class ComponentTable implements EntityStore {
     @Override
     public EntityState getEntityState(long id) {
         int entityRevision = getEntityRevision(id);
-        EntityState state = new EntityState(id, entityRevision, getComponents(id));
-        return state;
+        return new EntityState(id, entityRevision, getComponents(id));
     }
 
     private int selectLock(long id) {

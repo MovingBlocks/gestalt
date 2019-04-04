@@ -44,12 +44,13 @@ import static org.mockito.Mockito.when;
 public class EventReceiverMethodSupportTest {
 
     private EntityRef entity = mock(EntityRef.class);
+    private EventReceiverMethodSupport eventReceiverMethodSupport = new EventReceiverMethodSupport();
 
     @Test
     public void registerEventReceiverMethod() {
         TrivialEventReceiver receiver = new TrivialEventReceiver();
         EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        EventReceiverMethodSupport.register(receiver, builder);
+        eventReceiverMethodSupport.register(receiver, builder);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
         verify(builder).addHandler(captor.capture(), eq(TrivialEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
@@ -65,7 +66,7 @@ public class EventReceiverMethodSupportTest {
     public void registerWithFilterComponentFromAnnotation() {
         FilteredEventReceiver receiver = new FilteredEventReceiver();
         EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        EventReceiverMethodSupport.register(receiver, builder);
+        eventReceiverMethodSupport.register(receiver, builder);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
         verify(builder).addHandler(captor.capture(), eq(FilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class)));
@@ -80,7 +81,7 @@ public class EventReceiverMethodSupportTest {
     public void registerWithMultipleFilterComponentFromAnnotation() {
         MultiFilteredEventReceiver receiver = new MultiFilteredEventReceiver();
         EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        EventReceiverMethodSupport.register(receiver, builder);
+        eventReceiverMethodSupport.register(receiver, builder);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
         verify(builder).addHandler(captor.capture(), eq(MultiFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class, Second.class)));
@@ -95,7 +96,7 @@ public class EventReceiverMethodSupportTest {
     public void registerWithComponentArg() {
         MixedFilteredEventReceiver receiver = new MixedFilteredEventReceiver();
         EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        EventReceiverMethodSupport.register(receiver, builder);
+        eventReceiverMethodSupport.register(receiver, builder);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
         verify(builder).addHandler(captor.capture(), eq(MixedFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class, Second.class)));
@@ -114,7 +115,7 @@ public class EventReceiverMethodSupportTest {
     public void orderUsingClassBeforeAnnotation() {
         GlobalBeforeEventReceiver receiver = new GlobalBeforeEventReceiver();
         EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        EventReceiverMethodSupport.register(receiver, builder);
+        eventReceiverMethodSupport.register(receiver, builder);
 
         verify(builder).addHandler(any(EventHandler.class), eq(GlobalBeforeEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
         verify(builder).orderBeforeAll(Sets.newHashSet(TrivialEventReceiver.class));
@@ -125,7 +126,7 @@ public class EventReceiverMethodSupportTest {
     public void orderUsingClassAfterAnnotation() {
         GlobalAfterEventReceiver receiver = new GlobalAfterEventReceiver();
         EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        EventReceiverMethodSupport.register(receiver, builder);
+        eventReceiverMethodSupport.register(receiver, builder);
 
         verify(builder).addHandler(any(EventHandler.class), eq(GlobalAfterEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
         verify(builder).orderAfterAll(Sets.newHashSet(TrivialEventReceiver.class));
@@ -135,7 +136,7 @@ public class EventReceiverMethodSupportTest {
     public void orderUsingMethodBeforeAnnotation() {
         LocalBeforeEventReceiver receiver = new LocalBeforeEventReceiver();
         EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        EventReceiverMethodSupport.register(receiver, builder);
+        eventReceiverMethodSupport.register(receiver, builder);
 
         verify(builder).addHandler(any(EventHandler.class), eq(LocalBeforeEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
         verify(builder).orderBeforeAll(Sets.newHashSet(TrivialEventReceiver.class));
@@ -145,7 +146,7 @@ public class EventReceiverMethodSupportTest {
     public void orderUsingMethodAfterAnnotation() {
         LocalAfterEventReceiver receiver = new LocalAfterEventReceiver();
         EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        EventReceiverMethodSupport.register(receiver, builder);
+        eventReceiverMethodSupport.register(receiver, builder);
 
         verify(builder).addHandler(any(EventHandler.class), eq(LocalAfterEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
         verify(builder).orderAfterAll(Sets.newHashSet(TrivialEventReceiver.class));

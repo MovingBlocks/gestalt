@@ -57,7 +57,7 @@ public final class Reference implements Component {
         return Collections.unmodifiableList(references);
     }
 
-    void setReferences(List<EntityRef> references) {
+    public void setReferences(List<EntityRef> references) {
         this.references.clear();
         this.references.addAll(references);
         this.dirty = true;
