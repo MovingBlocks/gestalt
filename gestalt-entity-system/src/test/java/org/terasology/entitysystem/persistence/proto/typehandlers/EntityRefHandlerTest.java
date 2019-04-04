@@ -18,7 +18,6 @@ package org.terasology.entitysystem.persistence.proto.typehandlers;
 
 import org.junit.Test;
 import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.component.StandardComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.core.NullEntityRef;
@@ -26,7 +25,6 @@ import org.terasology.entitysystem.core.ProxyEntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.transaction.TransactionManager;
-import org.terasology.valuetype.TypeLibrary;
 
 import modules.test.components.Sample;
 
@@ -44,7 +42,7 @@ public class EntityRefHandlerTest {
     private ProtoPersistence context = ProtoPersistence.create();
 
     public EntityRefHandlerTest() {
-        componentManager = new StandardComponentManager();
+        componentManager = new ComponentManager();
         transactionManager = new TransactionManager();
         entityManager = new InMemoryEntityManager(componentManager, transactionManager);
         context.addTypeHandler(new EntityRefHandler(entityManager), EntityRef.class);

@@ -26,7 +26,14 @@ public class TransactionManager implements Transaction {
 
     private final TransactionPipeline pipeline = new TransactionPipeline();
 
-    private final ThreadLocal<Transaction> transactions = ThreadLocal.withInitial(() -> new ThreadTransaction(pipeline));
+    // Note: using the old version ThreadLocal initial value technique as the new version is not
+    // available under older Android API versions
+    private final ThreadLocal<Transaction> transactions = new ThreadLocal<Transaction>() {
+        @Override
+        protected Transaction initialValue() {
+            return new ThreadTransaction(pipeline);
+        }
+    };
 
     public TransactionPipeline getPipeline() {
         return pipeline;

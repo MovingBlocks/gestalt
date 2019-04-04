@@ -30,11 +30,17 @@ import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
+import org.terasology.entitysystem.component.ReflectionComponentTypeFactory;
+import org.terasology.entitysystem.core.EntityManager;
+import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.gestalt.android.AndroidModuleClassLoader;
 import org.terasology.gestalt.android.testbed.assettypes.Text;
 import org.terasology.gestalt.android.testbed.assettypes.TextData;
 import org.terasology.gestalt.android.testbed.assettypes.TextFactory;
 import org.terasology.gestalt.android.testbed.assettypes.TextFileFormat;
+import org.terasology.gestalt.android.testbed.packageModuleA.TextComponent;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;
@@ -148,6 +154,19 @@ public class GestaltTestActivity extends AppCompatActivity {
             });
         }
         assetTypeManager.disposedUnusedAssets();
+
+        TransactionManager transactionManager = new TransactionManager();
+        EntityManager entityManager = new InMemoryEntityManager(new ReflectionComponentTypeFactory(), transactionManager);
+        transactionManager.begin();
+        EntityRef entity = entityManager.createEntity();
+        TextComponent textComponent = entity.addComponent(TextComponent.class);
+        textComponent.setText("Hello");
+        transactionManager.commit();
+        transactionManager.begin();
+        displayText.append("\n-== Entity System Test ==-\n");
+        displayText.append(entity.getComponent(TextComponent.class).get().getText());
+        transactionManager.rollback();
+
         text.setText(displayText);
     }
 

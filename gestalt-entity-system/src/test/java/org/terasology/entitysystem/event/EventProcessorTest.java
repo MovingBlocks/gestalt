@@ -20,15 +20,12 @@ import com.google.common.collect.Sets;
 
 import org.junit.After;
 import org.junit.Test;
-import org.terasology.entitysystem.component.StandardComponentManager;
+import org.terasology.entitysystem.component.ComponentManager;
 import org.terasology.entitysystem.core.EntityManager;
 import org.terasology.entitysystem.core.EntityRef;
 import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
 import org.terasology.entitysystem.event.impl.EventProcessor;
 import org.terasology.entitysystem.transaction.TransactionManager;
-import org.terasology.valuetype.ImmutableCopy;
-import org.terasology.valuetype.TypeHandler;
-import org.terasology.valuetype.TypeLibrary;
 
 import java.io.IOException;
 
@@ -60,7 +57,7 @@ public class EventProcessorTest {
 
     public EventProcessorTest() {
         transactionManager = new TransactionManager();
-        entityManager = new InMemoryEntityManager(new StandardComponentManager(), transactionManager);
+        entityManager = new InMemoryEntityManager(new ComponentManager(), transactionManager);
     }
 
     @org.junit.Before
