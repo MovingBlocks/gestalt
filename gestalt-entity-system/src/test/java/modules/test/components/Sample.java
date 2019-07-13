@@ -20,7 +20,7 @@ import org.terasology.entitysystem.core.Component;
 
 import java.util.Objects;
 
-public final class Sample implements Component {
+public final class Sample implements Component<Sample> {
     private boolean dirty;
 
     private String name = "";
@@ -52,8 +52,7 @@ public final class Sample implements Component {
         this.dirty = true;
     }
 
-    public void copy(Component o) {
-        Sample other = (Sample) o;
+    public void copy(Sample other) {
         this.name = other.name;
         this.description = other.description;
         this.dirty = true;

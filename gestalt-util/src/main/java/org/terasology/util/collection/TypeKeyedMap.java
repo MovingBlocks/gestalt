@@ -117,9 +117,9 @@ public class TypeKeyedMap<T> {
      * @param <U>
      * @return The previous value associated with the key
      */
+    @SuppressWarnings("unchecked")
     public <U extends T> U put(Class<U> key, U value) {
-        Preconditions.checkArgument(key.isInstance(value));
-        return key.cast(inner.put(key, value));
+        return (U) inner.put(key, value);
     }
 
     /**

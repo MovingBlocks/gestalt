@@ -14,21 +14,41 @@
  * limitations under the License.
  */
 
-package org.terasology.gestalt.android.testbed.packageModuleA;
+package org.terasology.benchmarks.bouncingballs.common;
 
 import org.terasology.entitysystem.core.Component;
 
-public class TextComponent implements Component<TextComponent> {
-
+public class Physics implements Component<Physics> {
     private boolean dirty;
-    private String text;
+    private float velocityX;
+    private float velocityY;
+    private float velocityZ;
 
-    public String getText() {
-        return text;
+    public float getVelocityX() {
+        return velocityX;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void setVelocityX(float velocityX) {
+        this.velocityX = velocityX;
+        this.dirty = true;
+    }
+
+    public float getVelocityY() {
+        return velocityY;
+    }
+
+    public void setVelocityY(float velocityY) {
+        this.velocityY = velocityY;
+        this.dirty = true;
+    }
+
+    public float getVelocityZ() {
+        return velocityZ;
+    }
+
+    public void setVelocityZ(float velocityZ) {
+        this.velocityZ = velocityZ;
+        this.dirty = true;
     }
 
     @Override
@@ -42,8 +62,10 @@ public class TextComponent implements Component<TextComponent> {
     }
 
     @Override
-    public void copy(TextComponent other) {
-        this.text = other.text;
+    public void copy(Physics other) {
         this.dirty = true;
+        this.velocityX = other.velocityX;
+        this.velocityY = other.velocityY;
+        this.velocityZ = other.velocityZ;
     }
 }

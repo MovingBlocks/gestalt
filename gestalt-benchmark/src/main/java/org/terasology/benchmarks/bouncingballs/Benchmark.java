@@ -14,32 +14,17 @@
  * limitations under the License.
  */
 
-package modules.test.components;
+package org.terasology.benchmarks.bouncingballs;
 
-import org.terasology.entitysystem.core.Component;
+public interface Benchmark {
 
-/**
- *
- */
-public final class Empty implements Component<Empty> {
 
-    public Empty() {
-    }
 
-    public Empty(Empty other) {
-        copy(other);
-    }
+    String getName();
 
-    public void copy(Empty other) {
-    }
+    void setup();
 
-    @Override
-    public void setDirty(boolean dirty) {
+    void cleanup();
 
-    }
-
-    @Override
-    public boolean isDirty() {
-        return false;
-    }
+    void doFrame(float delta);
 }

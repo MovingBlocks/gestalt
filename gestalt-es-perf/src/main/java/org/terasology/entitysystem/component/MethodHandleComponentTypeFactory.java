@@ -41,6 +41,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * A ComponentType factory making use of Java 7's MethodHandle class to create high performance constructors an accessors for Components.
+ */
 @RequiresApi(26)
 public class MethodHandleComponentTypeFactory implements ComponentTypeFactory {
 
@@ -50,7 +53,7 @@ public class MethodHandleComponentTypeFactory implements ComponentTypeFactory {
 
     @Override
     @NonNull
-    public <T extends Component> ComponentType<T> createComponentType(Class<T> type) {
+    public <T extends Component<T>> ComponentType<T> createComponentType(Class<T> type) {
         MethodHandles.Lookup lookup = MethodHandles.publicLookup();
         Collection<PropertyAccessor<T, ?>> propertyAccessors = discoverProperties(type, lookup);
         if (propertyAccessors.isEmpty()) {
@@ -65,7 +68,7 @@ public class MethodHandleComponentTypeFactory implements ComponentTypeFactory {
 
     @NonNull
     @SuppressWarnings("unchecked")
-    private <T extends Component> Function<T, T> getCopyConstructor(Class<T> type, Supplier<T> emptyConstructor, MethodHandles.Lookup lookup) {
+    private <T extends Component<T>> Function<T, T> getCopyConstructor(Class<T> type, Supplier<T> emptyConstructor, MethodHandles.Lookup lookup) {
         Function<T, T> copyConstructor;
         try {
             MethodHandle copyCon = lookup.findConstructor(type, MethodType.methodType(Void.TYPE, type));
@@ -89,7 +92,7 @@ public class MethodHandleComponentTypeFactory implements ComponentTypeFactory {
 
     @NonNull
     @SuppressWarnings("unchecked")
-    private <T extends Component> Supplier<T> getEmptyConstructor(Class<T> type, MethodHandles.Lookup lookup) {
+    private <T extends Component<T>> Supplier<T> getEmptyConstructor(Class<T> type, MethodHandles.Lookup lookup) {
         Supplier<T> emptyConstructor;
         try {
             MethodHandle constructor = lookup.findConstructor(type, MethodType.methodType(Void.TYPE));
@@ -107,7 +110,7 @@ public class MethodHandleComponentTypeFactory implements ComponentTypeFactory {
     }
 
     @NonNull
-    private <T extends Component> ComponentType<T> createSingletonComponentType(Class<T> type) {
+    private <T extends Component<T>> ComponentType<T> createSingletonComponentType(Class<T> type) {
         try {
             T instance = type.newInstance();
             return new ComponentType<>(type, () -> instance, t -> instance, new ComponentPropertyInfo<>(Collections.emptySet()));
@@ -116,7 +119,7 @@ public class MethodHandleComponentTypeFactory implements ComponentTypeFactory {
         }
     }
 
-    private <T extends Component> Collection<PropertyAccessor<T, ?>> discoverProperties(Class<T> componentType, MethodHandles.Lookup lookup) {
+    private <T extends Component<T>> Collection<PropertyAccessor<T, ?>> discoverProperties(Class<T> componentType, MethodHandles.Lookup lookup) {
         List<PropertyAccessor<T, ?>> accessorList = Lists.newArrayList();
 
         for (Method method : componentType.getDeclaredMethods()) {

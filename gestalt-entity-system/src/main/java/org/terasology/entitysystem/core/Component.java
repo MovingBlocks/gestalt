@@ -24,7 +24,7 @@ package org.terasology.entitysystem.core;
  * Components should not inherit other components, and there is generally no reason to have common interfaces or abstract base types shared by components -
  * such desires generally suggest that there is another component that should be created.
  */
-public interface Component {
+public interface Component<T extends Component> {
 
     /**
      * @return Whether the component has been altered within the current context
@@ -42,5 +42,5 @@ public interface Component {
      * Copies the values from another component. This is expected to be of the same type.
      * @param other The component to copy
      */
-    void copy(Component other);
+    void copy(T other);
 }

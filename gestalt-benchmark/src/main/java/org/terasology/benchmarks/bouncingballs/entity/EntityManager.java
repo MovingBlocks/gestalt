@@ -14,32 +14,28 @@
  * limitations under the License.
  */
 
-package modules.test.components;
+package org.terasology.benchmarks.bouncingballs.entity;
 
+import org.terasology.benchmarks.bouncingballs.common.ComponentIterator;
+import org.terasology.benchmarks.bouncingballs.common.ComponentStore;
 import org.terasology.entitysystem.core.Component;
 
-/**
- *
- */
-public final class Empty implements Component<Empty> {
+import gnu.trove.iterator.TIntIterator;
 
-    public Empty() {
-    }
+public interface EntityManager {
 
-    public Empty(Empty other) {
-        copy(other);
-    }
+    <T extends Component<T>> ComponentStore<T> addComponentStore(ComponentStore<T> store);
 
-    public void copy(Empty other) {
-    }
+    int getNewId();
 
-    @Override
-    public void setDirty(boolean dirty) {
+    boolean delete(int id);
 
-    }
+    int size();
 
-    @Override
-    public boolean isDirty() {
-        return false;
-    }
+    TIntIterator iterate();
+
+    EntityManagerImpl.ComponentsIterator iterate(Component ... components);
+
+    <T extends Component<T>> ComponentStore<T> getComponentStore(Class<T> componentType);
+
 }

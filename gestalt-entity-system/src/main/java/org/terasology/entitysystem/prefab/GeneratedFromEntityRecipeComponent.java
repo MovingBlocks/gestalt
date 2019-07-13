@@ -22,7 +22,7 @@ import org.terasology.entitysystem.core.Component;
 /**
  * Component indicating an entity was generated from an entity recipe
  */
-public final class GeneratedFromEntityRecipeComponent implements Component {
+public final class GeneratedFromEntityRecipeComponent implements Component<GeneratedFromEntityRecipeComponent> {
 
     private boolean dirty;
 
@@ -54,8 +54,8 @@ public final class GeneratedFromEntityRecipeComponent implements Component {
         this.dirty = dirty;
     }
 
-    public void copy(Component other) {
-        this.entityRecipe = ((GeneratedFromEntityRecipeComponent)other).entityRecipe;
+    public void copy(GeneratedFromEntityRecipeComponent other) {
+        this.entityRecipe = other.entityRecipe;
         dirty = true;
     }
 }

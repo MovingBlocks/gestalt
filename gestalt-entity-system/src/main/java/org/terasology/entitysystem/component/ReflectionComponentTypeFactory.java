@@ -49,7 +49,7 @@ public class ReflectionComponentTypeFactory implements ComponentTypeFactory {
     private static final Set<String> IGNORE_PROPERTIES = ImmutableSet.of("Dirty");
 
     @NonNull
-    public <T extends Component> ComponentType<T> createComponentType(Class<T> type) {
+    public <T extends Component<T>> ComponentType<T> createComponentType(Class<T> type) {
         Collection<PropertyAccessor<T, ?>> propertyAccessors = discoverProperties(type);
         if (propertyAccessors.isEmpty()) {
             return createSingletonComponentType(type);
@@ -65,7 +65,7 @@ public class ReflectionComponentTypeFactory implements ComponentTypeFactory {
     }
 
     @NonNull
-    private <T extends Component> Function<T, T> getCopyConstructor(Class<T> type, Supplier<T> emptyConstructor) {
+    private <T extends Component<T>> Function<T, T> getCopyConstructor(Class<T> type, Supplier<T> emptyConstructor) {
         Function<T, T> copyConstructor;
         try {
             Constructor<T> constructor = type.getDeclaredConstructor(type);
@@ -87,7 +87,7 @@ public class ReflectionComponentTypeFactory implements ComponentTypeFactory {
         return copyConstructor;
     }
 
-    private <T extends Component> Supplier<T> getEmptyConstructor(Class<T> type) {
+    private <T extends Component<T>> Supplier<T> getEmptyConstructor(Class<T> type) {
         Supplier<T> emptyConstructor;
         try {
             Constructor<T> constructor = type.getDeclaredConstructor();
@@ -104,7 +104,7 @@ public class ReflectionComponentTypeFactory implements ComponentTypeFactory {
         return emptyConstructor;
     }
 
-    private <T extends Component> ComponentType<T> createSingletonComponentType(Class<T> type) {
+    private <T extends Component<T>> ComponentType<T> createSingletonComponentType(Class<T> type) {
         try {
             T instance = type.newInstance();
             return new ComponentType<>(type, () -> instance, t -> instance, new ComponentPropertyInfo<>(Collections.emptySet()));
@@ -113,7 +113,7 @@ public class ReflectionComponentTypeFactory implements ComponentTypeFactory {
         }
     }
 
-    private <T extends Component> Collection<PropertyAccessor<T, ?>> discoverProperties(Class<T> componentType) {
+    private <T extends Component<T>> Collection<PropertyAccessor<T, ?>> discoverProperties(Class<T> componentType) {
         List<PropertyAccessor<T, ?>> accessorList = Lists.newArrayList();
 
         for (Method method : componentType.getDeclaredMethods()) {
