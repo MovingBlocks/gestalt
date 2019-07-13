@@ -34,6 +34,7 @@ public final class ComponentIndexes {
     private ComponentIndexes() {
     }
 
+    @SafeVarargs
     public static Index createComponentIndex(TransactionManager transactionManager, EntityManager entityManager, Class<? extends Component> firstComponentType, Class<? extends Component>... additionalComponentTypes) {
         return createComponentIndex(transactionManager, entityManager, Varargs.combineToSet(firstComponentType, additionalComponentTypes));
     }

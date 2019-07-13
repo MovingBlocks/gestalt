@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.entity.inmemory;
+package org.terasology.benchmarks.bouncingballs.common;
 
-/**
- *
- */
-public class LockStore {
+import org.terasology.entitysystem.core.Component;
+
+public interface ComponentIterator<T extends Component<T>> {
+
+    boolean next(T component);
+
+    int getEntityId();
+
 }

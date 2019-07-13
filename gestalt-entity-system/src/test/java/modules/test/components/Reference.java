@@ -29,7 +29,7 @@ import java.util.Objects;
 /**
  *
  */
-public final class Reference implements Component {
+public final class Reference implements Component<Reference> {
 
     private boolean dirty;
 
@@ -63,8 +63,7 @@ public final class Reference implements Component {
         this.dirty = true;
     }
 
-    public void copy(Component o) {
-        Reference other = (Reference) o;
+    public void copy(Reference other) {
         setReferences(other.references);
         this.reference = other.reference;
         this.dirty = true;

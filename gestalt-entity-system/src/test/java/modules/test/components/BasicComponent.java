@@ -29,7 +29,7 @@ import java.util.Objects;
 /**
  *
  */
-public final class BasicComponent implements Component {
+public final class BasicComponent implements Component<BasicComponent> {
     private static Logger logger = LoggerFactory.getLogger(BasicComponent.class);
     private boolean dirty;
 
@@ -83,8 +83,7 @@ public final class BasicComponent implements Component {
         this.dirty = true;
     }
 
-    public void copy(Component o) {
-        BasicComponent other = (BasicComponent) o;
+    public void copy(BasicComponent other) {
         this.name = other.name;
         this.description = other.description;
         this.dirty = true;

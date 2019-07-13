@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  *
  */
-public final class Second implements Component {
+public final class Second implements Component<Second> {
     private boolean dirty;
 
     private String name = "";
@@ -55,8 +55,7 @@ public final class Second implements Component {
         this.dirty = true;
     }
 
-    public void copy(Component o) {
-        Second other = (Second) o;
+    public void copy(Second other) {
         this.name = other.name;
         this.description = other.description;
         this.dirty = true;

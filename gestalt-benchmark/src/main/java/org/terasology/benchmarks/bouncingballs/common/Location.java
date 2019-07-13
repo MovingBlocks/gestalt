@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package org.terasology.gestalt.android.testbed.packageModuleA;
+package org.terasology.benchmarks.bouncingballs.common;
 
 import org.terasology.entitysystem.core.Component;
 
-public class TextComponent implements Component<TextComponent> {
+public class Location implements Component<Location> {
 
     private boolean dirty;
-    private String text;
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
+    private float x;
+    private float y;
+    private float z;
 
     @Override
     public boolean isDirty() {
@@ -42,8 +36,38 @@ public class TextComponent implements Component<TextComponent> {
     }
 
     @Override
-    public void copy(TextComponent other) {
-        this.text = other.text;
+    public void copy(Location other) {
+        this.dirty = true;
+        this.x = other.x;
+        this.y = other.y;
+        this.z = other.z;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+        this.dirty = true;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+        this.dirty = true;
+    }
+
+    public float getZ() {
+        return z;
+    }
+
+    public void setZ(float z) {
+        this.z = z;
         this.dirty = true;
     }
 }
+

@@ -33,6 +33,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
+/**
+ * An event handler that makes use of Java 7's MethodHandle class to provide high performance event method triggering
+ */
 @RequiresApi(26)
 public class MethodHandleEventHandle implements EventHandler {
 

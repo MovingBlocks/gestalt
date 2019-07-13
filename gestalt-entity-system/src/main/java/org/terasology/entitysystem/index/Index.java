@@ -24,4 +24,5 @@ import org.terasology.entitysystem.core.EntityRef;
 public interface Index extends Iterable<EntityRef> {
 
     boolean contains(EntityRef entity);
+
 }

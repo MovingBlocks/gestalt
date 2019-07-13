@@ -14,32 +14,12 @@
  * limitations under the License.
  */
 
-package modules.test.components;
+package org.terasology.benchmarks.bouncingballs.common;
 
 import org.terasology.entitysystem.core.Component;
 
-/**
- *
- */
-public final class Empty implements Component<Empty> {
+public interface ComponentSpliterator<T extends Component<T>> extends ComponentIterator<T> {
 
-    public Empty() {
-    }
+    ComponentSpliterator<T> split();
 
-    public Empty(Empty other) {
-        copy(other);
-    }
-
-    public void copy(Empty other) {
-    }
-
-    @Override
-    public void setDirty(boolean dirty) {
-
-    }
-
-    @Override
-    public boolean isDirty() {
-        return false;
-    }
 }

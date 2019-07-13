@@ -14,32 +14,26 @@
  * limitations under the License.
  */
 
-package modules.test.components;
+package org.terasology.benchmarks.bouncingballs.entity;
 
-import org.terasology.entitysystem.core.Component;
+import gnu.trove.iterator.TIntIterator;
 
-/**
- *
- */
-public final class Empty implements Component<Empty> {
+public class ComponentTupleIterator implements TIntIterator {
 
-    public Empty() {
-    }
 
-    public Empty(Empty other) {
-        copy(other);
-    }
 
-    public void copy(Empty other) {
+    @Override
+    public int next() {
+        return 0;
     }
 
     @Override
-    public void setDirty(boolean dirty) {
-
-    }
-
-    @Override
-    public boolean isDirty() {
+    public boolean hasNext() {
         return false;
+    }
+
+    @Override
+    public void remove() {
+
     }
 }

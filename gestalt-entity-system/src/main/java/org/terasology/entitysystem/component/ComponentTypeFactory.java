@@ -33,5 +33,5 @@ public interface ComponentTypeFactory {
      * @throws ComponentTypeGenerationException If there is a problem generating a component type
      */
     @NonNull
-    <T extends Component> ComponentType<T> createComponentType(Class<T> type);
+    <T extends Component<T>> ComponentType<T> createComponentType(Class<T> type);
 }

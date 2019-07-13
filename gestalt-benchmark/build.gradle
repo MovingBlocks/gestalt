@@ -1,6 +1,6 @@
 /*
  * Copyright 2019 MovingBlocks
- *
+ *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,32 +14,29 @@
  * limitations under the License.
  */
 
-package modules.test.components;
-
-import org.terasology.entitysystem.core.Component;
-
-/**
- *
- */
-public final class Empty implements Component<Empty> {
-
-    public Empty() {
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
-
-    public Empty(Empty other) {
-        copy(other);
-    }
-
-    public void copy(Empty other) {
-    }
-
-    @Override
-    public void setDirty(boolean dirty) {
-
-    }
-
-    @Override
-    public boolean isDirty() {
-        return false;
+    dependencies {
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.8"
     }
 }
+
+apply plugin: "me.champeau.gradle.jmh"
+apply plugin: 'java-library'
+
+dependencies {
+    implementation project(":gestalt-entity-system")
+    implementation project(":gestalt-es-perf")
+    implementation 'com.google.guava:guava:27.0.1-android'
+    implementation 'net.sf.trove4j:trove4j:3.0.3'
+
+    jmh project(":gestalt-entity-system")
+}
+
+sourceCompatibility = "8"
+targetCompatibility = "8"

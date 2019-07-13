@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2019 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-package org.terasology.entitysystem.jmh;
+package org.terasology.benchmarks.bouncingballs.common;
 
-/**
- *
- */
-public class DirectComponent {
-    private String name;
-    private String description;
+import org.terasology.entitysystem.core.Component;
 
-    public String getDescription() {
-        return description;
-    }
+public interface ComponentStore<T extends Component<T>> {
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    boolean get(int entityId, T into);
 
-    public String getName() {
-        return name;
-    }
+    void set(int entityId, T component);
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    int size();
+
+    ComponentIterator<T> iterate();
+
+    ComponentSpliterator<T> spliterate();
+
+    void remove(int id);
+
+    Class<T> getType();
+
+    void extend(int capacity);
+
 }
