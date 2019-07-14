@@ -154,19 +154,6 @@ public class GestaltTestActivity extends AppCompatActivity {
             });
         }
         assetTypeManager.disposedUnusedAssets();
-
-        TransactionManager transactionManager = new TransactionManager();
-        EntityManager entityManager = new InMemoryEntityManager(new ReflectionComponentTypeFactory(), transactionManager);
-        transactionManager.begin();
-        EntityRef entity = entityManager.createEntity();
-        TextComponent textComponent = entity.addComponent(TextComponent.class);
-        textComponent.setText("Hello");
-        transactionManager.commit();
-        transactionManager.begin();
-        displayText.append("\n-== Entity System Test ==-\n");
-        displayText.append(entity.getComponent(TextComponent.class).get().getText());
-        transactionManager.rollback();
-
         text.setText(displayText);
     }
 
