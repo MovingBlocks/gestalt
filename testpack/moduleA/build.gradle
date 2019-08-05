@@ -36,6 +36,9 @@ buildscript {
         mavenLocal()
         google()
         jcenter()
+        maven {
+            url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+        }
     }
     dependencies {
         classpath 'org.reflections:reflections:0.9.12-SNAPSHOT'

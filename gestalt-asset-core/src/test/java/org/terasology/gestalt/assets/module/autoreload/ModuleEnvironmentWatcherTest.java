@@ -108,7 +108,17 @@ public class ModuleEnvironmentWatcherTest {
         }
         changed = watcher.checkForChanges();
         assertTrue(changed.containsEntry(assetType, new ResourceUrn(module.getId(), new Name("test.txt"))));
-        FilesUtil.recursiveDelete(tempDirectory);
+        try {
+            FilesUtil.recursiveDelete(tempDirectory);
+        } catch (IOException e) {
+            // Observed on Windows 10 to fail - timing issue? Try again after a brief moment!
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException ignore) {
+
+            }
+            FilesUtil.recursiveDelete(tempDirectory);
+        }
         watcher.checkForChanges();
 
     }
