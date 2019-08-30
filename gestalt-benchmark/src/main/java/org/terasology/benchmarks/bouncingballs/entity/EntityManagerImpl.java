@@ -36,27 +36,33 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class EntityManagerImpl implements EntityManager {
 
+    private final double EXTENSION_RATE = 1.5;
+
     private Map<Class<? extends Component>, ComponentStore<?>> componentStores = Maps.newConcurrentMap();
     private Deque<Integer> freedIdQueue = Queues.newArrayDeque();
     private TIntSet freedIds = new TIntHashSet();
     private int nextId = 1;
-    private int highWatermark = 1000;
+
+    private ManagedEntityRef[] entities = new ManagedEntityRef[1000];
 
     @Override
     public <T extends Component<T>> ComponentStore<T> addComponentStore(ComponentStore<T> store) {
         componentStores.put(store.getType(), store);
-        store.extend(highWatermark);
+        store.extend(entities.length);
         return store;
     }
 
     @Override
-    public synchronized int getNewId() {
+    public int getNewId() {
         if (freedIds.isEmpty()) {
             int id = nextId++;
-            if (id > highWatermark) {
-                highWatermark *= 2;
+            if (id > entities.length) {
+                int newSize = (int)(entities.length * EXTENSION_RATE) + 1;
+                ManagedEntityRef[] oldEntities = entities;
+                entities = new ManagedEntityRef[newSize];
+                System.arraycopy(oldEntities, 0, entities, 0, oldEntities.length);
                 for (ComponentStore<?> store : componentStores.values()) {
-                    store.extend(highWatermark);
+                    store.extend(entities.length);
                 }
             }
             return id;
@@ -68,7 +74,7 @@ public class EntityManagerImpl implements EntityManager {
     }
 
     @Override
-    public synchronized boolean delete(int id) {
+    public boolean delete(int id) {
         if (id > 0 && id < nextId && !freedIds.contains(id)) {
             for (ComponentStore store : componentStores.values()) {
                 store.remove(id);
@@ -180,5 +186,8 @@ public class EntityManagerImpl implements EntityManager {
         public int getEntityId() {
             return drivingIterator.getEntityId();
         }
+    }
+
+    private static class ManagedEntityRef {
     }
 }

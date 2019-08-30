@@ -23,6 +23,8 @@ import org.terasology.entitysystem.core.Component;
 
 import java.lang.reflect.Array;
 import java.util.Spliterator;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 /**
@@ -34,6 +36,8 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
     private final ComponentType<T> type;
     private T[] store;
 
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
+
     public ArrayComponentStore(ComponentType<T> componentType) {
         this(componentType, 1000);
     }
@@ -44,38 +48,59 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
     }
 
     public boolean get(int entityId, T into) {
-        T value = store[entityId];
-        if (value != null) {
-            into.copy(store[entityId]);
-            return true;
+        lock.readLock().lock();
+        try {
+            T value = store[entityId];
+            if (value != null) {
+                into.copy(store[entityId]);
+                return true;
+            }
+            return false;
+        } finally {
+            lock.readLock().unlock();
         }
-        return false;
+
     }
 
     public void set(int entityId, T component) {
-        if (store[entityId] == null) {
-            store[entityId] = type.createCopy(component);
-        } else {
-            store[entityId].copy(component);
+        lock.writeLock().lock();
+        try {
+            if (store[entityId] == null) {
+                store[entityId] = type.createCopy(component);
+            } else {
+                store[entityId].copy(component);
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
     @Override
     public int size() {
-        return store.length;
+        lock.readLock().lock();
+        try {
+            return store.length;
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public ComponentIterator<T> iterate() {
-        return new SingleComponentIterator<>(store, 0, store.length);
+        return new SingleComponentIterator(0, store.length);
     }
 
     public ComponentSpliterator<T> spliterate() {
-        return new SingleComponentIterator<>(store, 0, store.length);
+        return new SingleComponentIterator(0, store.length);
     }
 
     @Override
     public void remove(int id) {
-        store[id] = null;
+        lock.writeLock().lock();
+        try {
+            store[id] = null;
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     @Override
@@ -86,20 +111,23 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
     @Override
     public void extend(int capacity) {
         if (capacity >= store.length) {
-            T[] newStore = (T[]) Array.newInstance(type.getComponentClass(), capacity * 2);
-            System.arraycopy(store, 0, newStore, 0, store.length);
-            store = newStore;
+            lock.writeLock().lock();
+            try {
+                T[] newStore = (T[]) Array.newInstance(type.getComponentClass(), capacity * 2);
+                System.arraycopy(store, 0, newStore, 0, store.length);
+                store = newStore;
+            } finally {
+                lock.writeLock().unlock();
+            }
         }
     }
 
-    private static class SingleComponentIterator<T extends Component<T>> implements ComponentSpliterator<T> {
+    private class SingleComponentIterator implements ComponentSpliterator<T> {
 
-        private T[] store;
         private int index = -1;
         private int endIndex;
 
-        public SingleComponentIterator(T[] store, int start, int length) {
-            this.store = store;
+        public SingleComponentIterator(int start, int length) {
             this.endIndex = length + start;
             this.index = start - 1;
         }
@@ -107,14 +135,19 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
         @Override
         public boolean next(T component) {
             index++;
-            while (index < endIndex && store[index] == null) {
-                index++;
+            lock.readLock().lock();
+            try {
+                while (index < endIndex && store[index] == null) {
+                    index++;
+                }
+                if (index < endIndex) {
+                    component.copy(store[index]);
+                    return true;
+                }
+                return false;
+            } finally {
+                lock.readLock().unlock();
             }
-            if (index < endIndex) {
-                component.copy(store[index]);
-                return true;
-            }
-            return false;
         }
 
         @Override
@@ -123,7 +156,7 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
             int splitLength = length / 2;
             endIndex -= splitLength;
 
-            return new SingleComponentIterator<>(store, endIndex, splitLength); // 501, 500
+            return new SingleComponentIterator(endIndex, splitLength);
         }
 
         @Override
