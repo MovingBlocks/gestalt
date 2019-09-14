@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,9 @@ import java.util.stream.Collectors;
  * instances of their respective key, and provides a nicer interface for retrieving values.
  */
 public class TypeKeyedMap<T> {
+    @SuppressWarnings("unchecked")
+    private static TypeKeyedMap EMPTY = new TypeKeyedMap(Collections.emptyMap());
+
     private Map<Class<? extends T>, T> inner;
 
     /**
@@ -40,6 +44,15 @@ public class TypeKeyedMap<T> {
      */
     public TypeKeyedMap() {
         this(Maps::newLinkedHashMap);
+    }
+
+    /**
+     * @param <T> The type that the empty TypeKeyedMap would hold
+     * @return An immutable empty TypeKeyedMap
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> TypeKeyedMap<T> empty() {
+        return EMPTY;
     }
 
     /**

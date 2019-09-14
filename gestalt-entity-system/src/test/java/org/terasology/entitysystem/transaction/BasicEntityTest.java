@@ -17,10 +17,9 @@
 package org.terasology.entitysystem.transaction;
 
 import org.junit.Test;
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.entity.EntityRef;
 
 import java.io.IOException;
 import java.util.Optional;

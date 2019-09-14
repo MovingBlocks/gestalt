@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.persistence.proto.EntityRecipeManifest;
 import org.terasology.entitysystem.persistence.proto.EntityRecipeMetadata;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;

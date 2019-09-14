@@ -18,9 +18,9 @@ package modules.test.components;
 
 import com.google.common.collect.Lists;
 
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.core.NullEntityRef;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.entity.NullEntityRef;
 
 import java.util.Collections;
 import java.util.List;

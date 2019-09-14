@@ -20,9 +20,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
-import org.terasology.entitysystem.component.ComponentType;
-import org.terasology.entitysystem.component.PropertyAccessor;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.component.management.PropertyAccessor;
+import org.terasology.entitysystem.component.Component;
 import org.terasology.naming.Name;
 
 import java.util.Collections;

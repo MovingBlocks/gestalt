@@ -16,10 +16,8 @@
 
 package org.terasology.entitysystem.lifecycle;
 
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.entity.inmemory.EntityState;
-import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.event.EventSystem;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
 import org.terasology.entitysystem.transaction.pipeline.TransactionInterceptor;

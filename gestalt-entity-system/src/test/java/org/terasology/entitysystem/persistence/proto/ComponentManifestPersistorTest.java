@@ -19,7 +19,7 @@ package org.terasology.entitysystem.persistence.proto;
 import com.google.common.collect.Sets;
 
 import org.junit.Test;
-import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.component.management.ComponentManager;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentManifestPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.module.Module;

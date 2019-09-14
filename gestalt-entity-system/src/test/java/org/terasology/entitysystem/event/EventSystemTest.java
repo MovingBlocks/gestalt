@@ -19,8 +19,8 @@ package org.terasology.entitysystem.event;
 import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.impl.EventProcessor;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;

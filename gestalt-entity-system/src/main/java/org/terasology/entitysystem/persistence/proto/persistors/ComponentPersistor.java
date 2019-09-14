@@ -20,9 +20,9 @@ import com.google.common.base.Preconditions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.component.ComponentType;
-import org.terasology.entitysystem.component.PropertyAccessor;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.component.management.PropertyAccessor;
+import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.persistence.proto.ComponentManifest;
 import org.terasology.entitysystem.persistence.proto.ComponentMetadata;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;

@@ -36,13 +36,13 @@ import org.terasology.assets.format.AssetDataFile;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.Context;
 import org.terasology.assets.management.ContextManager;
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.component.ComponentType;
-import org.terasology.entitysystem.component.PropertyAccessor;
-import org.terasology.entitysystem.component.module.ComponentTypeIndex;
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.core.NullEntityRef;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.component.management.ComponentTypeIndex;
+import org.terasology.entitysystem.component.management.PropertyAccessor;
+import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.entity.NullEntityRef;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 import org.terasology.util.collection.TypeKeyedMap;
@@ -186,21 +186,13 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
             }
         }
 
-        private EntityRef readEntityRecipeRef(String refString) {
-            PrefabLoader loader = loaderStack.get().peek();
-            EntityRef ref = loader.prefabData.getRecipes().get(new ResourceUrn(loader.prefabUrn, refString));
-            if (ref == null) {
-                logger.error("Unable to resolve entity reference {}", refString);
-                return NullEntityRef.get();
-            } else {
-                return ref;
-            }
-        }
-
         private EntityRef readSimpleRef(String refString) {
             PrefabLoader loader = loaderStack.get().peek();
-            EntityRef ref = loader.prefabData.getRecipes().get(new ResourceUrn(loader.prefabUrn, refString));
-            if (ref == null) {
+            EntityRef ref = null;
+            EntityRecipe recipe = loader.prefabData.getRecipes().get(new ResourceUrn(loader.prefabUrn, refString));
+            if (recipe != null) {
+                ref = recipe.getReference();
+            } else {
                 Optional<Prefab> refPrefab = assetManager.getAsset(refString, Prefab.class);
                 if (refPrefab.isPresent()) {
                     ref = new PrefabRef(refPrefab.get());
@@ -224,6 +216,17 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
             } else {
                 logger.error("Unable to resolve prefab reference {}", refString);
                 return NullEntityRef.get();
+            }
+        }
+
+        private EntityRef readEntityRecipeRef(String refString) {
+            PrefabLoader loader = loaderStack.get().peek();
+            EntityRecipe recipe = loader.prefabData.getRecipes().get(new ResourceUrn(loader.prefabUrn, refString));
+            if (recipe == null) {
+                logger.error("Unable to resolve entity reference {}", refString);
+                return NullEntityRef.get();
+            } else {
+                return recipe.getReference();
             }
         }
     }
@@ -287,9 +290,11 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
             for (EntityRecipe recipe : parentPrefab.getEntityRecipes().values()) {
                 EntityRecipe copy = new EntityRecipe(new ResourceUrn(prefabUrn, recipe.getIdentifier().getFragmentName()));
                 recipe.getComponents().forEach(new TypeKeyedMap.EntryConsumer<Component>() {
+
                     @Override
+                    @SuppressWarnings("unchecked")
                     public <U extends Component> void accept(Class<U> type, U value) {
-                        copy.add(type, componentManager.copy(value));
+                        copy.add(componentManager.copy(value));
                     }
                 });
                 prefabData.addEntityRecipe(copy);
@@ -303,11 +308,11 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
             }
         }
 
-        private <T extends Component> void loadComponent(EntityRecipe entityRecipe, Class<T> componentClass, JsonObject value) {
+        private <T extends Component<T>> void loadComponent(EntityRecipe entityRecipe, Class<T> componentClass, JsonObject value) {
             ComponentType<T> type = componentManager.getType(componentClass);
             T component = entityRecipe.getComponent(componentClass).orElseGet(() -> {
                 T newComp = type.create();
-                entityRecipe.add(componentClass, newComp);
+                entityRecipe.add(newComp);
                 return newComp;
             });
 

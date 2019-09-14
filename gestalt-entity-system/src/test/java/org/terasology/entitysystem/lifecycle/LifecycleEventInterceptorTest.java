@@ -21,12 +21,9 @@ import com.google.common.collect.Sets;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.inmemory.CoreEntityRef;
-import org.terasology.entitysystem.entity.inmemory.EntityState;
-import org.terasology.entitysystem.entity.inmemory.EntitySystemState;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventSystem;
 import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
