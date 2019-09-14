@@ -18,11 +18,10 @@ package org.terasology.entitysystem.event.impl;
 
 import com.google.common.collect.ImmutableSet;
 
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventSystem;
-import org.terasology.entitysystem.event.Synchronous;
 import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.entitysystem.transaction.pipeline.TransactionStage;
 

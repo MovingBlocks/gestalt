@@ -16,7 +16,7 @@
 
 package org.terasology.entitysystem.event;
 
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.Component;
 
 import java.lang.reflect.Method;
 import java.util.Collection;

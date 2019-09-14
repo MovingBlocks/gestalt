@@ -20,10 +20,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.component.ComponentType;
-import org.terasology.entitysystem.component.module.ComponentTypeIndex;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.component.Component;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 

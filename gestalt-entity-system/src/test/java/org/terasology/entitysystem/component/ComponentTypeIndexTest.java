@@ -19,7 +19,7 @@ package org.terasology.entitysystem.component;
 import org.junit.Test;
 import org.reflections.util.ClasspathHelper;
 import org.terasology.assets.ResourceUrn;
-import org.terasology.entitysystem.component.module.ComponentTypeIndex;
+import org.terasology.entitysystem.component.management.ComponentTypeIndex;
 import org.terasology.module.Module;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.module.ModuleFactory;

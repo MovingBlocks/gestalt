@@ -20,29 +20,38 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import org.terasology.assets.ResourceUrn;
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Optional;
-import java.util.Set;
+
 
 /**
- * The recipe for creating an entity, intended for use as part of a prefab. This is an {@link EntityRef}, to allow it to be used in the components of other EntityRecipes
- * that are part of the same prefab. When the prefab is instantiated, these references will be replaced with references to the actual entities.
+ * The recipe for creating an entity, as part of a prefab.
  */
-public class EntityRecipe implements EntityRef {
+public class EntityRecipe {
 
+    private final ResourceUrn identifier;
+    private final EntityRecipeRef recipeRef;
     private TypeKeyedMap<Component> componentMap = new TypeKeyedMap<>(ImmutableMap.of());
-    private ResourceUrn identifier;
 
     public EntityRecipe(ResourceUrn identifier) {
         Preconditions.checkArgument(!identifier.getFragmentName().isEmpty(), "EntityRecipe identifiers must have a fragment name");
         this.identifier = identifier;
+        this.recipeRef = new EntityRecipeRef(this);
     }
 
     public EntityRecipe(ResourceUrn prefabIdentifier, String identifier) {
         this.identifier = new ResourceUrn(prefabIdentifier, identifier);
+        this.recipeRef = new EntityRecipeRef(this);
+    }
+
+    /**
+     * @return A reference to this EntityRecipe
+     */
+    public EntityRecipeRef getReference() {
+        return recipeRef;
     }
 
     /**
@@ -52,40 +61,30 @@ public class EntityRecipe implements EntityRef {
         return identifier;
     }
 
-    @Override
-    public long getId() {
-        return 0;
-    }
-
-    @Override
-    public long getRevision() {
-        return 0;
-    }
-
-    @Override
-    public boolean isPresent() {
-        return true;
-    }
-
-    @Override
-    public <T extends Component> Optional<T> getComponent(Class<T> componentType) {
+    /**
+     * @param componentType The type of component to get
+     * @param <T>           The type of component to get
+     * @return A component of the requested type, or {@link Optional#empty()}.
+     */
+    public <T extends Component<T>> Optional<T> getComponent(Class<T> componentType) {
         return Optional.ofNullable(componentType.cast(componentMap.get(componentType)));
     }
 
-    @Override
-    public Set<Class<? extends Component>> getComponentTypes() {
-        return componentMap.keySet();
+    /**
+     * @return A map of all the components of the in the recipe
+     */
+    public TypeKeyedMap<Component> getComponents() {
+        return componentMap;
     }
 
     /**
      * Adds a component to the recipe.
      *
-     * @param componentType The type of the component
-     * @param component     The component
-     * @param <T>           The type of the component
+     * @param component The component
+     * @param <T>       The type of the component
      */
-    public synchronized <T extends Component> void add(Class<T> componentType, T component) {
-        this.componentMap = new TypeKeyedMap<>(ImmutableMap.<Class<? extends Component>, Component>builder().putAll(componentMap.getInner()).put(componentType, component).build());
+    public synchronized <T extends Component<T>> void add(T component) {
+        this.componentMap = new TypeKeyedMap<>(ImmutableMap.<Class<? extends Component>, Component>builder().putAll(componentMap.getInner()).put(component.getClass(), component).build());
     }
 
     /**
@@ -93,7 +92,7 @@ public class EntityRecipe implements EntityRef {
      *
      * @param componentType The type of the component to remove
      */
-    public synchronized void remove(Class<? extends Component> componentType) {
+    public <T extends Component<T>> void remove(Class<T> componentType) {
         ImmutableMap.Builder<Class<? extends Component>, Component> builder = ImmutableMap.builder();
         componentMap.forEach(new TypeKeyedMap.EntryConsumer<Component>() {
             @Override
@@ -107,39 +106,10 @@ public class EntityRecipe implements EntityRef {
         this.componentMap = new TypeKeyedMap<>(builder.build());
     }
 
-    // AddComponent is unsupported, to avoid accidentally modifying an EntityPrefab in core entity processing. Also because EntityPrefab has no way to instantiate a
-    // component by class
-    @Override
-    public <T extends Component> T addComponent(Class<T> componentType) {
-        throw new UnsupportedOperationException("Components cannot be added to an entity prefab in this way - use EntityRecipe::add instead");
-    }
-
-    @Override
-    public <T extends Component> T addComponent(T component) {
-        throw new UnsupportedOperationException("Components cannot be added to an entity prefab in this way - use EntityRecipe::add instead");
-    }
-
-    // RemoveComponent is unsupported, to avoid accidentally modifying an EntityPrefab in core entity processing.
-    @Override
-    public <T extends Component> void removeComponent(Class<T> componentType) {
-        throw new UnsupportedOperationException("Components cannot be removed from an entity prefab in this way - use EntityRecipe::remove instead");
-    }
-
-    @Override
-    public void delete() {
-        throw new UnsupportedOperationException("EntityRecipes cannot be deleted");
-    }
-
     @Override
     public String toString() {
         return "EntityRecipe(" + identifier + ")";
     }
 
-    /**
-     * @return A map of all the components of the in the recipe
-     */
-    @Override
-    public TypeKeyedMap<Component> getComponents() {
-        return componentMap;
-    }
+
 }

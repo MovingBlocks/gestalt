@@ -16,11 +16,11 @@
 
 package org.terasology.entitysystem.persistence.proto.persistors;
 
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.component.ComponentType;
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.persistence.proto.ComponentManifest;
 import org.terasology.entitysystem.persistence.proto.ComponentMetadata;
 import org.terasology.entitysystem.persistence.proto.EntityRecipeManifest;
@@ -28,7 +28,7 @@ import org.terasology.entitysystem.persistence.proto.EntityRecipeMetadata;
 import org.terasology.entitysystem.persistence.proto.ProtoPersistence;
 import org.terasology.entitysystem.persistence.proto.exception.PersistenceException;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
-import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
+import org.terasology.entitysystem.prefab.GeneratedFromRecipeComponent;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Optional;
@@ -55,9 +55,9 @@ public class PrefabAwareEntityPersistor implements EntityPersistor {
 
     @Override
     public ProtoDatastore.EntityData.Builder serialize(EntityRef entity) {
-        Optional<GeneratedFromEntityRecipeComponent> metadata = entity.getComponent(GeneratedFromEntityRecipeComponent.class);
+        Optional<GeneratedFromRecipeComponent> metadata = entity.getComponent(GeneratedFromRecipeComponent.class);
         if (metadata.isPresent()) {
-            GeneratedFromEntityRecipeComponent prefabInfo = metadata.get();
+            GeneratedFromRecipeComponent prefabInfo = metadata.get();
             Optional<EntityRecipeMetadata> entityRecipeMetadata = recipeManifest.getEntityRecipeMetadata(prefabInfo.getEntityRecipe());
             if (entityRecipeMetadata.isPresent()) {
                 ProtoDatastore.EntityData.Builder builder = serializeEntityDelta(entityRecipeMetadata.get().getComponents(), entity);
@@ -76,7 +76,7 @@ public class PrefabAwareEntityPersistor implements EntityPersistor {
         ProtoDatastore.EntityData.Builder builder = ProtoDatastore.EntityData.newBuilder();
         builder.setId(entity.getId());
         for (TypeKeyedMap.Entry<? extends Component> component : entity.getComponents().entrySet()) {
-            if (GeneratedFromEntityRecipeComponent.class.isAssignableFrom(component.getKey())) {
+            if (GeneratedFromRecipeComponent.class.isAssignableFrom(component.getKey())) {
                 continue;
             }
             Component recipeComponent = baseComponents.get(component.getKey());
@@ -113,7 +113,7 @@ public class PrefabAwareEntityPersistor implements EntityPersistor {
         applyComponentChanges(data, entity);
         dropRemovedComponents(data, entity);
 
-        GeneratedFromEntityRecipeComponent sourceEntityRecipe = entity.addComponent(GeneratedFromEntityRecipeComponent.class);
+        GeneratedFromRecipeComponent sourceEntityRecipe = entity.addComponent(GeneratedFromRecipeComponent.class);
         sourceEntityRecipe.setEntityRecipe(base.getUrn());
 
         return entity;

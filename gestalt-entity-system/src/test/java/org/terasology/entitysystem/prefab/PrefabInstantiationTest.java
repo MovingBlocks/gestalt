@@ -21,12 +21,10 @@ import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.MapAssetTypeManager;
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.core.NullEntityRef;
-import org.terasology.entitysystem.core.ProxyEntityRef;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.entity.NullEntityRef;
 import org.terasology.entitysystem.transaction.TransactionManager;
 
 import java.io.IOException;
@@ -172,7 +170,7 @@ public class PrefabInstantiationTest {
     @Test
     public void entitiesCreatedByPrefabHaveEntityRecipeUrnTracked() {
         EntityRef entityRef = entityManager.createEntity(singlePrefab);
-        GeneratedFromEntityRecipeComponent comp = entityRef.getComponent(GeneratedFromEntityRecipeComponent.class).orElseThrow(AssertionError::new);
+        GeneratedFromRecipeComponent comp = entityRef.getComponent(GeneratedFromRecipeComponent.class).orElseThrow(AssertionError::new);
         assertEquals(comp.getEntityRecipe(), singlePrefab.getRootEntityUrn());
     }
 

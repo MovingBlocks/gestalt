@@ -23,15 +23,14 @@ import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.core.EntityManager;
-import org.terasology.entitysystem.core.EntityRef;
-import org.terasology.entitysystem.entity.inmemory.InMemoryEntityManager;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.entity.EntityManager;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.persistence.proto.persistors.EntityPersistor;
 import org.terasology.entitysystem.persistence.proto.persistors.PrefabAwareEntityPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.entitysystem.prefab.EntityRecipe;
-import org.terasology.entitysystem.prefab.GeneratedFromEntityRecipeComponent;
+import org.terasology.entitysystem.prefab.GeneratedFromRecipeComponent;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.entitysystem.prefab.PrefabData;
 import org.terasology.entitysystem.prefab.PrefabJsonFormat;
@@ -211,7 +210,7 @@ public class PrefabAwareEntityPersistorTest {
         EntityRef finalEntity = persist(entity);
 
         finalTransaction.begin();
-        Optional<GeneratedFromEntityRecipeComponent> component = finalEntity.getComponent(GeneratedFromEntityRecipeComponent.class);
+        Optional<GeneratedFromRecipeComponent> component = finalEntity.getComponent(GeneratedFromRecipeComponent.class);
         assertTrue(component.isPresent());
         assertEquals(EXISTING_ENTITY_RECIPE_URN, component.get().getEntityRecipe());
     }

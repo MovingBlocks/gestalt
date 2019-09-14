@@ -25,7 +25,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
 import org.reflections.ReflectionUtils;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventHandler;
 import org.terasology.util.collection.KahnSorter;

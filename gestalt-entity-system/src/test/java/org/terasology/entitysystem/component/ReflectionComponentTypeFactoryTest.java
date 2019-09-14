@@ -16,6 +16,9 @@
 
 package org.terasology.entitysystem.component;
 
+import org.terasology.entitysystem.component.management.ComponentTypeFactory;
+import org.terasology.entitysystem.component.management.ReflectionComponentTypeFactory;
+
 /**
  *
  */

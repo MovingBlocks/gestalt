@@ -15,7 +15,7 @@
  */
 package org.terasology.entitysystem.event;
 
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.Component;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;

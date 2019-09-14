@@ -25,7 +25,7 @@ import org.terasology.assets.format.producer.AssetFileDataProducer;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
-import org.terasology.entitysystem.component.ComponentManager;
+import org.terasology.entitysystem.component.management.ComponentManager;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
 import org.terasology.entitysystem.persistence.proto.persistors.EntityRecipeManifestPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;

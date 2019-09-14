@@ -18,8 +18,8 @@ package org.terasology.entitysystem.event.impl;
 
 import com.google.common.collect.ImmutableList;
 
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.Event;
 import org.terasology.entitysystem.event.EventHandler;
 import org.terasology.entitysystem.event.EventResult;

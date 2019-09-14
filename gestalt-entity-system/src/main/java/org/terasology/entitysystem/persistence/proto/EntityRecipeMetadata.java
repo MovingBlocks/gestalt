@@ -19,7 +19,7 @@ package org.terasology.entitysystem.persistence.proto;
 import com.google.common.collect.ImmutableMap;
 
 import org.terasology.assets.ResourceUrn;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.prefab.EntityRecipe;
 import org.terasology.util.collection.TypeKeyedMap;
 

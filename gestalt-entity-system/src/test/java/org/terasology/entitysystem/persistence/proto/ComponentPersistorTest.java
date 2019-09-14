@@ -17,8 +17,8 @@
 package org.terasology.entitysystem.persistence.proto;
 
 import org.junit.Test;
-import org.terasology.entitysystem.component.ComponentManager;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.persistence.proto.persistors.ComponentPersistor;
 import org.terasology.entitysystem.persistence.protodata.ProtoDatastore;
 import org.terasology.module.Module;
