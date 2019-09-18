@@ -17,7 +17,6 @@
 package org.terasology.entitysystem.event;
 
 import org.terasology.entitysystem.event.impl.EventProcessor;
-import org.terasology.entitysystem.event.impl.ImmediateEventSystem;
 import org.terasology.entitysystem.transaction.TransactionManager;
 
 /**

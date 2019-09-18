@@ -20,6 +20,7 @@ import org.terasology.entitysystem.component.ComponentIterator;
 import org.terasology.entitysystem.component.ComponentStore;
 import org.terasology.entitysystem.component.management.ComponentType;
 import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 
 import java.lang.reflect.Array;
 
@@ -58,14 +59,23 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
     }
 
     @Override
-    public boolean set(int entityId, T component) {
-        if (store[entityId] == null) {
-            store[entityId] = type.createCopy(component);
+    public boolean set(EntityRef entity, T component) {
+        int id = entity.getId();
+        if (store[id] == null) {
+            store[id] = type.createCopy(component);
             return true;
         } else {
-            store[entityId].copy(component);
+            store[id].copy(component);
             return false;
         }
+    }
+
+    @Override
+    public T remove(EntityRef entity) {
+        int id = entity.getId();
+        T result = store[id];
+        store[id] = null;
+        return result;
     }
 
     @Override
@@ -76,13 +86,6 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
     @Override
     public ComponentIterator<T> iterate() {
         return new ArrayComponentIterator();
-    }
-
-    @Override
-    public T remove(int id) {
-        T result = store[id];
-        store[id] = null;
-        return result;
     }
 
     @Override

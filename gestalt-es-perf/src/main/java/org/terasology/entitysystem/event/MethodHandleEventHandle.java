@@ -20,16 +20,14 @@ import android.support.annotation.RequiresApi;
 
 import com.google.common.collect.ImmutableList;
 
-import org.terasology.entitysystem.component.ComponentTypeGenerationException;
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.exception.EventSystemException;
 import org.terasology.entitysystem.event.impl.EventReceiverMethodSupport;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
@@ -59,13 +57,14 @@ public class MethodHandleEventHandle implements EventHandler {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public EventResult onEvent(Event event, EntityRef entity) {
         Object[] params = new Object[EventReceiverMethodSupport.FIXED_PARAM_COUNT + componentParams.size() + 1];
         params[0] = handler;
         params[1] = event;
         params[2] = entity;
         for (int i = 0; i < componentParams.size(); ++i) {
-            params[i + FIXED_PARAM_COUNT] = entity.getComponent(componentParams.get(i)).orElseThrow(() -> new RuntimeException("Component unexpectedly missing"));
+            params[i + FIXED_PARAM_COUNT] = getComponent(entity, componentParams.get(i));
         }
 
         try {
@@ -73,5 +72,9 @@ public class MethodHandleEventHandle implements EventHandler {
         } catch (Throwable e) {
             throw new EventSystemException("Error processing event", e);
         }
+    }
+
+    private <T extends Component<T>> T getComponent(EntityRef entity, Class<T> componentType) {
+        return entity.getComponent(componentType).orElseThrow(() -> new RuntimeException("Component unexpectedly missing"));
     }
 }

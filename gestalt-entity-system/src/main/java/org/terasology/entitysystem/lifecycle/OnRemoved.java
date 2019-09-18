@@ -16,20 +16,43 @@
 
 package org.terasology.entitysystem.lifecycle;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.terasology.entitysystem.component.Component;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  *
  */
-public class OnRemoved extends OnDeactivated {
-    public OnRemoved(int revision, TypeKeyedMap<Component> components) {
-        super(revision, components);
+public class OnRemoved implements LifecycleEvent {
+    private TypeKeyedMap<Component> components = new TypeKeyedMap<>();
+
+    public OnRemoved(Component component) {
+        this.components.put(component);
     }
 
-    public OnRemoved(int revision, Collection<Component> components) {
-        super(revision, components);
+    public OnRemoved(TypeKeyedMap<Component> components) {
+        this.components.putAll(components);
+    }
+
+    public OnRemoved(Collection<Component> components) {
+        this.components.putAll(components);
+    }
+
+    public TypeKeyedMap<Component> getComponents() {
+        return components;
+    }
+
+    public <T extends Component> T getComponent(Class<T> type) {
+        return components.get(type);
+    }
+
+    @Override
+    public Set<Class<? extends Component>> getComponentTypes() {
+        return components.keySet();
     }
 }

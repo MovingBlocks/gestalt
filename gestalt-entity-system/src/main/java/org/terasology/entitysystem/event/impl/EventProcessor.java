@@ -36,8 +36,10 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * The core event processing logic. When an event is sent against an entity, the EventProcessor propagates the event through an ordered list of relevant event handlers,
- * filtering out handlers that are not appropriate for the target entity based on the components it has.  All of this occurs within a provided transaction. If an event handler
+ * The core event processing logic. When an event is sent against an entity, the EventProcessor
+ * propagates the event through an ordered list of relevant event handlers,
+ * filtering out handlers that are not appropriate for the target entity based on the components it
+ * has.  All of this occurs within a provided transaction. If an event handler
  * returns EventResult.COMPLETE or EventResult.CANCEL the event processing is halted.
  *
  * @author Immortius
@@ -51,7 +53,8 @@ public class EventProcessor {
     /**
      * Initialises the EventProcessor with the ordered list of EventHandlers for each event type.
      *
-     * @param eventHandlers A {@link ListMultimap} giving an ordered list of event handlers for each event type. Events will be propagated through the handlers in the
+     * @param eventHandlers A {@link ListMultimap} giving an ordered list of event handlers for each
+     *                      event type. Events will be propagated through the handlers in the
      *                      order they are appear in each list.
      */
     public EventProcessor(ListMultimap<Class<? extends Event>, EventHandlerRegistration> eventHandlers) {
@@ -66,18 +69,19 @@ public class EventProcessor {
     }
 
     /**
-     * Sends an event against an entity, within the given transaction.
+     * Sends an event against an entity
      *
      * @param event  The event to send
      * @param entity The entity to send the event against
-     * @return The result of the event. If any event handler returns EventResult.CANCEL then that is returned, otherwise the result will be EventResult.COMPLETE.
+     * @return The result of the event. If any event handler returns EventResult.CANCEL then that
+     * is returned, otherwise the result will be EventResult.COMPLETE.
      */
     public EventResult send(Event event, EntityRef entity) {
         return send(event, entity, Collections.emptySet());
     }
 
     /**
-     * Sends an event against an entity, within the given transaction.
+     * Sends an event against an entity
      *
      * @param event                The event to send
      * @param entity               The entity to send the event against
@@ -107,12 +111,10 @@ public class EventProcessor {
             }
         }
 
-        switch (result) {
-            case CONTINUE:
-                return EventResult.COMPLETE;
-            default:
-                return result;
+        if (result == EventResult.CONTINUE) {
+            return EventResult.COMPLETE;
         }
+        return result;
     }
 
     private boolean validToInvoke(EventHandlerRegistration handler, Set<Class<? extends Component>> targetComponents, Set<Class<? extends Component>> triggeringComponents) {

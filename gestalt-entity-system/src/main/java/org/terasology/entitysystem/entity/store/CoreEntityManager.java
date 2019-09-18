@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.assets.ResourceUrn;
@@ -51,14 +53,14 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+@ThreadSafe
 public class CoreEntityManager implements EntityManager {
 
+    public static final int DEFAULT_CAPACITY = 1024;
     private static final Logger logger = LoggerFactory.getLogger(CoreEntityManager.class);
 
     private static final double EXTENSION_RATE = 1.5;
-    private static final int DEFAULT_CAPACITY = 1024;
 
-    private final EntitySupplier entitySupplier;
     private final ReadWriteLock locks = new ReentrantReadWriteLock();
     private final ImmutableMap<Class<? extends Component>, ComponentStore<?>> componentStores;
 
@@ -86,7 +88,6 @@ public class CoreEntityManager implements EntityManager {
             store.extend(capacity);
         }
         this.componentStores = builder.build();
-        this.entitySupplier = entitySupplier;
         this.entities = new ManagedEntityRef[capacity];
         Arrays.fill(this.entities, NullEntityRef.get());
     }
@@ -116,7 +117,7 @@ public class CoreEntityManager implements EntityManager {
             } else {
                 id = freedIdQueue.remove();
             }
-            EntityRef result = entitySupplier.create(this, id);
+            EntityRef result = new ManagedEntityRef(this, id);
             entities[id] = result;
             return result;
         } finally {

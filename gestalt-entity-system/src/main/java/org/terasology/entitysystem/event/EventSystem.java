@@ -16,8 +16,8 @@
 
 package org.terasology.entitysystem.event;
 
-import org.terasology.entitysystem.core.Component;
-import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 
 import java.util.Collections;
 import java.util.Set;
@@ -25,18 +25,17 @@ import java.util.Set;
 /**
  * An EventSystem manages the sending of events against entities.
  * <p>
- * Events annotated as {@link Synchronous} will always be run immediately, either on the transaction of origin or a fresh transaction if no transaction is provided. Otherwise
- * it is up to the EventSystem implementation when events will be run - this may be immediately or when processEvents is called, and may be on the calling thread or one or
- * more background threads.
+ * Events annotated as {@link Synchronous} will always be run immediately. Otherwise the events will
+ * be run later.
+ *
  * <p>The internal mechanics of determining what event handlers will be sent each event is handled by
- * an EventProcessor - EventSystem deals with the higher level concern of managing the transactions used to process each event, how events are queued or processes
- * across threads and allowing a thread to wait for the completion of all pending events (and events they may send).
+ * an EventProcessor - EventSystem deals with the higher level concern of managing how events are queued
+ * and run.
  */
 public interface EventSystem {
 
     /**
      * Sends an event against an entity. This event will be processed immediately if annotated as {@link Synchronous}, otherwise it will be processed at some future point.
-     * A new transaction will be created to process the event.
      *
      * @param event  The event to send
      * @param entity The entity to send the event against.
@@ -47,7 +46,6 @@ public interface EventSystem {
 
     /**
      * Sends an event against an entity. This event will be processed immediately if annotated as {@link Synchronous}, otherwise it will be processed at some future point.
-     * A new transaction will be created to process the event.
      *
      * @param event                The event to send.
      * @param entity               The entity to send the event against.
@@ -64,7 +62,7 @@ public interface EventSystem {
     void processEvents() throws InterruptedException;
 
     /**
-     * Clears all pending events and blocks for currently processing events to finish.
+     * Clears all pending events and blocks for currently processing events to finish (in necessary)
      *
      * @throws InterruptedException
      */

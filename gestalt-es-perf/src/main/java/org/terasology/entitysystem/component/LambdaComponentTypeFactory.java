@@ -25,7 +25,11 @@ import com.google.common.collect.Lists;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.entitysystem.core.Component;
+import org.terasology.entitysystem.component.management.ComponentPropertyInfo;
+import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.component.management.ComponentTypeFactory;
+import org.terasology.entitysystem.component.management.ComponentTypeGenerationException;
+import org.terasology.entitysystem.component.management.PropertyAccessor;
 import org.terasology.util.reflection.GenericsUtil;
 
 import java.lang.invoke.CallSite;

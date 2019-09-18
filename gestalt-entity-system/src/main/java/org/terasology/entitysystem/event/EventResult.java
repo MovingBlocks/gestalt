@@ -21,17 +21,17 @@ package org.terasology.entitysystem.event;
  */
 public enum EventResult {
     /**
-     * Signals that event processing should continue
+     * Signals that event processing should continue.
      */
     CONTINUE,
 
     /**
-     * Signals that event processing should halt, but be considered successfully complete
+     * Signals that event processing should halt, but be considered successfully complete.
      */
     COMPLETE,
 
     /**
-     * Signals that event processing should halt, and should be considered unsuccessful. This may trigger rolling back any uncommitted changes.
+     * Signals that event processing should halt, and should be considered unsuccessful.
      */
     CANCEL
 }

@@ -46,13 +46,4 @@ public final class NullEntityRef extends AbstractNOPEntityRef {
         return "EntityRef(null)";
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return o == this || o instanceof NullEntityRef;
-    }
-
-    @Override
-    public int hashCode() {
-        return 1337;
-    }
 }

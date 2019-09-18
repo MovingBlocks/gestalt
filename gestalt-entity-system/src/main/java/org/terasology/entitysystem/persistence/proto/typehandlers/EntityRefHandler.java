@@ -55,7 +55,7 @@ public class EntityRefHandler implements ProtoTypeHandler<EntityRef> {
         }
     }
 
-    private EntityRef getEntityRef(long id) {
+    private EntityRef getEntityRef(int id) {
         if (id != 0) {
             return entityManager.getEntity(id);
         }
@@ -65,7 +65,7 @@ public class EntityRefHandler implements ProtoTypeHandler<EntityRef> {
     @Override
     public EntityRef deserialize(ProtoDatastore.Value value, Type type, ProtoContext context) {
         if (value.getLongCount() > 0) {
-            return getEntityRef(value.getLong(0));
+            return getEntityRef(value.getInteger(0));
         }
         return NullEntityRef.get();
     }
@@ -83,7 +83,7 @@ public class EntityRefHandler implements ProtoTypeHandler<EntityRef> {
     public List<EntityRef> deserializeCollection(ProtoDatastore.Value value, Type type, ProtoContext context) {
         List<EntityRef> refs = Lists.newArrayListWithCapacity(value.getLongCount());
         for (int i = 0; i < value.getLongCount(); ++i) {
-            refs.add(getEntityRef(value.getLong(i)));
+            refs.add(getEntityRef(value.getInteger(i)));
         }
         return refs;
     }

@@ -36,25 +36,30 @@ public class ReflectionEventHandler implements EventHandler {
     private ImmutableList<Class<? extends Component>> componentParams;
 
     public ReflectionEventHandler(Object handler,
-                                     Method method,
-                                     Collection<Class<? extends Component>> componentParams) {
+                                  Method method,
+                                  Collection<Class<? extends Component>> componentParams) {
         this.handler = handler;
         this.method = method;
         this.componentParams = ImmutableList.copyOf(componentParams);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public EventResult onEvent(Event event, EntityRef entity) {
         try {
             Object[] params = new Object[EventReceiverMethodSupport.FIXED_PARAM_COUNT + componentParams.size()];
             params[0] = event;
             params[1] = entity;
             for (int i = 0; i < componentParams.size(); ++i) {
-                params[i + EventReceiverMethodSupport.FIXED_PARAM_COUNT] = entity.getComponent(componentParams.get(i)).orElseThrow(() -> new RuntimeException("Component unexpectedly missing"));
+                params[i + EventReceiverMethodSupport.FIXED_PARAM_COUNT] = getComponent(entity, componentParams.get(i));
             }
             return (EventResult) method.invoke(handler, params);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             throw new EventSystemException("Error processing event", ex);
         }
+    }
+
+    private <T extends Component<T>> T getComponent(EntityRef entity, Class<T> componentType) {
+        return entity.getComponent(componentType).orElseThrow(() -> new RuntimeException("Component unexpectedly missing"));
     }
 }
