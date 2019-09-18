@@ -16,23 +16,16 @@
 
 package org.terasology.entitysystem.lifecycle;
 
+import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.event.Event;
+
+import java.util.Set;
 
 /**
  *
  */
-public class LifecycleEvent implements Event {
+public interface LifecycleEvent extends Event {
 
-    private int revision;
+    Set<Class<? extends Component>> getComponentTypes();
 
-    public LifecycleEvent(int revision) {
-        this.revision = revision;
-    }
-
-    /**
-     * @return The revision of the entity that this lifecycle event was triggered by
-     */
-    public int getRevision() {
-        return revision;
-    }
 }

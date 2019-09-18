@@ -17,15 +17,19 @@
 package org.terasology.entitysystem.component.store;
 
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.terasology.entitysystem.component.ComponentIterator;
 import org.terasology.entitysystem.component.ComponentStore;
 import org.terasology.entitysystem.component.management.ComponentType;
 import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@ThreadSafe
 public class ConcurrentComponentStore<T extends Component<T>> implements ComponentStore<T> {
 
     private final ComponentStore<T> store;
@@ -63,22 +67,22 @@ public class ConcurrentComponentStore<T extends Component<T>> implements Compone
     }
 
     @Override
-    public boolean set(int entityId, T component) {
+    public boolean set(EntityRef entity, T component) {
         Lock lock = locks.writeLock();
         lock.lock();
         try {
-            return store.set(entityId, component);
+            return store.set(entity, component);
         } finally {
             lock.unlock();
         }
     }
 
     @Override
-    public T remove(int id) {
+    public T remove(EntityRef entity) {
         Lock lock = locks.writeLock();
         lock.lock();
         try {
-            return store.remove(id);
+            return store.remove(entity);
         } finally {
             lock.unlock();
         }

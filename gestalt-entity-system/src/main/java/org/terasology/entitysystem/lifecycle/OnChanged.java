@@ -23,33 +23,25 @@ import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
  */
-public class OnChanged extends LifecycleEvent {
-    private TypeKeyedMap<Component> components;
+public class OnChanged implements LifecycleEvent {
+    private Set<Class<? extends Component>> componentTypes = new HashSet<>();
 
-    public OnChanged(int revision, Collection<Component> components) {
-        super(revision);
-
-        ImmutableMap.Builder<Class<? extends Component>, Component> builder = ImmutableMap.builder();
-        for (Component component : components) {
-            builder.put(component.getClass(), component);
-        }
-        this.components = new TypeKeyedMap<>(builder.build());
+    public OnChanged(Class<? extends Component> componentType) {
+        componentTypes.add(componentType);
     }
 
-    public OnChanged(int revision, TypeKeyedMap<Component> components) {
-        super(revision);
-        this.components = new TypeKeyedMap<>(Collections.unmodifiableMap(components.getInner()));
+    public OnChanged(Collection<Class<? extends Component>> components) {
+        componentTypes.addAll(components);
     }
 
-    public TypeKeyedMap<Component> getComponents() {
-        return components;
-    }
-
-    public <T extends Component> T getAfterComponent(Class<T> type) {
-        return components.get(type);
+    @Override
+    public Set<Class<? extends Component>> getComponentTypes() {
+        return componentTypes;
     }
 }

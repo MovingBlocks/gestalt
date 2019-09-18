@@ -21,7 +21,8 @@ import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.impl.EventProcessor;
 
 /**
- * Interface for an event handler. An event handler receives notification when the event of interest has been sent against an entity that matches the conditions desired
+ * Interface for an event handler. An event handler receives notification when the event of interest
+ * has been sent against an entity that matches the conditions desired
  * when it was registered with an {@link EventProcessor}.
  *
  * @author Immortius
@@ -29,7 +30,8 @@ import org.terasology.entitysystem.event.impl.EventProcessor;
 public interface EventHandler<T extends Event> {
 
     /**
-     * Call back for when the desired event has been sent against an entity matching the desired conditions the EventHandler was registered with.
+     * Call back for when the desired event has been sent against an entity matching the desired
+     * conditions the EventHandler was registered with.
      *
      * @param event  The event that was sent against the entity
      * @param entity The entity that is receiving the event

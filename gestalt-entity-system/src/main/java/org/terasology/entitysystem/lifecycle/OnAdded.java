@@ -16,21 +16,34 @@
 
 package org.terasology.entitysystem.lifecycle;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.component.management.ComponentType;
 import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
  */
-public class OnAdded extends OnActivated {
+public class OnAdded implements LifecycleEvent {
+    private Set<Class<? extends Component>> componentTypes = new HashSet<>();
 
-    public OnAdded(int revision, TypeKeyedMap<Component> components) {
-        super(revision, components);
+    public OnAdded(Class<? extends Component> componentType) {
+        componentTypes.add(componentType);
     }
 
-    public OnAdded(int revision, Collection<Component> components) {
-        super(revision, components);
+    public OnAdded(Collection<Class<? extends Component>> components) {
+        componentTypes.addAll(components);
     }
+
+    @Override
+    public Set<Class<? extends Component>> getComponentTypes() {
+        return componentTypes;
+    }
+
 }

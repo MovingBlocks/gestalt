@@ -16,7 +16,7 @@
 
 package modules.test;
 
-import org.terasology.entitysystem.core.EntityRef;
+import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.EventResult;
 import org.terasology.entitysystem.event.ReceiveEvent;
 

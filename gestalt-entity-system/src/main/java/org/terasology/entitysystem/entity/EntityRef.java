@@ -21,6 +21,7 @@ import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -49,10 +50,18 @@ public interface EntityRef {
      *
      * @param component     The component to copy the retrieved component details into
      * @param <T>           The type of the component to retrieve
-     * @return An optional containing the requested component, if the entity has a component of that type
+     * @return True if the entity has a component of that type
      */
     <T extends Component<T>> boolean getComponent(T component);
 
+    /**
+     * Retrieves a component from the EntityRef into a new component instance
+     *
+     * @param componentType     The component to copy the retrieved component details into
+     * @param <T>           The type of the component to retrieve
+     * @return An optional containing the requested component, if the entity has a component of that type
+     */
+    <T extends Component<T>> Optional<T> getComponent(Class<T> componentType);
 
     /**
      * @param type The type of component to check for the presence of

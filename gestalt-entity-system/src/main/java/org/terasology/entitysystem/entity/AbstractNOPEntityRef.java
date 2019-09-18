@@ -21,6 +21,7 @@ import org.terasology.util.collection.TypeKeyedMap;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 public abstract class AbstractNOPEntityRef implements EntityRef {
@@ -40,6 +41,11 @@ public abstract class AbstractNOPEntityRef implements EntityRef {
     @Override
     public <T extends Component<T>> boolean getComponent(T component) {
         return false;
+    }
+
+    @Override
+    public <T extends Component<T>> Optional<T> getComponent(Class<T> componentType) {
+        return Optional.empty();
     }
 
     @Override

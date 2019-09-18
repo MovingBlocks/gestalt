@@ -203,6 +203,12 @@ public class TypeKeyedMap<T> {
         inner.putAll(other.inner);
     }
 
+    public void putAll(Collection<T> other) {
+        for (T item : other) {
+            put(item);
+        }
+    }
+
     @FunctionalInterface
     public interface EntryConsumer<T> {
         <U extends T> void accept(Class<U> type, U value);

@@ -23,8 +23,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks an event as synchronous - to run immediately when sent using the sending transaction, rather than being queued to run after the transaction is successfully committed.
- * Handlers of a synchronous event should be careful not to make changes if the event can be cancelled, as these changes will be stored in the transaction and not rolled back.
+ * Marks an event as synchronous - to run immediately when sent, rather than being queued to run later.
+ * Note: Care should be taken around the use of synchronous events, as components the caller has loaded are
+ * not visible to the handlers of the synchronous event - if the handlers modify a component the caller
+ * has loaded then the caller won't see those changes unless it reloads the component (and may save
+ * over those changes). Recommendation is the caller commits any changes that may be relevant before
+ * sending a synchronous event, and that the receivers do not modify anything
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.METHOD, ElementType.TYPE})

@@ -18,6 +18,10 @@ package org.terasology.entitysystem.component;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.component.management.ComponentTypeFactory;
+import org.terasology.entitysystem.component.management.PropertyAccessor;
 
 import modules.test.components.BasicComponent;
 import modules.test.components.Empty;

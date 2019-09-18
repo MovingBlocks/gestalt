@@ -27,82 +27,68 @@ import org.slf4j.LoggerFactory;
 import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.event.Event;
-import org.terasology.entitysystem.event.EventResult;
-import org.terasology.entitysystem.transaction.TransactionManager;
+import org.terasology.entitysystem.event.EventSystem;
+import org.terasology.entitysystem.event.Synchronous;
 
-import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 
 /**
- * A basic implementation of EventSystem. {@link Synchronous} events are processed immediately, other events are only processed when processEvents is called.
+ * A basic implementation of EventSystem. {@link org.terasology.entitysystem.event.Synchronous} events are processed immediately, other events are only processed when processEvents is called.
  */
 @ThreadSafe
-public class DelayedEventSystem extends AbstractEventSystem {
-    private static final Logger logger = LoggerFactory.getLogger(ImmediateEventSystem.class);
+public class DelayedEventSystem implements EventSystem {
+    private static final Logger logger = LoggerFactory.getLogger(DelayedEventSystem.class);
 
     private final EventProcessor eventProcessor;
     private final BlockingDeque<PendingEventInfo> pendingEvents = Queues.newLinkedBlockingDeque();
 
-    public DelayedEventSystem(TransactionManager transactionManager, EventProcessor eventProcessor) {
-        super(transactionManager);
+    public DelayedEventSystem(EventProcessor eventProcessor) {
         this.eventProcessor = eventProcessor;
+    }
+
+    @Override
+    public void send(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
+        if (event.getClass().isAnnotationPresent(Synchronous.class)) {
+            processEvent(event, entity, triggeringComponents);
+        } else {
+            synchronized (this) {
+                pendingEvents.addLast(new PendingEventInfo(event, entity, triggeringComponents));
+            }
+        }
     }
 
     @Override
     public void processEvents() throws InterruptedException {
         List<PendingEventInfo> events = Lists.newArrayListWithExpectedSize(pendingEvents.size());
         while (!pendingEvents.isEmpty()) {
-            pendingEvents.drainTo(events);
+            synchronized (this) {
+                pendingEvents.drainTo(events);
+            }
             for (PendingEventInfo eventInfo : events) {
-                doEvent(eventInfo.getEvent(), eventInfo.getEntity(), eventInfo.triggeringComponents);
+                processEvent(eventInfo.getEvent(), eventInfo.getEntity(), eventInfo.triggeringComponents);
             }
         }
     }
 
-    @Override
-    protected void processEvent(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
-        if (event.getClass().isAnnotationPresent(Synchronous.class)) {
-            doEvent(event, entity, triggeringComponents);
-        } else {
-            pendingEvents.addLast(new PendingEventInfo(event, entity, triggeringComponents));
-        }
-    }
-
-    private void doEvent(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
-        if (event.getClass().isAnnotationPresent(Synchronous.class) && getTransactionManager().isActive()) {
+    private void processEvent(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
+        if (entity.exists()) {
             eventProcessor.send(event, entity, triggeringComponents);
-        } else {
-
-            boolean completed = false;
-            while (!completed) {
-                try {
-                    getTransactionManager().begin();
-                    if (eventProcessor.send(event, entity, triggeringComponents) == EventResult.CANCEL) {
-                        getTransactionManager().rollback();
-                    } else {
-                        getTransactionManager().commit();
-                    }
-                    completed = true;
-                } catch (ConcurrentModificationException e) {
-                    logger.debug("Concurrency failure processing event {}, retrying", event, e);
-                }
-            }
         }
     }
 
     @Override
-    public void clearPendingEvents() throws InterruptedException {
+    public void clearPendingEvents() {
         pendingEvents.clear();
     }
 
     private static class PendingEventInfo {
-        private Event event;
-        private EntityRef entity;
-        private Set<Class<? extends Component>> triggeringComponents;
+        private final Event event;
+        private final EntityRef entity;
+        private final Set<Class<? extends Component>> triggeringComponents;
 
-        public PendingEventInfo(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
+        private PendingEventInfo(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
             this.event = event;
             this.entity = entity;
             this.triggeringComponents = ImmutableSet.copyOf(triggeringComponents);

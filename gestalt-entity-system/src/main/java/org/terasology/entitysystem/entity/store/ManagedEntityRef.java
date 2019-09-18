@@ -18,6 +18,8 @@ package org.terasology.entitysystem.entity.store;
 
 import com.google.common.collect.Sets;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.component.ComponentStore;
 import org.terasology.entitysystem.entity.EntityRef;
@@ -26,10 +28,12 @@ import org.terasology.util.collection.TypeKeyedMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
+@ThreadSafe
 public class ManagedEntityRef implements EntityRef {
-    private CoreEntityManager entityManager;
+    private volatile CoreEntityManager entityManager;
     private final int id;
 
     ManagedEntityRef(CoreEntityManager entityManager, int entityId) {
@@ -65,6 +69,16 @@ public class ManagedEntityRef implements EntityRef {
         } else {
             return false;
         }
+    }
+
+    @Override
+    public <T extends Component<T>> Optional<T> getComponent(Class<T> componentType) {
+        ComponentStore<T> componentStore = entityManager.getComponentStore(componentType);
+        T result = componentStore.getType().create();
+        if (componentStore.get(id, result)) {
+            return Optional.of(result);
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -145,23 +159,6 @@ public class ManagedEntityRef implements EntityRef {
             entityManager = null;
         }
         return removedComponents;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o instanceof ManagedEntityRef) {
-            ManagedEntityRef other = (ManagedEntityRef) o;
-            return this.id == other.id && Objects.equals(other.entityManager, this.entityManager);
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
     }
 
     @Override

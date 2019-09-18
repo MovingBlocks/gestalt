@@ -20,6 +20,7 @@ import org.terasology.entitysystem.component.ComponentIterator;
 import org.terasology.entitysystem.component.ComponentStore;
 import org.terasology.entitysystem.component.management.ComponentType;
 import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.entity.EntityRef;
 
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.TIntObjectMap;
@@ -54,10 +55,11 @@ public class SparseComponentStore<T extends Component<T>> implements ComponentSt
     }
 
     @Override
-    public boolean set(int entityId, T component) {
-        T stored = store.get(entityId);
+    public boolean set(EntityRef entity, T component) {
+        int id = entity.getId();
+        T stored = store.get(id);
         if (stored == null) {
-            store.put(entityId, type.createCopy(component));
+            store.put(id, type.createCopy(component));
             return true;
         } else {
             stored.copy(component);
@@ -76,8 +78,8 @@ public class SparseComponentStore<T extends Component<T>> implements ComponentSt
     }
 
     @Override
-    public T remove(int id) {
-        return store.remove(id);
+    public T remove(EntityRef entity) {
+        return store.remove(entity.getId());
     }
 
     @Override

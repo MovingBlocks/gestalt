@@ -17,6 +17,7 @@
 package org.terasology.entitysystem.component;
 
 import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.entity.EntityRef;
 
 /**
  * A component store holds definitive copies of components of a specific type used by entities.
@@ -44,20 +45,20 @@ public interface ComponentStore<T extends Component<T>> {
     boolean get(int entityId, T into);
 
     /**
-     * Stores a copy of the provided component against the given entity id
-     * @param entityId The id of the entity
+     * Stores a copy of the provided component against the given entity
+     * @param entity The entity to set the component for
      * @param component The component to store. It will be copied into the existing component
      *                  stored against the entity, or a new component will created from the existing
      * @return True if the component was added to the entity (as opposed to existing and updated)
      */
-    boolean set(int entityId, T component);
+    boolean set(EntityRef entity, T component);
 
     /**
      * Removes/deletes the component - if any - for the given entity
-     * @param id The id of the entity to delete the component for
+     * @param entity The entity to delete the component for
      * @return The removed component
      */
-    T remove(int id);
+    T remove(EntityRef entity);
 
     /**
      * @return The iterationCost of the component store - used to estimate the cost of iteration compared to another component store. Larger is higher.
