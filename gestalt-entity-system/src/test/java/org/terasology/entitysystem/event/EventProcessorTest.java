@@ -18,15 +18,17 @@ package org.terasology.entitysystem.event;
 
 import com.google.common.collect.Sets;
 
-import org.junit.After;
 import org.junit.Test;
 import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.component.store.ArrayComponentStore;
+import org.terasology.entitysystem.component.store.ComponentStore;
 import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.entity.manager.CoreEntityManager;
 import org.terasology.entitysystem.event.impl.EventProcessor;
-import org.terasology.entitysystem.transaction.TransactionManager;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import modules.test.components.Sample;
 import modules.test.components.Second;
@@ -50,31 +52,22 @@ public class EventProcessorTest {
 
     private EventProcessor eventProcessor;
     private EntityRef testEntity;
-
-    private TransactionManager transactionManager;
     private EntityManager entityManager;
 
     public EventProcessorTest() {
-        transactionManager = new TransactionManager();
-        entityManager = new InMemoryEntityManager(new ComponentManager(), transactionManager);
+        ComponentManager componentManager = new ComponentManager();
+        List<ComponentStore<?>> componentStores = new ArrayList<>();
+        componentStores.add(new ArrayComponentStore<>(componentManager.getType(Sample.class)));
+        componentStores.add(new ArrayComponentStore<>(componentManager.getType(Second.class)));
+        entityManager = new CoreEntityManager(componentStores);
     }
 
     @org.junit.Before
     public void startup() {
-        transactionManager.begin();
         testEntity = entityManager.createEntity();
-        Sample comp = testEntity.addComponent(Sample.class);
+        Sample comp = new Sample();
         comp.setName(TEST_NAME);
-        transactionManager.commit();
-
-        transactionManager.begin();
-    }
-
-    @After
-    public void teardown() throws IOException {
-        while (transactionManager.isActive()) {
-            transactionManager.rollback();
-        }
+        testEntity.setComponent(comp);
     }
 
     @Test
@@ -134,7 +127,8 @@ public class EventProcessorTest {
 
     @Test
     public void triggeringComponentsRestrictsReceivers() {
-        testEntity.addComponent(Second.class);
+        Second second = new Second();
+        testEntity.setComponent(second);
 
         EventHandler<TestEvent> sampleHandler = mock(EventHandler.class);
         when(sampleHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);

@@ -106,7 +106,13 @@ public interface EntityRef {
      *
      * @param components     The components to set
      */
-    void setComponents(Collection<Component> components);
+    default void setComponents(Collection<Component> components) {
+        if (exists()) {
+            for (Component component : components) {
+                setComponent(component);
+            }
+        }
+    }
 
     /**
      * Removes a component from the entity

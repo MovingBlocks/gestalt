@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package modules.test.components;
+package org.terasology.entitysystem.component.management;
 
-import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.component.management.ComponentManagerTest;
+import org.terasology.entitysystem.component.management.ComponentTypeFactory;
+import org.terasology.entitysystem.component.management.ReflectionComponentTypeFactory;
 
 /**
  *
  */
-public final class Empty implements Component<Empty> {
+public class ReflectionComponentTypeFactoryTest extends ComponentManagerTest {
 
-    public Empty() {
+    public ComponentTypeFactory getComponentTypeFactory() {
+        return new ReflectionComponentTypeFactory();
     }
-
-    public Empty(Empty other) {
-        copy(other);
-    }
-
-    public void copy(Empty other) {
-    }
-
 }

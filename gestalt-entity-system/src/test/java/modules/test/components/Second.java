@@ -62,16 +62,6 @@ public final class Second implements Component<Second> {
     }
 
     @Override
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    @Override
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (o == this) {
             return true;

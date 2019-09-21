@@ -16,6 +16,7 @@
 
 package org.terasology.entitysystem.component;
 
+import org.terasology.entitysystem.component.management.ComponentManagerTest;
 import org.terasology.entitysystem.component.management.ComponentTypeFactory;
 
 /**

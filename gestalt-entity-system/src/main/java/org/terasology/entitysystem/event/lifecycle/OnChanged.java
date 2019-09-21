@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-package modules.test.components;
+package org.terasology.entitysystem.event.lifecycle;
 
 import org.terasology.entitysystem.component.Component;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
  */
-public final class Empty implements Component<Empty> {
+public class OnChanged implements LifecycleEvent {
+    private Set<Class<? extends Component>> componentTypes = new HashSet<>();
 
-    public Empty() {
+    public OnChanged(Class<? extends Component> componentType) {
+        componentTypes.add(componentType);
     }
 
-    public Empty(Empty other) {
-        copy(other);
+    public OnChanged(Collection<Class<? extends Component>> components) {
+        componentTypes.addAll(components);
     }
 
-    public void copy(Empty other) {
+    @Override
+    public Set<Class<? extends Component>> getComponentTypes() {
+        return componentTypes;
     }
-
 }

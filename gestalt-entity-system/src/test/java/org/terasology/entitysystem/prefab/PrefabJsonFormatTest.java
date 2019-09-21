@@ -130,7 +130,7 @@ public class PrefabJsonFormatTest {
         assertTrue(rootEntity.getComponent(Sample.class).isPresent());
         assertEquals(TEST_NAME, rootEntity.getComponent(Sample.class).get().getName());
         assertTrue(rootEntity.getComponent(Reference.class).isPresent());
-        assertEquals(secondEntity, rootEntity.getComponent(Reference.class).get().getReference());
+        assertEquals(secondEntity.getReference(), rootEntity.getComponent(Reference.class).get().getReference());
     }
 
     @Test

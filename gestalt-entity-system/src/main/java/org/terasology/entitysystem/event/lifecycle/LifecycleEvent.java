@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package modules.test.components;
+package org.terasology.entitysystem.event.lifecycle;
 
 import org.terasology.entitysystem.component.Component;
+import org.terasology.entitysystem.event.Event;
+
+import java.util.Set;
 
 /**
  *
  */
-public final class Empty implements Component<Empty> {
+public interface LifecycleEvent extends Event {
 
-    public Empty() {
-    }
-
-    public Empty(Empty other) {
-        copy(other);
-    }
-
-    public void copy(Empty other) {
-    }
+    Set<Class<? extends Component>> getComponentTypes();
 
 }

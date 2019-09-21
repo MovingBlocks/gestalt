@@ -17,7 +17,6 @@
 package org.terasology.entitysystem.component.store;
 
 import org.terasology.entitysystem.component.ComponentIterator;
-import org.terasology.entitysystem.component.ComponentStore;
 import org.terasology.entitysystem.component.management.ComponentType;
 import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.entity.EntityRef;
