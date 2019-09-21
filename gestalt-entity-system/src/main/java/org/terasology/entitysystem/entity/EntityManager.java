@@ -17,7 +17,7 @@
 package org.terasology.entitysystem.entity;
 
 import org.terasology.entitysystem.component.Component;
-import org.terasology.entitysystem.component.ComponentStore;
+import org.terasology.entitysystem.component.store.ComponentStore;
 import org.terasology.entitysystem.prefab.Prefab;
 import org.terasology.naming.Name;
 

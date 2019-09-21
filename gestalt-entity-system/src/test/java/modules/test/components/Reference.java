@@ -31,8 +31,6 @@ import java.util.Objects;
  */
 public final class Reference implements Component<Reference> {
 
-    private boolean dirty;
-
     private EntityRef reference = NullEntityRef.get();
     private List<EntityRef> references = Lists.newArrayList();
 
@@ -50,7 +48,6 @@ public final class Reference implements Component<Reference> {
 
     public void setReference(EntityRef ref) {
         this.reference = ref;
-        this.dirty = true;
     }
 
     public List<EntityRef> getReferences() {
@@ -60,23 +57,11 @@ public final class Reference implements Component<Reference> {
     public void setReferences(List<EntityRef> references) {
         this.references.clear();
         this.references.addAll(references);
-        this.dirty = true;
     }
 
     public void copy(Reference other) {
         setReferences(other.references);
         this.reference = other.reference;
-        this.dirty = true;
-    }
-
-    @Override
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
-
-    @Override
-    public boolean isDirty() {
-        return dirty;
     }
 
     @Override

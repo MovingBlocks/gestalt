@@ -22,15 +22,16 @@ import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.management.AssetManager;
 import org.terasology.assets.management.MapAssetTypeManager;
 import org.terasology.entitysystem.component.management.ComponentManager;
+import org.terasology.entitysystem.component.store.ArrayComponentStore;
+import org.terasology.entitysystem.component.store.ComponentStore;
 import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.entity.EntityRef;
 import org.terasology.entitysystem.entity.NullEntityRef;
-import org.terasology.entitysystem.transaction.TransactionManager;
-
-import java.io.IOException;
+import org.terasology.entitysystem.entity.manager.CoreEntityManager;
 
 import modules.test.components.Reference;
 import modules.test.components.Sample;
+import modules.test.components.Second;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -52,7 +53,6 @@ public class PrefabInstantiationTest {
     public static final ResourceUrn COMPOSITE_PREFAB_ROOT_ENTITY_URN = new ResourceUrn(COMPOSITE_PREFAB_URN, "root");
     public static final ResourceUrn SECOND_ENTITY_URN = new ResourceUrn(MULTI_PREFAB_URN, "second");
 
-    private TransactionManager transactionManager = new TransactionManager();
     private EntityManager entityManager;
     private ComponentManager componentManager;
 
@@ -65,7 +65,11 @@ public class PrefabInstantiationTest {
 
     public PrefabInstantiationTest() {
         componentManager = new ComponentManager();
-        entityManager = new InMemoryEntityManager(componentManager, transactionManager);
+        ComponentStore<Sample> sampleStore = new ArrayComponentStore<>(componentManager.getType(Sample.class));
+        ComponentStore<Reference> referenceStore = new ArrayComponentStore<>(componentManager.getType(Reference.class));
+        ComponentStore<Second> secondStore = new ArrayComponentStore<>(componentManager.getType(Second.class));
+        ComponentStore<GeneratedFromRecipeComponent> generatedStore = new ArrayComponentStore<>(componentManager.getType(GeneratedFromRecipeComponent.class));
+        entityManager = new CoreEntityManager(sampleStore, referenceStore, secondStore, generatedStore);
 
         createSinglePrefab();
         createMultiPrefab();
@@ -77,12 +81,12 @@ public class PrefabInstantiationTest {
         EntityRecipe secondEntityRecipe = new EntityRecipe(SECOND_ENTITY_URN);
         Sample sampleComponent = componentManager.create(Sample.class);
         sampleComponent.setName(TEST_NAME);
-        secondEntityRecipe.add(Sample.class, sampleComponent);
+        secondEntityRecipe.add(sampleComponent);
         prefabData.addEntityRecipe(secondEntityRecipe);
         EntityRecipe rootEntityRecipe = new EntityRecipe(MULTI_PREFAB_ROOT_ENTITY_URN);
         Reference referenceComponent = componentManager.create(Reference.class);
-        referenceComponent.setReference(secondEntityRecipe);
-        rootEntityRecipe.add(Reference.class, referenceComponent);
+        referenceComponent.setReference(secondEntityRecipe.getReference());
+        rootEntityRecipe.add(referenceComponent);
         prefabData.addEntityRecipe(rootEntityRecipe);
         prefabData.setRootEntityId(MULTI_PREFAB_ROOT_ENTITY_URN);
 
@@ -94,7 +98,7 @@ public class PrefabInstantiationTest {
         EntityRecipe rootEntityRecipe = new EntityRecipe(COMPOSITE_PREFAB_ROOT_ENTITY_URN);
         Reference referenceComponent = componentManager.create(Reference.class);
         referenceComponent.setReference(new PrefabRef(singlePrefab));
-        rootEntityRecipe.add(Reference.class, referenceComponent);
+        rootEntityRecipe.add(referenceComponent);
         prefabData.addEntityRecipe(rootEntityRecipe);
         prefabData.setRootEntityId(COMPOSITE_PREFAB_ROOT_ENTITY_URN);
 
@@ -106,29 +110,17 @@ public class PrefabInstantiationTest {
         EntityRecipe entityRecipe = new EntityRecipe(SINGLE_PREFAB_ROOT_ENTITY_URN);
         Sample sampleComponent = componentManager.create(Sample.class);
         sampleComponent.setName(TEST_NAME);
-        entityRecipe.add(Sample.class, sampleComponent);
+        entityRecipe.add(sampleComponent);
         prefabData.addEntityRecipe(entityRecipe);
         prefabData.setRootEntityId(SINGLE_PREFAB_ROOT_ENTITY_URN);
 
         singlePrefab = assetManager.loadAsset(SINGLE_PREFAB_URN, prefabData, Prefab.class);
     }
 
-    @org.junit.Before
-    public void setup() {
-        transactionManager.begin();
-    }
-
-    @org.junit.After
-    public void teardown() throws IOException {
-        while (transactionManager.isActive()) {
-            transactionManager.rollback();
-        }
-    }
-
     @Test
     public void simplePrefab() {
         EntityRef entity = entityManager.createEntity(singlePrefab);
-        assertTrue(entity.getComponent(Sample.class).isPresent());
+        assertTrue(entity.hasComponent(Sample.class));
         assertEquals(TEST_NAME, entity.getComponent(Sample.class).get().getName());
     }
 
@@ -138,7 +130,7 @@ public class PrefabInstantiationTest {
         assertTrue(entity.getComponent(Reference.class).isPresent());
         EntityRef secondEntity = entity.getComponent(Reference.class).get().getReference();
         assertFalse(secondEntity instanceof EntityRecipe);
-        assertTrue(secondEntity.getComponent(Sample.class).isPresent());
+        assertTrue(secondEntity.hasComponent(Sample.class));
         assertEquals(TEST_NAME, secondEntity.getComponent(Sample.class).get().getName());
     }
 
@@ -148,8 +140,8 @@ public class PrefabInstantiationTest {
         EntityRecipe entityRecipe = new EntityRecipe(SINGLE_PREFAB_ROOT_ENTITY_URN);
         EntityRecipe secondEntityRecipe = new EntityRecipe(SECOND_ENTITY_URN);
         Reference referenceComponent = componentManager.create(Reference.class);
-        referenceComponent.setReference(secondEntityRecipe);
-        entityRecipe.add(Reference.class, referenceComponent);
+        referenceComponent.setReference(secondEntityRecipe.getReference());
+        entityRecipe.add(referenceComponent);
         prefabData.addEntityRecipe(entityRecipe);
         prefabData.setRootEntityId(SINGLE_PREFAB_ROOT_ENTITY_URN);
 
@@ -164,7 +156,7 @@ public class PrefabInstantiationTest {
     public void prefabReferencingAnotherPrefabInstantiatesBoth() {
         EntityRef entityRef = entityManager.createEntity(compositePrefab);
         EntityRef otherEntity = entityRef.getComponent(Reference.class).orElseThrow(() -> new RuntimeException("No reference component")).getReference();
-        assertEquals(ProxyEntityRef.class, otherEntity.getClass());
+        assertTrue(otherEntity.hasComponent(Sample.class));
     }
 
     @Test

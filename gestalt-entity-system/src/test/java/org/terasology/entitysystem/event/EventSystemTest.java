@@ -21,24 +21,18 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.entity.EntityRef;
+import org.terasology.entitysystem.event.impl.DelayedEventSystem;
 import org.terasology.entitysystem.event.impl.EventProcessor;
-import org.terasology.entitysystem.transaction.TransactionManager;
-import org.terasology.entitysystem.transaction.pipeline.TransactionContext;
-import org.terasology.entitysystem.transaction.pipeline.TransactionPipeline;
 
 import java.util.Collections;
-import java.util.ConcurrentModificationException;
 import java.util.Set;
 
-import modules.test.components.Sample;
-import modules.test.components.Second;
 import modules.test.TestEvent;
 import modules.test.TestSynchEvent;
+import modules.test.components.Sample;
+import modules.test.components.Second;
 
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -52,46 +46,28 @@ public abstract class EventSystemTest {
     TestSynchEvent synchEvent = new TestSynchEvent(EVENT_VALUE);
     TestEvent asynchEvent = new TestEvent(EVENT_VALUE);
     private EntityRef entity = mock(EntityRef.class);
-    private TransactionManager transactionManager = mock(TransactionManager.class);
     private EventProcessor eventProcessor = mock(EventProcessor.class);
     private EventSystem eventSystem;
-    private TransactionPipeline pipeline = new TransactionPipeline();
     private Set<Class<? extends Component>> triggeringComponents = ImmutableSet.of(Sample.class, Second.class);
 
     public EventSystemTest() {
-        when(transactionManager.getPipeline()).thenReturn(pipeline);
-        eventSystem = createEventSystem(transactionManager, eventProcessor);
-        verify(transactionManager, atLeastOnce()).getPipeline();
+        eventSystem = new DelayedEventSystem(eventProcessor);
     }
 
     @Test
-    public void sendAsynchEventOutsideTransaction() throws Exception {
+    public void sendAsynchEvent() throws Exception {
         eventSystem.send(asynchEvent, entity);
+        verifyNoMoreInteractions(eventProcessor);
         eventSystem.processEvents();
-        verify(transactionManager).begin();
         verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
-        verify(transactionManager).commit();
     }
 
     @Test
-    public void sendAsynchEventRollbackIfCancelled() throws Exception {
-        when(eventProcessor.send(asynchEvent, entity, Collections.emptySet())).thenReturn(EventResult.CANCEL);
-        eventSystem.send(asynchEvent, entity);
-        eventSystem.processEvents();
-        verify(transactionManager).begin();
-        verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
-        verify(transactionManager).rollback();
-    }
-
-    @Test
-    public void sendAsynchEventHandleCommitFailure() throws Exception {
-        doThrow(new ConcurrentModificationException()).doNothing().when(transactionManager).commit();
+    public void sendAsynchEventHandleException() throws Exception {
+        when(eventProcessor.send(asynchEvent, entity, Collections.emptySet())).thenThrow(new RuntimeException());
 
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
-
-        verify(eventProcessor, times(2)).send(asynchEvent, entity, Collections.emptySet());
-        verify(transactionManager, times(2)).commit();
     }
 
     @Test
@@ -99,149 +75,20 @@ public abstract class EventSystemTest {
         eventSystem.send(asynchEvent, entity, triggeringComponents);
         eventSystem.processEvents();
         verify(eventProcessor).send(asynchEvent, entity, triggeringComponents);
-        verify(transactionManager).commit();
     }
 
     @Test
-    public void sendSynchEventWithNoRunningTransaction() throws Exception {
-        when(transactionManager.isActive()).thenReturn(false);
-        eventSystem.send(synchEvent, entity);
-
-        verify(transactionManager).isActive();
-        verify(transactionManager).begin();
-        verify(eventProcessor).send(synchEvent, entity, Collections.emptySet());
-        verify(transactionManager).commit();
-        verifyNoMoreInteractions(transactionManager);
-    }
-
-    @Test
-    public void sendSynchEventNoRunningTransactionCommitFailure() throws Exception {
-        doThrow(new ConcurrentModificationException()).doNothing().when(transactionManager).commit();
+    public void sendSynchEvent() throws Exception {
+        when(eventProcessor.send(synchEvent, entity, Collections.emptySet())).thenThrow(new RuntimeException());
 
         eventSystem.send(synchEvent, entity);
-        eventSystem.processEvents();
-
-        verify(eventProcessor, times(2)).send(synchEvent, entity, Collections.emptySet());
-        verify(transactionManager, times(2)).commit();
     }
 
+
     @Test
-    public void sendSynchEventNoRunningTransactionWithTriggeringComponents() throws Exception {
+    public void sendSynchEventWithTriggeringComponents() throws Exception {
         eventSystem.send(synchEvent, entity, triggeringComponents);
 
-        verify(transactionManager).isActive();
-        verify(transactionManager).begin();
         verify(eventProcessor).send(synchEvent, entity, triggeringComponents);
-        verify(transactionManager).commit();
-        verifyNoMoreInteractions(transactionManager);
     }
-
-    @Test
-    public void sendSynchEventWithRunningTransaction() throws Exception {
-        // Should be processed within current transaction
-        when(transactionManager.isActive()).thenReturn(true);
-        pipeline.begin(new TransactionContext());
-        eventSystem.send(synchEvent, entity);
-        verify(transactionManager).isActive();
-        verify(eventProcessor).send(synchEvent, entity, Collections.emptySet());
-        verifyNoMoreInteractions(transactionManager);
-    }
-
-    @Test
-    public void sendSynchEventWithRunningTransactionAndTriggeringComponents() throws Exception {
-        when(transactionManager.isActive()).thenReturn(true);
-        pipeline.begin(new TransactionContext());
-        eventSystem.send(synchEvent, entity, triggeringComponents);
-
-        verify(transactionManager).isActive();
-        verify(eventProcessor).send(synchEvent, entity, triggeringComponents);
-        verifyNoMoreInteractions(transactionManager);
-    }
-
-    @Test
-    public void sendAsyncEventHeldUntilCurrentTransactionCommitted() throws Exception {
-        when(transactionManager.isActive()).thenReturn(true);
-
-        TransactionContext context = new TransactionContext();
-        when(transactionManager.getContext()).thenReturn(context);
-        pipeline.begin(context);
-        eventSystem.send(asynchEvent, entity);
-        eventSystem.processEvents();
-
-
-        verify(transactionManager, atLeastOnce()).isActive();
-        verify(transactionManager, atLeastOnce()).getContext();
-        verifyNoMoreInteractions(transactionManager);
-        verifyNoMoreInteractions(eventProcessor);
-
-        pipeline.commit(context);
-        eventSystem.processEvents();
-
-        verify(transactionManager).begin();
-        verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
-        verify(transactionManager).commit();
-        verifyNoMoreInteractions(transactionManager);
-    }
-
-    @Test
-    public void sendAsyncEventDiscardedIfTransactionRolledBack() throws Exception {
-        when(transactionManager.isActive()).thenReturn(true);
-        TransactionContext context = new TransactionContext();
-        when(transactionManager.getContext()).thenReturn(context);
-        pipeline.begin(context);
-        eventSystem.send(asynchEvent, entity);
-        eventSystem.processEvents();
-
-        verify(transactionManager, atLeastOnce()).isActive();
-        verify(transactionManager, atLeastOnce()).getContext();
-        verifyNoMoreInteractions(transactionManager);
-        verifyNoMoreInteractions(eventProcessor);
-
-        pipeline.rollback(context);
-        context = new TransactionContext();
-        when(transactionManager.getContext()).thenReturn(context);
-        pipeline.begin(context);
-        pipeline.commit(context);
-        eventSystem.processEvents();
-
-        verifyNoMoreInteractions(transactionManager);
-        verifyNoMoreInteractions(eventProcessor);
-    }
-
-    @Test
-    public void sendAsyncEventPreservedButNotSentOverDurationOfInnerTransaction() throws Exception {
-        when(transactionManager.isActive()).thenReturn(true);
-        TransactionContext outerContext = new TransactionContext();
-        when(transactionManager.getContext()).thenReturn(outerContext);
-        pipeline.begin(outerContext);
-        eventSystem.send(asynchEvent, entity);
-        eventSystem.processEvents();
-
-        verify(transactionManager, atLeastOnce()).isActive();
-        verify(transactionManager, atLeastOnce()).getContext();
-        verifyNoMoreInteractions(transactionManager);
-        verifyNoMoreInteractions(eventProcessor);
-
-        TransactionContext innerContext = new TransactionContext();
-        when(transactionManager.getContext()).thenReturn(innerContext);
-        pipeline.begin(innerContext);
-        pipeline.commit(innerContext);
-        eventSystem.processEvents();
-
-        verify(transactionManager, atLeastOnce()).isActive();
-        verify(transactionManager, atLeastOnce()).getContext();
-        verifyNoMoreInteractions(transactionManager);
-        verifyNoMoreInteractions(eventProcessor);
-
-        pipeline.commit(outerContext);
-        eventSystem.processEvents();
-
-        verify(transactionManager).begin();
-        verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
-        verify(transactionManager).commit();
-        verifyNoMoreInteractions(transactionManager);
-    }
-
-
-    protected abstract EventSystem createEventSystem(TransactionManager transactionManager, EventProcessor eventProcessor);
 }
