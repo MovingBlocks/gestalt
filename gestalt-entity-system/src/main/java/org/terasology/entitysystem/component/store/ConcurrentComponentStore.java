@@ -19,21 +19,37 @@ package org.terasology.entitysystem.component.store;
 
 import net.jcip.annotations.ThreadSafe;
 
+import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.component.ComponentIterator;
 import org.terasology.entitysystem.component.management.ComponentType;
-import org.terasology.entitysystem.component.Component;
-import org.terasology.entitysystem.entity.EntityRef;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * ConcurrentComponentStore wraps another ComponentStore, making it thread safe - at least in so
+ * far as making every method atomic. Note that this doesn't prevent iteration failure due to
+ * concurrent modification - nor does it protect against lost update issues from other threads
+ * making modifications between read and write operations.
+ *
+ * To provide thread safety, all interaction with the store must be through the wrapped store.
+ *
+ * Basic expected usage is to have a single thread that does writes, while other threads can still
+ * read. Potentially this system could be extended with entity-level optimistic or pessimistic locking
+ * to give true multithread read-write support, although performance overheads would have to be considered.
+ *
+ * @param <T> The type of component stored in this store.
+ */
 @ThreadSafe
 public class ConcurrentComponentStore<T extends Component<T>> implements ComponentStore<T> {
 
     private final ComponentStore<T> store;
     private final ReadWriteLock locks = new ReentrantReadWriteLock();
 
+    /**
+     * @param store The store to wrap
+     */
     public ConcurrentComponentStore(ComponentStore<T> store) {
         this.store = store;
     }
@@ -66,22 +82,22 @@ public class ConcurrentComponentStore<T extends Component<T>> implements Compone
     }
 
     @Override
-    public boolean set(EntityRef entity, T component) {
+    public boolean set(int entityId, T component) {
         Lock lock = locks.writeLock();
         lock.lock();
         try {
-            return store.set(entity, component);
+            return store.set(entityId, component);
         } finally {
             lock.unlock();
         }
     }
 
     @Override
-    public T remove(EntityRef entity) {
+    public T remove(int entityId) {
         Lock lock = locks.writeLock();
         lock.lock();
         try {
-            return store.remove(entity);
+            return store.remove(entityId);
         } finally {
             lock.unlock();
         }

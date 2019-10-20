@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Information and access to a property of a component
+ * Information and access to a single property of a component
  */
 public class ComponentPropertyInfo<T extends Component> {
 

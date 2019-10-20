@@ -32,16 +32,6 @@ public class TextComponent implements Component<TextComponent> {
     }
 
     @Override
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    @Override
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
-
-    @Override
     public void copy(TextComponent other) {
         this.text = other.text;
         this.dirty = true;
