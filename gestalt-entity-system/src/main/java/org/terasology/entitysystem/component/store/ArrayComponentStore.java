@@ -23,14 +23,30 @@ import org.terasology.entitysystem.entity.EntityRef;
 
 import java.lang.reflect.Array;
 
+/**
+ * ArrayComponentStore is a ComponentStore built atop a simple array. This provides good performance
+ * for gets and sets, but memory usage and iteration speed is based on the number of possibly entities.
+ *
+ * This is the recommended store for components with high usage, and otherwise if there is any doubt
+ * which store to use.
+ * @param <T> The type of component stored in this ComponentStore
+ */
 public class ArrayComponentStore<T extends Component<T>> implements ComponentStore<T> {
     private final ComponentType<T> type;
     private T[] store;
 
+    /**
+     * @param componentType Type information for the component type to store
+     */
     public ArrayComponentStore(ComponentType<T> componentType) {
         this(componentType, 1000);
     }
 
+    /**
+     *
+     * @param type Type information for the component type to store
+     * @param initialCapacity The initial capacity of the array
+     */
     @SuppressWarnings("unchecked")
     public ArrayComponentStore(ComponentType<T> type, int initialCapacity) {
         this.type = type;
@@ -58,22 +74,20 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
     }
 
     @Override
-    public boolean set(EntityRef entity, T component) {
-        int id = entity.getId();
-        if (store[id] == null) {
-            store[id] = type.createCopy(component);
+    public boolean set(int entityId, T component) {
+        if (store[entityId] == null) {
+            store[entityId] = type.createCopy(component);
             return true;
         } else {
-            store[id].copy(component);
+            store[entityId].copy(component);
             return false;
         }
     }
 
     @Override
-    public T remove(EntityRef entity) {
-        int id = entity.getId();
-        T result = store[id];
-        store[id] = null;
+    public T remove(int entityId) {
+        T result = store[entityId];
+        store[entityId] = null;
         return result;
     }
 

@@ -20,35 +20,41 @@ import org.terasology.entitysystem.component.Component;
 import org.terasology.entitysystem.component.ComponentIterator;
 import org.terasology.entitysystem.component.store.ComponentStore;
 import org.terasology.entitysystem.component.management.ComponentType;
+import org.terasology.entitysystem.entity.EntityManager;
 import org.terasology.entitysystem.entity.EntityRef;
 
 public class LifecycleAwareComponentStore<T extends Component<T>> implements ComponentStore<T> {
 
     private final LifecycleEventManager lifecycleEventManager;
     private final ComponentStore<T> inner;
+    private EntityManager entityManager;
 
     public LifecycleAwareComponentStore(LifecycleEventManager lifecycleEventManager, ComponentStore<T> inner) {
         this.inner = inner;
         this.lifecycleEventManager = lifecycleEventManager;
     }
 
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
-    public boolean set(EntityRef entity, T component) {
-        if (inner.set(entity, component)) {
-            lifecycleEventManager.componentAdded(entity, component.getClass());
+    public boolean set(int entityId, T component) {
+        if (inner.set(entityId, component)) {
+            lifecycleEventManager.componentAdded(entityManager.getEntity(entityId), component.getClass());
             return true;
         } else {
-            lifecycleEventManager.componentChanged(entity, component.getClass());
+            lifecycleEventManager.componentChanged(entityManager.getEntity(entityId), component.getClass());
             return false;
         }
     }
 
     @Override
-    public T remove(EntityRef entity) {
-        T result = inner.remove(entity);
+    public T remove(int entityId) {
+        T result = inner.remove(entityId);
         if (result != null) {
-            lifecycleEventManager.componentRemoved(entity, result);
+            lifecycleEventManager.componentRemoved(entityManager.getEntity(entityId), result);
         }
         return result;
     }

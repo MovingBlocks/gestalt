@@ -84,7 +84,7 @@ class ManagedEntityRef implements EntityRef {
     @SuppressWarnings("unchecked")
     public <T extends Component<T>> boolean setComponent(T component) {
         if (entityManager != null) {
-            return entityManager.getComponentStore(component.getClass()).set(this, component);
+            return entityManager.getComponentStore(component.getClass()).set(id, component);
         }
         return false;
     }
@@ -92,7 +92,7 @@ class ManagedEntityRef implements EntityRef {
     @Override
     public <T extends Component<T>> T removeComponent(Class<T> componentType) {
         if (entityManager != null) {
-            return entityManager.getComponentStore(componentType).remove(this);
+            return entityManager.getComponentStore(componentType).remove(id);
         }
         return null;
     }
@@ -144,7 +144,7 @@ class ManagedEntityRef implements EntityRef {
         Set<Component<?>> removedComponents = Sets.newLinkedHashSet();
         if (entityManager != null) {
             for (ComponentStore<?> store : entityManager.allComponentStores()) {
-                Component<?> removed = store.remove(this);
+                Component<?> removed = store.remove(id);
                 if (removed != null) {
                     removedComponents.add(removed);
                 }

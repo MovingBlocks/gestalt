@@ -16,8 +16,6 @@
 
 package org.terasology.entitysystem.component;
 
-import org.terasology.entitysystem.component.Component;
-
 /**
  * An iterator over components. This doesn't use the standard iterator interface because of the
  * component copy behavior
@@ -34,12 +32,12 @@ public interface ComponentIterator<T extends Component<T>> {
     boolean next();
 
     /**
-     * @return The id of the last returned entity
+     * @return The id of the current entity
      */
     int getEntityId();
 
     /**
-     * @param component Populates the given component with the component for the current entity
+     * @param component Populates the given component with information for the current entity
      */
     void getComponent(Component<T> component);
 

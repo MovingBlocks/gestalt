@@ -25,10 +25,21 @@ import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
+/**
+ * SparseComponentStore is a component store based on a hash map. This has slower performance for gets
+ * and sets (although still O(1)), but uses less memory and can be faster for iteration in some cases.
+ *
+ * SparseComponentStore can be used if memory is an issue, for component types that are used on few
+ * entities.
+ * @param <T> The type of component stored in this store
+ */
 public class SparseComponentStore<T extends Component<T>> implements ComponentStore<T> {
     private final ComponentType<T> type;
     private final TIntObjectMap<T> store = new TIntObjectHashMap<>();
 
+    /**
+     * @param type Type information for the component type stored in store
+     */
     public SparseComponentStore(ComponentType<T> type) {
         this.type = type;
     }
@@ -54,11 +65,10 @@ public class SparseComponentStore<T extends Component<T>> implements ComponentSt
     }
 
     @Override
-    public boolean set(EntityRef entity, T component) {
-        int id = entity.getId();
-        T stored = store.get(id);
+    public boolean set(int entityId, T component) {
+        T stored = store.get(entityId);
         if (stored == null) {
-            store.put(id, type.createCopy(component));
+            store.put(entityId, type.createCopy(component));
             return true;
         } else {
             stored.copy(component);
@@ -77,8 +87,8 @@ public class SparseComponentStore<T extends Component<T>> implements ComponentSt
     }
 
     @Override
-    public T remove(EntityRef entity) {
-        return store.remove(entity.getId());
+    public T remove(int entityId) {
+        return store.remove(entityId);
     }
 
     @Override
