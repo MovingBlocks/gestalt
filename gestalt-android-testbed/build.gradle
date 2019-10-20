@@ -80,7 +80,7 @@ dependencies {
     implementation project(":gestalt-entity-system")
     implementation 'com.google.guava:guava:27.0.1-android'
     implementation 'org.slf4j:slf4j-api:1.7.25'
-    implementation 'com.github.tony19:logback-android:1.3.0-3'
+    implementation 'com.github.tony19:logback-android:2.0.0'
     implementation project(':testpack:testpack-api')
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
@@ -89,11 +89,11 @@ dependencies {
 
 def reflectPackage(packageName, variant) {
     def resourcesPath = variant.sourceSets.find { it.name == 'main' }.resources.srcDirs
-    def classPath = files { variant.javaCompiler.destinationDir }
+    def classPath = files { variant.getJavaCompileProvider().get().destinationDir }
     URL[] scanUrls = classPath.collect { it.toURI().toURL() } + resourcesPath.collect {
         it.toURI().toURL()
     }
-    URL[] classLoaderUrls = scanUrls + variant.javaCompiler.classpath.collect {
+    URL[] classLoaderUrls = scanUrls + variant.getJavaCompileProvider().get().classpath.collect {
         it.toURI().toURL()
     } + [new File(android.sdkDirectory, "platforms/" + android.compileSdkVersion + "/android.jar").toURI().toURL()]
 
@@ -111,14 +111,14 @@ def reflectPackage(packageName, variant) {
     config.addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner().filterResultsBy())
     Reflections reflections = new Reflections(config)
     JsonSerializer serializer = new JsonSerializer()
-    def outPath = variant.javaCompiler.destinationDir.toString() + "/" + packageName.replaceAll(Pattern.quote("."), "/") + "/manifest.json"
+    def outPath = variant.getJavaCompileProvider().get().destinationDir.toString() + "/" + packageName.replaceAll(Pattern.quote("."), "/") + "/manifest.json"
     serializer.save(reflections, outPath)
 }
 
 afterEvaluate {
     android.applicationVariants.each {
         variant ->
-            variant.javaCompiler.doLast {
+            variant.getJavaCompileProvider().get().doLast {
                 reflectPackage("org.terasology.gestalt.android.testbed.packageModuleA", variant)
                 reflectPackage("org.terasology.gestalt.android.testbed.packageModuleB", variant)
             }

@@ -30,7 +30,6 @@ import org.terasology.assets.AssetType;
 import org.terasology.assets.ResourceUrn;
 import org.terasology.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.assets.module.ModuleAwareAssetTypeManagerImpl;
-import org.terasology.entitysystem.transaction.TransactionManager;
 import org.terasology.gestalt.android.AndroidModuleClassLoader;
 import org.terasology.gestalt.android.testbed.assettypes.Text;
 import org.terasology.gestalt.android.testbed.assettypes.TextData;
