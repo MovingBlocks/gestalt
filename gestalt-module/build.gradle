@@ -25,18 +25,19 @@ apply plugin: 'java-library'
 
 // Primary dependencies definition
 dependencies {
-    implementation project(":gestalt-util")
-    implementation 'com.google.guava:guava:27.0.1-android'
     api 'org.reflections:reflections:0.9.12-SNAPSHOT'
-    implementation 'com.google.code.gson:gson:2.8.5'
+
+    implementation project(":gestalt-util")
+    implementation "com.google.guava:guava:$guava_version"
+    implementation "com.google.code.gson:gson:$gson_version"
     implementation 'org.apache.commons:commons-vfs2:2.2'
-    implementation 'org.slf4j:slf4j-api:1.7.25'
-    implementation 'com.android.support:support-annotations:28.0.0'
+    implementation "org.slf4j:slf4j-api:$slf4j_version"
+    implementation "com.android.support:support-annotations:$android_annotation_version"
 
     testImplementation project(":testpack:testpack-api")
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'ch.qos.logback:logback-classic:1.2.3'
-    testImplementation 'org.mockito:mockito-core:1.10.19'
+    testImplementation "junit:junit:$junit_version"
+    testImplementation "ch.qos.logback:logback-classic:$logback_version"
+    testImplementation "org.mockito:mockito-core:$mockito_version"
 
 }
 
