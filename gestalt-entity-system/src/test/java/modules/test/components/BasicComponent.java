@@ -81,6 +81,9 @@ public final class BasicComponent implements Component<BasicComponent> {
     public void copy(BasicComponent other) {
         this.name = other.name;
         this.description = other.description;
+        this.count = other.count;
+        this.friends.clear();
+        this.friends.addAll(other.friends);
     }
 
     @Override
