@@ -57,9 +57,9 @@ import java.util.stream.Collectors;
 @ThreadSafe
 public class CoreEntityManager implements EntityManager {
 
-    public static final int DEFAULT_CAPACITY = 1024;
     private static final Logger logger = LoggerFactory.getLogger(CoreEntityManager.class);
 
+    private static final int DEFAULT_CAPACITY = 1024;
     private static final double EXTENSION_RATE = 1.5;
 
     private final ReadWriteLock locks = new ReentrantReadWriteLock();
