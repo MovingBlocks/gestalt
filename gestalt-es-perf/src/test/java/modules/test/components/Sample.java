@@ -16,7 +16,7 @@
 
 package modules.test.components;
 
-import org.terasology.entitysystem.component.Component;
+import org.terasology.gestalt.entitysystem.component.Component;
 
 import java.util.Objects;
 

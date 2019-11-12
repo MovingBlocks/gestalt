@@ -19,9 +19,9 @@ package virtualModules.test.stubs.book;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 
-import org.terasology.assets.ResourceUrn;
-import org.terasology.assets.format.AbstractAssetFileFormat;
-import org.terasology.assets.format.AssetDataFile;
+import org.terasology.gestalt.assets.ResourceUrn;
+import org.terasology.gestalt.assets.format.AbstractAssetFileFormat;
+import org.terasology.gestalt.assets.format.AssetDataFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;

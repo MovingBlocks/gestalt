@@ -16,7 +16,7 @@
 
 package virtualModules.test.stubs.extensions;
 
-import org.terasology.assets.AssetData;
+import org.terasology.gestalt.assets.AssetData;
 
 /**
  * @author Immortius

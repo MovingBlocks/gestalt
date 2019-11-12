@@ -16,7 +16,7 @@
 
 package modules.test;
 
-import org.terasology.entitysystem.event.Event;
+import org.terasology.gestalt.entitysystem.event.Event;
 
 /**
  *

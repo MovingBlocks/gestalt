@@ -16,9 +16,9 @@
 
 package virtualModules.test.stubs.inheritance;
 
-import org.terasology.assets.AssetFactory;
-import org.terasology.assets.AssetType;
-import org.terasology.assets.ResourceUrn;
+import org.terasology.gestalt.assets.AssetFactory;
+import org.terasology.gestalt.assets.AssetType;
+import org.terasology.gestalt.assets.ResourceUrn;
 
 /**
  * @author Immortius

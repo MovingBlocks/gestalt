@@ -1,0 +1,27 @@
+/*
+ * Copyright 2019 MovingBlocks
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * This package contains the interfaces and support for loading asset data from files.
+ * <p>
+ * A file format applies information from one or more files to create or alter an {@link org.terasology.gestalt.assets.AssetData AssetData}.
+ * {@link org.terasology.gestalt.assets.format.AssetFileFormat AssetFileFormat} creates AssetData, while
+ * {@link org.terasology.gestalt.assets.format.AssetAlterationFileFormat AssetAlterationFileFormat} modifies an existing AssetData.
+ */
+@API
+package org.terasology.gestalt.assets.format;
+
+import org.terasology.gestalt.module.sandbox.API;

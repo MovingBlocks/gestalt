@@ -18,7 +18,7 @@ package virtualModules.test.stubs.book;
 
 import com.google.common.collect.Lists;
 
-import org.terasology.assets.AssetData;
+import org.terasology.gestalt.assets.AssetData;
 
 import java.util.Arrays;
 import java.util.List;

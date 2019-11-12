@@ -16,7 +16,7 @@
 
 package org.terasology.gestalt.android.testbed.packageModuleA;
 
-import org.terasology.entitysystem.component.Component;
+import org.terasology.gestalt.entitysystem.component.Component;
 
 public class TextComponent implements Component<TextComponent> {
 

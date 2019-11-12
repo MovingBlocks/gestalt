@@ -16,7 +16,7 @@
 
 package org.terasology.gestalt.android.testbed.assettypes;
 
-import org.terasology.assets.AssetData;
+import org.terasology.gestalt.assets.AssetData;
 
 /**
  * @author Immortius

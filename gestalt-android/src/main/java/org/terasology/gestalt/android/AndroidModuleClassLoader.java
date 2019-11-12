@@ -20,12 +20,12 @@ import com.google.common.base.Joiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.module.Module;
-import org.terasology.module.sandbox.JavaModuleClassLoader;
-import org.terasology.module.sandbox.ModuleClassLoader;
-import org.terasology.module.sandbox.ObtainClassloader;
-import org.terasology.module.sandbox.PermissionProvider;
-import org.terasology.naming.Name;
+import org.terasology.gestalt.module.Module;
+import org.terasology.gestalt.module.sandbox.JavaModuleClassLoader;
+import org.terasology.gestalt.module.sandbox.ModuleClassLoader;
+import org.terasology.gestalt.module.sandbox.ObtainClassloader;
+import org.terasology.gestalt.module.sandbox.PermissionProvider;
+import org.terasology.gestalt.naming.Name;
 
 import java.io.File;
 import java.security.AccessController;

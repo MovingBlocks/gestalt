@@ -16,9 +16,9 @@
 
 package modules.test;
 
-import org.terasology.entitysystem.entity.EntityRef;
-import org.terasology.entitysystem.event.EventResult;
-import org.terasology.entitysystem.event.ReceiveEvent;
+import org.terasology.gestalt.entitysystem.entity.EntityRef;
+import org.terasology.gestalt.entitysystem.event.EventResult;
+import org.terasology.gestalt.entitysystem.event.ReceiveEvent;
 
 import modules.test.components.Sample;
 
