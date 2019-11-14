@@ -39,9 +39,6 @@ android {
     }
     lintOptions {
         lintConfig file("lintconfig.xml")
-    }
-
-    lintOptions {
         abortOnError false
     }
 }
