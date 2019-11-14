@@ -21,7 +21,7 @@ import org.terasology.gestalt.entitysystem.component.Component;
 /**
  *
  */
-public final class Empty implements Component {
+public final class Empty implements Component<Empty> {
 
     public Empty() {
     }
@@ -30,16 +30,6 @@ public final class Empty implements Component {
         copy(other);
     }
 
-    public void copy(Component other) {
-    }
-
-    @Override
-    public void setDirty(boolean dirty) {
-
-    }
-
-    @Override
-    public boolean isDirty() {
-        return false;
+    public void copy(Empty other) {
     }
 }

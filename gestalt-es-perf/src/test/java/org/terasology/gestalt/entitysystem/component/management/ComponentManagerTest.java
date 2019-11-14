@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.gestalt.entitysystem.component;
+package org.terasology.gestalt.entitysystem.component.management;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -29,9 +29,8 @@ import java.util.Objects;
 /**
  *
  */
-public final class BasicComponent implements Component {
+public final class BasicComponent implements Component<BasicComponent> {
     private static Logger logger = LoggerFactory.getLogger(BasicComponent.class);
-    private boolean dirty;
 
     private String name = "";
     private String description = "";
@@ -53,7 +52,6 @@ public final class BasicComponent implements Component {
 
     public void setName(String name) {
         this.name = name;
-        this.dirty = true;
     }
 
     public String getDescription() {
@@ -62,7 +60,6 @@ public final class BasicComponent implements Component {
 
     public void setDescription(String description) {
         this.description = description;
-        this.dirty = true;
     }
 
     public List<String> getFriends() {
@@ -71,7 +68,6 @@ public final class BasicComponent implements Component {
 
     public void setFriends(List<String> friends) {
         this.friends = friends;
-        this.dirty = true;
     }
 
     public int getCount() {
@@ -80,24 +76,13 @@ public final class BasicComponent implements Component {
 
     public void setCount(int count) {
         this.count = count;
-        this.dirty = true;
     }
 
-    public void copy(Component o) {
-        BasicComponent other = (BasicComponent) o;
+    public void copy(BasicComponent other) {
         this.name = other.name;
         this.description = other.description;
-        this.dirty = true;
-    }
-
-    @Override
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    @Override
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
+        this.count = other.count;
+        this.friends = other.friends;
     }
 
     @Override
@@ -107,13 +92,13 @@ public final class BasicComponent implements Component {
         }
         if (o instanceof BasicComponent) {
             BasicComponent other = (BasicComponent) o;
-            return Objects.equals(this.name, other.name) && Objects.equals(this.description, other.description);
+            return Objects.equals(this.name, other.name) && Objects.equals(this.description, other.description) && Objects.equals(this.friends, other.friends) && this.count == other.count;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, description);
+        return Objects.hash(name, description, friends, count);
     }
 }

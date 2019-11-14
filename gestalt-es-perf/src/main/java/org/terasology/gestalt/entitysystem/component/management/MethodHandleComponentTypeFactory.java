@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.gestalt.entitysystem.component;
+package org.terasology.gestalt.entitysystem.component.management;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
@@ -26,11 +26,7 @@ import com.google.common.collect.Lists;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terasology.gestalt.entitysystem.component.management.ComponentPropertyInfo;
-import org.terasology.gestalt.entitysystem.component.management.ComponentType;
-import org.terasology.gestalt.entitysystem.component.management.ComponentTypeFactory;
-import org.terasology.gestalt.entitysystem.component.management.ComponentTypeGenerationException;
-import org.terasology.gestalt.entitysystem.component.management.PropertyAccessor;
+import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.util.reflection.GenericsUtil;
 
 import java.lang.invoke.MethodHandle;
@@ -87,7 +83,6 @@ public class MethodHandleComponentTypeFactory implements ComponentTypeFactory {
             copyConstructor = (T from) -> {
                 T result = emptyConstructor.get();
                 result.copy(from);
-                result.setDirty(false);
                 return result;
             };
         }

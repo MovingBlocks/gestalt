@@ -20,9 +20,7 @@ import org.terasology.gestalt.entitysystem.component.Component;
 
 import java.util.Objects;
 
-public final class Sample implements Component {
-    private boolean dirty;
-
+public final class Sample implements Component<Sample> {
     private String name = "";
     private String description = "";
 
@@ -40,7 +38,6 @@ public final class Sample implements Component {
 
     public void setName(String name) {
         this.name = name;
-        this.dirty = true;
     }
 
     public String getDescription() {
@@ -49,24 +46,11 @@ public final class Sample implements Component {
 
     public void setDescription(String description) {
         this.description = description;
-        this.dirty = true;
     }
 
-    public void copy(Component o) {
-        Sample other = (Sample) o;
+    public void copy(Sample other) {
         this.name = other.name;
         this.description = other.description;
-        this.dirty = true;
-    }
-
-    @Override
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    @Override
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
     }
 
     @Override

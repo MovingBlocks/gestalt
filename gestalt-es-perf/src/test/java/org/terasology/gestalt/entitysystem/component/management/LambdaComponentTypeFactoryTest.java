@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.gestalt.entitysystem.component;
-
-import org.terasology.gestalt.entitysystem.component.management.ComponentManagerTest;
-import org.terasology.gestalt.entitysystem.component.management.ComponentTypeFactory;
+package org.terasology.gestalt.entitysystem.component.management;
 
 /**
  *

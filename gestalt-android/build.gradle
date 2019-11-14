@@ -37,12 +37,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    lintOptions {
+        lintConfig file("lintconfig.xml")
+    }
 
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    api project(':gestalt-module')
+    api(project(':gestalt-module')) {
+        exclude group: 'org.javassist', module: 'javassist'
+    }
     implementation project(':gestalt-util')
     implementation "org.slf4j:slf4j-api:$slf4j_version"
 
