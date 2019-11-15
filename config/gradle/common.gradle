@@ -1,0 +1,55 @@
+apply plugin: 'java-library'
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
+apply plugin: 'findbugs'
+
+
+// Set the expected module Java level (can use a higher Java to run, but should not use features from a higher Java)
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+jar {
+    manifest {
+        attributes("Implementation-Title": project.name, "Implementation-Version": version)
+    }
+    from(['LICENSE'])
+}
+
+task sourceJar(type: Jar) {
+    description = "Create a JAR with all sources"
+    from sourceSets.main.allSource
+    from sourceSets.test.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    description = "Create a JAR with the JavaDoc for the java sources"
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+
+checkstyle {
+    ignoreFailures = true
+    configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
+    configProperties.samedir = new File(rootDir, "config/checkstyle")
+    toolVersion = "6.5"
+}
+
+pmd {
+    // Set PMD to an older version than Gradle default - the pmd.xml needs to be updated for a newer PMD version
+    toolVersion = '4.3'
+    ignoreFailures = true
+    ruleSetFiles = files(new File(rootDir, "config/pmd/pmd.xml"))
+}
+
+findbugs {
+    toolVersion = '3.0.0'
+    ignoreFailures = true
+    effort = 'max'
+    reportLevel = 'medium'
+    excludeFilter = new File(rootDir, "config/findbugs/findbugs-exclude.xml")
+}
+
+javadoc {
+    failOnError = false
+}
