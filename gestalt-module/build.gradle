@@ -21,6 +21,8 @@
  * - View tasks for this project: $ gradlew tasks
  */
 
+apply from: "$rootDir/config/gradle/artifactory.gradle" 
+
 apply plugin: 'java-library'
 
 // Primary dependencies definition
