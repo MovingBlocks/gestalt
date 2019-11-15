@@ -31,8 +31,8 @@ import static org.junit.Assert.assertEquals;
  */
 public class ModuleDependencyResolutionStrategyTest {
 
-    private static final Name TEST_MODULE = new Name("Test");
-    private static final Name MODULE_A = new Name("ModuleA");
+    private static final Name TEST_MODULE = new Name("test");
+    private static final Name MODULE_A = new Name("moduleA");
 
     @Test
     public void resolveNoOptions() {
