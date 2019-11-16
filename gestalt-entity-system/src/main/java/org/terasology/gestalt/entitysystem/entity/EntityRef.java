@@ -65,6 +65,7 @@ public interface EntityRef {
 
     /**
      * @param type The type of component to check for the presence of
+     * @param <T> The type of component
      * @return Whether this entity has a component of the given type
      */
     <T extends Component<T>> boolean hasComponent(Class<T> type);

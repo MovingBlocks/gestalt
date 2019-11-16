@@ -41,7 +41,7 @@ public class ModuleEnvironmentDependencyProvider implements ModuleDependencyProv
     /**
      * Creates a {@link ModuleEnvironmentDependencyProvider} with the provided environment
      *
-     * @param moduleEnvironment
+     * @param moduleEnvironment The module environment
      */
     public ModuleEnvironmentDependencyProvider(@Nullable ModuleEnvironment moduleEnvironment) {
         this.moduleEnvironment = moduleEnvironment;
@@ -57,7 +57,7 @@ public class ModuleEnvironmentDependencyProvider implements ModuleDependencyProv
     /**
      * Sets the module environment to use to obtain dependency information
      *
-     * @param moduleEnvironment
+     * @param moduleEnvironment The module environment
      */
     public void setModuleEnvironment(@Nullable ModuleEnvironment moduleEnvironment) {
         this.moduleEnvironment = moduleEnvironment;

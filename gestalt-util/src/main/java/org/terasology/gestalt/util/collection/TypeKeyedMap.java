@@ -95,7 +95,7 @@ public class TypeKeyedMap<T> {
     }
 
     /**
-     * @param key
+     * @param key The key to check for the existence of
      * @return Whether the map contains the provided key
      */
     public boolean containsKey(Class<? extends T> key) {
@@ -103,8 +103,8 @@ public class TypeKeyedMap<T> {
     }
 
     /**
-     * @param value
-     * @param <U>
+     * @param value The value to check for the existence of
+     * @param <U> The type of the value
      * @return Whether the map contains the provided value
      */
     public <U extends T> boolean containsValue(U value) {
@@ -112,8 +112,8 @@ public class TypeKeyedMap<T> {
     }
 
     /**
-     * @param key
-     * @param <U>
+     * @param key The type to return the value of
+     * @param <U> The type to return the value of
      * @return The value associated with the provided key, or null if there is no such value
      */
     public <U extends T> U get(Class<U> key) {
@@ -123,9 +123,9 @@ public class TypeKeyedMap<T> {
     /**
      * Adds a value to the map, against the provided key
      *
-     * @param key
-     * @param value
-     * @param <U>
+     * @param key The type to register against
+     * @param value The value to add to the map
+     * @param <U> The type to register against
      * @return The previous value associated with the key
      */
     @SuppressWarnings("unchecked")
@@ -147,8 +147,8 @@ public class TypeKeyedMap<T> {
     /**
      * Removes a key and its associated value from the map.
      *
-     * @param key
-     * @param <U>
+     * @param key The key to remove the value of
+     * @param <U> The key to remove the value of
      * @return The value associated with the removed key
      */
     public <U extends T> U remove(Class<U> key) {

@@ -90,6 +90,7 @@ public class EntityRecipe {
      * Removes a component from the recipe.
      *
      * @param componentType The type of the component to remove
+     * @param <T> The type of component to remove
      */
     public <T extends Component<T>> void remove(Class<T> componentType) {
         ImmutableMap.Builder<Class<? extends Component>, Component> builder = ImmutableMap.builder();

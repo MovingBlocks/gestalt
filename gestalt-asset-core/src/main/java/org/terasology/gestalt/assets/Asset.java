@@ -96,14 +96,6 @@ public abstract class Asset<T extends AssetData> {
     }
 
     /**
-     * Retrieves this asset's disposal hook. This is used to hold the action to run when the asset is disposed.
-     * <p>
-     *
-     *
-     * @return This asset's disposal hook.
-     */
-
-    /**
      * Reloads this assets using the new data.
      *
      * @param data The data to reload the asset with.
@@ -123,6 +115,7 @@ public abstract class Asset<T extends AssetData> {
      * Instance assets are reloaded back to the same value as their origin if their asset type is refreshed.
      * </p>
      *
+     * @param <U> The asset type
      * @return A new instance of the asset.
      */
     @SuppressWarnings("unchecked")

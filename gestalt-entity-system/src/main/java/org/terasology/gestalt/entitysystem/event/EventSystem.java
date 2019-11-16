@@ -56,17 +56,13 @@ public interface EventSystem {
 
     /**
      * Blocks until all pending events and events sent by those events have been processed.
-     *
-     * @throws InterruptedException
      */
-    void processEvents() throws InterruptedException;
+    void processEvents();
 
     /**
      * Clears all pending events and blocks for currently processing events to finish (in necessary)
-     *
-     * @throws InterruptedException
      */
-    void clearPendingEvents() throws InterruptedException;
+    void clearPendingEvents();
 
 
 }

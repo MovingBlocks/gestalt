@@ -102,7 +102,7 @@ public final class MapAssetTypeManager implements AssetTypeManager {
     /**
      * Adds an assetType. There must not be an existing asset type for the asset class managed by the asset type.
      *
-     * @param assetType
+     * @param assetType The asset type to add
      */
     public synchronized void addAssetType(AssetType<?, ?> assetType) {
         Preconditions.checkNotNull(assetType);
@@ -121,6 +121,7 @@ public final class MapAssetTypeManager implements AssetTypeManager {
      *
      * @param type The type of Asset to remove the AssetType for
      * @param <T>  The type of Asset
+     * @return The removed (and closed) asset type
      */
     @SuppressWarnings("unchecked")
     public synchronized <T extends Asset<?>> AssetType<?, ?> removeAssetType(Class<T> type) {

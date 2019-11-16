@@ -60,7 +60,7 @@ public class DelayedEventSystem implements EventSystem {
     }
 
     @Override
-    public void processEvents() throws InterruptedException {
+    public void processEvents() {
         List<PendingEventInfo> events = Lists.newArrayListWithExpectedSize(pendingEvents.size());
         while (!pendingEvents.isEmpty()) {
             synchronized (this) {

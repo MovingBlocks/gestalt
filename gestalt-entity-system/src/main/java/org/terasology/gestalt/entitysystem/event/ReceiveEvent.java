@@ -40,7 +40,7 @@ import java.lang.annotation.Target;
 public @interface ReceiveEvent {
 
     /**
-     * What components that the entity must have for this method to be invoked
+     * @return What components that the entity must have for this method to be invoked
      */
     Class<? extends Component>[] components() default {};
 }

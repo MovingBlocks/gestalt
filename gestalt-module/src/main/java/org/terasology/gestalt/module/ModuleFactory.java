@@ -267,7 +267,6 @@ public class ModuleFactory {
      *
      * @param packageName The package to create the module from, as a list of the parts of the package
      * @return A module covering the contents of the package on the classpath
-     * @
      */
     public Module createPackageModule(String packageName) {
         ModuleMetadata metadata = null;
@@ -297,7 +296,6 @@ public class ModuleFactory {
      * @param metadata    The metadata describing the module
      * @param packageName The package to create the module from, as a list of the parts of the package
      * @return A module covering the contents of the package on the classpath
-     * @
      */
     public Module createPackageModule(ModuleMetadata metadata, String packageName) {
         List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));

@@ -10,9 +10,12 @@ buildscript {
         google()
         jcenter()
         mavenLocal()
+        maven {
+            url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+        }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath 'com.android.tools.build:gradle:3.5.1'
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -33,15 +36,18 @@ buildscript {
     }
 }
 
+apply plugin: 'maven-publish'
+
 allprojects {
     repositories {
         google()
         jcenter()
         mavenLocal()
         maven {
-            url "http://artifactory.terasology.org/artifactory/repo"
-        }
+            //url "http://artifactory.terasology.org/artifactory/repo"
 
+            url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+        }
     }
 }
 
@@ -51,118 +57,5 @@ description = 'A set of libraries providing core capabilities for games and game
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
-/*configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.startsWith("module") }) {
-    apply plugin: 'checkstyle'
-    apply plugin: 'pmd'
-    apply plugin: 'findbugs'
-    apply plugin: 'maven'
-    apply plugin: 'java-library-distribution'
-    apply plugin: 'artifactory-publish'
-    apply plugin: 'maven-publish'
-
-    // Primary dependencies definition
-    dependencies {
-        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
-        compile group: 'com.google.guava', name: 'guava', version: '19.0'
-
-        // These dependencies are only needed for running tests
-        testCompile group: 'junit', name: 'junit', version: '4.12'
-        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
-        testCompile group: 'org.mockito', name: 'mockito-core', version: '1.10.19'
-    }
-
-    // Set the expected module Java level (can use a higher Java to run, but should not use features from a higher Java)
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-
-    jar {
-        manifest {
-            attributes("Implementation-Title": project.name,
-                    "Implementation-Version": version)
-        }
-        from(['LICENSE', 'NOTICE'])
-    }
-
-    task sourceJar(type: Jar) {
-        description = "Create a JAR with all sources"
-        from sourceSets.main.allSource
-        from sourceSets.test.allSource
-        classifier = 'sources'
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        description = "Create a JAR with the JavaDoc for the java sources"
-        from javadoc.destinationDir
-        classifier = 'javadoc'
-    }
-
-    // A configuration for publishing artifacts
-    configurations {
-        published
-    }
-
-    // Define the artifacts we want to publish (the .pom will also be included since the Maven plugin is active)
-    artifacts {
-        published jar
-        published sourceJar
-        published javadocJar
-    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-                artifact jar {
-                }
-                artifact sourceJar {
-                    classifier "sources"
-                }
-                artifact javadocJar {
-                    classifier "javadoc"
-                }
-            }
-        }
-    }
-
-    artifactory {
-        publish {
-            defaults {
-                publications('mavenJava')
-            }
-        }
-    }
-
-    // Technically the plain "jar" both here and above is included automatically, but leaving it explicit for clarity
-    artifactoryPublish {
-        dependsOn jar, sourceJar, javadocJar
-    }
-
-    checkstyle {
-        ignoreFailures = true
-        configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
-        configProperties.samedir = new File(rootDir, "config/checkstyle")
-        toolVersion = "6.5"
-    }
-
-    pmd {
-        // Set PMD to an older version than Gradle default - the pmd.xml needs to be updated for a newer PMD version
-        toolVersion = '4.3'
-        ignoreFailures = true
-        ruleSetFiles = files(new File(rootDir, "config/pmd/pmd.xml"))
-    }
-
-    findbugs {
-        toolVersion = '3.0.0'
-        ignoreFailures = true
-        effort = 'max'
-        reportLevel = 'medium'
-        excludeFilter = new File(rootDir, "config/findbugs/findbugs-exclude.xml")
-    }
-
-    javadoc {
-        failOnError = false
-    }
-}*/
 
 

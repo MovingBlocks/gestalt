@@ -24,7 +24,7 @@ import java.util.List;
  * A TopologicalSorter takes a Directed Acyclic Graph and produces a linear ordering of the nodes,
  * such that each node n appears before every node m where an edge exists from n to m.
  * <p>
- * If a graph contains cycles (e.g. a -> b -> c -> a) then a linear ordering is not possible - instead
+ * If a graph contains cycles (e.g. a -&gt; b -&gt; c -&gt; a) then a linear ordering is not possible - instead
  * a {@link CircularDependencyException} will be thrown.
  */
 public interface TopologicalSorter<T> {
