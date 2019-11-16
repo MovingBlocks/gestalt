@@ -38,7 +38,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'org.reflections:reflections:0.9.12-SNAPSHOT'
+        classpath 'org.terasology:reflections:0.9.12-MB'
     }
 }
 

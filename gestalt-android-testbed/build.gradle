@@ -25,6 +25,7 @@ import org.reflections.util.ConfigurationBuilder
 import java.util.regex.Pattern
 
 apply plugin: 'com.android.application'
+apply plugin: 'project-report'
 
 android {
     compileSdkVersion 28
@@ -67,7 +68,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'org.reflections:reflections:0.9.12-SNAPSHOT'
+        classpath 'org.terasology:reflections:0.9.12-MB'
         classpath 'org.apache.commons:commons-vfs2:2.2'
     }
 }
