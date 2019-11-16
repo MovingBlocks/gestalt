@@ -61,18 +61,6 @@ android {
     }
 }
 
-buildscript {
-    repositories {
-        mavenLocal()
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath 'org.terasology:reflections:0.9.12-MB'
-        classpath 'org.apache.commons:commons-vfs2:2.2'
-    }
-}
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:28.0.0'

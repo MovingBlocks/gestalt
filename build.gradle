@@ -11,11 +11,12 @@ buildscript {
         jcenter()
         mavenLocal()
         maven {
-            url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+            url "http://artifactory.terasology.org/artifactory/libs-release-local"
         }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.1'
+        classpath 'org.terasology:reflections:0.9.12-MB'
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -44,9 +45,7 @@ allprojects {
         jcenter()
         mavenLocal()
         maven {
-            //url "http://artifactory.terasology.org/artifactory/repo"
-
-            url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+            url "http://artifactory.terasology.org/artifactory/libs-release-local"
         }
     }
 }

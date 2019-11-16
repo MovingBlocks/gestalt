@@ -31,17 +31,6 @@ jar {
     version = ''
 }
 
-buildscript {
-    repositories {
-        mavenLocal()
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath 'org.terasology:reflections:0.9.12-MB'
-    }
-}
-
 dependencies {
     implementation project(":testpack:testpack-api")
 }
