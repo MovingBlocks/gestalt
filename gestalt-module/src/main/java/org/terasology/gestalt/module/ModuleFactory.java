@@ -99,6 +99,7 @@ public class ModuleFactory {
     }
 
     /**
+     * @param classLoader        The classloader that modules should be loaded atop of
      * @param defaultCodeSubpath The default subpath in a path module that contains code (compiled class files)
      * @param defaultLibsSubpath The default subpath in a path module that contains libraries (jars)
      * @param metadataLoaders    A map of relative paths/files to metadata loaders to use for loading module metadata
@@ -121,7 +122,7 @@ public class ModuleFactory {
     /**
      * Sets the default subpath for code in a path module
      *
-     * @param defaultCodeSubpath
+     * @param defaultCodeSubpath The default code subpath
      */
     public void setDefaultCodeSubpath(String defaultCodeSubpath) {
         this.defaultCodeSubpath = defaultCodeSubpath;
@@ -151,7 +152,7 @@ public class ModuleFactory {
     /**
      * Sets the default subpath for libraries in a path module
      *
-     * @param defaultLibsSubpath
+     * @param defaultLibsSubpath The default libs subpath
      */
     public void setDefaultLibsSubpath(String defaultLibsSubpath) {
         this.defaultLibsSubpath = defaultLibsSubpath;
@@ -312,6 +313,8 @@ public class ModuleFactory {
      *
      * @param directory The directory to load as a module
      * @return A module covering the contents of the directory
+     *
+     * @throws IOException if no module metadata cannot be resolved or loaded
      */
     public Module createDirectoryModule(File directory) throws IOException {
         for (Map.Entry<String, ModuleMetadataLoader> entry : moduleMetadataLoaderMap.entrySet()) {
@@ -410,6 +413,7 @@ public class ModuleFactory {
      * @param path     The path to create a module for.
      * @param metadata The metadata describing the module.
      * @return The new module.
+     * @throws IOException if there is an issue reading the module
      */
     public Module createModule(ModuleMetadata metadata, File path) throws IOException {
         if (path.isDirectory()) {

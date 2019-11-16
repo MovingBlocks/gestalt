@@ -29,6 +29,7 @@ public interface PermissionProviderFactory {
 
     /**
      * @param module The module to create a permission provider for.
+     * @param classpathModuleClasses A predicate that determines what classes on the classpath belong to the module
      * @return A permission provider suitable for the given module
      */
     PermissionProvider createPermissionProviderFor(Module module, Predicate<Class<?>> classpathModuleClasses);

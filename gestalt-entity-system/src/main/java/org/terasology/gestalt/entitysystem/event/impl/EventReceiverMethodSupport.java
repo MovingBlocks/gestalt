@@ -60,6 +60,8 @@ public final class EventReceiverMethodSupport {
 
     /**
      * Creates the EventReceiverMethodSupport using the provided eventHandlerFactory to generate event handlers.
+     *
+     * @param eventHandlerFactory Factory for creating event handlers
      */
     public EventReceiverMethodSupport(EventHandlerFactory eventHandlerFactory) {
         this.eventHandlerFactory = eventHandlerFactory;

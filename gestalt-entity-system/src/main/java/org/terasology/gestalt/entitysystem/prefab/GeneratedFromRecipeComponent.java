@@ -35,7 +35,7 @@ public final class GeneratedFromRecipeComponent implements Component<GeneratedFr
 
     /**
      * Sets the URN of the recipe this entity was generated from
-     * @param entityRecipe
+     * @param entityRecipe The recipe urn
      */
     public void setEntityRecipe(ResourceUrn entityRecipe) {
         this.entityRecipe = entityRecipe;

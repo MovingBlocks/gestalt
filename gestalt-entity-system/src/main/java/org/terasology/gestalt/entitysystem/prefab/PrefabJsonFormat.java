@@ -134,8 +134,8 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
         /**
          * Register a GSON type adapter. All the rules for {@link GsonBuilder}.registerTypeAdapter apply.
          *
-         * @param type
-         * @param typeAdapter
+         * @param type The type the adapter is for
+         * @param typeAdapter The adapter
          * @return The builder.
          */
         public Builder registerTypeAdapter(Type type, Object typeAdapter) {
@@ -146,8 +146,8 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
         /**
          * Register a GSON type hierarchy adapter. All the rules for {@link GsonBuilder}.registerTypeHierarchyAdapter apply.
          *
-         * @param type
-         * @param typeAdapter
+         * @param type The type the adapter is for
+         * @param typeAdapter The adapter
          * @return The builder
          */
         public Builder registerTypeHierarchyAdapter(Class<?> type, Object typeAdapter) {
@@ -158,7 +158,7 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
         /**
          * Register a GSON type adapter factory. All the rules for {@link GsonBuilder}.registerTypeAdapterFactory apply.
          *
-         * @param factory
+         * @param factory The type adapter factory to register
          * @return The builder
          */
         public Builder registerTypeAdapterFactory(TypeAdapterFactory factory) {

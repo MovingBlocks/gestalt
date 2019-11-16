@@ -36,7 +36,7 @@ public class ComponentPropertyInfo<T extends Component> {
     /**
      * Constructs the property info
      *
-     * @param accessors
+     * @param accessors The accessors for the property
      */
     public ComponentPropertyInfo(Collection<PropertyAccessor<T, ?>> accessors) {
         ImmutableMap.Builder<String, PropertyAccessor<T, ?>> nameIndexBuilder = ImmutableMap.builder();

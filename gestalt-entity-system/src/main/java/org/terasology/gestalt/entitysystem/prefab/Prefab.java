@@ -40,6 +40,7 @@ public class Prefab extends Asset<PrefabData> {
      *
      * @param urn       The urn identifying the asset.
      * @param assetType The asset type this asset belongs to.
+     * @param data      The prefab data to load
      */
     public Prefab(ResourceUrn urn, AssetType<?, PrefabData> assetType, PrefabData data) {
         super(urn, assetType);

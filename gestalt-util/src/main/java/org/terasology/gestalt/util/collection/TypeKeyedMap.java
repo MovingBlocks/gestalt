@@ -313,7 +313,7 @@ public class TypeKeyedMap<T> {
     /**
      * An entry in a TypeKeyedMap.
      *
-     * @param <T>
+     * @param <T> The type of the object held in the entry
      */
     public static class Entry<T> {
         private Map.Entry<Class<T>, T> innerEntry;
