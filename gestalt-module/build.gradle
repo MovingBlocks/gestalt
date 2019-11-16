@@ -95,8 +95,8 @@ publishing {
     repositories {
         maven {
             credentials {
-                username project.artifactoryUser
-                password project.artifactoryPass
+                username project.gestaltMavenRepoUsername
+                password project.gestaltMavenRepoPassword
             }
             name 'TerasologyTestRepo'
             url project.version.endsWith('SNAPSHOT') ? project.snapshotPublishRepo : project.releasePublishRepo
