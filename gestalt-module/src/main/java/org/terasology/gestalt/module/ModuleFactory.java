@@ -39,6 +39,8 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.gestalt.module.exceptions.InvalidModulePathException;
+import org.terasology.gestalt.module.exceptions.MissingModuleMetadataException;
 import org.terasology.gestalt.module.resources.ArchiveFileSource;
 import org.terasology.gestalt.module.resources.ClasspathFileSource;
 import org.terasology.gestalt.module.resources.DirectoryFileSource;
@@ -288,7 +290,7 @@ public class ModuleFactory {
         if (metadata != null) {
             return createPackageModule(metadata, packageName);
         }
-        throw new RuntimeException("Missing metadata for package module " + packageName);
+        throw new MissingModuleMetadataException("Missing or failed to load metadata for package module " + packageName);
     }
 
     /**
@@ -403,7 +405,7 @@ public class ModuleFactory {
         try {
             return new Module(metadata, new ArchiveFileSource(archive), Collections.singletonList(archive), scanOrLoadArchiveManifest(archive), x -> false);
         } catch (MalformedURLException e) {
-            throw new RuntimeException("Unable to convert file path to url for " + archive, e);
+            throw new InvalidModulePathException("Unable to convert file path to url for " + archive, e);
         }
     }
 

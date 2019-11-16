@@ -25,6 +25,7 @@ import com.google.common.collect.Queues;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.gestalt.module.exceptions.InvalidModulePathException;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -76,7 +77,7 @@ public class DirectoryFileSource implements ModuleFileSource {
         try {
             this.rootDirectory = directory.getCanonicalFile();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to canonicalize file " + directory, e);
+            throw new InvalidModulePathException("Failed to canonicalize file " + directory, e);
         }
     }
 

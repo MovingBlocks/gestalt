@@ -60,6 +60,6 @@ public class ReflectionEventHandler implements EventHandler {
     }
 
     private <T extends Component<T>> T getComponent(EntityRef entity, Class<T> componentType) {
-        return entity.getComponent(componentType).orElseThrow(() -> new RuntimeException("Component unexpectedly missing"));
+        return entity.getComponent(componentType).orElseThrow(() -> new EventSystemException("Component unexpectedly missing"));
     }
 }

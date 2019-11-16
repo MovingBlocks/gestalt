@@ -286,7 +286,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     synchronized void registerAsset(Asset<U> asset, DisposalHook disposer) {
         if (closed) {
-            throw new RuntimeException("Cannot create asset for disposed asset type: " + assetClass);
+            throw new IllegalStateException("Cannot create asset for disposed asset type: " + assetClass);
         } else {
             if (asset.getUrn().isInstance()) {
                 instanceAssets.put(asset.getUrn(), new WeakReference<>(assetClass.cast(asset)));

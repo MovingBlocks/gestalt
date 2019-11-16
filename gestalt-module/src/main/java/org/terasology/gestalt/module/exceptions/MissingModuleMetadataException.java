@@ -17,28 +17,18 @@
 package org.terasology.gestalt.module.exceptions;
 
 /**
- * Exception when a module path cannot be resolved.
- *
- * @author Immortius
+ * Exception for when metadata cannot be resolved for a module
  */
-public class InvalidModulePathException extends RuntimeException {
+public class MissingModuleMetadataException extends RuntimeException {
 
-    public InvalidModulePathException() {
+    public MissingModuleMetadataException() {
     }
 
-    public InvalidModulePathException(String message) {
-        super(message);
+    public MissingModuleMetadataException(String s) {
+        super(s);
     }
 
-    public InvalidModulePathException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public InvalidModulePathException(Throwable cause) {
-        super(cause);
-    }
-
-    public InvalidModulePathException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+    public MissingModuleMetadataException(String s, Throwable throwable) {
+        super(s, throwable);
     }
 }
