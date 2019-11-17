@@ -71,7 +71,6 @@ publishing {
     }
     publications {
         mavenAssetCore(MavenPublication) {
-            groupId = project.groupId
             artifactId = project.name
             version = project.version
 

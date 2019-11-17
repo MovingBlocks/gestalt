@@ -104,7 +104,6 @@ publishing {
     }
     publications {
         mavenModule(MavenPublication) {
-            groupId = project.groupId
             artifactId = project.name
             version = project.version
 
