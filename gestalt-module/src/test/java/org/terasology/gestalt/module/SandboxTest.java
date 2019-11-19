@@ -58,7 +58,6 @@ public class SandboxTest {
         registry = new TableModuleRegistry();
         new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
 
-        permissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.util");
         PermissionSet ioPermissionSet = new PermissionSet();

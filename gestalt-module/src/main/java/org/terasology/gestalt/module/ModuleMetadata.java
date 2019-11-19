@@ -53,6 +53,7 @@ public class ModuleMetadata {
      * The set of reserved ids that cannot be used by extensions.
      */
     public static final Set<String> RESERVED_IDS = ImmutableSet.of(ID, VERSION, DISPLAY_NAME, DESCRIPTION, DEPENDENCIES, REQUIRED_PERMISSIONS);
+
     private final Map<String, Object> extensions = Maps.newHashMap();
     private Name id = Name.EMPTY;
     private Version version = Version.DEFAULT;

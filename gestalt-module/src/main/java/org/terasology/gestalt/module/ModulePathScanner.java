@@ -70,23 +70,18 @@ public class ModulePathScanner {
      */
     public void scan(ModuleRegistry registry, Collection<File> paths) {
         for (File discoveryPath : paths) {
-            try {
-                scanModuleDirectories(discoveryPath, registry);
-                scanModuleArchives(discoveryPath, registry);
-            } catch (IOException e) {
-                logger.error("Failed to scan path {}", discoveryPath, e);
-            }
+            scanModuleDirectories(registry, discoveryPath);
+            scanModuleArchives(registry, discoveryPath);
         }
     }
 
     /**
      * Scans a directory for module archives (jar or zip)
      *
-     * @param discoveryPath The directory to scan
      * @param registry      The registry to populate with discovered modules
-     * @throws IOException If an error occurs scanning the directory - but not an individual module.
+     * @param discoveryPath The directory to scan
      */
-    private void scanModuleArchives(File discoveryPath, ModuleRegistry registry) throws IOException {
+    private void scanModuleArchives(ModuleRegistry registry, File discoveryPath) {
         File[] files = discoveryPath.listFiles(x -> !x.isDirectory() && (x.getName().endsWith(".jar") || x.getName().endsWith(".zip")));
         if (files != null) {
             for (File modulePath : files) {
@@ -98,11 +93,10 @@ public class ModulePathScanner {
     /**
      * Scans a directory for module directories
      *
-     * @param discoveryPath The directory to scan
      * @param registry      The registry to populate with discovered modules
-     * @throws IOException If an error occurs scanning the directory - but not an individual module.
+     * @param discoveryPath The directory to scan
      */
-    private void scanModuleDirectories(File discoveryPath, ModuleRegistry registry) throws IOException {
+    private void scanModuleDirectories(ModuleRegistry registry, File discoveryPath) {
         File[] files = discoveryPath.listFiles(File::isDirectory);
         if (files != null) {
             for (File modulePath : files) {

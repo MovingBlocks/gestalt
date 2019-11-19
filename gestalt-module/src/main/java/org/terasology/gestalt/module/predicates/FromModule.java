@@ -16,12 +16,11 @@
 
 package org.terasology.gestalt.module.predicates;
 
-import com.google.common.base.Predicate;
-
 import org.terasology.gestalt.module.ModuleEnvironment;
 import org.terasology.gestalt.naming.Name;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Predicate for filtering classes to those from a specific module.
@@ -39,7 +38,7 @@ public class FromModule implements Predicate<Class<?>> {
     }
 
     @Override
-    public boolean apply(Class<?> input) {
+    public boolean test(Class<?> input) {
         return Objects.equals(environment.getModuleProviding(input), moduleId);
     }
 }
