@@ -30,22 +30,22 @@ import java.lang.reflect.Modifier;
 class DisposalHook {
 
     private static final Logger logger = LoggerFactory.getLogger(DisposalHook.class);
-    private volatile Runnable disposeAction;
+    private volatile DisposableResource resource;
 
     synchronized void dispose() {
-        if (disposeAction != null) {
-            disposeAction.run();
+        if (resource != null) {
+            resource.close();
         }
-        disposeAction = null;
+        resource = null;
     }
 
-    public void setDisposeAction(@Nullable Runnable disposeAction) {
-        if (disposeAction != null) {
-            Class<? extends Runnable> actionType = disposeAction.getClass();
+    void setDisposableResource(@Nullable DisposableResource resource) {
+        if (resource != null) {
+            Class<? extends DisposableResource> actionType = resource.getClass();
             if ((actionType.isLocalClass() || actionType.isAnonymousClass() || actionType.isMemberClass()) && !Modifier.isStatic(actionType.getModifiers())) {
-                logger.warn("Non-static anonymous or member class should not be registered as the disposal hook - this will block garbage collection enqueuing for disposal");
+                logger.warn("Non-static anonymous or member class should not be registered as the disposable resource - this will block garbage collection enqueuing for disposal");
             }
         }
-        this.disposeAction = disposeAction;
+        this.resource = resource;
     }
 }

@@ -75,16 +75,16 @@ public abstract class Asset<T extends AssetData> {
      *
      * @param urn            The urn identifying the asset.
      * @param assetType      The asset type this asset belongs to.
-     * @param disposalAction The action to take when disposing this class.  The action registered to the disposal hook must not have a reference to asset -
+     * @param resource        A resource to close when disposing this class.  The resource must not have a reference to this asset -
      *                       this would prevent it being garbage collected. It must be a static inner class, or not contained in the asset class
      *                       (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
      */
-    public Asset(ResourceUrn urn, AssetType<?, T> assetType, Runnable disposalAction) {
+    public Asset(ResourceUrn urn, AssetType<?, T> assetType, DisposableResource resource) {
         Preconditions.checkNotNull(urn);
         Preconditions.checkNotNull(assetType);
         this.urn = urn;
         this.assetType = assetType;
-        disposalHook.setDisposeAction(disposalAction);
+        disposalHook.setDisposableResource(resource);
         assetType.registerAsset(this, disposalHook);
     }
 

@@ -16,14 +16,18 @@
 
 package org.terasology.gestalt.assets.format;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
 import net.jcip.annotations.Immutable;
 
 import org.terasology.gestalt.module.resources.FileReference;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -93,6 +97,29 @@ public class AssetDataFile {
             throw new IOException("Failed to open stream for '" + file + "'", e);
         }
     }
+
+    /**
+     * Opens a reader to read the file. It is up to the reader's user to close it after use.
+     * It is assumed the file is UTF-8 encoded
+     *
+     * @return A new buffered reader.
+     * @throws IOException If there was an error opening the file
+     */
+    public BufferedReader openReader() throws IOException {
+        return openReader(Charsets.UTF_8);
+    }
+
+    /**
+     * Opens a reader to read the file. It is up to the reader's user to close it after use.
+     *
+     * @param charset The character set to interpret the file with
+     * @return A new buffered reader.
+     * @throws IOException If there was an error opening the file
+     */
+    public BufferedReader openReader(Charset charset) throws IOException {
+        return new BufferedReader(new InputStreamReader(openStream(), charset));
+    }
+
 
     @Override
     public String toString() {

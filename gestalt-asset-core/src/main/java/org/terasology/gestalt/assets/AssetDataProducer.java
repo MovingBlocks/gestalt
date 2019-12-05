@@ -47,7 +47,8 @@ public interface AssetDataProducer<T extends AssetData> {
     Set<ResourceUrn> getAvailableAssetUrns();
 
     /**
-     * The names of modules for which this producer can produce asset data with the given resource name for.
+     * The names of modules for which this producer can produce asset data with the given resource name for. This is semi-optional, but required if a partial resource urn needs to be
+     * resolved to an asset produced by this producer
      *
      * @param resourceName The name of a resource
      * @return A set of modules containing the resource.
