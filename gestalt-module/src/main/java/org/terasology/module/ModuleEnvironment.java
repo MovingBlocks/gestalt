@@ -41,6 +41,7 @@ import org.terasology.naming.Name;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.security.AccessControlException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
