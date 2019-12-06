@@ -41,6 +41,7 @@ import org.terasology.naming.Name;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.security.AccessControlException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
@@ -306,6 +307,8 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
             }
         } catch (URISyntaxException e) {
             logger.error("Failed to convert url to uri for comparison", e);
+        } catch (AccessControlException e) {
+            logger.error("Cannot determinate Module for type: {}", type.getName());
         }
         return null;
     }
