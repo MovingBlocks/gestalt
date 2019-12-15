@@ -24,13 +24,13 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +40,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
 /**
  * ModuleFileSource that exposes the content of an archive file (zip/jar, etc)
@@ -75,9 +75,10 @@ public class ArchiveFileSource implements ModuleFileSource {
      */
     public ArchiveFileSource(File file, Predicate<String> contentsFilter, String... subpath) throws IOException {
         String basePath = buildPathString(Arrays.asList(subpath));
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(file))) {
-            ZipEntry entry = zis.getNextEntry();
-            while (entry != null) {
+        try (ZipFile zip = new ZipFile(file)) {
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
                 if (entry.isDirectory() && entry.getName().startsWith(basePath)) {
                     List<String> pathParts = Arrays.asList(entry.getName().substring(basePath.length()).split(PATH_SEPARATOR));
                     if (!pathParts.get(0).isEmpty()) {
@@ -89,7 +90,6 @@ public class ArchiveFileSource implements ModuleFileSource {
                         contents.put(entry.getName().substring(basePath.length()), archiveFile);
                     }
                 }
-                entry = zis.getNextEntry();
             }
         }
     }
@@ -161,13 +161,13 @@ public class ArchiveFileSource implements ModuleFileSource {
 
         @Override
         public InputStream open() throws IOException {
-            ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
-            ZipEntry entry = zis.getNextEntry();
-            while (entry != null) {
+            ZipFile zip = new ZipFile(zipFile);
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
                 if (entry.getName().equals(internalFile)) {
-                    return zis;
+                    return zip.getInputStream(entry);
                 }
-                entry = zis.getNextEntry();
             }
             throw new FileNotFoundException("Could not find file " + internalFile + " in " + zipFile.getPath());
         }
