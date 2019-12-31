@@ -28,6 +28,7 @@ import org.terasology.gestalt.entitysystem.event.Before;
 import org.terasology.gestalt.entitysystem.event.Event;
 import org.terasology.gestalt.entitysystem.event.EventHandler;
 import org.terasology.gestalt.entitysystem.event.EventHandlerFactory;
+import org.terasology.gestalt.entitysystem.event.EventSystem;
 import org.terasology.gestalt.entitysystem.event.ReceiveEvent;
 import org.terasology.gestalt.entitysystem.event.exception.EventSystemException;
 
@@ -68,14 +69,14 @@ public final class EventReceiverMethodSupport {
     }
 
     /**
-     * Scans for and registers all methods annotated with {@link ReceiveEvent} with the provided {@link EventProcessorBuilder}.
+     * Scans for and registers all methods annotated with {@link ReceiveEvent} with the provided {@link org.terasology.gestalt.entitysystem.event.EventSystem}.
      *
      * @param eventReceiverObject The object to scan for methods
-     * @param builder             The EventProcessorBuilder to register the methods with as event handlers.
+     * @param eventSystem         The EventSystem to register the methods with as event handlers.
      * @throws org.terasology.gestalt.entitysystem.event.exception.InvalidEventReceiverObjectException if the eventReceiverObject is not a public class
      */
     @SuppressWarnings("unchecked")
-    public void register(Object eventReceiverObject, EventProcessorBuilder builder) {
+    public void register(Object eventReceiverObject, EventSystem eventSystem) {
         Class<?> handlerClass = eventReceiverObject.getClass();
         if (!Modifier.isPublic(handlerClass.getModifiers())) {
             throw new EventSystemException("Cannot register handler " + handlerClass.getName() + ", must be public");
@@ -113,24 +114,23 @@ public final class EventReceiverMethodSupport {
                 List<Class<? extends Component>> componentParams = gatherComponentParameters(types);
                 requiredComponents.addAll(componentParams);
 
-                registerEventHandler(eventHandlerFactory.create(eventReceiverObject, method, componentParams), builder, handlerClass, globalBefore, globalAfter, method, (Class<? extends Event>) types[0], requiredComponents);
+                registerEventHandler(eventHandlerFactory.create(eventReceiverObject, method, componentParams), eventSystem, handlerClass, globalBefore, globalAfter, method, (Class<? extends Event>) types[0], requiredComponents);
             }
         }
     }
 
-    private <T extends Event> void registerEventHandler(EventHandler<T> eventHandler, EventProcessorBuilder builder, Class<?> handlerClass, Set<Class<?>> globalBefore, Set<Class<?>> globalAfter, Method method, Class<? extends T> type, Set<Class<? extends Component>> requiredComponents) {
-        builder.addHandler(eventHandler, handlerClass, type, requiredComponents);
+    private <T extends Event> void registerEventHandler(EventHandler<T> eventHandler, EventSystem eventSystem, Class<?> handlerClass, Set<Class<?>> globalBefore, Set<Class<?>> globalAfter, Method method, Class<? extends T> type, Set<Class<? extends Component>> requiredComponents) {
         Set<Class<?>> beforeUnion = globalBefore;
         if (method.isAnnotationPresent(Before.class)) {
             beforeUnion = ImmutableSet.<Class<?>>builder().addAll(globalBefore).addAll(Arrays.asList(method.getAnnotation(Before.class).value())).build();
         }
-        builder.orderBeforeAll(beforeUnion);
 
         Set<Class<?>> afterUnion = globalAfter;
         if (method.isAnnotationPresent(After.class)) {
             afterUnion = ImmutableSet.<Class<?>>builder().addAll(globalAfter).addAll(Arrays.asList(method.getAnnotation(After.class).value())).build();
         }
-        builder.orderAfterAll(afterUnion);
+
+        eventSystem.registerHandler(type, eventHandler, handlerClass, beforeUnion, afterUnion, requiredComponents);
     }
 
     @SuppressWarnings("unchecked")

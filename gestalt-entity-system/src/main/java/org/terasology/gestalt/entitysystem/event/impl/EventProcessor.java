@@ -18,7 +18,10 @@ package org.terasology.gestalt.entitysystem.event.impl;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -29,11 +32,15 @@ import org.terasology.gestalt.entitysystem.entity.EntityRef;
 import org.terasology.gestalt.entitysystem.event.Event;
 import org.terasology.gestalt.entitysystem.event.EventHandler;
 import org.terasology.gestalt.entitysystem.event.EventResult;
+import org.terasology.gestalt.util.collection.KahnSorter;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The core event processing logic. When an event is sent against an entity, the EventProcessor
@@ -43,30 +50,29 @@ import java.util.Set;
  * returns EventResult.COMPLETE or EventResult.CANCEL the event processing is halted.
  *
  * @author Immortius
- * @see EventProcessorBuilder
  */
-@ThreadSafe
 public class EventProcessor {
     private static final Logger logger = LoggerFactory.getLogger(EventProcessor.class);
-    private final ListMultimap<Class<? extends Event>, EventHandlerRegistration> eventHandlers;
+    private final List<EventProcessor> children = new ArrayList<>();
+    private final List<EventHandlerRegistration> eventHandlers = Lists.newArrayList();
+    private final Multimap<Class<?>, EventHandlerRegistration> eventHandlersByProvider = ArrayListMultimap.create();
+
+    public EventProcessor() {
+        this(null);
+    }
 
     /**
      * Initialises the EventProcessor with the ordered list of EventHandlers for each event type.
      *
-     * @param eventHandlers A {@link ListMultimap} giving an ordered list of event handlers for each
-     *                      event type. Events will be propagated through the handlers in the
-     *                      order they are appear in each list.
+     * @param parent The event processor for the parent event, if any
      */
-    public EventProcessor(ListMultimap<Class<? extends Event>, EventHandlerRegistration> eventHandlers) {
-        this.eventHandlers = ArrayListMultimap.create(eventHandlers);
+    public EventProcessor(EventProcessor parent) {
+        if (parent != null) {
+            parent.children.add(this);
+            this.eventHandlers.addAll(parent.eventHandlers);
+        }
     }
 
-    /**
-     * @return A new builder for constructing an EventProcessor.
-     */
-    public static EventProcessorBuilder newBuilder() {
-        return new EventProcessorBuilder();
-    }
 
     /**
      * Sends an event against an entity
@@ -76,8 +82,8 @@ public class EventProcessor {
      * @return The result of the event. If any event handler returns EventResult.CANCEL then that
      * is returned, otherwise the result will be EventResult.COMPLETE.
      */
-    public EventResult send(Event event, EntityRef entity) {
-        return send(event, entity, Collections.emptySet());
+    public EventResult process(Event event, EntityRef entity) {
+        return process(event, entity, Collections.emptySet());
     }
 
     /**
@@ -92,10 +98,11 @@ public class EventProcessor {
      *                             all EventHandlers interested in components the entity has.
      * @return The result of the event. If any event handler returns EventResult.CANCEL then that is returned, otherwise the result will be EventResult.COMPLETE.
      */
-    public EventResult send(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
+    public EventResult process(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
         EventResult result = EventResult.CONTINUE;
-        for (EventHandlerRegistration handler : eventHandlers.get(event.getClass())) {
-            if (validToInvoke(handler, entity.getComponentTypes(), triggeringComponents)) {
+        Set<Class<? extends Component>> componentTypes = entity.getComponentTypes();
+        for (EventHandlerRegistration handler : eventHandlers) {
+            if (validToInvoke(handler, componentTypes, triggeringComponents)) {
                 try {
                     result = handler.invoke(event, entity);
                     switch (result) {
@@ -118,13 +125,13 @@ public class EventProcessor {
     }
 
     private boolean validToInvoke(EventHandlerRegistration handler, Set<Class<? extends Component>> targetComponents, Set<Class<? extends Component>> triggeringComponents) {
-        for (Class<? extends Component> component : handler.getRequiredComponents()) {
+        for (Class<? extends Component> component : handler.components) {
             if (!targetComponents.contains(component) && !triggeringComponents.contains(component)) {
                 return false;
             }
         }
         if (!triggeringComponents.isEmpty()) {
-            for (Class<? extends Component> component : handler.getRequiredComponents()) {
+            for (Class<? extends Component> component : handler.components) {
                 if (triggeringComponents.contains(component)) {
                     return true;
                 }
@@ -135,27 +142,56 @@ public class EventProcessor {
         return false;
     }
 
+    public <T extends Event> void registerHandler(EventHandler<? super T> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
+        children.forEach(child -> child.registerHandler(eventHandler, provider, before, after, requiredComponents));
+        EventHandlerRegistration eventHandlerRegistration = new EventHandlerRegistration(eventHandler, before, after, requiredComponents);
+        eventHandlersByProvider.put(provider, eventHandlerRegistration);
+        eventHandlers.add(eventHandlerRegistration);
+        sortHandlers();
+    }
+
+    private void sortHandlers() {
+        KahnSorter<EventHandlerRegistration> sorter = new KahnSorter<>();
+        sorter.addNodes(eventHandlersByProvider.values());
+        for (EventHandlerRegistration eventHandler : eventHandlers) {
+            for (Class<?> beforeProvider : eventHandler.before) {
+                eventHandlersByProvider.get(beforeProvider).forEach(x -> sorter.addEdge(eventHandler, x));
+            }
+            for (Class<?> afterProvider : eventHandler.after) {
+                eventHandlersByProvider.get(afterProvider).forEach(x -> sorter.addEdge(x, eventHandler));
+            }
+        }
+        eventHandlers.clear();
+        eventHandlers.addAll(sorter.sort());
+    }
+
+    public boolean removeProvider(Class<?> provider) {
+        return eventHandlers.removeAll(eventHandlersByProvider.removeAll(provider));
+    }
+
+    public boolean removeHandler(EventHandler<?> handler) {
+        eventHandlersByProvider.values().removeIf(x -> x.receiver.equals(handler));
+        return eventHandlers.removeIf(x -> x.receiver.equals(handler));
+    }
+
     /**
      * A registration of an EventHandler. Includes the handler to call and the components that an entity must have for the handler to be called.
      */
-    public static class EventHandlerRegistration {
-        private EventHandler receiver;
-        private ImmutableList<Class<? extends Component>> components;
+    private static class EventHandlerRegistration {
+        private final EventHandler receiver;
+        private final ImmutableList<Class<? extends Component>> components;
+        private final List<Class<?>> before;
+        private final List<Class<?>> after;
 
         /**
          * @param receiver           The event handler
          * @param requiredComponents The components an entity must have for the receiver to be called.
          */
-        public EventHandlerRegistration(EventHandler<?> receiver, Iterable<Class<? extends Component>> requiredComponents) {
+        EventHandlerRegistration(EventHandler<?> receiver, Iterable<Class<?>> before, Iterable<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
             this.receiver = receiver;
             this.components = ImmutableList.copyOf(requiredComponents);
-        }
-
-        /**
-         * @return The components required by this event handler
-         */
-        public List<Class<? extends Component>> getRequiredComponents() {
-            return components;
+            this.before = ImmutableList.copyOf(before);
+            this.after = ImmutableList.copyOf(after);
         }
 
         /**
@@ -166,7 +202,7 @@ public class EventProcessor {
          * @return The result of running the event, indicating whether processing should continue or halt
          */
         @SuppressWarnings("unchecked")
-        public EventResult invoke(Event event, EntityRef entity) {
+        EventResult invoke(Event event, EntityRef entity) {
             return receiver.onEvent(event, entity);
         }
 

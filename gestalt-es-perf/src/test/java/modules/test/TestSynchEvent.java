@@ -17,10 +17,12 @@
 package modules.test;
 
 import org.terasology.gestalt.entitysystem.event.Event;
+import org.terasology.gestalt.entitysystem.event.Synchronous;
 
 /**
  *
  */
+@Synchronous
 public class TestSynchEvent implements Event {
     private final String value;
 

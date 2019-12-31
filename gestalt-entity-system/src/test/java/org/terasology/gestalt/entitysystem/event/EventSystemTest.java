@@ -20,11 +20,17 @@ import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 import org.terasology.gestalt.entitysystem.component.Component;
+import org.terasology.gestalt.entitysystem.component.store.ArrayComponentStore;
+import org.terasology.gestalt.entitysystem.component.store.ComponentStore;
+import org.terasology.gestalt.entitysystem.entity.EntityManager;
 import org.terasology.gestalt.entitysystem.entity.EntityRef;
-import org.terasology.gestalt.entitysystem.event.impl.DelayedEventSystem;
+import org.terasology.gestalt.entitysystem.entity.manager.CoreEntityManager;
 import org.terasology.gestalt.entitysystem.event.impl.EventProcessor;
+import org.terasology.gestalt.entitysystem.event.impl.EventSystemImpl;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import modules.test.TestEvent;
@@ -40,55 +46,66 @@ import static org.mockito.Mockito.when;
 /**
  * Core tests showing correct behaviour for any EventSystem implementation.
  */
-public abstract class EventSystemTest {
+public class EventSystemTest {
 
     private static final String EVENT_VALUE = "Test";
-    TestSynchEvent synchEvent = new TestSynchEvent(EVENT_VALUE);
-    TestEvent asynchEvent = new TestEvent(EVENT_VALUE);
-    private EntityRef entity = mock(EntityRef.class);
-    private EventProcessor eventProcessor = mock(EventProcessor.class);
-    private EventSystem eventSystem;
+    private TestSynchEvent synchEvent = new TestSynchEvent(EVENT_VALUE);
+    private TestEvent asynchEvent = new TestEvent(EVENT_VALUE);
+    private EntityManager entityManager;
+    private EntityRef entity;
+    private EventSystem eventSystem = new EventSystemImpl();
     private Set<Class<? extends Component>> triggeringComponents = ImmutableSet.of(Sample.class, Second.class);
 
+
     public EventSystemTest() {
-        eventSystem = new DelayedEventSystem(eventProcessor);
+        List<ComponentStore<?>> componentStores = new ArrayList<>();
+        entityManager = new CoreEntityManager(componentStores);
+        entity = entityManager.createEntity();
     }
 
     @Test
     public void sendAsynchEvent() throws Exception {
+        EventHandler<TestEvent> eventHandler = mock(EventHandler.class);
+        eventSystem.registerHandler(TestEvent.class, eventHandler, eventHandler.getClass());
         eventSystem.send(asynchEvent, entity);
-        verifyNoMoreInteractions(eventProcessor);
+        verifyNoMoreInteractions(eventHandler);
         eventSystem.processEvents();
-        verify(eventProcessor).send(asynchEvent, entity, Collections.emptySet());
+        verify(eventHandler).onEvent(asynchEvent, entity);
     }
 
     @Test
     public void sendAsynchEventHandleException() throws Exception {
-        when(eventProcessor.send(asynchEvent, entity, Collections.emptySet())).thenThrow(new RuntimeException());
-
+        EventHandler<TestEvent> eventHandler = mock(EventHandler.class);
+        eventSystem.registerHandler(TestEvent.class, eventHandler, eventHandler.getClass());
+        when(eventHandler.onEvent(asynchEvent, entity)).thenThrow(new RuntimeException());
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
     }
 
     @Test
-    public void sendAsynchEventWithTriggeringComponents() throws Exception {
+    public void sendAsynchEventWithTriggeringComponentsIgnoresHandlerNotInterestedInThoseComponents() throws Exception {
+        EventHandler<TestEvent> eventHandler = mock(EventHandler.class);
+        eventSystem.registerHandler(TestEvent.class, eventHandler, eventHandler.getClass());
         eventSystem.send(asynchEvent, entity, triggeringComponents);
         eventSystem.processEvents();
-        verify(eventProcessor).send(asynchEvent, entity, triggeringComponents);
+        verifyNoMoreInteractions(eventHandler);
+    }
+
+    @Test
+    public void sendAsynchEventWithTriggeringComponentsTriggersInterestedHandler() throws Exception {
+        EventHandler<TestEvent> eventHandler = mock(EventHandler.class);
+        eventSystem.registerHandler(TestEvent.class, eventHandler, eventHandler.getClass(), Sample.class);
+        eventSystem.send(asynchEvent, entity, triggeringComponents);
+        eventSystem.processEvents();
+        verify(eventHandler).onEvent(asynchEvent, entity);
     }
 
     @Test
     public void sendSynchEvent() throws Exception {
-        when(eventProcessor.send(synchEvent, entity, Collections.emptySet())).thenThrow(new RuntimeException());
-
+        EventHandler<TestSynchEvent> eventHandler = mock(EventHandler.class);
+        eventSystem.registerHandler(TestSynchEvent.class, eventHandler, eventHandler.getClass());
         eventSystem.send(synchEvent, entity);
+        verify(eventHandler).onEvent(synchEvent, entity);
     }
 
-
-    @Test
-    public void sendSynchEventWithTriggeringComponents() throws Exception {
-        eventSystem.send(synchEvent, entity, triggeringComponents);
-
-        verify(eventProcessor).send(synchEvent, entity, triggeringComponents);
-    }
 }

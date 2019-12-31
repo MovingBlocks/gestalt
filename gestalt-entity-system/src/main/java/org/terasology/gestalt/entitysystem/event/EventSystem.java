@@ -19,6 +19,8 @@ package org.terasology.gestalt.entitysystem.event;
 import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.entitysystem.entity.EntityRef;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -35,7 +37,7 @@ import java.util.Set;
 public interface EventSystem {
 
     /**
-     * Sends an event against an entity. This event will be processed immediately if annotated as {@link Synchronous}, otherwise it will be processed at some future point.
+     * Sends an event against an entity. This event will be processed immediately (and on the same thread) if annotated as {@link Synchronous}, otherwise it will be processed at some future point.
      *
      * @param event  The event to send
      * @param entity The entity to send the event against.
@@ -45,7 +47,7 @@ public interface EventSystem {
     }
 
     /**
-     * Sends an event against an entity. This event will be processed immediately if annotated as {@link Synchronous}, otherwise it will be processed at some future point.
+     * Sends an event against an entity. This event will be processed immediately (and on the same thread) if annotated as {@link Synchronous}, otherwise it will be processed at some future point.
      *
      * @param event                The event to send.
      * @param entity               The entity to send the event against.
@@ -60,9 +62,93 @@ public interface EventSystem {
     void processEvents();
 
     /**
-     * Clears all pending events and blocks for currently processing events to finish (in necessary)
+     * Clears all pending events and blocks for currently processing events to finish (if necessary)
      */
     void clearPendingEvents();
 
+    /**
+     * Registers an event handler, with its own class as its provider
+     * @param eventClass The class of event to handle
+     * @param eventHandler The handler for the event
+     * @param requiredComponents Zero or more components that an entity must have for this handler to be relevant for it
+     * @param <T> The class of event to handle
+     */
+    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<? extends Component> ... requiredComponents) {
+        registerHandler(eventClass, eventHandler, eventHandler.getClass(), Collections.emptyList(), Collections.emptyList(), Arrays.asList(requiredComponents));
+    }
 
+    /**
+     * Registers an event handler with its own class as its provider
+     * @param eventClass The class of event to handle
+     * @param eventHandler The handler for the event
+     * @param requiredComponents Zero or more components that an entity must have for this handler to be relevant for it
+     * @param <T> The class of event to handle
+     */
+    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Iterable<Class<? extends Component>> requiredComponents) {
+        registerHandler(eventClass, eventHandler, eventHandler.getClass(), Collections.emptyList(), Collections.emptyList(), requiredComponents);
+    }
+
+    /**
+     * Registers an event handler
+     * @param eventClass The class of event to handle
+     * @param eventHandler The handler for the event
+     * @param provider A class that is "providing" the handler - this is used to sort handlers before or after other handlers.
+     * @param requiredComponents Zero or more components that an entity must have for this handler to be relevant for it
+     * @param <T> The class of event to handle
+     */
+    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<?> provider, Class<? extends Component> ... requiredComponents)  {
+        registerHandler(eventClass, eventHandler, provider, Collections.emptyList(), Collections.emptyList(), Arrays.asList(requiredComponents));
+    }
+
+    /**
+     * Registers an event handler
+     * @param eventClass The class of event to handle
+     * @param eventHandler The handler for the event
+     * @param provider A class that is "providing" the handler - this is used to sort handlers before or after other handlers.
+     * @param requiredComponents Zero or more components that an entity must have for this handler to be relevant for it
+     * @param <T> The class of event to handle
+     */
+    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<?> provider, Iterable<Class<? extends Component>> requiredComponents) {
+        registerHandler(eventClass, eventHandler, provider, Collections.emptyList(), Collections.emptyList(), requiredComponents);
+    }
+
+    /**
+     * Registers an event handler
+     * @param eventClass The class of event to handle
+     * @param eventHandler The handler for the event
+     * @param provider A class that is "providing" the handler - this is used to sort handlers before or after other handlers.
+     * @param before A collection of provider classes this handler should be processed before
+     * @param after A collection of provider classes this handler should be processed after
+     * @param requiredComponents Zero or more components that an entity must have for this handler to be relevant for it
+     * @param <T> The class of event to handle
+     */
+    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Class<? extends Component> ... requiredComponents) {
+        registerHandler(eventClass, eventHandler, provider, before, after, Arrays.asList(requiredComponents));
+    }
+
+    /**
+     * Registers an event handler
+     * @param eventClass The class of event to handle
+     * @param eventHandler The handler for the event
+     * @param provider A class that is "providing" the handler - this is used to sort handlers before or after other handlers.
+     * @param before A collection of provider classes this handler should be processed before
+     * @param after A collection of provider classes this handler should be processed after
+     * @param requiredComponents Zero or more components that an entity must have for this handler to be relevant for it
+     * @param <T> The class of event to handle
+     */
+    <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents);
+
+    /**
+     * Removes all handlers registered with the given provider class
+     * @param provider
+     * @return Whether any handlers were removed
+     */
+    boolean removeHandlers(Class<?> provider);
+
+    /**
+     * Removes the given handler
+     * @param handler
+     * @return Whether any handlers were removed
+     */
+    boolean removeHandler(EventHandler<?> handler);
 }

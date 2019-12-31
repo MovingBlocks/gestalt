@@ -16,6 +16,8 @@
 
 package org.terasology.gestalt.entitysystem.event;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import org.junit.Test;
@@ -28,6 +30,7 @@ import org.terasology.gestalt.entitysystem.entity.manager.CoreEntityManager;
 import org.terasology.gestalt.entitysystem.event.impl.EventProcessor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import modules.test.components.Sample;
@@ -68,15 +71,16 @@ public class EventProcessorTest {
         Sample comp = new Sample();
         comp.setName(TEST_NAME);
         testEntity.setComponent(comp);
+        eventProcessor = new EventProcessor();
     }
 
     @Test
     public void eventHandlerReceivesEvent() {
         EventHandler<TestEvent> handler = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder().addHandler(handler, TestEvent.class, Sample.class).build();
+        eventProcessor.registerHandler(handler, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity));
+        assertEquals(EventResult.COMPLETE, eventProcessor.process(event, testEntity));
 
         verify(handler).onEvent(event, testEntity);
     }
@@ -87,11 +91,10 @@ public class EventProcessorTest {
         EventHandler<TestEvent> handler2 = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity)).thenReturn(EventResult.CANCEL);
         when(handler2.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handler, TestEvent.class, Sample.class)
-                .addHandler(handler2, TestEvent.class, Sample.class).build();
+        eventProcessor.registerHandler(handler, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
+        eventProcessor.registerHandler(handler2, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
 
-        assertEquals(EventResult.CANCEL, eventProcessor.send(event, testEntity));
+        assertEquals(EventResult.CANCEL, eventProcessor.process(event, testEntity));
 
         verify(handler).onEvent(event, testEntity);
         verifyNoMoreInteractions(handler2);
@@ -103,11 +106,10 @@ public class EventProcessorTest {
         EventHandler<TestEvent> handler2 = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity)).thenReturn(EventResult.COMPLETE);
         when(handler2.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handler, TestEvent.class, Sample.class)
-                .addHandler(handler2, TestEvent.class, Sample.class).build();
+        eventProcessor.registerHandler(handler, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
+        eventProcessor.registerHandler(handler2, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity));
+        assertEquals(EventResult.COMPLETE, eventProcessor.process(event, testEntity));
 
         verify(handler).onEvent(event, testEntity);
         verifyNoMoreInteractions(handler2);
@@ -117,10 +119,9 @@ public class EventProcessorTest {
     public void eventHandlerSkippedIfComponentNotPresent() {
         EventHandler<TestEvent> handler = mock(EventHandler.class);
         when(handler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handler, TestEvent.class, Second.class).build();
+        eventProcessor.registerHandler(handler, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Second.class));
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity));
+        assertEquals(EventResult.COMPLETE, eventProcessor.process(event, testEntity));
 
         verifyNoMoreInteractions(handler);
     }
@@ -135,11 +136,10 @@ public class EventProcessorTest {
 
         EventHandler<TestEvent> secondHandler = mock(EventHandler.class);
         when(secondHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder()
-                .addHandler(sampleHandler, TestEvent.class, Sample.class)
-                .addHandler(secondHandler, TestEvent.class, Second.class).build();
+        eventProcessor.registerHandler(sampleHandler, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
+        eventProcessor.registerHandler(secondHandler, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Second.class));
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity, Sets.newHashSet(Sample.class)));
+        assertEquals(EventResult.COMPLETE, eventProcessor.process(event, testEntity, Sets.newHashSet(Sample.class)));
 
         verify(sampleHandler).onEvent(event, testEntity);
         verifyNoMoreInteractions(secondHandler);
@@ -153,11 +153,10 @@ public class EventProcessorTest {
 
         EventHandler<TestEvent> secondHandler = mock(EventHandler.class);
         when(secondHandler.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder()
-                .addHandler(sampleHandler, TestEvent.class, Sample.class)
-                .addHandler(secondHandler, TestEvent.class, Second.class).build();
+        eventProcessor.registerHandler(sampleHandler, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
+        eventProcessor.registerHandler(secondHandler, EventHandler.class, Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Second.class));
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity, Sets.newHashSet(Second.class)));
+        assertEquals(EventResult.COMPLETE, eventProcessor.process(event, testEntity, Sets.newHashSet(Second.class)));
 
         verifyNoMoreInteractions(sampleHandler);
         verify(secondHandler).onEvent(event, testEntity);
@@ -169,28 +168,14 @@ public class EventProcessorTest {
         EventHandler<TestEvent> handlerB = mock(EventHandlerB.class);
         when(handlerA.onEvent(event, testEntity)).thenReturn(EventResult.CANCEL);
         when(handlerB.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handlerA, TestEvent.class, Sample.class)
-                .addHandler(handlerB, TestEvent.class, Sample.class).orderBefore(handlerA.getClass()).build();
+                eventProcessor.registerHandler(handlerA, handlerA.getClass(), Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
+                eventProcessor.registerHandler(handlerB, handlerB.getClass(), ImmutableSet.of(handlerA.getClass()), Collections.emptyList(), ImmutableList.of(Sample.class));
 
-        assertEquals(EventResult.CANCEL, eventProcessor.send(event, testEntity));
+        assertEquals(EventResult.CANCEL, eventProcessor.process(event, testEntity));
 
         verify(handlerB).onEvent(event, testEntity);
     }
 
-    @Test
-    public void registeringForBaseEventReceivesChildEvent() {
-        EventHandler<TestEvent> handler = mock(EventHandler.class);
-        when(handler.onEvent(childEvent, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder()
-                .addEventClass(TestEvent.class)
-                .addEventClass(TestChildEvent.class)
-                .addHandler(handler, TestEvent.class, Sample.class)
-                .build();
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(childEvent, testEntity));
-
-        verify(handler).onEvent(childEvent, testEntity);
-    }
 
     @Test
     public void handleExceptionWhenInvokingHandler() {
@@ -199,11 +184,10 @@ public class EventProcessorTest {
         EventHandler<TestEvent> handlerB = mock(EventHandlerB.class);
         when(handlerA.onEvent(event, testEntity)).thenThrow(new RuntimeException());
         when(handlerB.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
-        eventProcessor = EventProcessor.newBuilder()
-                .addHandler(handlerA, TestEvent.class, Sample.class)
-                .addHandler(handlerB, TestEvent.class, Sample.class).orderBefore(handlerA.getClass()).build();
+        eventProcessor.registerHandler(handlerA, handlerA.getClass(), Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
+        eventProcessor.registerHandler(handlerB, handlerB.getClass(), ImmutableList.of(handlerA.getClass()), Collections.emptyList(), ImmutableList.of(Sample.class));
 
-        assertEquals(EventResult.COMPLETE, eventProcessor.send(event, testEntity));
+        assertEquals(EventResult.COMPLETE, eventProcessor.process(event, testEntity));
 
         verify(handlerB).onEvent(event, testEntity);
     }

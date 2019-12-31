@@ -21,8 +21,8 @@ import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.terasology.gestalt.entitysystem.entity.EntityRef;
-import org.terasology.gestalt.entitysystem.event.impl.EventProcessorBuilder;
 import org.terasology.gestalt.entitysystem.event.impl.EventReceiverMethodSupport;
+import org.terasology.gestalt.entitysystem.event.impl.EventSystemImpl;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -53,15 +53,14 @@ public abstract class AbstractEventReceiverMethodSupportTest {
         eventReceiverMethodSupport = new EventReceiverMethodSupport(getEventHandlerFactory());
     }
 
-
     @Test
     public void registerEventReceiverMethod() {
         TrivialEventReceiver receiver = new TrivialEventReceiver();
-        EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        eventReceiverMethodSupport.register(receiver, builder);
+        EventSystem eventSystem = mock(EventSystem.class);
+        eventReceiverMethodSupport.register(receiver, eventSystem);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
-        verify(builder).addHandler(captor.capture(), eq(TrivialEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
+        verify(eventSystem).registerHandler(eq(TestEvent.class), captor.capture(), eq(TrivialEventReceiver.class), eq(Collections.emptySet()), eq(Collections.emptySet()), eq(Collections.emptySet()));
 
         TestEvent event = new TestEvent("test");
 
@@ -73,11 +72,11 @@ public abstract class AbstractEventReceiverMethodSupportTest {
     @Test
     public void registerWithFilterComponentFromAnnotation() {
         FilteredEventReceiver receiver = new FilteredEventReceiver();
-        EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        eventReceiverMethodSupport.register(receiver, builder);
+        EventSystem system = mock(EventSystem.class);
+        eventReceiverMethodSupport.register(receiver, system);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
-        verify(builder).addHandler(captor.capture(), eq(FilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class)));
+        verify(system).registerHandler(eq(TestEvent.class), captor.capture(), eq(FilteredEventReceiver.class), eq(Collections.emptySet()), eq(Collections.emptySet()), eq(Sets.newHashSet(Sample.class)));
 
         TestEvent event = new TestEvent("test");
         captor.getValue().onEvent(event, entity);
@@ -88,11 +87,11 @@ public abstract class AbstractEventReceiverMethodSupportTest {
     @Test
     public void registerWithMultipleFilterComponentFromAnnotation() {
         MultiFilteredEventReceiver receiver = new MultiFilteredEventReceiver();
-        EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
+        EventSystem builder = mock(EventSystem.class);
         eventReceiverMethodSupport.register(receiver, builder);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
-        verify(builder).addHandler(captor.capture(), eq(MultiFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class, Second.class)));
+        verify(builder).registerHandler(eq(TestEvent.class), captor.capture(), eq(MultiFilteredEventReceiver.class), eq(Collections.emptySet()), eq(Collections.emptySet()), eq(Sets.newHashSet(Sample.class, Second.class)));
 
         TestEvent event = new TestEvent("test");
         captor.getValue().onEvent(event, entity);
@@ -103,11 +102,11 @@ public abstract class AbstractEventReceiverMethodSupportTest {
     @Test
     public void registerWithComponentArg() {
         MixedFilteredEventReceiver receiver = new MixedFilteredEventReceiver();
-        EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        eventReceiverMethodSupport.register(receiver, builder);
+        EventSystem system = mock(EventSystem.class);
+        eventReceiverMethodSupport.register(receiver, system);
 
         final ArgumentCaptor<EventHandler> captor = ArgumentCaptor.forClass(EventHandler.class);
-        verify(builder).addHandler(captor.capture(), eq(MixedFilteredEventReceiver.class), eq(TestEvent.class), eq(Sets.newHashSet(Sample.class, Second.class)));
+        verify(system).registerHandler(eq(TestEvent.class), captor.capture(), eq(MixedFilteredEventReceiver.class), eq(Collections.emptySet()), eq(Collections.emptySet()), eq(Sets.newHashSet(Sample.class, Second.class)));
 
         TestEvent event = new TestEvent("test");
 
@@ -122,42 +121,38 @@ public abstract class AbstractEventReceiverMethodSupportTest {
     @Test
     public void orderUsingClassBeforeAnnotation() {
         GlobalBeforeEventReceiver receiver = new GlobalBeforeEventReceiver();
-        EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        eventReceiverMethodSupport.register(receiver, builder);
+        EventSystem system = mock(EventSystem.class);
+        eventReceiverMethodSupport.register(receiver, system);
 
-        verify(builder).addHandler(any(EventHandler.class), eq(GlobalBeforeEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
-        verify(builder).orderBeforeAll(Sets.newHashSet(TrivialEventReceiver.class));
+        verify(system).registerHandler(eq(TestEvent.class), any(EventHandler.class), eq(GlobalBeforeEventReceiver.class), eq(Sets.newHashSet(TrivialEventReceiver.class)), eq(Collections.emptySet()), eq(Collections.emptySet()));
     }
 
 
     @Test
     public void orderUsingClassAfterAnnotation() {
         GlobalAfterEventReceiver receiver = new GlobalAfterEventReceiver();
-        EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        eventReceiverMethodSupport.register(receiver, builder);
+        EventSystem system = mock(EventSystem.class);
+        eventReceiverMethodSupport.register(receiver, system);
 
-        verify(builder).addHandler(any(EventHandler.class), eq(GlobalAfterEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
-        verify(builder).orderAfterAll(Sets.newHashSet(TrivialEventReceiver.class));
+        verify(system).registerHandler(eq(TestEvent.class), any(EventHandler.class), eq(GlobalAfterEventReceiver.class), eq(Collections.emptySet()), eq(Sets.newHashSet(TrivialEventReceiver.class)), eq(Collections.emptySet()));
     }
 
     @Test
     public void orderUsingMethodBeforeAnnotation() {
         LocalBeforeEventReceiver receiver = new LocalBeforeEventReceiver();
-        EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        eventReceiverMethodSupport.register(receiver, builder);
+        EventSystem system = mock(EventSystem.class);
+        eventReceiverMethodSupport.register(receiver, system);
 
-        verify(builder).addHandler(any(EventHandler.class), eq(LocalBeforeEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
-        verify(builder).orderBeforeAll(Sets.newHashSet(TrivialEventReceiver.class));
+        verify(system).registerHandler(eq(TestEvent.class), any(EventHandler.class), eq(LocalBeforeEventReceiver.class), eq(Sets.newHashSet(TrivialEventReceiver.class)), eq(Collections.emptySet()), eq(Collections.emptySet()));
     }
 
     @Test
     public void orderUsingMethodAfterAnnotation() {
         LocalAfterEventReceiver receiver = new LocalAfterEventReceiver();
-        EventProcessorBuilder builder = mock(EventProcessorBuilder.class);
-        eventReceiverMethodSupport.register(receiver, builder);
+        EventSystem system = mock(EventSystem.class);
+        eventReceiverMethodSupport.register(receiver, system);
 
-        verify(builder).addHandler(any(EventHandler.class), eq(LocalAfterEventReceiver.class), eq(TestEvent.class), eq(Collections.emptySet()));
-        verify(builder).orderAfterAll(Sets.newHashSet(TrivialEventReceiver.class));
+        verify(system).registerHandler(eq(TestEvent.class), any(EventHandler.class), eq(LocalAfterEventReceiver.class), eq(Collections.emptySet()), eq(Sets.newHashSet(TrivialEventReceiver.class)), eq(Collections.emptySet()));
     }
 
     public static class TrivialEventReceiver {

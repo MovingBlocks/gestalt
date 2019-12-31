@@ -17,6 +17,7 @@
 package org.terasology.gestalt.entitysystem.entity;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -38,8 +39,10 @@ import org.terasology.gestalt.naming.Name;
 import org.terasology.gestalt.naming.Version;
 
 import java.util.List;
+import java.util.Set;
 
 import modules.test.components.BasicComponent;
+import modules.test.components.Second;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -175,6 +178,25 @@ public class FullSetupExample {
 
         assertFalse(entity.hasComponent(BasicComponent.class));
         assertFalse(entity.exists());
+    }
+
+    @Test
+    public void iterateEntities() {
+        EntityRef entity1 = entityManager.createEntity(new BasicComponent(), new Second());
+        EntityRef entity2 = entityManager.createEntity(new BasicComponent(), new Second());
+        entityManager.createEntity(new BasicComponent());
+
+        BasicComponent basicComp = new BasicComponent();
+        Second secondComp = new Second();
+        Set<EntityRef> iterated = Sets.newLinkedHashSet();
+        EntityIterator entityIterator = entityManager.iterate(basicComp, secondComp);
+        while (entityIterator.next()) {
+            iterated.add(entityIterator.getEntity());
+        }
+        assertEquals(2, iterated.size());
+        assertTrue(iterated.contains(entity1));
+        assertTrue(iterated.contains(entity2));
+
     }
 
 }

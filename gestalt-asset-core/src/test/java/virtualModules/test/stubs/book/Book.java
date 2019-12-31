@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.assets.Asset;
 import org.terasology.gestalt.assets.AssetType;
+import org.terasology.gestalt.assets.DisposableResource;
 import org.terasology.gestalt.assets.ResourceUrn;
 
 import java.util.Optional;
@@ -52,7 +53,7 @@ public class Book extends Asset<BookData> {
         return lines;
     }
 
-    private static class DisposalAction implements Runnable {
+    private static class DisposalAction implements DisposableResource {
 
         private static final Logger logger = LoggerFactory.getLogger(DisposalAction.class);
         private ResourceUrn urn;
@@ -62,7 +63,7 @@ public class Book extends Asset<BookData> {
         }
 
         @Override
-        public void run() {
+        public void close() {
             logger.info("Disposed: {}", urn);
         }
     }
