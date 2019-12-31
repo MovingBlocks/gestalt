@@ -40,11 +40,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
- * The core event processing logic. When an event is sent against an entity, the EventProcessor
- * propagates the event through an ordered list of relevant event handlers,
+ * The core event processing logic, for a single type of event. When an event is sent against an entity, the EventProcessor
+ * propagates the event through an ordered list of registered event handlers,
  * filtering out handlers that are not appropriate for the target entity based on the components it
  * has.  All of this occurs within a provided transaction. If an event handler
  * returns EventResult.COMPLETE or EventResult.CANCEL the event processing is halted.
@@ -54,7 +55,7 @@ import java.util.stream.Collectors;
 public class EventProcessor {
     private static final Logger logger = LoggerFactory.getLogger(EventProcessor.class);
     private final List<EventProcessor> children = new ArrayList<>();
-    private final List<EventHandlerRegistration> eventHandlers = Lists.newArrayList();
+    private final List<EventHandlerRegistration> eventHandlers = new CopyOnWriteArrayList<>();
     private final Multimap<Class<?>, EventHandlerRegistration> eventHandlersByProvider = ArrayListMultimap.create();
 
     public EventProcessor() {
@@ -70,6 +71,7 @@ public class EventProcessor {
         if (parent != null) {
             parent.children.add(this);
             this.eventHandlers.addAll(parent.eventHandlers);
+            this.eventHandlersByProvider.putAll(parent.eventHandlersByProvider);
         }
     }
 
@@ -142,18 +144,17 @@ public class EventProcessor {
         return false;
     }
 
-    public <T extends Event> void registerHandler(EventHandler<? super T> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
+    public synchronized <T extends Event> void registerHandler(EventHandler<? super T> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
         children.forEach(child -> child.registerHandler(eventHandler, provider, before, after, requiredComponents));
         EventHandlerRegistration eventHandlerRegistration = new EventHandlerRegistration(eventHandler, before, after, requiredComponents);
         eventHandlersByProvider.put(provider, eventHandlerRegistration);
-        eventHandlers.add(eventHandlerRegistration);
         sortHandlers();
     }
 
     private void sortHandlers() {
         KahnSorter<EventHandlerRegistration> sorter = new KahnSorter<>();
         sorter.addNodes(eventHandlersByProvider.values());
-        for (EventHandlerRegistration eventHandler : eventHandlers) {
+        for (EventHandlerRegistration eventHandler : eventHandlersByProvider.values()) {
             for (Class<?> beforeProvider : eventHandler.before) {
                 eventHandlersByProvider.get(beforeProvider).forEach(x -> sorter.addEdge(eventHandler, x));
             }
@@ -165,11 +166,11 @@ public class EventProcessor {
         eventHandlers.addAll(sorter.sort());
     }
 
-    public boolean removeProvider(Class<?> provider) {
+    public synchronized boolean removeProvider(Class<?> provider) {
         return eventHandlers.removeAll(eventHandlersByProvider.removeAll(provider));
     }
 
-    public boolean removeHandler(EventHandler<?> handler) {
+    public synchronized boolean removeHandler(EventHandler<?> handler) {
         eventHandlersByProvider.values().removeIf(x -> x.receiver.equals(handler));
         return eventHandlers.removeIf(x -> x.receiver.equals(handler));
     }

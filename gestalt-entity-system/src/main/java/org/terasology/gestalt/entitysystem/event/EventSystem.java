@@ -28,11 +28,7 @@ import java.util.Set;
  * An EventSystem manages the sending of events against entities.
  * <p>
  * Events annotated as {@link Synchronous} will always be run immediately. Otherwise the events will
- * be run later.
- *
- * <p>The internal mechanics of determining what event handlers will be sent each event is handled by
- * an EventProcessor - EventSystem deals with the higher level concern of managing how events are queued
- * and run.
+ * be later - when later is depends on the implementation, but all queued events will be run after a call to {@link EventSystem#processEvents}.
  */
 public interface EventSystem {
 

@@ -43,7 +43,7 @@ public class EventSystemImpl implements EventSystem {
     }
 
     @Override
-    public void processEvents() {
+    public synchronized void processEvents() {
         List<PendingEventInfo> events = Lists.newArrayListWithExpectedSize(pendingEvents.size());
         while (!pendingEvents.isEmpty()) {
             pendingEvents.drainTo(events);
@@ -58,7 +58,7 @@ public class EventSystemImpl implements EventSystem {
         pendingEvents.clear();
     }
 
-    private void processEvent(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
+    private synchronized void processEvent(Event event, EntityRef entity, Set<Class<? extends Component>> triggeringComponents) {
         if (entity.exists()) {
             EventProcessor eventProcessor = getEventProcessor(event.getClass());
             eventProcessor.process(event, entity, triggeringComponents);
@@ -66,13 +66,13 @@ public class EventSystemImpl implements EventSystem {
     }
 
     @Override
-    public <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
+    public synchronized <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
         EventProcessor eventProcessor = getEventProcessor(eventClass);
         eventProcessor.registerHandler(eventHandler, provider, before, after, requiredComponents);
     }
 
     @Override
-    public boolean removeHandlers(Class<?> provider) {
+    public synchronized boolean removeHandlers(Class<?> provider) {
         boolean result = false;
         for (EventProcessor processor : eventProcessorLookup.values()) {
             result |= processor.removeProvider(provider);
@@ -81,7 +81,7 @@ public class EventSystemImpl implements EventSystem {
     }
 
     @Override
-    public boolean removeHandler(EventHandler<?> handler) {
+    public synchronized boolean removeHandler(EventHandler<?> handler) {
         boolean result = false;
         for (EventProcessor processor : eventProcessorLookup.values()) {
             result |= processor.removeHandler(handler);
@@ -89,7 +89,7 @@ public class EventSystemImpl implements EventSystem {
         return result;
     }
 
-    private EventProcessor getEventProcessor(Class<? extends Event> eventClass) {
+    private synchronized EventProcessor getEventProcessor(Class<? extends Event> eventClass) {
         EventProcessor eventProcessor = eventProcessorLookup.get(eventClass);
         if (eventProcessor == null) {
             eventProcessor = createEventProcessor(eventClass);
