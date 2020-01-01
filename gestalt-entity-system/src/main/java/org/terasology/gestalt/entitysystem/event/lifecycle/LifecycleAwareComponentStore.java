@@ -22,18 +22,26 @@ import org.terasology.gestalt.entitysystem.component.store.ComponentStore;
 import org.terasology.gestalt.entitysystem.component.management.ComponentType;
 import org.terasology.gestalt.entitysystem.entity.EntityManager;
 
+/**
+ * A wrapper for ComponentStore that captures component changes that should trigger lifecycle events.
+ * This can be wrapped around the component store for any components that need to support such events.
+
+ * @param <T> The Component the store contains
+ */
 public class LifecycleAwareComponentStore<T extends Component<T>> implements ComponentStore<T> {
 
     private final LifecycleEventManager lifecycleEventManager;
     private final ComponentStore<T> inner;
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    public LifecycleAwareComponentStore(LifecycleEventManager lifecycleEventManager, ComponentStore<T> inner) {
+    /**
+     * @param lifecycleEventManager The lifecycle event manager to notify of component changes
+     * @param entityManager The entity manager that will contain this store. Used to obtain entity refs
+     * @param inner The component store to wrap
+     */
+    public LifecycleAwareComponentStore(LifecycleEventManager lifecycleEventManager, EntityManager entityManager, ComponentStore<T> inner) {
         this.inner = inner;
         this.lifecycleEventManager = lifecycleEventManager;
-    }
-
-    public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
 

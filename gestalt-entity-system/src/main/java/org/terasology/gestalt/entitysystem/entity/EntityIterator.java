@@ -16,9 +16,20 @@
 
 package org.terasology.gestalt.entitysystem.entity;
 
+/**
+ * An entity iterator is used to iterate over a set of Entities. These may also have secondary
+ * effects when iteratoring, such as retrieving components
+ */
 public interface EntityIterator {
 
+    /**
+     * Fetches the next entity
+     * @return Whether there is another entity
+     */
     boolean next();
 
+    /**
+     * @return The current entity
+     */
     EntityRef getEntity();
 }

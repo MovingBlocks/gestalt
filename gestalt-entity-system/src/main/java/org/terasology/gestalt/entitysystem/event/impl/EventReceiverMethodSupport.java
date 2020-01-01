@@ -31,6 +31,7 @@ import org.terasology.gestalt.entitysystem.event.EventHandlerFactory;
 import org.terasology.gestalt.entitysystem.event.EventSystem;
 import org.terasology.gestalt.entitysystem.event.ReceiveEvent;
 import org.terasology.gestalt.entitysystem.event.exception.EventSystemException;
+import org.terasology.gestalt.entitysystem.event.exception.InvalidEventReceiverObjectException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -40,7 +41,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Helper to discover and register all methods annotated with {@link ReceiveEvent} in an object, into an EventProcessorBuilder.
+ * Helper to discover and register all methods annotated with {@link ReceiveEvent} in an object, into an {@link EventSystem}.
  * Also processes {@link Before} and {@link After} annotations to order the methods.
  */
 public final class EventReceiverMethodSupport {
@@ -79,7 +80,7 @@ public final class EventReceiverMethodSupport {
     public void register(Object eventReceiverObject, EventSystem eventSystem) {
         Class<?> handlerClass = eventReceiverObject.getClass();
         if (!Modifier.isPublic(handlerClass.getModifiers())) {
-            throw new EventSystemException("Cannot register handler " + handlerClass.getName() + ", must be public");
+            throw new InvalidEventReceiverObjectException("Cannot register handler " + handlerClass.getName() + ", must be public");
         }
 
         Set<Class<?>> globalBefore;

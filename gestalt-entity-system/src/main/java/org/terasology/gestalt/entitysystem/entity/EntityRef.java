@@ -29,11 +29,13 @@ import java.util.Set;
  * to an entity template in a prefab.
  * <p>
  * EntityRef provides some simple methods for manipulating the entity that is being referenced.
+ * <p>
+ * When an EntityRef is deleted,
  */
 public interface EntityRef {
 
     /**
-     * @return The id of this entity ref. This will be 0 for null entity refs or new entities that have not yet been created.
+     * @return The id of this entity ref. This will be {@link NullEntityRef#NON_EXISTENT_ENTITY_ID} for null entity refs or special purpose entity refs that don't represent an actual entity
      */
     int getId();
 

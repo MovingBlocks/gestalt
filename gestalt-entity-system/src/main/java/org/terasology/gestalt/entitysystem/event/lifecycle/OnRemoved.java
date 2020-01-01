@@ -23,27 +23,46 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
+ * This event indicates that one or more components have been removed from an entity.
  *
+ * The removed components are included in the event and can be inspected.
  */
 public class OnRemoved implements LifecycleEvent {
     private TypeKeyedMap<Component> components = new TypeKeyedMap<>();
 
+    /**
+     * @param component A component that has been removed
+     */
     public OnRemoved(Component component) {
         this.components.put(component);
     }
 
+    /**
+     * @param components A map of components that have been removed
+     */
     public OnRemoved(TypeKeyedMap<Component> components) {
         this.components.putAll(components);
     }
 
+    /**
+     * @param components A collection of components that have been removed
+     */
     public OnRemoved(Collection<Component> components) {
         this.components.putAll(components);
     }
 
+    /**
+     * @return A map of the components that have been removed
+     */
     public TypeKeyedMap<Component> getComponents() {
         return components;
     }
 
+    /**
+     * @param type The type of component to get from those that have been removed
+     * @param <T> The type of component to get from those that have been removed
+     * @return A removed component, or null if no component of that type was removed
+     */
     public <T extends Component> T getComponent(Class<T> type) {
         return components.get(type);
     }

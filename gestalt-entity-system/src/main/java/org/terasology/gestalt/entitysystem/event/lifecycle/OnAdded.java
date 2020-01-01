@@ -23,15 +23,21 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- *
+ * This event indicates one or more component has been added to the entity
  */
 public class OnAdded implements LifecycleEvent {
     private Set<Class<? extends Component>> componentTypes = new HashSet<>();
 
+    /**
+     * @param componentType The type of components that has been added
+     */
     public OnAdded(Class<? extends Component> componentType) {
         componentTypes.add(componentType);
     }
 
+    /**
+     * @param components The types of components that have been added
+     */
     public OnAdded(Collection<Class<? extends Component>> components) {
         componentTypes.addAll(components);
     }

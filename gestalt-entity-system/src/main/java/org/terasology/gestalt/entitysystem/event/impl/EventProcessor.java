@@ -144,7 +144,15 @@ public class EventProcessor {
         return false;
     }
 
-    public synchronized <T extends Event> void registerHandler(EventHandler<? super T> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
+    /**
+     * Registers an event handler
+     * @param eventHandler The handler to register
+     * @param provider The class providing the handler (can be the handler's class)
+     * @param before Any providers whose handlers should be invoked before eventHandler
+     * @param after Any providers whose handlers should be invoked after eventHandler
+     * @param requiredComponents Any components that are required for this handler to be called
+     */
+    public synchronized void registerHandler(EventHandler<?> eventHandler, Class<?> provider, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
         children.forEach(child -> child.registerHandler(eventHandler, provider, before, after, requiredComponents));
         EventHandlerRegistration eventHandlerRegistration = new EventHandlerRegistration(eventHandler, before, after, requiredComponents);
         eventHandlersByProvider.put(provider, eventHandlerRegistration);
@@ -166,13 +174,25 @@ public class EventProcessor {
         eventHandlers.addAll(sorter.sort());
     }
 
+    /**
+     * Removes all handlers provided by the given provider
+     * @param provider The provider to remove handlers for
+     * @return Whether any handlers were removed
+     */
     public synchronized boolean removeProvider(Class<?> provider) {
         return eventHandlers.removeAll(eventHandlersByProvider.removeAll(provider));
     }
 
+    /**
+     * Removes a specific handler
+     * @param handler The handler to remove
+     * @return Whether the handler was removed
+     */
     public synchronized boolean removeHandler(EventHandler<?> handler) {
-        eventHandlersByProvider.values().removeIf(x -> x.receiver.equals(handler));
-        return eventHandlers.removeIf(x -> x.receiver.equals(handler));
+        if (eventHandlersByProvider.values().removeIf(x -> x.receiver.equals(handler))) {
+            return eventHandlers.removeIf(x -> x.receiver.equals(handler));
+        }
+        return false;
     }
 
     /**

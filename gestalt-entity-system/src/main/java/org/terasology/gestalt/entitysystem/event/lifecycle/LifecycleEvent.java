@@ -22,10 +22,13 @@ import org.terasology.gestalt.entitysystem.event.Event;
 import java.util.Set;
 
 /**
- *
+ * Base type for Lifecycle events
  */
 public interface LifecycleEvent extends Event {
 
+    /**
+     * @return The component types involved in this lifecycle event
+     */
     Set<Class<? extends Component>> getComponentTypes();
 
 }

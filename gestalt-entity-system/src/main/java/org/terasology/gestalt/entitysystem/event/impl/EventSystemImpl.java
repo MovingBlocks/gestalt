@@ -23,7 +23,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Implementation of EventSystem that can queue events from multiple threads, but expects events to be processed and handlers to be registered/removed on a single thread.
+ * Threadsafe event system implementation. Events are queued up from any thread (run immediately if {@link Synchronous}, and then processed
+ * when processEvents is called. processEvents can only be called on a single thread at a time and is blocking until completed.
  */
 @ThreadSafe
 public class EventSystemImpl implements EventSystem {

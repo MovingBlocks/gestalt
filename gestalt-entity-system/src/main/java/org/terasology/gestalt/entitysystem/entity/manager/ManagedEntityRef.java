@@ -30,6 +30,9 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * An EntityRef implementation for Entities managed by a CoreEntityManager.
+ */
 @ThreadSafe
 class ManagedEntityRef implements EntityRef {
     private volatile CoreEntityManager entityManager;

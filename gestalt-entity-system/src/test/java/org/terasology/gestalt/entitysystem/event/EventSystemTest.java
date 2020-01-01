@@ -66,7 +66,7 @@ public class EventSystemTest {
     @Test
     public void sendAsynchEvent() throws Exception {
         EventHandler<TestEvent> eventHandler = mock(EventHandler.class);
-        eventSystem.registerHandler(TestEvent.class, eventHandler, eventHandler.getClass());
+        eventSystem.registerHandler(TestEvent.class, eventHandler);
         eventSystem.send(asynchEvent, entity);
         verifyNoMoreInteractions(eventHandler);
         eventSystem.processEvents();
@@ -76,7 +76,7 @@ public class EventSystemTest {
     @Test
     public void sendAsynchEventHandleException() throws Exception {
         EventHandler<TestEvent> eventHandler = mock(EventHandler.class);
-        eventSystem.registerHandler(TestEvent.class, eventHandler, eventHandler.getClass());
+        eventSystem.registerHandler(TestEvent.class, eventHandler);
         when(eventHandler.onEvent(asynchEvent, entity)).thenThrow(new RuntimeException());
         eventSystem.send(asynchEvent, entity);
         eventSystem.processEvents();
@@ -85,7 +85,7 @@ public class EventSystemTest {
     @Test
     public void sendAsynchEventWithTriggeringComponentsIgnoresHandlerNotInterestedInThoseComponents() throws Exception {
         EventHandler<TestEvent> eventHandler = mock(EventHandler.class);
-        eventSystem.registerHandler(TestEvent.class, eventHandler, eventHandler.getClass());
+        eventSystem.registerHandler(TestEvent.class, eventHandler);
         eventSystem.send(asynchEvent, entity, triggeringComponents);
         eventSystem.processEvents();
         verifyNoMoreInteractions(eventHandler);
@@ -94,7 +94,7 @@ public class EventSystemTest {
     @Test
     public void sendAsynchEventWithTriggeringComponentsTriggersInterestedHandler() throws Exception {
         EventHandler<TestEvent> eventHandler = mock(EventHandler.class);
-        eventSystem.registerHandler(TestEvent.class, eventHandler, eventHandler.getClass(), Sample.class);
+        eventSystem.registerHandler(TestEvent.class, eventHandler, Sample.class);
         eventSystem.send(asynchEvent, entity, triggeringComponents);
         eventSystem.processEvents();
         verify(eventHandler).onEvent(asynchEvent, entity);
@@ -103,7 +103,7 @@ public class EventSystemTest {
     @Test
     public void sendSynchEvent() throws Exception {
         EventHandler<TestSynchEvent> eventHandler = mock(EventHandler.class);
-        eventSystem.registerHandler(TestSynchEvent.class, eventHandler, eventHandler.getClass());
+        eventSystem.registerHandler(TestSynchEvent.class, eventHandler);
         eventSystem.send(synchEvent, entity);
         verify(eventHandler).onEvent(synchEvent, entity);
     }

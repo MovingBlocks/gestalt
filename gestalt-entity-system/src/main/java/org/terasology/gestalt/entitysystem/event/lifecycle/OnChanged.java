@@ -23,15 +23,21 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- *
+ * This event indicates that one or more components have been modified on an entity
  */
 public class OnChanged implements LifecycleEvent {
     private Set<Class<? extends Component>> componentTypes = new HashSet<>();
 
+    /**
+     * @param componentType The type of component that has been modified
+     */
     public OnChanged(Class<? extends Component> componentType) {
         componentTypes.add(componentType);
     }
 
+    /**
+     * @param components The types of component that have been modified
+     */
     public OnChanged(Collection<Class<? extends Component>> components) {
         componentTypes.addAll(components);
     }

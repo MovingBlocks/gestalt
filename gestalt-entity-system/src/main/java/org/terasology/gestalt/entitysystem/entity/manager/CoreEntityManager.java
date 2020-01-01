@@ -49,11 +49,20 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+/**
+ * A basic but threadsafe implementation of EntityManager.
+ * <ul>
+ *     <li>Reuses entity ids after entities are destroyed.</li>
+ *     <li>Extends all component stores entity capacity is reached.</li>
+ *     <li>Read/write locks on entity ids and entity creation.</li>
+ * </ul>
+ */
 @ThreadSafe
 public class CoreEntityManager implements EntityManager {
 
@@ -63,30 +72,58 @@ public class CoreEntityManager implements EntityManager {
     private static final double EXTENSION_RATE = 1.5;
 
     private final ReadWriteLock locks = new ReentrantReadWriteLock();
-    private final ImmutableMap<Class<? extends Component>, ComponentStore<?>> componentStores;
+    private final Map<Class<? extends Component>, ComponentStore<?>> componentStores;
 
     private final UniqueQueue<Integer> freedIdQueue = new UniqueQueue<>();
 
     private EntityRef[] entities;
     private int nextId = 0;
 
+    /**
+     * @param componentStores The component stores for components supported by this entity manager
+     */
     public CoreEntityManager(ComponentStore<?> ... componentStores) {
         this(Arrays.asList(componentStores), DEFAULT_CAPACITY);
     }
 
+    /**
+     * @param componentStores The component stores for components supported by this entity manager
+     */
     public CoreEntityManager(Collection<ComponentStore<?>> componentStores) {
         this(componentStores, DEFAULT_CAPACITY);
     }
 
+    /**
+     * @param componentStores The component stores for components supported by this entity manager
+     * @param capacity The initial capacity of entities. All stores will be extended to this amount.
+     */
     public CoreEntityManager(Collection<ComponentStore<?>> componentStores, int capacity) {
-        ImmutableMap.Builder<Class<? extends Component>, ComponentStore<?>> builder = ImmutableMap.builder();
+        this.componentStores = new ConcurrentHashMap<>();
         for (ComponentStore<?> store : componentStores) {
-            builder.put(store.getType().getComponentClass(), store);
+            this.componentStores.put(store.getType().getComponentClass(), store);
             store.extend(capacity);
         }
-        this.componentStores = builder.build();
         this.entities = new EntityRef[capacity];
         Arrays.fill(this.entities, NullEntityRef.get());
+    }
+
+    /**
+     * Adds a component store.
+     * @param store The component store to add
+     * @throws IllegalStateException If a store for that component type is already present
+     */
+    public void addComponentStore(ComponentStore<?> store) {
+        Lock lock = locks.readLock();
+        lock.lock();
+        try {
+            store.extend(entities.length);
+            if (componentStores.containsKey(store.getType().getComponentClass())) {
+                throw new IllegalStateException("Component store for type " + store.getType() + " already present");
+            }
+            this.componentStores.put(store.getType().getComponentClass(), store);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -256,10 +293,6 @@ public class CoreEntityManager implements EntityManager {
     @Override
     public Iterable<ComponentStore<?>> allComponentStores() {
         return componentStores.values();
-    }
-
-    public interface EntitySupplier {
-        EntityRef create(CoreEntityManager entityManager, int id);
     }
 
     private class ComponentsIterator implements EntityIterator {

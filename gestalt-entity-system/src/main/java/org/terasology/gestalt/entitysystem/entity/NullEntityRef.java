@@ -18,7 +18,7 @@ package org.terasology.gestalt.entitysystem.entity;
 
 /**
  * A NullEntityRef represents a reference to no entity. This can be used instead of a straight null to avoid NullPointerExceptions (following the Null Object pattern).
- * Note that attempting to add a component to a NullEntityRef will evoke an exception.
+ * This implementation gobbles up and ignores attempts to change its components.
  */
 public final class NullEntityRef extends AbstractNOPEntityRef {
 

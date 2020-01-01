@@ -23,12 +23,38 @@ import org.terasology.gestalt.entitysystem.event.EventSystem;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * A manager for collating and sending Lifecycle events.
+ * sendPendingEvents should be called regularly to send events.
+ *
+ * This event manager sends three sorts of events:
+ * <ul>
+ *     <li>OnAdded events, listing all components that have been added to an entity</li>
+ *     <li>OnChanged events, listing all components that have been modified on an entity</li>
+ *     <li>OnRemoved events, listing all components that have been removed from an entity</li>
+ * </ul>
+ * This events are sent in that order. If a component has been involved in multiple events since
+ * last time events were processed:
+ * <ul>
+ *     <li>If a component was removed and then readded, a OnChange event is sent instead</li>
+ *     <li>If the component was added and/or changed, then removed, only an OnRemoved event is sent</li>
+ * </ul>
+ *
+ * This class is not thread safe. It is expected all modification and sending events happens on a single
+ * thread.
+ */
 public class LifecycleEventManager {
 
     private Map<EntityRef, OnAdded> onAddedEvents = new LinkedHashMap<>();
     private Map<EntityRef, OnChanged> onChangedEvents = new LinkedHashMap<>();
     private Map<EntityRef, OnRemoved> onRemovedEvents = new LinkedHashMap<>();
 
+    /**
+     * Notifies that a component has been added to an entity.
+     * @param entity The entity the component has been added to
+     * @param componentType The type of component that was added
+     * @param <T> The type of component that was added
+     */
     public <T extends Component<T>> void componentAdded(EntityRef entity, Class<T> componentType) {
         // Create or add to an existing OnAdded event
         OnAdded onAdded = onAddedEvents.get(entity);
@@ -48,6 +74,12 @@ public class LifecycleEventManager {
         }
     }
 
+    /**
+     * Notifies that a component was modified on an entity
+     * @param entity The entity the component was modified on
+     * @param componentType The type of component that was modified
+     * @param <T> The type of component that was modified
+     */
     public <T extends Component<T>> void componentChanged(EntityRef entity, Class<T> componentType) {
         OnChanged onChanged = onChangedEvents.get(entity);
         if (onChanged == null) {
@@ -58,6 +90,12 @@ public class LifecycleEventManager {
         }
     }
 
+    /**
+     * Notifies that a component was removed from an entity
+     * @param entity The entity the component was removed from
+     * @param component The removed component
+     * @param <T> The type of component that was removed
+     */
     public <T extends Component<T>> void componentRemoved(EntityRef entity, T component) {
         OnRemoved onRemoved = onRemovedEvents.get(entity);
         if (onRemoved == null) {
@@ -78,6 +116,10 @@ public class LifecycleEventManager {
         }
     }
 
+    /**
+     * Sends all pending events
+     * @param eventSystem The event system to send the events to
+     */
     public void sendPendingEvents(EventSystem eventSystem) {
         sendEvents(eventSystem, onAddedEvents);
         sendEvents(eventSystem, onChangedEvents);

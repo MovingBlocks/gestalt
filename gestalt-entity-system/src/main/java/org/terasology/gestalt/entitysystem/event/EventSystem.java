@@ -88,25 +88,28 @@ public interface EventSystem {
      * Registers an event handler
      * @param eventClass The class of event to handle
      * @param eventHandler The handler for the event
-     * @param provider A class that is "providing" the handler - this is used to sort handlers before or after other handlers.
+     * @param before A collection of provider classes this handler should be processed before
+     * @param after A collection of provider classes this handler should be processed after
      * @param requiredComponents Zero or more components that an entity must have for this handler to be relevant for it
      * @param <T> The class of event to handle
      */
-    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<?> provider, Class<? extends Component> ... requiredComponents)  {
-        registerHandler(eventClass, eventHandler, provider, Collections.emptyList(), Collections.emptyList(), Arrays.asList(requiredComponents));
+    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Collection<Class<?>> before, Collection<Class<?>> after, Class<? extends Component> ... requiredComponents) {
+        registerHandler(eventClass, eventHandler, eventHandler.getClass(), before, after, Arrays.asList(requiredComponents));
     }
 
     /**
      * Registers an event handler
      * @param eventClass The class of event to handle
      * @param eventHandler The handler for the event
-     * @param provider A class that is "providing" the handler - this is used to sort handlers before or after other handlers.
+     * @param before A collection of provider classes this handler should be processed before
+     * @param after A collection of provider classes this handler should be processed after
      * @param requiredComponents Zero or more components that an entity must have for this handler to be relevant for it
      * @param <T> The class of event to handle
      */
-    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Class<?> provider, Iterable<Class<? extends Component>> requiredComponents) {
-        registerHandler(eventClass, eventHandler, provider, Collections.emptyList(), Collections.emptyList(), requiredComponents);
+    default <T extends Event> void registerHandler(Class<T> eventClass, EventHandler<? super T> eventHandler, Collection<Class<?>> before, Collection<Class<?>> after, Iterable<Class<? extends Component>> requiredComponents) {
+        registerHandler(eventClass, eventHandler, eventHandler.getClass(), before, after, requiredComponents);
     }
+
 
     /**
      * Registers an event handler

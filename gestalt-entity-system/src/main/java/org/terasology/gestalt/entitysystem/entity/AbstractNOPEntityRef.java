@@ -24,6 +24,10 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * AbstractNOPEntityRef is a reusable core for special purpose EntityRefs that do not represent
+ * actual entities. See {@link NullEntityRef} for an example.
+ */
 public abstract class AbstractNOPEntityRef implements EntityRef {
 
     public static final int NON_EXISTENT_ENTITY_ID = -1;

@@ -29,12 +29,21 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
+/**
+ * Default EventHandler implementation using reflections. See gestalt-es-perf library for high
+ * performance alternatives.
+ */
 public class ReflectionEventHandler implements EventHandler {
 
     private Object handler;
     private Method method;
     private ImmutableList<Class<? extends Component>> componentParams;
 
+    /**
+     * @param handler The object providing the event handler
+     * @param method The event handling method
+     * @param componentParams Any component parameters the event declares
+     */
     public ReflectionEventHandler(Object handler,
                                   Method method,
                                   Collection<Class<? extends Component>> componentParams) {
