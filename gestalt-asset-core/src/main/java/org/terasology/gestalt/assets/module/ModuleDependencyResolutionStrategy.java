@@ -45,7 +45,10 @@ public class ModuleDependencyResolutionStrategy implements ResolutionStrategy {
      * allow for switching environments without creating a new resolution strategy.
      *
      * @param environment The module environment to use to resolve an asset.
+     *
+     * @deprecated Use {@link ModuleDependencyResolutionStrategy#ModuleDependencyResolutionStrategy(ModuleDependencyProvider)} instead to allow changing environment
      */
+    @Deprecated
     public ModuleDependencyResolutionStrategy(ModuleEnvironment environment) {
         this(new ModuleEnvironmentDependencyProvider(environment));
     }

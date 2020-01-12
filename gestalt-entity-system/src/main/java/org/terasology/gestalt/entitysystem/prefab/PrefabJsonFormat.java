@@ -76,9 +76,9 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
         }
     };
 
-    public PrefabJsonFormat(ModuleEnvironment moduleEnvironment, ComponentManager componentManager, AssetManager assetManager, GsonBuilder gsonBuilder) {
+    public PrefabJsonFormat(ComponentTypeIndex componentIndex, ComponentManager componentManager, AssetManager assetManager, GsonBuilder gsonBuilder) {
         super("json", "prefab");
-        this.componentIndex = new ComponentTypeIndex(moduleEnvironment);
+        this.componentIndex = componentIndex;
         this.componentManager = componentManager;
         this.assetManager = assetManager;
         gsonBuilder.registerTypeAdapter(EntityRef.class, new EntityRefTypeHandler());
@@ -110,18 +110,18 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
      * A builder used to aid construction of {@link PrefabJsonFormat}
      */
     public static class Builder {
-        private final ModuleEnvironment moduleEnvironment;
+        private final ComponentTypeIndex componentTypeIndex;
         private final ComponentManager componentManager;
         private AssetManager assetManager;
         private GsonBuilder gsonBuilder;
 
         /**
-         * @param moduleEnvironment The module environment, used to discover available component types
+         * @param componentTypeIndex The component type index, used to discover available component types
          * @param componentManager  The manager for components, used to construct and work with components
          * @param assetManager      The asset manager, used to look up prefabs.
          */
-        public Builder(ModuleEnvironment moduleEnvironment, ComponentManager componentManager, AssetManager assetManager) {
-            this.moduleEnvironment = moduleEnvironment;
+        public Builder(ComponentTypeIndex componentTypeIndex, ComponentManager componentManager, AssetManager assetManager) {
+            this.componentTypeIndex = componentTypeIndex;
             this.componentManager = componentManager;
             this.assetManager = assetManager;
 
@@ -170,7 +170,7 @@ public class PrefabJsonFormat extends AbstractAssetFileFormat<PrefabData> {
          * @return The new PrefabJsonFormat.
          */
         public PrefabJsonFormat create() {
-            return new PrefabJsonFormat(moduleEnvironment, componentManager, assetManager, gsonBuilder);
+            return new PrefabJsonFormat(componentTypeIndex, componentManager, assetManager, gsonBuilder);
         }
     }
 

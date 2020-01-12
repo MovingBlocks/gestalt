@@ -38,13 +38,22 @@ import java.util.Set;
  */
 public class ComponentTypeIndex {
 
-    private final Map<ResourceUrn, Class<? extends Component>> componentIndexByUrn;
-    private final SetMultimap<Name, Name> modulesProvidingComponentsIndex;
+    private transient Map<ResourceUrn, Class<? extends Component>> componentIndexByUrn;
+    private transient SetMultimap<Name, Name> modulesProvidingComponentsIndex;
     private final ResolutionStrategy resolutionStrategy;
+
+    public ComponentTypeIndex(ResolutionStrategy resolutionStrategy) {
+        componentIndexByUrn = ImmutableMap.of();
+        modulesProvidingComponentsIndex = ImmutableSetMultimap.of();
+        this.resolutionStrategy = resolutionStrategy;
+    }
 
     /**
      * @param environment The module environment providing components
+     * @deprecated Use {@link ComponentTypeIndex#ComponentTypeIndex(ResolutionStrategy)} instead to
+     * allow environment changes
      */
+    @Deprecated
     public ComponentTypeIndex(ModuleEnvironment environment) {
         this(environment, new ModuleDependencyResolutionStrategy(environment));
     }
@@ -55,6 +64,21 @@ public class ComponentTypeIndex {
      */
     public ComponentTypeIndex(ModuleEnvironment environment, ResolutionStrategy resolutionStrategy) {
         this.resolutionStrategy = resolutionStrategy;
+        changeEnvironment(environment);
+
+    }
+
+    private static void indexUrn(Name moduleName, String typeName, Class<? extends Component> componentType, ImmutableMap.Builder<ResourceUrn, Class<? extends Component>> componentByUrnBuilder, ImmutableSetMultimap.Builder<Name, Name> modulesProvidingComponentsBuilder) {
+        ResourceUrn urn = new ResourceUrn(moduleName, new Name(typeName));
+        componentByUrnBuilder.put(urn, componentType);
+        modulesProvidingComponentsBuilder.put(urn.getResourceName(), urn.getModuleName());
+    }
+
+    /**
+     * Updates the component index for the changed environment
+     * @param environment The new environment
+     */
+    public void changeEnvironment(ModuleEnvironment environment) {
         ImmutableMap.Builder<ResourceUrn, Class<? extends Component>> componentByUrnBuilder = ImmutableMap.builder();
         ImmutableSetMultimap.Builder<Name, Name> modulesProvidingComponentsBuilder = ImmutableSetMultimap.builder();
         for (Class<? extends Component> componentType : environment.getSubtypesOf(Component.class, (x) -> (x != Component.class && !x.isInterface()))) {
@@ -63,12 +87,6 @@ public class ComponentTypeIndex {
         }
         this.componentIndexByUrn = componentByUrnBuilder.build();
         this.modulesProvidingComponentsIndex = modulesProvidingComponentsBuilder.build();
-    }
-
-    private static void indexUrn(Name moduleName, String typeName, Class<? extends Component> componentType, ImmutableMap.Builder<ResourceUrn, Class<? extends Component>> componentByUrnBuilder, ImmutableSetMultimap.Builder<Name, Name> modulesProvidingComponentsBuilder) {
-        ResourceUrn urn = new ResourceUrn(moduleName, new Name(typeName));
-        componentByUrnBuilder.put(urn, componentType);
-        modulesProvidingComponentsBuilder.put(urn.getResourceName(), urn.getModuleName());
     }
 
     /**

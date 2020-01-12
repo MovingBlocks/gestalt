@@ -139,14 +139,14 @@ public interface EventSystem {
 
     /**
      * Removes all handlers registered with the given provider class
-     * @param provider
+     * @param provider The provider to remove handlers for
      * @return Whether any handlers were removed
      */
     boolean removeHandlers(Class<?> provider);
 
     /**
      * Removes the given handler
-     * @param handler
+     * @param handler The handler to remove
      * @return Whether any handlers were removed
      */
     boolean removeHandler(EventHandler<?> handler);

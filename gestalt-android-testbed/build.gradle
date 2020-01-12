@@ -59,6 +59,9 @@ android {
             }
             variant.assembleProvider.get().dependsOn(t)
     }
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
@@ -103,10 +106,4 @@ def reflectPackage(packageName, variant) {
     JsonSerializer serializer = new JsonSerializer()
     def outPath = variant.javaCompileProvider.get().destinationDir.toString() + "/" + packageName.replaceAll(Pattern.quote("."), "/") + "/manifest.json"
     serializer.save(reflections, outPath)
-}
-
-android {
-    lintOptions {
-        abortOnError false
-    }
 }

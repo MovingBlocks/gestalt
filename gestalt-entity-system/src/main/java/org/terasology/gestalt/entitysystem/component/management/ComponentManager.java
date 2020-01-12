@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.entitysystem.component.Component;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manager for components. Provides the ability to create or copy components, or retrieve information on the properties of the component that allows the individual
@@ -32,8 +33,8 @@ public class ComponentManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ComponentManager.class);
 
-    private ComponentTypeFactory componentTypeFactory;
-    private Map<Class<?>, ComponentType<?>> componentTypes = Maps.newLinkedHashMap();
+    private final ComponentTypeFactory componentTypeFactory;
+    private final Map<Class<?>, ComponentType<?>> componentTypes = new ConcurrentHashMap<>();
 
     /**
      * Creates the ComponentManager using the default {@link ComponentTypeFactory} - {@link ReflectionComponentTypeFactory}.
@@ -102,5 +103,12 @@ public class ComponentManager {
     @SuppressWarnings("unchecked")
     public <T extends Component> ComponentType<T> getType(T instance) {
         return (ComponentType<T>) getType(instance.getClass());
+    }
+
+    /**
+     * Clears the cache of component types
+     */
+    public void clearCache() {
+        componentTypes.clear();
     }
 }
