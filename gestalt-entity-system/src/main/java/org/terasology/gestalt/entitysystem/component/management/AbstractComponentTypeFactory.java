@@ -104,7 +104,7 @@ public abstract class AbstractComponentTypeFactory implements ComponentTypeFacto
 
     /**
      * Creates a function to call a setter
-     * @@param method The getter method
+     * @param method The getter method
      * @param propertyName The name of the property
      * @param propertyType The type of the property
      * @param componentType The type of the component
