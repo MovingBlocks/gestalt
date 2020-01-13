@@ -83,7 +83,9 @@ public class ComponentTypeIndex {
         ImmutableSetMultimap.Builder<Name, Name> modulesProvidingComponentsBuilder = ImmutableSetMultimap.builder();
         for (Class<? extends Component> componentType : environment.getSubtypesOf(Component.class, (x) -> (x != Component.class && !x.isInterface()))) {
             Name module = environment.getModuleProviding(componentType);
-            indexUrn(module, componentType.getSimpleName(), componentType, componentByUrnBuilder, modulesProvidingComponentsBuilder);
+            if (module != null) {
+                indexUrn(module, componentType.getSimpleName(), componentType, componentByUrnBuilder, modulesProvidingComponentsBuilder);
+            }
         }
         this.componentIndexByUrn = componentByUrnBuilder.build();
         this.modulesProvidingComponentsIndex = modulesProvidingComponentsBuilder.build();

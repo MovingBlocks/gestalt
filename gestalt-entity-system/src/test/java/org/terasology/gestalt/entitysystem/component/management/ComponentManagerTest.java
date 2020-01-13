@@ -18,6 +18,9 @@ package org.terasology.gestalt.entitysystem.component.management;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terasology.gestalt.entitysystem.component.Component;
+
+import java.util.Optional;
 
 import modules.test.components.BasicComponent;
 import modules.test.components.Empty;
@@ -25,6 +28,7 @@ import modules.test.components.Empty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -78,5 +82,30 @@ public abstract class ComponentManagerTest {
         instance.setName("Hello");
         BasicComponent copy = componentManager.copy(instance);
         assertEquals("Hello", copy.getName());
+    }
+
+    @Test
+    public void propertyUsesHighestCommonDenominator() {
+        ComponentType<MismatchedPropertiesComponent> type = componentManager.getType(MismatchedPropertiesComponent.class);
+        Optional<PropertyAccessor<MismatchedPropertiesComponent, ?>> stringProperty = type.getPropertyInfo().getProperty("stringProperty");
+        assertTrue(stringProperty.isPresent());
+        assertEquals(CharSequence.class, stringProperty.get().getPropertyType());
+    }
+
+    public static class MismatchedPropertiesComponent implements Component<MismatchedPropertiesComponent> {
+        private String stringProperty;
+
+        public String getStringProperty() {
+            return stringProperty;
+        }
+
+        public void setStringProperty(CharSequence charSequence) {
+            stringProperty = charSequence.toString();
+        }
+
+        @Override
+        public void copy(MismatchedPropertiesComponent other) {
+            this.stringProperty = other.stringProperty;
+        }
     }
 }

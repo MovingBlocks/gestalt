@@ -23,7 +23,10 @@ import org.terasology.gestalt.assets.format.producer.AssetFileDataProducer;
 import org.terasology.gestalt.assets.management.AssetManager;
 import org.terasology.gestalt.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.gestalt.assets.module.ModuleAwareAssetTypeManagerImpl;
+import org.terasology.gestalt.assets.module.ModuleDependencyResolutionStrategy;
+import org.terasology.gestalt.assets.module.ModuleEnvironmentDependencyProvider;
 import org.terasology.gestalt.entitysystem.component.management.ComponentManager;
+import org.terasology.gestalt.entitysystem.component.management.ComponentTypeIndex;
 import org.terasology.gestalt.module.Module;
 import org.terasology.gestalt.module.ModuleEnvironment;
 import org.terasology.gestalt.module.ModuleFactory;
@@ -74,8 +77,8 @@ public class PrefabJsonFormatTest {
         componentManager = new ComponentManager();
         AssetType<Prefab, PrefabData> prefabAssetType = assetTypeManager.createAssetType(Prefab.class, Prefab::new, "prefabs");
         AssetFileDataProducer<PrefabData> prefabDataProducer = assetTypeManager.getAssetFileDataProducer(prefabAssetType);
-        prefabDataProducer.addAssetFormat(new PrefabJsonFormat.Builder(moduleEnvironment, componentManager, assetManager).create());
-
+        ComponentTypeIndex componentTypeIndex = new ComponentTypeIndex(moduleEnvironment, new ModuleDependencyResolutionStrategy(new ModuleEnvironmentDependencyProvider(moduleEnvironment)));
+        prefabDataProducer.addAssetFormat(new PrefabJsonFormat.Builder(componentTypeIndex, componentManager, assetManager).create());
         assetTypeManager.switchEnvironment(moduleEnvironment);
     }
 
