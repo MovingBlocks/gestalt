@@ -23,7 +23,17 @@ import org.terasology.gestalt.entitysystem.component.management.ComponentManager
 import org.terasology.gestalt.entitysystem.component.management.ComponentType;
 import org.terasology.gestalt.entitysystem.component.management.ComponentTypeFactory;
 import org.terasology.gestalt.entitysystem.component.management.PropertyAccessor;
+import org.terasology.gestalt.module.Module;
+import org.terasology.gestalt.module.ModuleEnvironment;
+import org.terasology.gestalt.module.ModuleFactory;
+import org.terasology.gestalt.module.sandbox.PermissionProviderFactory;
+import org.terasology.gestalt.module.sandbox.PermitAllPermissionProviderFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import modules.test.components.BasicComponent;
@@ -33,6 +43,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  *
@@ -94,6 +105,24 @@ public abstract class ComponentManagerTest {
         Optional<PropertyAccessor<MismatchedPropertiesComponent, ?>> stringProperty = type.getPropertyInfo().getProperty("stringProperty");
         assertTrue(stringProperty.isPresent());
         assertEquals(CharSequence.class, stringProperty.get().getPropertyType());
+    }
+
+    @Test
+    public void runtimeLoadedModuleTest() throws IOException {
+        Module module = new ModuleFactory().createArchiveModule(new File("./test-modules/moduleF.jar"));
+        PermissionProviderFactory permissionProviderFactory = new PermitAllPermissionProviderFactory();
+        ModuleEnvironment environment = new ModuleEnvironment(Collections.singletonList(module), permissionProviderFactory);
+
+        List<Class<? extends Component>> componentTypes = new ArrayList<Class<? extends Component>>();
+        environment.getSubtypesOf(Component.class).forEach(x -> componentTypes.add(x));
+        if (componentTypes.isEmpty()) {
+            fail("No component types found to test");
+        }
+        for (Class<? extends Component> componentType : componentTypes) {
+            ComponentType<? extends Component> type = componentManager.getType(componentType);
+            Component<?> component = type.create();
+        }
+
     }
 
     public static class MismatchedPropertiesComponent implements Component<MismatchedPropertiesComponent> {

@@ -1,0 +1,6 @@
+{
+  "id": "ModuleF",
+  "version": "1.0.0",
+  "displayName": "Module F",
+  "description": "This module contains a entity system Component to be loaded and used"
+}

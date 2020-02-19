@@ -1,0 +1,10 @@
+
+apply plugin: 'java'
+
+jar {
+    version = ''
+}
+
+dependencies {
+    implementation project(":gestalt-entity-system")
+}
