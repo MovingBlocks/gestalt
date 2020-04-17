@@ -40,10 +40,19 @@ public final class Name implements Comparable<Name> {
     public static final Name EMPTY = new Name("");
 
     private final String normalizedName;
+    private final String originalName;
 
     public Name(String name) {
         Preconditions.checkNotNull(name);
+        this.originalName = name;
         this.normalizedName = name.toLowerCase(Locale.ENGLISH);
+    }
+
+    /**
+     * @return The original name when string is passed into name
+     */
+    public String originalName() {
+        return originalName;
     }
 
     /**
