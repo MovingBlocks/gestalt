@@ -51,7 +51,7 @@ public final class Name implements Comparable<Name> {
     /**
      * @return The original name when string is passed into name
      */
-    public String originalName() {
+    public String displayName() {
         return originalName;
     }
 
