@@ -40,38 +40,23 @@ public final class Name implements Comparable<Name> {
     public static final Name EMPTY = new Name("");
 
     private final String originalName;
-    private final String normalisedName;
 
     public Name(String name) {
         Preconditions.checkNotNull(name);
         this.originalName = name;
-        this.normalisedName = name.toLowerCase(Locale.ENGLISH);
     }
 
     /**
      * @return Whether this name is empty (equivalent to an empty string)
      */
     public boolean isEmpty() {
-        return normalisedName.isEmpty();
+        return originalName.isEmpty();
     }
 
-    /**
-     * @return The Name in lowercase consistent with Name equality (so two names that are equal will have the same lowercase)
-     */
-    public String toLowerCase() {
-        return normalisedName;
-    }
-
-    /**
-     * @return The Name in uppercase consistent with Name equality (so two names that are equal will have the same uppercase)
-     */
-    public String toUpperCase() {
-        return originalName.toUpperCase(Locale.ENGLISH);
-    }
 
     @Override
     public int compareTo(Name o) {
-        return normalisedName.compareTo(o.normalisedName);
+        return originalName.compareTo(o.originalName);
     }
 
     @Override
@@ -81,20 +66,18 @@ public final class Name implements Comparable<Name> {
         }
         if (obj instanceof Name) {
             Name other = (Name) obj;
-            return normalisedName.equals(other.normalisedName);
+            return originalName.equals(other.originalName);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return normalisedName.hashCode();
+        return originalName.hashCode();
     }
 
     @Override
     public String toString() {
         return originalName;
     }
-
-
 }
