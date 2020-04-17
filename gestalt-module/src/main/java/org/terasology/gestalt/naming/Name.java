@@ -39,24 +39,24 @@ public final class Name implements Comparable<Name> {
      */
     public static final Name EMPTY = new Name("");
 
-    private final String originalName;
+    private final String normalizedName;
 
     public Name(String name) {
         Preconditions.checkNotNull(name);
-        this.originalName = name;
+        this.normalizedName = name.toLowerCase(Locale.ENGLISH);
     }
 
     /**
      * @return Whether this name is empty (equivalent to an empty string)
      */
     public boolean isEmpty() {
-        return originalName.isEmpty();
+        return normalizedName.isEmpty();
     }
 
 
     @Override
     public int compareTo(Name o) {
-        return originalName.compareTo(o.originalName);
+        return normalizedName.compareTo(o.normalizedName);
     }
 
     @Override
@@ -66,18 +66,18 @@ public final class Name implements Comparable<Name> {
         }
         if (obj instanceof Name) {
             Name other = (Name) obj;
-            return originalName.equals(other.originalName);
+            return normalizedName.equals(other.normalizedName);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return originalName.hashCode();
+        return normalizedName.hashCode();
     }
 
     @Override
     public String toString() {
-        return originalName;
+        return normalizedName;
     }
 }
