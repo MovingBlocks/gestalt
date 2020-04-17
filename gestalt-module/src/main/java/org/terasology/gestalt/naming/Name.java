@@ -49,7 +49,7 @@ public final class Name implements Comparable<Name> {
     }
 
     /**
-     * @return The original name when string is passed into name
+     * @return The original <b>case-sensitive</b>  name when string is passed into name
      */
     public String displayName() {
         return originalName;
@@ -62,6 +62,21 @@ public final class Name implements Comparable<Name> {
         return normalizedName.isEmpty();
     }
 
+    /**
+     * @return The Name in lowercase consistent with Name equality (so two names that are equal will have the same lowercase)
+     * @deprecated
+     */
+    public String toLowerCase() {
+        return normalizedName;
+    }
+
+    /**
+     * @return The Name in uppercase consistent with Name equality (so two names that are equal will have the same uppercase)
+     * @deprecated
+     */
+    public String toUpperCase() {
+        return originalName.toUpperCase(Locale.ENGLISH);
+    }
 
     @Override
     public int compareTo(Name o) {
