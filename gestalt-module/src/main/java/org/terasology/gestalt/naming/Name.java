@@ -64,8 +64,11 @@ public final class Name implements Comparable<Name> {
 
     /**
      * @return The Name in lowercase consistent with Name equality (so two names that are equal will have the same lowercase)
-     * @deprecated
+     * @deprecated This is scheduled for removal in upcoming versions. 
+     *             Use {@code toString} or {@code displayName} instead.
+     *             Note that a Name should not be transformed to a String for further processing.
      */
+    @Deprecated
     public String toLowerCase() {
         return normalizedName;
     }
