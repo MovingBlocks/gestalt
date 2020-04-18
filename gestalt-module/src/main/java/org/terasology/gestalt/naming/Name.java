@@ -103,6 +103,9 @@ public final class Name implements Comparable<Name> {
         return normalizedName.hashCode();
     }
 
+    /**
+      * @return The Name as string consistent with Name equality (so two names that are equal will have the same {@code toString})
+      */
     @Override
     public String toString() {
         return normalizedName;
