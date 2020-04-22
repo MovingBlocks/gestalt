@@ -91,7 +91,6 @@ public final class Name implements Comparable<Name> {
         return normalisedName.compareTo(other.toLowerCase(Locale.ENGLISH));
     }
 
-
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
@@ -116,6 +115,4 @@ public final class Name implements Comparable<Name> {
     public String toString() {
         return originalName;
     }
-
-    
 }
