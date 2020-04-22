@@ -110,7 +110,7 @@ public final class Name implements Comparable<Name> {
     }
 
     /**
-     * @return The Name as string consistent with Name equality (so two names that are equal will have the same {@code toString})
+     * @return The Name as string for display purposes
      */
     @Override
     public String toString() {
