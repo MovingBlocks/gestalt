@@ -23,7 +23,7 @@ import java.util.Locale;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * A name is a normalisedName string used as an identifier. Primarily this means it is case insensitive.
+ * A name is a normalised string used as an identifier. Primarily this means it is case insensitive.
  * <p>
  * The original case-sensitive name is retained and available for display purposes, since it may use camel casing for readability.
  * </p><p>
@@ -39,8 +39,8 @@ public final class Name implements Comparable<Name> {
      */
     public static final Name EMPTY = new Name("");
 
-    private final String normalisedName;
     private final String originalName;
+    private final String normalisedName;
 
     public Name(String name) {
         Preconditions.checkNotNull(name);
@@ -116,4 +116,6 @@ public final class Name implements Comparable<Name> {
     public String toString() {
         return originalName;
     }
+
+    
 }
