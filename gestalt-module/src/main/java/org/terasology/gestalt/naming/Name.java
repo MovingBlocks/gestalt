@@ -23,7 +23,7 @@ import java.util.Locale;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * A name is a normalised string used as an identifier. Primarily this means it is case insensitive.
+ * A name is a normalisedName string used as an identifier. Primarily this means it is case insensitive.
  * <p>
  * The original case-sensitive name is retained and available for display purposes, since it may use camel casing for readability.
  * </p><p>
@@ -39,20 +39,20 @@ public final class Name implements Comparable<Name> {
      */
     public static final Name EMPTY = new Name("");
 
-    private final String normalised;
+    private final String normalisedName;
     private final String originalName;
 
     public Name(String name) {
         Preconditions.checkNotNull(name);
         this.originalName = name;
-        this.normalised = name.toLowerCase(Locale.ENGLISH);
+        this.normalisedName = name.toLowerCase(Locale.ENGLISH);
     }
 
     /**
      * @return Whether this name is empty (equivalent to an empty string)
      */
     public boolean isEmpty() {
-        return normalised.isEmpty();
+        return normalisedName.isEmpty();
     }
 
     /**
@@ -63,7 +63,7 @@ public final class Name implements Comparable<Name> {
      */
     @Deprecated
     public String toLowerCase() {
-        return normalised;
+        return normalisedName;
     }
 
     /**
@@ -79,16 +79,16 @@ public final class Name implements Comparable<Name> {
 
     @Override
     public int compareTo(Name o) {
-        return normalised.compareTo(o.normalised);
+        return normalisedName.compareTo(o.normalisedName);
     }
 
     /**
-     * normalises the string and compares it to the normalised version used for @{@linkplain Name}
+     * normalises the string and compares it to the normalisedName version used for @{@linkplain Name}
      * @param other string to compare against
-     * @return string comparision with normalised version 0 if match and unmatched with anything else
+     * @return string comparision with normalisedName version 0 if match and unmatched with anything else
      */
     public int compareTo(String other) {
-        return normalised.compareTo(other.toLowerCase(Locale.ENGLISH));
+        return normalisedName.compareTo(other.toLowerCase(Locale.ENGLISH));
     }
 
 
@@ -99,14 +99,14 @@ public final class Name implements Comparable<Name> {
         }
         if (obj instanceof Name) {
             Name other = (Name) obj;
-            return normalised.equals(other.normalised);
+            return normalisedName.equals(other.normalisedName);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return normalised.hashCode();
+        return normalisedName.hashCode();
     }
 
     /**
