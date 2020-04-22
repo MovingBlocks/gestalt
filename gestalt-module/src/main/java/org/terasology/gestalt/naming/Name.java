@@ -39,45 +39,38 @@ public final class Name implements Comparable<Name> {
      */
     public static final Name EMPTY = new Name("");
 
-    private final String normalizedName;
+    private final String normalised;
     private final String originalName;
 
     public Name(String name) {
         Preconditions.checkNotNull(name);
         this.originalName = name;
-        this.normalizedName = name.toLowerCase(Locale.ENGLISH);
-    }
-
-    /**
-     * @return The original <b>case-sensitive</b>  name when string is passed into name
-     */
-    public String displayName() {
-        return originalName;
+        this.normalised = name.toLowerCase(Locale.ENGLISH);
     }
 
     /**
      * @return Whether this name is empty (equivalent to an empty string)
      */
     public boolean isEmpty() {
-        return normalizedName.isEmpty();
+        return normalised.isEmpty();
     }
 
     /**
      * @return The Name in lowercase consistent with Name equality (so two names that are equal will have the same lowercase)
-     * @deprecated This is scheduled for removal in upcoming versions. 
-     *             Use {@code toString} or {@code displayName} instead.
-     *             Note that a Name should not be transformed to a String for further processing.
+     * @deprecated This is scheduled for removal in upcoming versions.
+     * Use {@code toString} or {@code displayName} instead.
+     * Note that a Name should not be transformed to a String for further processing.
      */
     @Deprecated
     public String toLowerCase() {
-        return normalizedName;
+        return normalised;
     }
 
     /**
      * @return The Name in uppercase consistent with Name equality (so two names that are equal will have the same uppercase)
-     * @deprecated This is scheduled for removal in upcoming versions. 
-     *             Use {@code toString} or {@code displayName} instead.
-     *             Note that a Name should not be transformed to a String for further processing.
+     * @deprecated This is scheduled for removal in upcoming versions.
+     * Use {@code toString} or {@code displayName} instead.
+     * Note that a Name should not be transformed to a String for further processing.
      */
     @Deprecated
     public String toUpperCase() {
@@ -86,8 +79,18 @@ public final class Name implements Comparable<Name> {
 
     @Override
     public int compareTo(Name o) {
-        return normalizedName.compareTo(o.normalizedName);
+        return normalised.compareTo(o.normalised);
     }
+
+    /**
+     * normalises the string and compares it to the normalised version used for @{@linkplain Name}
+     * @param other string to compare against
+     * @return string comparision with normalised version 0 if match and unmatched with anything else
+     */
+    public int compareTo(String other) {
+        return normalised.compareTo(other.toLowerCase(Locale.ENGLISH));
+    }
+
 
     @Override
     public boolean equals(Object obj) {
@@ -96,21 +99,21 @@ public final class Name implements Comparable<Name> {
         }
         if (obj instanceof Name) {
             Name other = (Name) obj;
-            return normalizedName.equals(other.normalizedName);
+            return normalised.equals(other.normalised);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return normalizedName.hashCode();
+        return normalised.hashCode();
     }
 
     /**
-      * @return The Name as string consistent with Name equality (so two names that are equal will have the same {@code toString})
-      */
+     * @return The Name as string consistent with Name equality (so two names that are equal will have the same {@code toString})
+     */
     @Override
     public String toString() {
-        return normalizedName;
+        return originalName;
     }
 }
