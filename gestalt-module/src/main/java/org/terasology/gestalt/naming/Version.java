@@ -15,13 +15,8 @@
  */
 package org.terasology.gestalt.naming;
 
-import com.google.common.base.Strings;
-
+import com.github.zafarkhaja.semver.ParseException;
 import org.terasology.gestalt.naming.exception.VersionParseException;
-
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Wrapper for a semantic version string - for version numbers of the form MAJOR.minor.patch(-SNAPSHOT). Allows the individual
@@ -34,12 +29,10 @@ public final class Version implements Comparable<Version> {
      * A default version of 1.0.0
      */
     public static final Version DEFAULT = new Version(1, 0, 0);
-    private static final Pattern VERSION_PATTERN = Pattern.compile("(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-SNAPSHOT)?");
 
-    private int major;
-    private int minor;
-    private int patch;
-    private boolean snapshot;
+    private static final String SNAPSHOT = "SNAPSHOT";
+
+    private com.github.zafarkhaja.semver.Version semver;
 
     /**
      * Constructs a version with the given values
@@ -66,10 +59,10 @@ public final class Version implements Comparable<Version> {
         if (major < 0 || minor < 0 || patch < 0) {
             throw new IllegalArgumentException("Illegal version " + major + "." + minor + "." + patch + " - all version parts must be positive");
         }
-        this.major = major;
-        this.minor = minor;
-        this.patch = patch;
-        this.snapshot = snapshot;
+
+
+        final com.github.zafarkhaja.semver.Version baseVersion = com.github.zafarkhaja.semver.Version.forIntegers(major, minor, patch);
+        this.semver = snapshot ? baseVersion.setPreReleaseVersion(SNAPSHOT) : baseVersion;
     }
 
     /**
@@ -77,53 +70,55 @@ public final class Version implements Comparable<Version> {
      * @throws VersionParseException If the version string is not a valid version.
      */
     public Version(String version) {
-        Matcher matcher = VERSION_PATTERN.matcher(version);
-        if (matcher.matches()) {
-            major = Integer.parseInt(matcher.group(1));
-            minor = Integer.parseInt(matcher.group(2));
-            patch = Integer.parseInt(matcher.group(3));
-            snapshot = !Strings.isNullOrEmpty(matcher.group(4));
-        } else {
+        try {
+            this.semver = com.github.zafarkhaja.semver.Version.valueOf(version);
+        } catch (ParseException e) {
             throw new VersionParseException("Invalid version '" + version + "' - must be of the form MAJOR.minor.patch");
         }
     }
 
+    /**
+     * Create a new Version from the internal representation.
+     *
+     * @param semver the internal representation of a semantic version
+     */
+    private Version(com.github.zafarkhaja.semver.Version semver) {
+        this.semver = semver;
+    }
+
     public int getMajor() {
-        return major;
+        return semver.getMajorVersion();
     }
 
     public int getMinor() {
-        return minor;
+        return semver.getMinorVersion();
     }
 
     public int getPatch() {
-        return patch;
+        return semver.getPatchVersion();
     }
 
     /**
      * @return Whether this version is a snapshot (work in progress)
      */
     public boolean isSnapshot() {
-        return snapshot;
+        return !semver.getPreReleaseVersion().isEmpty();
     }
 
     public Version getSnapshot() {
-        if (snapshot) {
-            return this;
-        }
-        return new Version(major, minor, patch, true);
+        return new Version(semver.setPreReleaseVersion(SNAPSHOT));
     }
 
     public Version getNextMajorVersion() {
-        return new Version(major + 1, 0, 0);
+        return new Version(semver.incrementMajorVersion());
     }
 
     public Version getNextMinorVersion() {
-        return new Version(major, minor + 1, 0);
+        return new Version(semver.incrementMinorVersion());
     }
 
     public Version getNextPatchVersion() {
-        return new Version(major, minor, patch + 1);
+        return new Version(semver.incrementPatchVersion());
     }
 
     @Override
@@ -133,41 +128,23 @@ public final class Version implements Comparable<Version> {
         }
         if (obj instanceof Version) {
             Version other = (Version) obj;
-            return other.major == major && other.minor == minor && other.patch == patch && other.snapshot == snapshot;
+            return this.semver.equals(other.semver);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(major, minor, patch, snapshot);
+        return this.semver.hashCode();
     }
 
     @Override
     public String toString() {
-        if (isSnapshot()) {
-            return major + "." + minor + "." + patch + "-SNAPSHOT";
-        }
-        return major + "." + minor + "." + patch;
+        return this.semver.toString();
     }
 
     @Override
     public int compareTo(Version other) {
-        if (other.major != major) {
-            return major - other.major;
-        }
-        if (other.minor != minor) {
-            return minor - other.minor;
-        }
-        if (other.patch != patch) {
-            return patch - other.patch;
-        }
-        if (other.snapshot && !snapshot) {
-            return 1;
-        }
-        if (!other.snapshot && snapshot) {
-            return -1;
-        }
-        return 0;
+        return this.semver.compareTo(other.semver);
     }
 }
