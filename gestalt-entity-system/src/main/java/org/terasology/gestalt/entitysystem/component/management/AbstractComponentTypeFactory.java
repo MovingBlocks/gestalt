@@ -20,7 +20,6 @@ import android.support.annotation.NonNull;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Converter;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import org.slf4j.Logger;
@@ -28,15 +27,16 @@ import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.util.reflection.GenericsUtil;
 
-import java.lang.invoke.LambdaConversionException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -103,6 +103,18 @@ public abstract class AbstractComponentTypeFactory implements ComponentTypeFacto
     protected abstract <T extends Component<T>> Function<T, Object> createGetterFunction(Method method, String propertyName, Type propertyType, Class<T> componentType) throws Throwable;
 
     /**
+     * Creates a function to get the value of a field
+     * @param field The field to get
+     * @param propertyName The name of the property
+     * @param propertyType The type of the property
+     * @param componentType The type of the component
+     * @param <T> The type of the component
+     * @return A function that calls a getter and returns the value
+     * @throws Throwable If something goes wrong setting up the function
+     */
+    protected abstract <T extends Component<T>> Function<T, Object> createGetterFunction(Field field, String propertyName, Type propertyType, Class<T> componentType) throws Throwable;
+
+    /**
      * Creates a function to call a setter
      * @param method The getter method
      * @param propertyName The name of the property
@@ -113,6 +125,18 @@ public abstract class AbstractComponentTypeFactory implements ComponentTypeFacto
      * @throws Throwable If something goes wrong setting up the function
      */
     protected abstract <T extends Component<T>> BiConsumer<T, Object> createSetterFunction(Method method, String propertyName, Type propertyType, Class<T> componentType) throws Throwable;
+
+    /**
+     * Creates a function to set the value of a field
+     * @param field The getter method
+     * @param propertyName The name of the property
+     * @param propertyType The type of the property
+     * @param componentType The type of the component
+     * @param <T> The type of the component
+     * @return A function to call the setter
+     * @throws Throwable If something goes wrong setting up the function
+     */
+    protected abstract <T extends Component<T>> BiConsumer<T, Object> createSetterFunction(Field field, String propertyName, Type propertyType, Class<T> componentType) throws Throwable;
 
     private <T extends Component<T>> ComponentType<T> createSingletonComponentType(Class<T> type) {
         try {
@@ -125,20 +149,34 @@ public abstract class AbstractComponentTypeFactory implements ComponentTypeFacto
 
     @SuppressWarnings("unchecked")
     private <T extends Component<T>> Collection<PropertyAccessor<T, ?>> discoverProperties(Class<T> componentType) {
-        List<PropertyAccessor<T, ?>> accessorList = Lists.newArrayList();
+        Map<String, PropertyAccessor<T, ?>> accessorList = discoverMethodProperties(componentType);
+        accessorList.putAll(discoverAttributeProperties(componentType));
+        return accessorList.values();
+    }
+
+    private <T extends Component<T>> Map<String, PropertyAccessor<T, ?>> discoverAttributeProperties(Class<T> componentType) {
+        Map<String, PropertyAccessor<T, ?>> accessorList = new HashMap<>();
+
+        Arrays.stream(componentType.getDeclaredFields()).filter(x -> Modifier.isPublic(x.getModifiers())).forEach(field -> {
+            String propertyName = field.getName();
+            try {
+                accessorList.put(propertyName, new PropertyAccessor<>(propertyName, componentType, field.getGenericType(), createGetterFunction(field, propertyName, field.getGenericType(), componentType), createSetterFunction(field, propertyName, field.getGenericType(), componentType)));
+            } catch (Throwable t) {
+                logger.error("Failed to create accessor for property {} of {}", propertyName, componentType, t);
+            }
+        });
+        return accessorList;
+    }
+
+    private <T extends Component<T>> Map<String, PropertyAccessor<T, ?>> discoverMethodProperties(Class<T> componentType) {
+        Map<String, PropertyAccessor<T, ?>> accessorList = new HashMap<>();
 
         for (Method method : componentType.getDeclaredMethods()) {
             if (method.getGenericReturnType() == Void.TYPE && method.getName().startsWith("set") && method.getParameterTypes().length == 1) {
                 String propertyName = method.getName().substring(3);
                 Type setterType = method.getGenericParameterTypes()[0];
 
-
-                String getterMethodName;
-                if (Boolean.TYPE.equals(setterType)) {
-                    getterMethodName = "is" + propertyName;
-                } else {
-                    getterMethodName = "get" + propertyName;
-                }
+                String getterMethodName = getGetterName(propertyName, setterType);
                 Method getter;
                 try {
                     getter = componentType.getDeclaredMethod(getterMethodName);
@@ -169,7 +207,7 @@ public abstract class AbstractComponentTypeFactory implements ComponentTypeFacto
                 }
 
                 try {
-                    accessorList.add(new PropertyAccessor(TO_LOWER_CAMEL.convert(propertyName), componentType, propertyType,
+                    accessorList.put(TO_LOWER_CAMEL.convert(propertyName), new PropertyAccessor(TO_LOWER_CAMEL.convert(propertyName), componentType, propertyType,
                             createGetterFunction(getter, propertyName, getterType, componentType),
                             createSetterFunction(method, propertyName, setterType, componentType)));
                 } catch (Throwable t) {
@@ -178,6 +216,16 @@ public abstract class AbstractComponentTypeFactory implements ComponentTypeFacto
             }
         }
         return accessorList;
+    }
+
+    private String getGetterName(String propertyName, Type setterType) {
+        String getterMethodName;
+        if (Boolean.TYPE.equals(setterType)) {
+            getterMethodName = "is" + propertyName;
+        } else {
+            getterMethodName = "get" + propertyName;
+        }
+        return getterMethodName;
     }
 
 }

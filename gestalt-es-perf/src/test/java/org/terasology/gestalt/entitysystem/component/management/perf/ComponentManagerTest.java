@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.gestalt.entitysystem.component.management;
+package org.terasology.gestalt.entitysystem.component.management.perf;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -23,27 +23,19 @@ import org.terasology.gestalt.entitysystem.component.management.ComponentManager
 import org.terasology.gestalt.entitysystem.component.management.ComponentType;
 import org.terasology.gestalt.entitysystem.component.management.ComponentTypeFactory;
 import org.terasology.gestalt.entitysystem.component.management.PropertyAccessor;
-import org.terasology.gestalt.module.Module;
-import org.terasology.gestalt.module.ModuleEnvironment;
-import org.terasology.gestalt.module.ModuleFactory;
-import org.terasology.gestalt.module.sandbox.PermissionProviderFactory;
-import org.terasology.gestalt.module.sandbox.PermitAllPermissionProviderFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
+import modules.test.components.ArrayContainingComponent;
 import modules.test.components.BasicComponent;
 import modules.test.components.Empty;
+import modules.test.components.PublicAttributeComponent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  *
@@ -65,10 +57,6 @@ public abstract class ComponentManagerTest {
         assertNotNull(instance);
         instance.setName("World");
         assertEquals("World", instance.getName());
-        ComponentType<BasicComponent> typeInfo = componentManager.getType(BasicComponent.class);
-        PropertyAccessor<BasicComponent, String> property = (PropertyAccessor<BasicComponent, String>) typeInfo.getPropertyInfo().getProperty("name").get();
-        property.set(instance, "Blue");
-        assertEquals("Blue", property.get(instance));
     }
 
     @Test
@@ -108,21 +96,28 @@ public abstract class ComponentManagerTest {
     }
 
     @Test
-    public void runtimeLoadedModuleTest() throws IOException {
-        Module module = new ModuleFactory().createArchiveModule(new File("./test-modules/moduleF.jar"));
-        PermissionProviderFactory permissionProviderFactory = new PermitAllPermissionProviderFactory();
-        ModuleEnvironment environment = new ModuleEnvironment(Collections.singletonList(module), permissionProviderFactory);
+    public void publicAttributesPreventSingletons() {
+        ArrayContainingComponent instance = componentManager.create(ArrayContainingComponent.class);
+        ArrayContainingComponent instance2 = componentManager.create(ArrayContainingComponent.class);
+        assertNotSame(instance, instance2);
+    }
 
-        List<Class<? extends Component>> componentTypes = new ArrayList<Class<? extends Component>>();
-        environment.getSubtypesOf(Component.class).forEach(x -> componentTypes.add(x));
-        if (componentTypes.isEmpty()) {
-            fail("No component types found to test");
-        }
-        for (Class<? extends Component> componentType : componentTypes) {
-            ComponentType<? extends Component> type = componentManager.getType(componentType);
-            Component<?> component = type.create();
-        }
+    @Test
+    public void accessProperty() {
+        BasicComponent component = new BasicComponent();
+        ComponentType<BasicComponent> typeInfo = componentManager.getType(BasicComponent.class);
+        PropertyAccessor<BasicComponent, String> property = (PropertyAccessor<BasicComponent, String>) typeInfo.getPropertyInfo().getProperty("name").get();
+        property.set(component, "Blue");
+        assertEquals("Blue", property.get(component));
+    }
 
+    @Test
+    public void accessPublicField() {
+        PublicAttributeComponent component = new PublicAttributeComponent();
+        ComponentType<PublicAttributeComponent> typeInfo = componentManager.getType(PublicAttributeComponent.class);
+        PropertyAccessor<PublicAttributeComponent, String> property = (PropertyAccessor<PublicAttributeComponent, String>) typeInfo.getPropertyInfo().getProperty("name").get();
+        property.set(component, "Blue");
+        assertEquals("Blue", property.get(component));
     }
 
     public static class MismatchedPropertiesComponent implements Component<MismatchedPropertiesComponent> {

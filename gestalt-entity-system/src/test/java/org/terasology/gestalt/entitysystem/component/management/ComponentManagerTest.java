@@ -20,13 +20,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terasology.gestalt.entitysystem.component.Component;
 
+import java.util.Arrays;
 import java.util.Optional;
 
+import modules.test.components.ArrayContainingComponent;
 import modules.test.components.BasicComponent;
 import modules.test.components.Empty;
+import modules.test.components.PublicAttributeComponent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -50,10 +54,6 @@ public abstract class ComponentManagerTest {
         assertNotNull(instance);
         instance.setName("World");
         assertEquals("World", instance.getName());
-        ComponentType<BasicComponent> typeInfo = componentManager.getType(BasicComponent.class);
-        PropertyAccessor<BasicComponent, String> property = (PropertyAccessor<BasicComponent, String>) typeInfo.getPropertyInfo().getProperty("name").get();
-        property.set(instance, "Blue");
-        assertEquals("Blue", property.get(instance));
     }
 
     @Test
@@ -90,6 +90,31 @@ public abstract class ComponentManagerTest {
         Optional<PropertyAccessor<MismatchedPropertiesComponent, ?>> stringProperty = type.getPropertyInfo().getProperty("stringProperty");
         assertTrue(stringProperty.isPresent());
         assertEquals(CharSequence.class, stringProperty.get().getPropertyType());
+    }
+
+    @Test
+    public void publicAttributesPreventSingletons() {
+        ArrayContainingComponent instance = componentManager.create(ArrayContainingComponent.class);
+        ArrayContainingComponent instance2 = componentManager.create(ArrayContainingComponent.class);
+        assertNotSame(instance, instance2);
+    }
+
+    @Test
+    public void accessProperty() {
+        BasicComponent component = new BasicComponent();
+        ComponentType<BasicComponent> typeInfo = componentManager.getType(BasicComponent.class);
+        PropertyAccessor<BasicComponent, String> property = (PropertyAccessor<BasicComponent, String>) typeInfo.getPropertyInfo().getProperty("name").get();
+        property.set(component, "Blue");
+        assertEquals("Blue", property.get(component));
+    }
+
+    @Test
+    public void accessPublicField() {
+        PublicAttributeComponent component = new PublicAttributeComponent();
+        ComponentType<PublicAttributeComponent> typeInfo = componentManager.getType(PublicAttributeComponent.class);
+        PropertyAccessor<PublicAttributeComponent, String> property = (PropertyAccessor<PublicAttributeComponent, String>) typeInfo.getPropertyInfo().getProperty("name").get();
+        property.set(component, "Blue");
+        assertEquals("Blue", property.get(component));
     }
 
     public static class MismatchedPropertiesComponent implements Component<MismatchedPropertiesComponent> {

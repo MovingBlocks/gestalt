@@ -19,7 +19,7 @@ package org.terasology.gestalt.entitysystem.component.management;
 /**
  *
  */
-public class ReflectionComponentTypeFactoryTest extends ComponentManagerTest {
+public class ReflectionComponentManagerTest extends ComponentManagerTest {
 
     public ComponentTypeFactory getComponentTypeFactory() {
         return new ReflectionComponentTypeFactory();

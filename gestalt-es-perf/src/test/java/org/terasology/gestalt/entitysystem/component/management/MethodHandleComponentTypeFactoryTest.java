@@ -16,6 +16,8 @@
 
 package org.terasology.gestalt.entitysystem.component.management;
 
+import org.terasology.gestalt.entitysystem.component.management.perf.ComponentManagerTest;
+
 /**
  *
  */

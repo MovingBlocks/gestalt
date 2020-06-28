@@ -29,9 +29,11 @@ import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.util.reflection.GenericsUtil;
 
+import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -101,9 +103,35 @@ public class MethodHandleComponentTypeFactory extends AbstractComponentTypeFacto
     }
 
     @Override
+    protected <T extends Component<T>> Function<T, Object> createGetterFunction(Field field, String propertyName, Type propertyType, Class<T> componentType) throws Throwable {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        MethodHandle handle = lookup.unreflectGetter(field);
+        return t -> {
+            try {
+                return handle.invoke(t);
+            } catch (Throwable e) {
+                throw new ComponentTypeGenerationException("Failed to access field " + propertyName + " of " + componentType, e);
+            }
+        };
+    }
+
+    @Override
     protected <T extends Component<T>> BiConsumer<T, Object> createSetterFunction(Method method, String propertyName, Type propertyType, Class<T> componentType) throws Throwable {
         MethodHandles.Lookup lookup = MethodHandles.publicLookup();
         MethodHandle handle = lookup.findVirtual(componentType, method.getName(), MethodType.methodType(Void.TYPE, GenericsUtil.getClassOfType(propertyType)));
+        return (t, o) -> {
+            try {
+                handle.invokeWithArguments(t, o);
+            } catch (Throwable e) {
+                throw new ComponentTypeGenerationException("Failed to set property " + propertyName + " of " + componentType, e);
+            }
+        };
+    }
+
+    @Override
+    protected <T extends Component<T>> BiConsumer<T, Object> createSetterFunction(Field field, String propertyName, Type propertyType, Class<T> componentType) throws Throwable {
+        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+        MethodHandle handle = lookup.unreflectSetter(field);
         return (t, o) -> {
             try {
                 handle.invokeWithArguments(t, o);

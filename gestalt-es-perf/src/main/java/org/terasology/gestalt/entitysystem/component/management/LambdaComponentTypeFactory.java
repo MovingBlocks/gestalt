@@ -34,6 +34,7 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -85,11 +86,37 @@ public class LambdaComponentTypeFactory extends AbstractComponentTypeFactory {
     }
 
     @Override
+    protected <T extends Component<T>> Function<T, Object> createGetterFunction(Field field, String propertyName, Type propertyType, Class<T> componentType) throws Throwable {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        MethodHandle handle = lookup.unreflectGetter(field);
+        return t -> {
+            try {
+                return handle.invoke(t);
+            } catch (Throwable e) {
+                throw new ComponentTypeGenerationException("Failed to access field " + propertyName + " of " + componentType, e);
+            }
+        };
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     protected <T extends Component<T>> BiConsumer<T, Object> createSetterFunction(Method method, String propertyName, Type propertyType, Class<T> componentType) throws Throwable {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         MethodHandle handle = lookup.findVirtual(componentType, method.getName(), MethodType.methodType(Void.TYPE, GenericsUtil.getClassOfType(propertyType)));
         return (BiConsumer<T, Object>) LambdaMetafactory.metafactory(lookup, "accept", MethodType.methodType(BiConsumer.class), handle.type().erase(), handle, handle.type()).getTarget().invoke();
+    }
+
+    @Override
+    protected <T extends Component<T>> BiConsumer<T, Object> createSetterFunction(Field field, String propertyName, Type propertyType, Class<T> componentType) throws Throwable {
+        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+        MethodHandle handle = lookup.unreflectSetter(field);
+        return (t, o) -> {
+            try {
+                handle.invokeWithArguments(t, o);
+            } catch (Throwable e) {
+                throw new ComponentTypeGenerationException("Failed to set property " + propertyName + " of " + componentType, e);
+            }
+        };
     }
 
 

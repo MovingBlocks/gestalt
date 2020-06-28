@@ -29,6 +29,7 @@ import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.util.reflection.GenericsUtil;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -96,12 +97,34 @@ public class ReflectionComponentTypeFactory extends AbstractComponentTypeFactory
     }
 
     @Override
+    protected <T extends Component<T>> Function<T, Object> createGetterFunction(Field field, String propertyName, Type propertyType, Class<T> componentType) throws Throwable {
+        return t -> {
+            try {
+                return field.get(t);
+            } catch (IllegalAccessException e) {
+                throw new ComponentTypeGenerationException("Failed to get value for '" + propertyName + "' of '" + componentType + "'", e);
+            }
+        };
+    }
+
+    @Override
     protected <T extends Component<T>> BiConsumer<T, Object> createSetterFunction(Method method, String propertyName, Type propertyType, Class<T> componentType) {
         return (t, o) -> {
             try {
                 method.invoke(t, o);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new ComponentTypeGenerationException("Failed to invoke setter for '" + propertyName + "' of '" + componentType + "'", e);
+            }
+        };
+    }
+
+    @Override
+    protected <T extends Component<T>> BiConsumer<T, Object> createSetterFunction(Field field, String propertyName, Type propertyType, Class<T> componentType) throws Throwable {
+        return (t, o) -> {
+            try {
+                field.set(t, o);
+            } catch (IllegalAccessException e) {
+                throw new ComponentTypeGenerationException("Failed to set value for '" + propertyName + "' of '" + componentType + "'", e);
             }
         };
     }
