@@ -8,10 +8,9 @@ package org.terasology.gestalt.entitysystem.component;
  * Note if this is used for a component with attributes and the copy method is not overwritten then the component will not behave as desired - effectively the entity system will
  * not retain any values given to the attributes.
  */
-public abstract class EmptyComponent implements Component<EmptyComponent> {
+public abstract class EmptyComponent<T extends EmptyComponent> implements Component<T> {
 
     @Override
-    public void copy(EmptyComponent other) {
-
+    public void copy(T other) {
     }
 }

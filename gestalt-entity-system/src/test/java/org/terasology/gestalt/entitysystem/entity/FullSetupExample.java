@@ -38,10 +38,12 @@ import org.terasology.gestalt.module.sandbox.WarnOnlyProviderFactory;
 import org.terasology.gestalt.naming.Name;
 import org.terasology.gestalt.naming.Version;
 
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Set;
 
 import modules.test.components.BasicComponent;
+import modules.test.components.Empty;
 import modules.test.components.Second;
 
 import static org.junit.Assert.assertEquals;
@@ -80,7 +82,9 @@ public class FullSetupExample {
 
         List<ComponentStore<?>> stores = Lists.newArrayList();
         for (Class<? extends Component> componentType : environment.getSubtypesOf(Component.class)) {
-            stores.add(new ConcurrentComponentStore(new ArrayComponentStore(componentManager.getType(componentType))));
+            if (!Modifier.isAbstract(componentType.getModifiers())) {
+                stores.add(new ConcurrentComponentStore(new ArrayComponentStore(componentManager.getType(componentType))));
+            }
         }
 
         // EntityManager
@@ -116,6 +120,20 @@ public class FullSetupExample {
         BasicComponent retrievedComponent = new BasicComponent();
         assertTrue(entity.getComponent(retrievedComponent));
         assertEquals(newComponent, retrievedComponent);
+    }
+
+    @Test
+    public void emptyComponentHandling() {
+        EntityRef entity = entityManager.createEntity(new Empty());
+        assertTrue(entity.hasComponent(Empty.class));
+    }
+
+    @Test
+    public void extendingStorageTest() {
+        for (int i = 0; i < 2000; i++) {
+            entityManager.createEntity();
+        }
+        assertEquals(2000, entityManager.size());
     }
 
     @Test

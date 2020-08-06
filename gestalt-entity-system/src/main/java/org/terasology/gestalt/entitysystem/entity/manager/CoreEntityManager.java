@@ -139,7 +139,7 @@ public class CoreEntityManager implements EntityManager {
 
     @Override
     public EntityRef createEntity() {
-        Lock lock = locks.readLock();
+        Lock lock = locks.writeLock();
         lock.lock();
         try {
             int id;
@@ -271,22 +271,16 @@ public class CoreEntityManager implements EntityManager {
      * Extends the internal storage of the entity manager and all the component stores, if they are exhausted
      */
     private void extendStorage() {
-        Lock lock = locks.writeLock();
-        lock.lock();
-        try {
-            if (entities.length <= nextId) {
-                int newSize = Math.min((int) (entities.length * EXTENSION_RATE), entities.length + 1);
-                EntityRef[] newEntities = new EntityRef[newSize];
-                System.arraycopy(entities, 0, newEntities, 0, entities.length);
-                Arrays.fill(newEntities, entities.length, newEntities.length, NullEntityRef.get());
-                entities = newEntities;
+        if (entities.length <= nextId) {
+            int newSize = Math.min((int) (entities.length * EXTENSION_RATE), entities.length + 1);
+            EntityRef[] newEntities = new EntityRef[newSize];
+            System.arraycopy(entities, 0, newEntities, 0, entities.length);
+            Arrays.fill(newEntities, entities.length, newEntities.length, NullEntityRef.get());
+            entities = newEntities;
 
-                for (ComponentStore<?> store : componentStores.values()) {
-                    store.extend(entities.length);
-                }
+            for (ComponentStore<?> store : componentStores.values()) {
+                store.extend(entities.length);
             }
-        } finally {
-            lock.unlock();
         }
     }
 

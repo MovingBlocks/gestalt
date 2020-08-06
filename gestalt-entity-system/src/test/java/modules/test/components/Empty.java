@@ -16,21 +16,12 @@
 
 package modules.test.components;
 
-import org.terasology.gestalt.entitysystem.component.Component;
+import org.terasology.gestalt.entitysystem.component.EmptyComponent;
 
 /**
  *
  */
-public final class Empty implements Component<Empty> {
-
+public final class Empty extends EmptyComponent {
     public Empty() {
     }
-
-    public Empty(Empty other) {
-        copy(other);
-    }
-
-    public void copy(Empty other) {
-    }
-
 }
