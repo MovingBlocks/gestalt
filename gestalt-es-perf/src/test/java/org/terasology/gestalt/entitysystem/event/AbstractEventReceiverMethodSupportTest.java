@@ -22,12 +22,11 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.terasology.gestalt.entitysystem.entity.EntityRef;
 import org.terasology.gestalt.entitysystem.event.impl.EventReceiverMethodSupport;
-import org.terasology.gestalt.entitysystem.event.impl.EventSystemImpl;
 
 import java.util.Collections;
 import java.util.Optional;
 
-import modules.test.TestEvent;
+import modules.test.events.TestEvent;
 import modules.test.components.Sample;
 import modules.test.components.Second;
 

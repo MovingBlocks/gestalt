@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package modules.test;
+package modules.test.events;
 
 import org.terasology.gestalt.entitysystem.event.Event;
+import org.terasology.gestalt.entitysystem.event.Synchronous;
 
 /**
  *
  */
-public class TestEvent implements Event {
+@Synchronous
+public class TestSynchEvent implements Event {
     private final String value;
 
-    public TestEvent(String value) {
+    public TestSynchEvent(String value) {
         this.value = value;
     }
 

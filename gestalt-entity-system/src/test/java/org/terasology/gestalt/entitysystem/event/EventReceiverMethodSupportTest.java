@@ -23,13 +23,12 @@ import org.mockito.ArgumentCaptor;
 import org.terasology.gestalt.entitysystem.entity.EntityRef;
 import org.terasology.gestalt.entitysystem.event.impl.EventReceiverMethodSupport;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
 import modules.test.components.Sample;
 import modules.test.components.Second;
-import modules.test.TestEvent;
+import modules.test.events.TestEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;

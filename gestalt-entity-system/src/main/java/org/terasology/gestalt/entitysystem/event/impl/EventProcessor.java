@@ -111,8 +111,11 @@ public class EventProcessor {
                         case COMPLETE:
                         case CANCEL:
                             return result;
-                        default:
-                            // Continue
+                        default: {
+                            if (!entity.exists()) {
+                                return EventResult.CANCEL;
+                            }
+                        }
                     }
                 } catch (RuntimeException e) {
                     logger.error("Exception thrown when processing event {}", event.getClass(), e);

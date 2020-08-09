@@ -20,21 +20,18 @@ import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 import org.terasology.gestalt.entitysystem.component.Component;
-import org.terasology.gestalt.entitysystem.component.store.ArrayComponentStore;
 import org.terasology.gestalt.entitysystem.component.store.ComponentStore;
 import org.terasology.gestalt.entitysystem.entity.EntityManager;
 import org.terasology.gestalt.entitysystem.entity.EntityRef;
 import org.terasology.gestalt.entitysystem.entity.manager.CoreEntityManager;
-import org.terasology.gestalt.entitysystem.event.impl.EventProcessor;
 import org.terasology.gestalt.entitysystem.event.impl.EventSystemImpl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import modules.test.TestEvent;
-import modules.test.TestSynchEvent;
+import modules.test.events.TestEvent;
+import modules.test.events.TestSynchEvent;
 import modules.test.components.Sample;
 import modules.test.components.Second;
 

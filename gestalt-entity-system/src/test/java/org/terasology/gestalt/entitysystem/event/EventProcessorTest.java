@@ -35,8 +35,8 @@ import java.util.List;
 
 import modules.test.components.Sample;
 import modules.test.components.Second;
-import modules.test.TestChildEvent;
-import modules.test.TestEvent;
+import modules.test.events.TestChildEvent;
+import modules.test.events.TestEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -190,6 +190,25 @@ public class EventProcessorTest {
         assertEquals(EventResult.COMPLETE, eventProcessor.process(event, testEntity));
 
         verify(handlerB).onEvent(event, testEntity);
+    }
+
+    @Test
+    public void handleDestructionOfEntityDuringProcessing() {
+        // Errors should be logged but not stop processing
+        EventHandler<TestEvent> handlerA = new EventHandlerA<TestEvent>() {
+            @Override
+            public EventResult onEvent(TestEvent event, EntityRef entity) {
+                entity.delete();
+                return EventResult.CONTINUE;
+            }
+        };
+        EventHandler<TestEvent> handlerB = mock(EventHandlerB.class);
+        when(handlerB.onEvent(event, testEntity)).thenReturn(EventResult.CONTINUE);
+        eventProcessor.registerHandler(handlerA, handlerA.getClass(), Collections.emptyList(), Collections.emptyList(), ImmutableList.of(Sample.class));
+        eventProcessor.registerHandler(handlerB, handlerB.getClass(), Collections.emptyList(), ImmutableList.of(handlerA.getClass()), ImmutableList.of(Sample.class));
+
+        assertEquals(EventResult.CANCEL, eventProcessor.process(event, testEntity));
+        verifyNoMoreInteractions(handlerB);
     }
 
     private interface EventHandlerA<T extends Event> extends EventHandler<T> {

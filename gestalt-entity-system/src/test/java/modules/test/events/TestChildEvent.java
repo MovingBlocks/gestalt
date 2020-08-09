@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package modules.test;
+package modules.test.events;
 
 /**
  *

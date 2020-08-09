@@ -21,6 +21,7 @@ import org.terasology.gestalt.entitysystem.event.EventResult;
 import org.terasology.gestalt.entitysystem.event.ReceiveEvent;
 
 import modules.test.components.Sample;
+import modules.test.events.TestEvent;
 
 /**
  *

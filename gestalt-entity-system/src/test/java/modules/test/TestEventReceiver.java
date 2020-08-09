@@ -21,6 +21,7 @@ import org.terasology.gestalt.entitysystem.event.EventResult;
 import org.terasology.gestalt.entitysystem.event.ReceiveEvent;
 
 import modules.test.components.Sample;
+import modules.test.events.TestEvent;
 
 /**
  *
@@ -29,11 +30,13 @@ public class TestEventReceiver {
 
     public boolean called = false;
     public Sample component;
+    public EntityRef entity;
 
     @ReceiveEvent
     public EventResult testEventListener(TestEvent event, EntityRef entity, Sample sample) {
         called = true;
         component = sample;
+        this.entity = entity;
         return EventResult.COMPLETE;
     }
 
