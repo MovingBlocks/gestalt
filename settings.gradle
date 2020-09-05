@@ -1,5 +1,5 @@
 rootProject.name = 'gestalt'
-include 'gestalt-util', 'testpack:testpack-api', 'gestalt-module', 'testpack:moduleA', 'testpack:moduleB', 'testpack:moduleC', 'testpack:moduleD', 'testpack:moduleF', 'gestalt-asset-core', 'gestalt-entity-system', 'gestalt-es-perf'
+include 'gestalt-util', 'testpack:testpack-api', 'gestalt-module', 'testpack:moduleA', 'testpack:moduleB', 'testpack:moduleC', 'testpack:moduleD', 'testpack:moduleF', 'gestalt-asset-core', 'gestalt-entity-system', 'gestalt-es-perf', 'gestalt-di-processor', 'gestalt-di'
 
 if (rootProject.projectDir.toPath().resolve("local.properties").toFile().exists()) {
     include 'gestalt-android', 'gestalt-android-testbed'

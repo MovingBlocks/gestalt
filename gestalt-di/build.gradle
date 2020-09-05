@@ -1,0 +1,11 @@
+apply plugin: 'java-library'
+
+dependencies {
+    api project(':gestalt-module')
+    api project(':gestalt-di-processor')
+
+    implementation "org.slf4j:slf4j-api:$slf4j_version"
+}
+
+sourceCompatibility = "8"
+targetCompatibility = "8"
