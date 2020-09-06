@@ -35,7 +35,6 @@ dependencies {
     api 'org.terasology:reflections:0.9.12-MB'
 
     implementation project(":gestalt-util")
-    implementation project(":gestalt-inject")
     implementation "com.google.guava:guava:$guava_version"
     implementation "com.google.code.gson:gson:$gson_version"
     implementation 'org.apache.commons:commons-vfs2:2.2'

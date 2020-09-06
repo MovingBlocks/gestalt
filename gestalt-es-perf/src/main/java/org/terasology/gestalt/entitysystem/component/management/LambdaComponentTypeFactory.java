@@ -18,18 +18,10 @@ package org.terasology.gestalt.entitysystem.component.management;
 
 import android.support.annotation.NonNull;
 
-import com.google.common.base.CaseFormat;
-import com.google.common.base.Converter;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.util.reflection.GenericsUtil;
 
 import java.lang.invoke.CallSite;
-import java.lang.invoke.LambdaConversionException;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -37,10 +29,6 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;

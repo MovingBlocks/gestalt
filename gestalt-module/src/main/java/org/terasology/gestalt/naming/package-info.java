@@ -20,4 +20,4 @@
 @API
 package org.terasology.gestalt.naming;
 
-import org.terasology.gestalt.module.sandbox.API;
+import org.terasology.context.annotation.API;

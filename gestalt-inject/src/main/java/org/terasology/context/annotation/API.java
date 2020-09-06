@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.terasology.gestalt.module.sandbox;
+package org.terasology.context.annotation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -30,8 +30,9 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.PACKAGE})
 @Documented
 public @interface API {
+
     /**
      * @return The permission sets that should be granted access to the marked class
      */
-    String[] permissionSet() default {StandardPermissionProviderFactory.BASE_PERMISSION_SET};
+    String[] permissionSet() default "";
 }

@@ -28,6 +28,7 @@ apply plugin: 'maven-publish'
 dependencies {
     implementation project(":gestalt-util")
     implementation project(":gestalt-module")
+    implementation project(":gestalt-inject")
 
     implementation "org.slf4j:slf4j-api:$slf4j_version"
     implementation "com.android.support:support-annotations:$android_annotation_version"

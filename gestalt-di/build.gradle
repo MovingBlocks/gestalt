@@ -1,0 +1,10 @@
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+
+repositories {
+}
+
+// Primary dependencies definition
+dependencies {
+}
+
