@@ -1,17 +1,18 @@
 package org.terasology.context;
 
 import java.lang.annotation.Annotation;
+import java.util.List;
 
 public interface AnnotationMetadata {
+    List<AnnotationValue> getAnnotationsByStereotype(String stereotype);
 
-    <T> T getField(Class<? extends Annotation> ann, String field, Class<T> targetType);
+    boolean hasAnnotation(Class<? extends Annotation> annotation);
 
+    boolean hasAnnotation(String annotation);
 
-    boolean hasAnnotation(Class<? extends Annotation> ann);
+    boolean hasStereotype(Class<? extends Annotation> annotation);
 
-    boolean hasAnnotation(String ann);
+    boolean hasStereotype(String annotation);
 
-    boolean hasStereotype(Class<? extends Annotation> ann);
-
-    boolean hasStereotype(String ann);
+    Object getRawSingleValue(String annotation, String field);
 }

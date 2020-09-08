@@ -6,5 +6,7 @@ repositories {
 
 // Primary dependencies definition
 dependencies {
+    annotationProcessor project(":gestalt-inject-java")
+    implementation project(":gestalt-inject")
 }
 

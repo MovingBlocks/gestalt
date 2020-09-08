@@ -47,6 +47,8 @@ dependencies {
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
 
+    implementation 'com.squareup:javapoet:1.12.0'
+
 }
 
 // Library and distribution config

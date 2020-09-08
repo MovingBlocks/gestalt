@@ -19,6 +19,7 @@ package org.terasology.gestalt.module.sandbox;
 import com.google.common.reflect.Reflection;
 
 import org.reflections.Reflections;
+import org.terasology.context.annotation.API;
 
 /**
  * Scans a reflections manifest for API annotated classes and packages, registering them with a {@link StandardPermissionProviderFactory}.
