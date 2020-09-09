@@ -6,7 +6,12 @@ repositories {
 
 // Primary dependencies definition
 dependencies {
-    annotationProcessor project(":gestalt-inject-java")
+    testAnnotationProcessor project(":gestalt-inject-java")
+
     implementation project(":gestalt-inject")
+
+    testImplementation "junit:junit:$junit_version"
+    testImplementation "ch.qos.logback:logback-classic:$logback_version"
+    testImplementation "org.mockito:mockito-core:$mockito_version"
 }
 

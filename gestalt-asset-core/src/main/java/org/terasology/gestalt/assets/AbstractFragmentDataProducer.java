@@ -22,8 +22,8 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 
+import org.terasology.context.annotation.API;
 import org.terasology.gestalt.assets.management.AssetManager;
-import org.terasology.gestalt.module.sandbox.API;
 import org.terasology.gestalt.naming.Name;
 
 import java.io.IOException;

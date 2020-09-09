@@ -20,3 +20,4 @@
 @API
 package org.terasology.gestalt.assets.module.annotations;
 
+import org.terasology.context.annotation.API;

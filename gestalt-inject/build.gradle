@@ -6,4 +6,5 @@ repositories {
 
 // Primary dependencies definition
 dependencies {
+    api group: 'javax.inject', name: 'javax.inject', version: '1'
 }

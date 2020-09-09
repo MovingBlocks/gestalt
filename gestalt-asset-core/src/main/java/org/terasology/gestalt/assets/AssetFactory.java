@@ -16,7 +16,7 @@
 
 package org.terasology.gestalt.assets;
 
-import org.terasology.gestalt.module.sandbox.API;
+import org.terasology.context.annotation.API;
 
 /**
  * AssetFactorys are used to load AssetData into new assets.

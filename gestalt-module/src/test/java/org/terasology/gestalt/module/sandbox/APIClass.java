@@ -16,6 +16,8 @@
 
 package org.terasology.gestalt.module.sandbox;
 
+import org.terasology.context.annotation.API;
+
 /**
  * @author Immortius
  */

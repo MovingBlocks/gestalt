@@ -16,7 +16,7 @@
 
 package org.terasology.gestalt.assets;
 
-import org.terasology.gestalt.module.sandbox.API;
+import org.terasology.context.annotation.API;
 
 /**
  * AssetData is the implementation agnostic data for an asset - typically it isn't dependant on either the source format
