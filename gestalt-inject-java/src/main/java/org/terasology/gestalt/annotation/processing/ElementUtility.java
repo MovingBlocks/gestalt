@@ -5,6 +5,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import java.util.List;
 
 public class ElementUtility {
     private final Elements elements;
@@ -33,6 +34,21 @@ public class ElementUtility {
             return (TypeElement) element;
         }
         return null;
+    }
+
+    public boolean hasStereotype(Element element, List<String> stereotype) {
+        if (element == null) {
+            return false;
+        }
+        if (stereotype.contains(element.toString())) {
+            return true;
+        }
+        for (Element ele : element.getEnclosedElements()) {
+            if (ele.getKind() == ElementKind.ANNOTATION_TYPE) {
+                return hasStereotype(ele, stereotype);
+            }
+        }
+        return false;
     }
 
 

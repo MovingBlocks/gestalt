@@ -1,6 +1,5 @@
 package org.terasology.gestalt.annotation.processing;
 
-
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -12,9 +11,9 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementScanner8;
 import javax.tools.Diagnostic;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,6 +59,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment environment) {
 
         Set<? extends TypeElement> filteredAnnotation = annotations.stream()
+            .filter(ann -> utility.hasStereotype(ann, Arrays.asList(TARGET_ANNOTATIONS)))
             .collect(Collectors.toSet());
 
         filteredAnnotation.forEach(annotation -> environment.getElementsAnnotatedWith(annotation)
@@ -92,7 +92,6 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     final TypeElement result = utility.getElements().getTypeElement(className);
                     DefinitionWriter visitor = new DefinitionWriter(result);
                     result.accept(visitor, className);
-
                 }
             });
         }
