@@ -1,161 +1,68 @@
-/*
- * This is a Gradle build file:
- * - Gradle Homepage: http://gradle.org/
- * - Gradle Documentation: http://gradle.org/documentation
- * - View tasks for this project: $ gradlew tasks
- */
-apply plugin: 'project-report'
+buildscript {
+    repositories {
+        // External libs - jcenter is Bintray and is supposed to be a superset of Maven Central, but do both just in case
+        jcenter()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    dependencies {
+        //Spotbugs
+        classpath "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.0.0"
+    }
+}
+
+// Needed for extending the "clean" task to also delete custom stuff defined here like analytics config
+apply plugin: 'base'
+
+ext {
+    dirAnalyticsConfig = 'gradle/analytics'
+}
+
+// Define configurations for analytics config
+configurations {
+    codeAnalyticsConfig
+}
+
+dependencies {
+    // Config for our code analytics lives in a centralized repo: https://github.com/MovingBlocks/TeraConfig
+    codeAnalyticsConfig group: 'org.terasology.config', name: 'codemetrics', version: '1.3.2', ext: 'zip'
+}
+
+task extractAnalyticsConfig(type: Copy) {
+    description = "Extracts configuration files for our analytics from the zip we fetched as a dependency"
+    from {
+        configurations.codeAnalyticsConfig.collect {
+            zipTree(it)
+        }
+    }
+    into "$rootDir/$dirAnalyticsConfig"
+}
+
+// Include deletion of extracted stuff in the global clean task. Without the doLast it runs on *every* execution ...
+clean.doLast {
+    new File(dirAnalyticsConfig).deleteDir()
+    println "Cleaned root - don't forget to re-extract stuff! 'gradlew extractAnalyticsConfig' will do so"
+}
 
 allprojects {
     apply plugin: 'idea'
     
-    group = 'org.terasology'
-
     // Declare remote repositories we're interested in - library files will be fetched from here
     repositories {
         // Main Maven repo
         mavenCentral()
         maven {
-            url "http://artifactory.terasology.org/artifactory/repo"
+            name "Terasology Artifactory"
+            url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+            allowInsecureProtocol true  // 😱
         }
     }
 }
 
+//configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.startsWith("module") }) {
 subprojects {
-    apply plugin: 'java'
-    apply plugin: 'eclipse'
-}
-
-configure(subprojects.findAll { !it.name.contains("testpack") && !it.name.startsWith("module") }) {
-    apply plugin: 'checkstyle'
-    apply plugin: 'pmd'
-    apply plugin: 'findbugs'
-    apply plugin: 'maven'
-    apply plugin: 'java-library-distribution'
-    apply plugin: 'artifactory-publish'
-    apply plugin: 'maven-publish'
-
-    // Primary dependencies definition
-    dependencies {
-        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
-        compile group: 'com.google.guava', name: 'guava', version: '19.0'
-
-        // These dependencies are only needed for running tests
-        testCompile group: 'junit', name: 'junit', version: '4.12'
-        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
-        testCompile group: 'org.mockito', name: 'mockito-core', version: '1.10.19'
-    }
-
-    // Set the expected module Java level (can use a higher Java to run, but should not use features from a higher Java)
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-
-    jar {
-        manifest {
-            attributes("Implementation-Title": project.name,
-                    "Implementation-Version": version)
-        }
-        from(['LICENSE', 'NOTICE'])
-    }
-
-    task sourceJar(type: Jar) {
-        description = "Create a JAR with all sources"
-        from sourceSets.main.allSource
-        from sourceSets.test.allSource
-        classifier = 'sources'
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        description = "Create a JAR with the JavaDoc for the java sources"
-        from javadoc.destinationDir
-        classifier = 'javadoc'
-    }
-
-    // A configuration for publishing artifacts
-    configurations {
-        published
-    }
-
-    // Define the artifacts we want to publish (the .pom will also be included since the Maven plugin is active)
-    artifacts {
-        published jar
-        published sourceJar
-        published javadocJar
-    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-                artifact jar {
-                }
-                artifact sourceJar {
-                    classifier "sources"
-                }
-                artifact javadocJar {
-                    classifier "javadoc"
-                }
-            }
-        }
-    }
-
-    artifactory {
-        publish {
-            defaults {
-                publications('mavenJava')
-            }
-        }
-    }
-
-    // Technically the plain "jar" both here and above is included automatically, but leaving it explicit for clarity
-    artifactoryPublish {
-        dependsOn jar, sourceJar, javadocJar
-    }
-
-    checkstyle {
-        ignoreFailures = true
-        configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
-        configProperties.samedir = new File(rootDir, "config/checkstyle")
-        toolVersion = "6.5"
-    }
-
-    pmd {
-        ignoreFailures = true
-        ruleSetFiles = files(new File(rootDir, "config/pmd/pmd.xml"))
-    }
-
-    findbugs {
-        toolVersion = '3.0.0'
-        ignoreFailures = true
-        effort = 'max'
-        reportLevel = 'medium'
-        excludeFilter = new File(rootDir, "config/findbugs/findbugs-exclude.xml")
-    }
-}
-
-// gradle wrapper version
-wrapper {
-    gradleVersion '5.6.4'
-}
-
-ext {
-    // Read environment variables, including variables passed by jenkins continuous integration server
-    env = System.getenv()
-}
-
-// Dependencies needed for what our Gradle scripts themselves use. It cannot be included via an external Gradle file :-(
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url 'http://dl.bintray.com/jfrog/jfrog-jars'
-        }
-    }
-
-    dependencies {
-        // Artifactory plugin
-        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.2.3')
-    }
+    apply from: "$rootDir/gradle/common.gradle"
 }
 
 // Library and distribution config
@@ -198,7 +105,6 @@ idea {
 }
 
 ext {
-
     // Activate 'git' as VCS
     ideaActivateGit = { Node iprNode ->
         def vcsMappings = iprNode.component.find { it.'@name' == 'VcsDirectoryMappings' }
@@ -250,5 +156,4 @@ ext {
             '''))
         }
     }
-
 }

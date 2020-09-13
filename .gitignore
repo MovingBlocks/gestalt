@@ -16,9 +16,11 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-# Ignore Gradle
+# Ignore Gradle related files we don't want to commit
 /.gradle/
 build/
+gradle/analytics
+local.properties
 
 # Ignore IntelliJ
 /out/

@@ -1,0 +1,130 @@
+// Analytics
+apply plugin: 'project-report'
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
+apply plugin: 'com.github.spotbugs'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+apply plugin: 'java-library-distribution'
+
+// Primary dependencies definition
+dependencies {
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
+    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+
+    // These dependencies are only needed for running tests
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.10.19'
+}
+
+jar {
+    manifest {
+        attributes("Implementation-Title": project.name,
+                "Implementation-Version": version)
+    }
+    from(['LICENSE', 'NOTICE'])
+}
+
+task sourceJar(type: Jar) {
+    description = "Create a JAR with all sources"
+    from sourceSets.main.allSource
+    from sourceSets.test.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    description = "Create a JAR with the JavaDoc for the java sources"
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+
+    sourceCompatibility(JavaVersion.VERSION_1_8)
+    targetCompatibility(JavaVersion.VERSION_1_8)
+}
+
+// Extract analytics config files if needed (note: does not help IDE execution or cases like 'gradlew spotbugsMain')
+check.dependsOn rootProject.extractAnalyticsConfig
+
+// We use both Maven Central and our own Artifactory instance, which contains module builds, extra libs, and so on
+repositories {
+    // For development so you can publish binaries locally and have them grabbed from there
+    mavenLocal()
+
+    // External libs - jcenter is Bintray and is supposed to be a superset of Maven Central, but do both just in case
+    jcenter()
+    mavenCentral()
+
+    // Terasology Artifactory instance for libs not readily available elsewhere plus our own libs
+    maven {
+        def repoViaEnv = System.getenv()["RESOLUTION_REPO"]
+        if (rootProject.hasProperty("alternativeResolutionRepo")) {
+            // If the user supplies an alternative repo via gradle.properties then use that
+            name "from alternativeResolutionRepo property"
+            url alternativeResolutionRepo
+        } else if (repoViaEnv != null && repoViaEnv != "") {
+            name "from \$RESOLUTION_REPO"
+            url = repoViaEnv
+        } else {
+            // Our default is the main virtual repo containing everything except repos for testing Artifactory itself
+            name "Terasology Artifactory"
+            url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+            allowInsecureProtocol true  // 😱
+        }
+    }
+}
+
+// Extra details provided for unit tests
+test {
+    useJUnitPlatform()
+
+    // ignoreFailures: Specifies whether the build should break when the verifications performed by this task fail.
+    ignoreFailures = true
+    // showStandardStreams: makes the standard streams (err and out) visible at console when running tests
+    testLogging.showStandardStreams = true
+    reports {
+        junitXml.enabled = true
+    }
+    // Arguments to include while running tests
+    jvmArgs '-Xms512m', '-Xmx1024m'
+}
+
+// In theory all Javadoc should be good and fixed, but it might be a bit much to entirely fail a build over. For now at least ...
+// Note: In IntelliJ 2020.1+ running a javadoc Gradle task may still *look* alarming in the UI, but errors should be ignored
+javadoc {
+    failOnError = false
+}
+
+checkstyle {
+    ignoreFailures = true
+    configFile = new File(rootDir, 'gradle/analytics/checkstyle/checkstyle.xml')
+    configProperties.samedir = checkstyle.configFile.parentFile
+}
+
+pmd {
+    ignoreFailures = true
+    ruleSetFiles = files("$rootDir/gradle/analytics/pmd/pmd.xml")
+    // By default, gradle uses both ruleset file AND the rulesets. Override the ruleSets to use only those from the file
+    ruleSets = []
+}
+
+spotbugs {
+    toolVersion = '4.0.0'
+    ignoreFailures = true
+    excludeFilter = new File(rootDir, "gradle/analytics/findbugs/findbugs-exclude.xml")
+}
+
+spotbugsMain {
+    reports {
+        xml {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/main/spotbugs.xml")
+        }
+    }
+}
