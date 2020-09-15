@@ -1,20 +1,13 @@
 package org.terasology.gestalt.annotation.processing;
 
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedOptions;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.TypeElement;
+import com.squareup.javapoet.*;
+
+import javax.annotation.processing.*;
+import javax.lang.model.element.*;
 import javax.lang.model.util.ElementScanner8;
 import javax.tools.Diagnostic;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -25,10 +18,10 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     private static final String RECEIVE_EVENT_TYPE = "org.terasology.gestalt.entitysystem.event.ReceiveEvent";
 
     private static final String[] TARGET_ANNOTATIONS = new String[]{
-        "javax.inject.Inject",
-        "javax.inject.Qualifier",
-        "javax.inject.Singleton",
-        RECEIVE_EVENT_TYPE
+            "javax.inject.Inject",
+            "javax.inject.Qualifier",
+            "javax.inject.Singleton",
+            RECEIVE_EVENT_TYPE
     };
 
     private Filer filer;
@@ -59,36 +52,36 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment environment) {
 
         Set<? extends TypeElement> filteredAnnotation = annotations.stream()
-            .filter(ann -> utility.hasStereotype(ann, Arrays.asList(TARGET_ANNOTATIONS)))
-            .collect(Collectors.toSet());
+                .filter(ann -> utility.hasStereotype(ann, Arrays.asList(TARGET_ANNOTATIONS)))
+                .collect(Collectors.toSet());
 
         filteredAnnotation.forEach(annotation -> environment.getElementsAnnotatedWith(annotation)
-            .stream().filter(element -> element.getKind() != ElementKind.ANNOTATION_TYPE)
-            .forEach(element -> {
-                TypeElement typeElement = utility.classElementFor(element);
-                if (element.getKind() == ElementKind.ENUM) {
-                    return;
-                }
-                if (typeElement == null) {
-                    return;
-                }
-                String name = typeElement.getQualifiedName().toString();
-                if(!beanDefinitions.contains(name) && !processed.contains(name)){
-                    if(typeElement.getKind() != ElementKind.INTERFACE){
-                        beanDefinitions.add(name);
+                .stream().filter(element -> element.getKind() != ElementKind.ANNOTATION_TYPE)
+                .forEach(element -> {
+                    TypeElement typeElement = utility.classElementFor(element);
+                    if (element.getKind() == ElementKind.ENUM) {
+                        return;
                     }
-                }
-            }));
+                    if (typeElement == null) {
+                        return;
+                    }
+                    String name = typeElement.getQualifiedName().toString();
+                    if (!beanDefinitions.contains(name) && !processed.contains(name)) {
+                        if (typeElement.getKind() != ElementKind.INTERFACE) {
+                            beanDefinitions.add(name);
+                        }
+                    }
+                }));
 
-        for(String name: processed){
+        for (String name : processed) {
             beanDefinitions.remove(name);
         }
 
         int count = beanDefinitions.size();
-        if(count > 0) {
-            this.messager.printMessage(Diagnostic.Kind.NOTE,String.format("Creating bean classes for %s type elements", count));
+        if (count > 0) {
+            this.messager.printMessage(Diagnostic.Kind.NOTE, String.format("Creating bean classes for %s type elements", count));
             beanDefinitions.forEach(className -> {
-                if(processed.add(className)) {
+                if (processed.add(className)) {
                     final TypeElement result = utility.getElements().getTypeElement(className);
                     DefinitionWriter visitor = new DefinitionWriter(result);
                     result.accept(visitor, className);
@@ -107,11 +100,81 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         return false;
     }
 
-    public static class DefinitionWriter extends ElementScanner8<Object, Object> {
+    public class DefinitionWriter extends ElementScanner8<Object, String> {
         private final TypeElement concreteClass;
 
         DefinitionWriter(TypeElement concreteClass) {
             this.concreteClass = concreteClass;
+        }
+
+        @Override
+        public Object visitVariable(VariableElement e, String o) {
+            return super.visitVariable(e, o);
+        }
+
+        @Override
+        public Object visitPackage(PackageElement e, String o) {
+            return super.visitPackage(e, o);
+        }
+
+        @Override
+        public Object visitType(TypeElement e, String className) {
+            writer.writeService(className, className);
+            writeBeanDefenition(e, className);
+            return super.visitType(e, className);
+        }
+
+        private void writeBeanDefenition(TypeElement typeElement, String className) {
+            TypeElement beanDefinitionClass = utility.getElements().getTypeElement("org.terasology.context.BeanDefinition");
+            writer.writeService(beanDefinitionClass.getQualifiedName().toString(), className + "$BeanDefinition");
+            JavaFile javaFile = JavaFile.builder(
+                    className.substring(0, className.lastIndexOf('.')),
+                    TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "$BeanDefinition")
+                            .addSuperinterface(ParameterizedTypeName.get(
+                                    ClassName.get(beanDefinitionClass),
+                                    TypeName.get(typeElement.asType()))
+                            )
+                            .addMethod(
+                                    MethodSpec.overriding(beanDefinitionClass
+                                            .getEnclosedElements().stream()
+                                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("isSingleton"))
+                                            .map((elem) -> (ExecutableElement) elem)
+                                            .findFirst()
+                                            .get()
+                                    ).addCode("return true;").build()
+                            )
+                            .addMethod(
+                                    MethodSpec.overriding(beanDefinitionClass
+                                            .getEnclosedElements().stream()
+                                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("targetClass"))
+                                            .map((elem) -> (ExecutableElement) elem)
+                                            .findFirst()
+                                            .get()
+                                    ).returns(ParameterizedTypeName.get(ClassName.get(Class.class),TypeName.get(typeElement.asType())))
+                                            .addCode("return $T.class;", typeElement).build()
+                            )
+                            .build())
+                    .build();
+            try {
+                javaFile.writeTo(filer);
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+
+        @Override
+        public Object visitExecutable(ExecutableElement e, String o) {
+            return super.visitExecutable(e, o);
+        }
+
+        @Override
+        public Object visitTypeParameter(TypeParameterElement e, String o) {
+            return super.visitTypeParameter(e, o);
+        }
+
+        @Override
+        public Object visitUnknown(Element e, String o) {
+            return super.visitUnknown(e, o);
         }
     }
 }
