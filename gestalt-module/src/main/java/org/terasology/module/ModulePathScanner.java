@@ -1,18 +1,5 @@
-/*
- * Copyright 2015 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2020 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.module;
 
@@ -23,6 +10,7 @@ import org.terasology.util.io.FileTypesFilter;
 import org.terasology.util.io.FilesUtil;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -90,8 +78,11 @@ public class ModulePathScanner {
      * @throws IOException If an error occurs scanning the directory - but not an individual module.
      */
     private void scanModuleArchives(Path discoveryPath, ModuleRegistry registry) throws IOException {
-        for (Path modulePath : Files.newDirectoryStream(discoveryPath, new FileTypesFilter("jar", "zip"))) {
-            loadModule(registry, modulePath);
+        try (DirectoryStream<Path> discoveryDirectory = Files.newDirectoryStream(discoveryPath,
+                new FileTypesFilter("jar", "zip"))) {
+            for (Path modulePath : discoveryDirectory) {
+                loadModule(registry, modulePath);
+            }
         }
     }
 
@@ -103,8 +94,11 @@ public class ModulePathScanner {
      * @throws IOException If an error occurs scanning the directory - but not an individual module.
      */
     private void scanModuleDirectories(Path discoveryPath, ModuleRegistry registry) throws IOException {
-        for (Path modulePath : Files.newDirectoryStream(discoveryPath, FilesUtil.DIRECTORY_FILTER)) {
-            loadModule(registry, modulePath);
+        try (DirectoryStream<Path> discoveryDirectory = Files.newDirectoryStream(discoveryPath,
+                FilesUtil.DIRECTORY_FILTER)) {
+            for (Path modulePath : discoveryDirectory) {
+                loadModule(registry, modulePath);
+            }
         }
     }
 
