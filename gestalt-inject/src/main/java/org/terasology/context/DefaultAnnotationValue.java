@@ -2,17 +2,27 @@ package org.terasology.context;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DefaultAnnotationValue<S extends Annotation> implements AnnotationValue<S> {
     private String annotationName;
     private Map<String, Object> defaultValues;
     private Map<String, Object> values;
-    private Map<String, DefaultAnnotationValue[]> annotations;
+    private Map<String, AnnotationValue[]> annotations;
 
-    public DefaultAnnotationValue(String name) {
-
+    public DefaultAnnotationValue(String name, Map<String, Object> values, Map<String, Object> defaultValues, AnnotationValue[] annotations) {
+        this.annotationName = name;
+        this.defaultValues = defaultValues;
+        this.values = values;
+        Arrays.stream(annotations).collect(Collectors.groupingBy(k -> k.getAnnotationName())).forEach((k, v) -> {
+            this.annotations.putIfAbsent(k, v.toArray(new DefaultAnnotationValue[0]));
+        });
     }
 
     @Override
@@ -34,8 +44,8 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
         if (annotations.containsKey(annotation)) {
             return true;
         }
-        for (DefaultAnnotationValue[] annotations : annotations.values()) {
-            for (DefaultAnnotationValue metadata : annotations) {
+        for (AnnotationValue[] annotations : annotations.values()) {
+            for (AnnotationValue metadata : annotations) {
                 if (metadata.hasStereotype(annotation)) {
                     return true;
                 }
@@ -44,6 +54,10 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
         return false;
     }
 
+    @Override
+    public Iterator<AnnotationValue[]> iterator() {
+        return annotations.values().iterator();
+    }
 
     @Override
     public List<AnnotationValue> getAnnotationsByStereotype(String stereotype) {
@@ -51,21 +65,21 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
         if (annotations.containsKey(stereotype)) {
             result.add(this);
         }
-        for (DefaultAnnotationValue[] annotations : annotations.values()) {
-            for (DefaultAnnotationValue metadata : annotations) {
-                metadata.internalGetAnnotationByStereotype(stereotype, result);
+        for (AnnotationValue[] annotations : annotations.values()) {
+            for (AnnotationValue metadata : annotations) {
+                internalGetAnnotationByStereotype(metadata, stereotype, result);
             }
         }
         return result;
     }
 
-    private void internalGetAnnotationByStereotype(String stereotype, List<AnnotationValue> result) {
-        if (annotations.containsKey(stereotype)) {
+    private void internalGetAnnotationByStereotype(AnnotationValue<? extends Annotation> target, String stereotype, List<AnnotationValue> result) {
+        if (target.hasAnnotation(stereotype)) {
             result.add(this);
         }
-        for (DefaultAnnotationValue[] annotations : annotations.values()) {
-            for (DefaultAnnotationValue metadata : annotations) {
-                metadata.internalGetAnnotationByStereotype(stereotype, result);
+        for (AnnotationValue[] annotations : target) {
+            for (AnnotationValue metadata : annotations) {
+                internalGetAnnotationByStereotype(metadata, stereotype, result);
             }
         }
     }

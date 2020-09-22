@@ -1,9 +1,10 @@
 package org.terasology.context;
 
 import java.lang.annotation.Annotation;
+import java.util.Iterator;
 import java.util.List;
 
-public interface AnnotationValue<S extends Annotation> {
+public interface AnnotationValue<S extends Annotation> extends Iterable<AnnotationValue[]> {
 
     String getAnnotationName();
 

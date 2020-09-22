@@ -3,26 +3,31 @@ package org.terasology.context;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DefaultAnnotationMetadata implements AnnotationMetadata {
-    private final Map<String, AnnotationValue[]> annotations;
+    private final Map<String, AnnotationValue[]> annotations = new HashMap<>();
 
-    public DefaultAnnotationMetadata(Map<String, AnnotationValue[]> annotation) {
-        this.annotations = annotation == null ? new HashMap<>() : annotation;
+    public DefaultAnnotationMetadata(AnnotationValue[] annotations) {
+        Arrays.stream(annotations).collect(Collectors.groupingBy(k -> k.getAnnotationName())).forEach((k, v) -> {
+            this.annotations.putIfAbsent(k, v.toArray(v.toArray(new AnnotationValue[0])));
+        });
     }
 
-    public static DefaultAnnotationMetadata Build(Map<String, AnnotationValue[]> annotation) {
+    public static DefaultAnnotationMetadata Build(AnnotationValue[] annotation) {
         return new DefaultAnnotationMetadata(annotation);
     }
 
     @Override
     public Object getRawSingleValue(String annotation, String field) {
         AnnotationValue[] result = annotations.get(annotation);
-        if(result != null){
-            if(result.length == 1) {
+        if (result != null) {
+            if (result.length == 1) {
                 return result[0].getRawValue(field);
             }
         }
@@ -33,7 +38,7 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
     @Override
     public List<AnnotationValue> getAnnotationsByStereotype(String stereotype) {
         List<AnnotationValue> results = new ArrayList<>();
-        if(annotations.containsKey(stereotype)) {
+        if (annotations.containsKey(stereotype)) {
             results.addAll(Arrays.asList(annotations.get(stereotype)));
         }
         for (AnnotationValue[] annotations : annotations.values()) {
@@ -72,5 +77,4 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
         }
         return false;
     }
-
 }
