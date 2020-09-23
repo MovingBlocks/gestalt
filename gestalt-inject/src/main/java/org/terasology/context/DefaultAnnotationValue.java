@@ -16,6 +16,10 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
     private Map<String, Object> values;
     private Map<String, AnnotationValue[]> annotations;
 
+    public DefaultAnnotationValue(String name, Map<String, Object> values, Map<String, Object> defaultValues) {
+        this(name, values, defaultValues, new AnnotationValue[]{});
+    }
+
     public DefaultAnnotationValue(String name, Map<String, Object> values, Map<String, Object> defaultValues, AnnotationValue[] annotations) {
         this.annotationName = name;
         this.defaultValues = defaultValues;
