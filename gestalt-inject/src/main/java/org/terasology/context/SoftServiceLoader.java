@@ -17,10 +17,16 @@ public class SoftServiceLoader<S> implements Iterable<S> {
     private final Class<S> target;
     private final ClassLoader classLoader;
 
-    private SoftServiceLoader(Class<S> target, ClassLoader classLoader) {
+    public SoftServiceLoader(Class<S> target, ClassLoader classLoader) {
         this.target = target;
         this.classLoader = classLoader;
     }
+
+    public static <S> SoftServiceLoader<S> ThreadLocal(Class<S> target) {
+        return new SoftServiceLoader<>(target, SoftServiceLoader.class.getClassLoader());
+    }
+
+
 
     @Override
     public Iterator<S> iterator() {
@@ -83,9 +89,5 @@ public class SoftServiceLoader<S> implements Iterable<S> {
         return Collections.emptyIterator();
     }
 
-    public static final class Builder {
-        public static <S> SoftServiceLoader<S> ThreadLocal(Class<S> target) {
-            return new SoftServiceLoader<>(target, SoftServiceLoader.class.getClassLoader());
-        }
-    }
+
 }
