@@ -1,10 +1,11 @@
 package org.terasology.gestalt.di;
 
-import org.terasology.context.BeanDefinition;
+import java.io.Closeable;
 
-import javax.inject.Singleton;
 
 public interface Lifecycle {
-    void start();
-    void stop();
+
+
+     Lifecycle parent();
+
 }

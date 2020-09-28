@@ -6,23 +6,12 @@ import org.terasology.context.SoftServiceLoader;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Stack;
 
 public class DefaultBeanContext extends BeanContext implements AutoCloseable {
-
-    private final Stack<Lifecycle> lifecycles = new Stack<>();
     private final Map<Class, BeanDefinition> definitions = new HashMap<>();
 
-    public void startLifecycle(Lifecycle lifecycle){
-        this.lifecycles.add(lifecycle);
-    }
-
-    public void freeLifecycle(Lifecycle lifecycle) {
-        do {
-            Lifecycle temp = lifecycles.pop();
-            temp.stop();
-        }
-        while (lifecycles.peek() != lifecycle);
+    public BeanContext getParent(){
+        return null;
     }
 
     public<T> T inject(T instance){
@@ -31,7 +20,7 @@ public class DefaultBeanContext extends BeanContext implements AutoCloseable {
         return null;
     }
 
-    public DefaultBeanContext(Environment environment) {
+    public DefaultBeanContext() {
 //        lifecycles.add(SINGLETON_LIFECYCLE);
     }
 

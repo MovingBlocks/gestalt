@@ -9,4 +9,5 @@ public interface BeanContext {
     <T> T inject(Annotation parent, @NotNull T instance);
 
     <T> T inject(BeanIdentifier<T> definition);
+    
 }
