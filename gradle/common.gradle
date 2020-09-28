@@ -82,7 +82,7 @@ repositories {
 
 // Extra details provided for unit tests
 test {
-    useJUnitPlatform()
+    useJUnit()
 
     // ignoreFailures: Specifies whether the build should break when the verifications performed by this task fail.
     ignoreFailures = true
