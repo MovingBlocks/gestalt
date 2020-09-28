@@ -17,13 +17,12 @@
 hs_err_pid*
 
 # Ignore Gradle related files we don't want to commit
-/.gradle/
 build/
 gradle/analytics
 local.properties
 
 # Ignore IntelliJ
-/out/
+out/
 *.iml
 /*.ipr
 /*.iws
