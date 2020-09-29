@@ -11,6 +11,10 @@ public class LifecycleContainer extends DefaultBeanContext {
         this.applicationContext = applicationContext;
     }
 
+    public Lifecycle getLifecycle() {
+        return lifecycle;
+    }
+
     @Override
     public BeanContext getParent() {
         return this.parent;

@@ -6,6 +6,4 @@ import java.io.Closeable;
 public interface Lifecycle {
 
 
-     Lifecycle parent();
-
 }

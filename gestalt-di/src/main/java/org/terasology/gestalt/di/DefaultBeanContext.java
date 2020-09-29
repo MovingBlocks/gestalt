@@ -1,43 +1,69 @@
 package org.terasology.gestalt.di;
 
-import org.terasology.context.BeanContext;
-import org.terasology.context.BeanDefinition;
-import org.terasology.context.SoftServiceLoader;
-
-import java.util.HashMap;
+import java.lang.annotation.Annotation;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class DefaultBeanContext extends BeanContext implements AutoCloseable {
-    private final Map<Class, BeanDefinition> definitions = new HashMap<>();
+public class DefaultBeanContext implements AutoCloseable, BeanContext {
+    private BeanContext root;
+    private ServiceGraph serviceGraph;
+    private Map<BeanIdentifier, Object> instance = new ConcurrentHashMap<>();
 
-    public BeanContext getParent(){
-        return null;
+
+    public DefaultBeanContext(ServiceRegistry registry) {
     }
 
-    public<T> T inject(T instance){
-        BeanDefinition definition = definitions.get(instance.getClass());
+    public DefaultBeanContext(BeanContext root) {
+        this(root, new ServiceGraph());
+    }
+
+    public DefaultBeanContext(BeanContext root, ServiceGraph serviceGraph) {
+
+        this.root = root;
+        this.serviceGraph = serviceGraph;
+    }
+
+    public <T> T inject(T instance) {
         //TODO: setup inject
         return null;
     }
 
-    public DefaultBeanContext() {
-//        lifecycles.add(SINGLETON_LIFECYCLE);
-    }
+    private <T> T internalInject(Class<T> type) {
 
-    public void loadDefinitions(ClassLoader loader) {
-        SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<BeanDefinition>(BeanDefinition.class, loader);
-        for (BeanDefinition definition : definitions) {
-            this.definitions.put(definition.targetClass(), definition);
-        }
+        return null;
     }
 
 
-    private void readBeanDefinitions(){
+    public void Configure() {
+
+    }
+
+    public BeanContext GetNestedContainer() {
+        return new DefaultBeanContext(this, new ServiceGraph());
+    }
+
+    private void readBeanDefinitions() {
 
     }
 
     @Override
     public void close() throws Exception {
 
+    }
+
+
+    public Optional<BeanContext> getRoot() {
+        return Optional.ofNullable(root);
+    }
+
+    @Override
+    public <T> T inject(Annotation parent, T instance) {
+        return null;
+    }
+
+    @Override
+    public <T> T inject(BeanIdentifier definition) {
+        return null;
     }
 }
