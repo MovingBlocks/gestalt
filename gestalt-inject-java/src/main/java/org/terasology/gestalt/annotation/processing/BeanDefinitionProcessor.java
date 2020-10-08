@@ -1,30 +1,60 @@
 package org.terasology.gestalt.annotation.processing;
 
-import com.squareup.javapoet.*;
+import com.squareup.javapoet.ArrayTypeName;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 
-import javax.annotation.processing.*;
-import javax.lang.model.element.*;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedOptions;
+import javax.inject.Inject;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementScanner8;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 
 @SupportedOptions({"org.terasology.gestalt.annotation.processing"})
 public class BeanDefinitionProcessor extends AbstractProcessor {
-    private static final String EVENT_INTERFACE = "org.terasology.gestalt.entitysystem.event.Event";
 
-    private static final String RECEIVE_EVENT_TYPE = "org.terasology.gestalt.entitysystem.event.ReceiveEvent";
+    private static final String Introspected = "org.terasology.context.annotation.Introspected";
+
 
     private static final String[] TARGET_ANNOTATIONS = new String[]{
-            "javax.inject.Inject",
-            "javax.inject.Qualifier",
-            "javax.inject.Singleton",
-            RECEIVE_EVENT_TYPE
+        "javax.inject.Inject",
+        "javax.inject.Qualifier",
+        "javax.inject.Singleton",
+        Introspected
     };
 
     private Filer filer;
@@ -33,7 +63,10 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     private Messager messager;
 
     private Set<String> processed = new HashSet<>();
-    private Set<String> beanDefinitions;
+    private Set<String> beanDefinitions = new HashSet<>();
+
+    protected Elements elementUtils;
+    protected Types typeUtils;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -42,8 +75,10 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         this.writer = new ServiceTypeWriter(this.filer);
         this.messager = processingEnvironment.getMessager();
 
+        this.elementUtils = processingEnvironment.getElementUtils();
+        this.typeUtils = processingEnv.getTypeUtils();
+
         this.utility = new ElementUtility(processingEnvironment.getElementUtils(), processingEnvironment.getTypeUtils());
-        beanDefinitions = new HashSet<>();
     }
 
     @Override
@@ -105,6 +140,11 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
     public class DefinitionWriter extends ElementScanner8<Object, String> {
         private final TypeElement concreteClass;
+        private List<CodeBlock> arguments = new ArrayList<>();
+
+        public static final String ARGUMENT_FIELD = "$ARGUMENT";
+        public static final String CLASS_METADATA_FIELD = "$CLASS_METADATA";
+
 
         DefinitionWriter(TypeElement concreteClass) {
             this.concreteClass = concreteClass;
@@ -126,21 +166,18 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             return super.visitType(e, className);
         }
 
-        private CodeBlock buildDefaultValues(Element declaredType) {
-            for(Element target: declaredType.getEnclosedElements()){
-                if(target.getKind() == ElementKind.METHOD){
-                    ExecutableElement executableElement = (ExecutableElement) target;
-                    TypeMirror returnType = executableElement.getReturnType();
-                    Object defaultValue = executableElement.getDefaultValue().getValue();
-
-
-                    returnType.toString();
-
-                }
-
-            }
-            return null;
-        }
+//        private CodeBlock buildDefaultValues(Element declaredType) {
+//            for(Element target: declaredType.getEnclosedElements()){
+//                if(target.getKind() == ElementKind.METHOD){
+//                    ExecutableElement executableElement = (ExecutableElement) target;
+//                    TypeMirror returnType = executableElement.getReturnType();
+//                    Object defaultValue = executableElement.getDefaultValue().getValue();
+//                    returnType.toString();
+//                }
+//
+//            }
+//            return null;
+//        }
 
         private Object getValue(Object target){
             Object result;
@@ -192,7 +229,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             return annotationsBuilder;
         }
 
-        private CodeBlock buildAnnotationMetadata(TypeElement element) {
+        private CodeBlock buildAnnotationMetadataBlock(TypeElement element) {
             List<CodeBlock> blocks = buildAnnotationValues(element.getAnnotationMirrors());
             return CodeBlock.builder().add("new $T(new $T[]{$L})",
                 ClassName.get("org.terasology.context", "DefaultAnnotationMetadata"),
@@ -201,27 +238,68 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
         }
 
+        private String buildArgument(TypeElement element) {
+            arguments.add(CodeBlock.builder().add("new $T($T.class,$T)",
+                ClassName.get("org.terasology.context", "DefaultArgument"),
+                element,
+                buildAnnotationMetadataBlock(element)).build());
+            return ARGUMENT_FIELD + "[" + (arguments.size() - 1) + "]";
+        }
+
+        private CodeBlock buildInjectionPointBlock(TypeElement target) {
+            Element[] constructors = target.getEnclosedElements()
+                .stream()
+                .filter(k -> k.getKind() == ElementKind.CONSTRUCTOR &&
+                    k.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getSimpleName()))
+                    ).toArray(Element[]::new);
+            for (Element c : constructors) {
+                TypeElement element = utility.classElementFor(c);
+                ElementKind kind = c.getKind();
+                buildArgument(element);
+            }
+            return CodeBlock.builder().add("return null;").build();
+//            return CodeBlock.builder().build();
+        }
+
+        private CodeBlock buildArgumentBlock() {
+            return CodeBlock.builder().add("new $T[]{$L}",
+                ClassName.get("org.terasology.context", "Argument"),
+                CodeBlock.join(this.arguments, ",")
+            ).build();
+        }
 
         private void writeBeanDefinition(TypeElement typeElement, String className) {
 
             TypeElement beanDefinitionClass = utility.getElements().getTypeElement("org.terasology.context.AbstractBeanDefinition");
             writer.writeService("org.terasology.context.BeanDefinition", className + "$BeanDefinition");
-            JavaFile javaFile = JavaFile.builder(
+
+            CodeBlock injectionPointBuilder = buildInjectionPointBlock(typeElement);
+            CodeBlock classAnnotationBuilder = buildAnnotationMetadataBlock(typeElement);
+
+            // argument block is built last
+            CodeBlock argumentBlockBuilder = buildArgumentBlock();
+
+
+            JavaFile.Builder builder = JavaFile.builder(
                 className.substring(0, className.lastIndexOf('.')),
                 TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "$BeanDefinition")
                     .superclass(ParameterizedTypeName.get(
                         ClassName.get(beanDefinitionClass),
                         TypeName.get(typeElement.asType()))
                     )
-                    .addMethod(
-                        MethodSpec.overriding(beanDefinitionClass
-                            .getEnclosedElements().stream()
-                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("isSingleton"))
-                            .map((elem) -> (ExecutableElement) elem)
-                            .findFirst()
-                            .get()
-                        ).addCode("return true;").build()
-                    )
+                    .addField(FieldSpec.builder(ClassName.get("org.terasology.context", "AnnotationMetadata"), CLASS_METADATA_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
+                        .initializer(classAnnotationBuilder).build())
+                    .addField(FieldSpec.builder(ArrayTypeName.of(ClassName.get("org.terasology.context", "Argument")), ARGUMENT_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
+                        .initializer(argumentBlockBuilder).build())
+//                    .addMethod(
+//                        MethodSpec.overriding(beanDefinitionClass
+//                            .getEnclosedElements().stream()
+//                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("isSingleton"))
+//                            .map((elem) -> (ExecutableElement) elem)
+//                            .findFirst()
+//                            .get()
+//                        ).addCode("return true;").build()
+//                    )
                     .addMethod(
                         MethodSpec.overriding(beanDefinitionClass
                             .getEnclosedElements().stream()
@@ -240,12 +318,22 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                             .findFirst()
                             .get()
                         ).returns(ClassName.get("org.terasology.context", "AnnotationMetadata"))
-                            .addCode("return $L;", buildAnnotationMetadata(typeElement)).build()
+                            .addCode("return $L;", CLASS_METADATA_FIELD).build()
                     )
-                    .build())
-                .build();
+                    .addMethod(
+                        MethodSpec.overriding(beanDefinitionClass
+                            .getEnclosedElements().stream()
+                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("build"))
+                            .map((elem) -> (ExecutableElement) elem)
+                            .findFirst()
+                            .get()
+                        ).returns(ClassName.get(typeElement))
+                            .addCode("$L", injectionPointBuilder).build()
+                    )
+                    .build());
+                this.buildInjectionPointBlock(typeElement);
             try {
-                javaFile.writeTo(filer);
+                builder.build().writeTo(filer);
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }

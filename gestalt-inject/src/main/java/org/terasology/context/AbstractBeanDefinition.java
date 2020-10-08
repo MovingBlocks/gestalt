@@ -1,6 +1,6 @@
 package org.terasology.context;
 
-import java.util.HashMap;
+import java.beans.beancontext.BeanContext;
 
 public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
 
@@ -8,10 +8,14 @@ public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
         return new DefaultAnnotationMetadata(new AnnotationValue[]{});
     }
 
-    @Override
-    public boolean isSingleton() {
-        return false;
+//    public T build(BeanContext beanContext) {
+//        return null;
+//    }
+
+    public T build(BeanResolution resolution) {
+        return null;
     }
+
 
     public abstract Class<T> targetClass();
 }

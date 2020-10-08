@@ -36,6 +36,7 @@ public class ElementUtility {
         return null;
     }
 
+
     public boolean hasStereotype(Element element, List<String> stereotype) {
         if (element == null) {
             return false;

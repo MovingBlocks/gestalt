@@ -7,6 +7,8 @@ repositories {
 // Primary dependencies definition
 dependencies {
     api group: 'javax.inject', name: 'javax.inject', version: '1'
+    implementation "org.slf4j:slf4j-api:$slf4j_version"
+    implementation "com.google.guava:guava:$guava_version"
 }
 
 sourceCompatibility = 1.8

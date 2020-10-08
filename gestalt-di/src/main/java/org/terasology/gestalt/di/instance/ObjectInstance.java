@@ -7,7 +7,7 @@ public class ObjectInstance extends Instance {
     private Object service;
 
     public ObjectInstance(Class<?> serviceType, Object service) {
-
+        super(null,null);
     }
 
     @Override
