@@ -6,6 +6,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
@@ -28,7 +29,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementScanner8;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -90,26 +91,26 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment environment) {
 
         Set<? extends TypeElement> filteredAnnotation = annotations.stream()
-                .filter(ann -> utility.hasStereotype(ann, Arrays.asList(TARGET_ANNOTATIONS)))
-                .collect(Collectors.toSet());
+            .filter(ann -> utility.hasStereotype(ann, Arrays.asList(TARGET_ANNOTATIONS)))
+            .collect(Collectors.toSet());
 
         filteredAnnotation.forEach(annotation -> environment.getElementsAnnotatedWith(annotation)
-                .stream().filter(element -> element.getKind() != ElementKind.ANNOTATION_TYPE)
-                .forEach(element -> {
-                    TypeElement typeElement = utility.classElementFor(element);
-                    if (element.getKind() == ElementKind.ENUM) {
-                        return;
+            .stream().filter(element -> element.getKind() != ElementKind.ANNOTATION_TYPE)
+            .forEach(element -> {
+                TypeElement typeElement = utility.classElementFor(element);
+                if (element.getKind() == ElementKind.ENUM) {
+                    return;
+                }
+                if (typeElement == null) {
+                    return;
+                }
+                String name = typeElement.getQualifiedName().toString();
+                if (!beanDefinitions.contains(name) && !processed.contains(name)) {
+                    if (typeElement.getKind() != ElementKind.INTERFACE) {
+                        beanDefinitions.add(name);
                     }
-                    if (typeElement == null) {
-                        return;
-                    }
-                    String name = typeElement.getQualifiedName().toString();
-                    if (!beanDefinitions.contains(name) && !processed.contains(name)) {
-                        if (typeElement.getKind() != ElementKind.INTERFACE) {
-                            beanDefinitions.add(name);
-                        }
-                    }
-                }));
+                }
+            }));
 
         for (String name : processed) {
             beanDefinitions.remove(name);
@@ -166,22 +167,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             return super.visitType(e, className);
         }
 
-//        private CodeBlock buildDefaultValues(Element declaredType) {
-//            for(Element target: declaredType.getEnclosedElements()){
-//                if(target.getKind() == ElementKind.METHOD){
-//                    ExecutableElement executableElement = (ExecutableElement) target;
-//                    TypeMirror returnType = executableElement.getReturnType();
-//                    Object defaultValue = executableElement.getDefaultValue().getValue();
-//                    returnType.toString();
-//                }
-//
-//            }
-//            return null;
-//        }
-
-        private Object getValue(Object target){
+        private Object getValue(Object target) {
             Object result;
-            if(target instanceof String){
+            if (target instanceof String) {
                 result = String.format("\"%s\"", target);
             } else {
                 result = target;
@@ -229,36 +217,74 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             return annotationsBuilder;
         }
 
-        private CodeBlock buildAnnotationMetadataBlock(TypeElement element) {
+        private CodeBlock buildAnnotationMetadataBlock(Element element) {
             List<CodeBlock> blocks = buildAnnotationValues(element.getAnnotationMirrors());
             return CodeBlock.builder().add("new $T(new $T[]{$L})",
                 ClassName.get("org.terasology.context", "DefaultAnnotationMetadata"),
                 ClassName.get("org.terasology.context", "AnnotationValue"),
-                CodeBlock.join(blocks,",")).build();
+                CodeBlock.join(blocks, ",")).build();
 
         }
 
-        private String buildArgument(TypeElement element) {
-            arguments.add(CodeBlock.builder().add("new $T($T.class,$T)",
+        private CodeBlock buildArgument(VariableElement element) {
+            arguments.add(CodeBlock.builder().add("new $T($T.class,$L)",
                 ClassName.get("org.terasology.context", "DefaultArgument"),
                 element,
                 buildAnnotationMetadataBlock(element)).build());
-            return ARGUMENT_FIELD + "[" + (arguments.size() - 1) + "]";
+            return CodeBlock.builder().add("$L[" + (arguments.size() - 1) + "]", ARGUMENT_FIELD).build();
         }
 
-        private CodeBlock buildInjectionPointBlock(TypeElement target) {
-            Element[] constructors = target.getEnclosedElements()
-                .stream()
-                .filter(k -> k.getKind() == ElementKind.CONSTRUCTOR &&
-                    k.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getSimpleName()))
-                    ).toArray(Element[]::new);
-            for (Element c : constructors) {
-                TypeElement element = utility.classElementFor(c);
-                ElementKind kind = c.getKind();
-                buildArgument(element);
+        private CodeBlock buildObjectPointCreationBlock(TypeElement target) {
+            CodeBlock.Builder builder = CodeBlock.builder();
+            ClassName targetClass = ClassName.get(target);
+
+            Element[] constructors = target.getEnclosedElements().stream().filter(k -> k.getKind() == ElementKind.CONSTRUCTOR).toArray(Element[]::new);
+            Optional<Element> emptyConstructor = Arrays.stream(constructors).filter(k -> k instanceof ExecutableElement && ((ExecutableElement) k).getParameters().size() == 0).findFirst();
+            Element[] injectionConstructor = Arrays.stream(constructors)
+                .filter(k -> k.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName())))
+                .toArray(Element[]::new);
+            if (injectionConstructor.length == 1) {
+                Element c = injectionConstructor[0];
+                if (c instanceof ExecutableElement) {
+                    ExecutableElement constructorParams = (ExecutableElement) c;
+                    builder.add("$T result = new $T($L); \n",
+                        targetClass,
+                        targetClass,
+                        CodeBlock.join(constructorParams.getParameters().stream().map((k) ->
+                            buildResolution("resolveConstructorArgument", k)
+                        ).collect(Collectors.toList()), ","));
+                }
+            } else {
+                builder.add("$T result = new $T();\n", targetClass, targetClass);
             }
-            return CodeBlock.builder().add("return null;").build();
-//            return CodeBlock.builder().build();
+
+            return builder.add("return this.inject(result,resolution);").build();
+        }
+
+        private CodeBlock buildResolution(String method, VariableElement element) {
+            return CodeBlock.builder().add("resolution.$L($T.class,$L)", method, ClassName.get(element.asType()), buildArgument(element)).build();
+        }
+
+        private CodeBlock buildInjectionBlock(TypeElement target) {
+            String name = "instance";
+            CodeBlock.Builder builder = CodeBlock.builder();
+            ClassName targetClass = ClassName.get(target);
+
+            for (Element ele : target.getEnclosedElements()) {
+                if (ele.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName()))) {
+                    if (ele instanceof ExecutableElement) {
+                        List<? extends VariableElement> parameters = ((ExecutableElement) ele).getParameters();
+
+                        if (ele.getSimpleName().toString().startsWith("set") && parameters.size() == 1) {
+                            builder.add("$L.$L($L); \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", parameters.get(0)));
+                        }
+                    }
+                    if (ele instanceof VariableElement) {
+                        builder.add("$L.$L = $L; \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", (VariableElement) ele));
+                    }
+                }
+            }
+            return builder.add("return $L;", name).build();
         }
 
         private CodeBlock buildArgumentBlock() {
@@ -268,16 +294,27 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             ).build();
         }
 
+
         private void writeBeanDefinition(TypeElement typeElement, String className) {
 
             TypeElement beanDefinitionClass = utility.getElements().getTypeElement("org.terasology.context.AbstractBeanDefinition");
             writer.writeService("org.terasology.context.BeanDefinition", className + "$BeanDefinition");
 
-            CodeBlock injectionPointBuilder = buildInjectionPointBlock(typeElement);
+            CodeBlock injectionCreationBuilder = buildObjectPointCreationBlock(typeElement);
+            CodeBlock injectionBlock = buildInjectionBlock(typeElement);
             CodeBlock classAnnotationBuilder = buildAnnotationMetadataBlock(typeElement);
 
             // argument block is built last
             CodeBlock argumentBlockBuilder = buildArgumentBlock();
+
+            MethodSpec.Builder injectMethod = MethodSpec.overriding(beanDefinitionClass
+                .getEnclosedElements().stream()
+                .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("inject"))
+                .map((elem) -> (ExecutableElement) elem)
+                .findFirst()
+                .get()
+            ).returns(ClassName.get(typeElement)).addCode(injectionBlock);
+            injectMethod.parameters.set(0, ParameterSpec.builder(TypeName.get(typeElement.asType()), "instance").build());
 
 
             JavaFile.Builder builder = JavaFile.builder(
@@ -291,15 +328,6 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                         .initializer(classAnnotationBuilder).build())
                     .addField(FieldSpec.builder(ArrayTypeName.of(ClassName.get("org.terasology.context", "Argument")), ARGUMENT_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
                         .initializer(argumentBlockBuilder).build())
-//                    .addMethod(
-//                        MethodSpec.overriding(beanDefinitionClass
-//                            .getEnclosedElements().stream()
-//                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("isSingleton"))
-//                            .map((elem) -> (ExecutableElement) elem)
-//                            .findFirst()
-//                            .get()
-//                        ).addCode("return true;").build()
-//                    )
                     .addMethod(
                         MethodSpec.overriding(beanDefinitionClass
                             .getEnclosedElements().stream()
@@ -320,6 +348,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                         ).returns(ClassName.get("org.terasology.context", "AnnotationMetadata"))
                             .addCode("return $L;", CLASS_METADATA_FIELD).build()
                     )
+                    .addMethod(injectMethod.build())
                     .addMethod(
                         MethodSpec.overriding(beanDefinitionClass
                             .getEnclosedElements().stream()
@@ -327,11 +356,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                             .map((elem) -> (ExecutableElement) elem)
                             .findFirst()
                             .get()
-                        ).returns(ClassName.get(typeElement))
-                            .addCode("$L", injectionPointBuilder).build()
+                        ).returns(ClassName.get(typeElement)).addCode("$L", injectionCreationBuilder).build()
                     )
                     .build());
-                this.buildInjectionPointBlock(typeElement);
             try {
                 builder.build().writeTo(filer);
             } catch (IOException ioException) {

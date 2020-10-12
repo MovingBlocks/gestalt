@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
     private BeanContext root;
-    private ServiceGraph serviceGraph;
+    private BeanEnvironment environment;
     private Map<BeanIdentifier, Object> instance = new ConcurrentHashMap<>();
 
 
@@ -15,13 +15,12 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     public DefaultBeanContext(BeanContext root) {
-        this(root, new ServiceGraph());
+        this(root, new BeanEnvironment());
     }
 
-    public DefaultBeanContext(BeanContext root, ServiceGraph serviceGraph) {
-
+    public DefaultBeanContext(BeanContext root, BeanEnvironment serviceGraph) {
         this.root = root;
-        this.serviceGraph = serviceGraph;
+        this.environment = serviceGraph;
     }
 
     public <T> T inject(T instance) {
@@ -40,7 +39,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     public BeanContext GetNestedContainer() {
-        return new DefaultBeanContext(this, new ServiceGraph());
+        return new DefaultBeanContext(this, environment);
     }
 
     private void readBeanDefinitions() {

@@ -1,34 +1,53 @@
 package org.terasology.gestalt.di;
 
-import org.terasology.context.BeanDefinition;
-import org.terasology.context.SoftServiceLoader;
+import org.terasology.gestalt.di.instance.Instance;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Stack;
+import java.util.function.Supplier;
 
 public class ServiceGraph {
-    private Map<Class, String> families = new HashMap<>();
-    private final Map<Class, BeanDefinition> definitions = new HashMap<>();
-    private final Map<ClassLoader, List<Class>> classMapping = new HashMap<>();
+    private Map<BeanIdentifier, Instance> instances;
+    private Stack<Instance> path = new Stack<>();
 
-    public ServiceGraph() {
-
-    }
-
-    public void start() {
-
-    }
-
-    public void loadDefinitions(ClassLoader loader) {
-        List<Class> cl = new ArrayList<>();
-        SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<BeanDefinition>(BeanDefinition.class, loader);
-        for (BeanDefinition definition : definitions) {
-            cl.add(definition.targetClass());
-            this.definitions.put(definition.targetClass(), definition);
+    public ServiceGraph(Collection<ServiceRegistry> registries) {
+        for (ServiceRegistry registry : registries) {
+            this.bindRegistry(registry);
         }
-        this.classMapping.put(loader,cl);
     }
 
+    public void PushPath(Instance instance) {
+        path.add(instance);
+    }
+
+    private void bindRegistry(ServiceRegistry registry) {
+
+    }
+
+    private <T> Supplier<T> FindResolver(Class<T> definition) {
+        return () -> null;
+    }
+
+    public static class BeanKey<T> implements BeanIdentifier {
+
+        public BeanKey(Class<T> target) {
+
+        }
+
+        @Override
+        public int length() {
+            return 0;
+        }
+
+        @Override
+        public char charAt(int i) {
+            return 0;
+        }
+
+        @Override
+        public CharSequence subSequence(int i, int i1) {
+            return null;
+        }
+    }
 }

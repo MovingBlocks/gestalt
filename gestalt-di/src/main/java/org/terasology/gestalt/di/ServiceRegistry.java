@@ -1,12 +1,16 @@
 package org.terasology.gestalt.di;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 public class ServiceRegistry {
 
     Callable<ScannerExpression> expression;
+    private List<InstanceExpression> instanceExpressions = new ArrayList<>();
 
     public static class ScanExpression {
 
@@ -16,17 +20,23 @@ public class ServiceRegistry {
         this.expression = expression;
     }
 
-    public void includeRegistry(ServiceRegistry registry ){
+    public void includeRegistry(ServiceRegistry registry){
 
     }
 
     public <T> InstanceExpression<T> with(Class<T> type) {
-        return new InstanceExpression<>(type);
+        InstanceExpression expr = new InstanceExpression<>(type);
+        instanceExpressions.add(expr);
+        return expr;
+    }
+
+    public <T> InstanceExpression<T> singleton(Class<T> type) {
+        return this.with(type).lifetime(InstanceExpression.Lifetime.Singleton);
     }
 
     public static class InstanceExpression<T>  {
-        Class<T> root;
-        Lifetime lifetime;
+        private final Class<T> root;
+        private Lifetime lifetime;
         public enum Lifetime {
             Scoped,
             Singleton,
@@ -38,26 +48,22 @@ public class ServiceRegistry {
             return this;
         }
 
-        public InstanceExpression(Class<T> root){
-
+        public InstanceExpression(Class<T> root) {
+            this.root = root;
+            lifetime = Lifetime.Scoped;
         }
 
-        public InstanceExpression<T> Scope() {
+        public InstanceExpression<T> use(T instance) {
 
             return this;
         }
 
-        public InstanceExpression<T> Use(T instance) {
-
-            return this;
-        }
-
-        public InstanceExpression<T> Use(Supplier<T> instance){
+        public InstanceExpression<T> use(Supplier<T> instance){
             return this;
 
         }
 
-        public InstanceExpression<T> Named(String name) {
+        public InstanceExpression<T> named(String name) {
             return this;
         }
     }

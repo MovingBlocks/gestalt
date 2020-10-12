@@ -8,7 +8,17 @@ import javax.inject.Singleton;
 @Introspected
 public class ParentDep {
     @Inject
+    Dep3 dep;
+
+    @Inject
     ParentDep(Dep1 one, Dep2 two) {
 
     }
+
+    @Inject
+    public void setDep4(Dep4 d){
+
+    }
+
 }
+

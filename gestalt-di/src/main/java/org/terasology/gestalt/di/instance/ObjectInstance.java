@@ -2,6 +2,8 @@ package org.terasology.gestalt.di.instance;
 
 import org.terasology.gestalt.di.BeanContext;
 
+import java.util.function.Function;
+
 public class ObjectInstance extends Instance {
 
     private Object service;
@@ -11,12 +13,12 @@ public class ObjectInstance extends Instance {
     }
 
     @Override
-    public Object resolve(BeanContext beanContext) {
-        return null;
+    public void close() throws Exception {
+
     }
 
     @Override
-    public void close() throws Exception {
-
+    public Function<BeanContext, Object> toResolve(BeanContext from) {
+        return null;
     }
 }
