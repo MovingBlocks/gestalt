@@ -4,8 +4,6 @@ import java.util.Optional;
 
 public interface Argument<T> {
 
-    Argument[] a = new DefaultArgument[] {};
-
     /**
      * Constant for string argument.
      */

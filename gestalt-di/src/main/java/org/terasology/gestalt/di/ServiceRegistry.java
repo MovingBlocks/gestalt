@@ -3,6 +3,7 @@ package org.terasology.gestalt.di;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -10,12 +11,11 @@ import java.util.function.Supplier;
 public class ServiceRegistry {
 
     Callable<ScannerExpression> expression;
-    private List<InstanceExpression> instanceExpressions = new ArrayList<>();
+    protected List<InstanceExpression> instanceExpressions = new ArrayList<>();
 
     public static class ScanExpression {
 
     }
-
     public void scanner(Callable<ScannerExpression> expression) {
         this.expression = expression;
     }
@@ -34,16 +34,19 @@ public class ServiceRegistry {
         return this.with(type).lifetime(InstanceExpression.Lifetime.Singleton);
     }
 
-    public static class InstanceExpression<T>  {
+    public static class InstanceExpression<T> {
         private final Class<T> root;
-        private Lifetime lifetime;
+        protected Lifetime lifetime;
+        protected String name;
+        protected Supplier<T> supplier;
+
         public enum Lifetime {
             Scoped,
             Singleton,
             Transient
         }
 
-        public InstanceExpression<T> lifetime(Lifetime lifetime){
+        public InstanceExpression<T> lifetime(Lifetime lifetime) {
             this.lifetime = lifetime;
             return this;
         }
@@ -54,18 +57,20 @@ public class ServiceRegistry {
         }
 
         public InstanceExpression<T> use(T instance) {
-
+            this.supplier = () -> instance;
             return this;
         }
 
-        public InstanceExpression<T> use(Supplier<T> instance){
+        public InstanceExpression<T> use(Supplier<T> instance) {
+            this.supplier = instance;
             return this;
 
         }
-
         public InstanceExpression<T> named(String name) {
+            this.name = name;
             return this;
         }
+
     }
 
     public static class ScannerExpression {
@@ -88,4 +93,5 @@ public class ServiceRegistry {
             this.annotation = annotation;
         }
     }
+
 }

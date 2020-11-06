@@ -14,13 +14,17 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     public DefaultBeanContext(ServiceRegistry registry) {
     }
 
+    public DefaultBeanContext(ServiceRegistry ... registries) {
+
+    }
+
     public DefaultBeanContext(BeanContext root) {
         this(root, new BeanEnvironment());
     }
 
-    public DefaultBeanContext(BeanContext root, BeanEnvironment serviceGraph) {
+    public DefaultBeanContext(BeanContext root, BeanEnvironment environment) {
         this.root = root;
-        this.environment = serviceGraph;
+        this.environment = environment;
     }
 
     public <T> T inject(T instance) {

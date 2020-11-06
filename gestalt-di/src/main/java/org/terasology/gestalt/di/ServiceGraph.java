@@ -22,7 +22,9 @@ public class ServiceGraph {
     }
 
     private void bindRegistry(ServiceRegistry registry) {
+        for(ServiceRegistry.InstanceExpression expression: registry.instanceExpressions) {
 
+        }
     }
 
     private <T> Supplier<T> FindResolver(Class<T> definition) {

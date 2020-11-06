@@ -16,6 +16,10 @@ public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
         return null;
     }
 
+    public T inject(T instance, BeanResolution resolution) {
+        return instance;
+    }
+
 
     public abstract Class<T> targetClass();
 }
