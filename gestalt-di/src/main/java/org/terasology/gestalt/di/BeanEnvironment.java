@@ -19,7 +19,6 @@ public class BeanEnvironment {
         loadDefinitions(BeanEnvironment.class.getClassLoader());
     }
 
-
     public void loadDefinitions(ClassLoader loader) {
         List<Class> cl = new ArrayList<>();
         SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, loader);
@@ -37,5 +36,9 @@ public class BeanEnvironment {
                 toRelease.add(definition.targetClass());
             }
         }
+    }
+
+    public <T> BeanDefinition<T> getInstance(Class<T> beanType) {
+        return definitions.get(beanType);
     }
 }
