@@ -31,20 +31,15 @@ public class ServiceRegistry {
     }
 
     public <T> InstanceExpression<T> singleton(Class<T> type) {
-        return this.with(type).lifetime(InstanceExpression.Lifetime.Singleton);
+        return this.with(type).lifetime(Lifetime.Singleton);
     }
 
     public static class InstanceExpression<T> {
-        private final Class<T> root;
+        protected final Class<T> root;
         protected Lifetime lifetime;
         protected String name;
         protected Supplier<T> supplier;
 
-        public enum Lifetime {
-            Scoped,
-            Singleton,
-            Transient
-        }
 
         public InstanceExpression<T> lifetime(Lifetime lifetime) {
             this.lifetime = lifetime;
@@ -54,11 +49,6 @@ public class ServiceRegistry {
         public InstanceExpression(Class<T> root) {
             this.root = root;
             lifetime = Lifetime.Scoped;
-        }
-
-        public InstanceExpression<T> use(T instance) {
-            this.supplier = () -> instance;
-            return this;
         }
 
         public InstanceExpression<T> use(Supplier<T> instance) {

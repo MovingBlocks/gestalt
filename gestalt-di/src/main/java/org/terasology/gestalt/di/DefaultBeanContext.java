@@ -2,8 +2,6 @@ package org.terasology.gestalt.di;
 
 import org.terasology.context.BeanDefinition;
 
-import javax.swing.text.html.Option;
-import javax.xml.ws.Service;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +24,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     public DefaultBeanContext(BeanContext root, BeanEnvironment environment, ServiceRegistry ... registries) {
         this.root = root;
         this.environment = environment;
-        this.serviceGraph = new ServiceGraph(registries);
+        this.serviceGraph = new ServiceGraph(this,registries);
     }
 
     public <T> T inject(T instance) {
@@ -36,18 +34,13 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     private <T> T internalInject(Class<T> type) {
         BeanDefinition<T> instance =  environment.getInstance(type);
-        BeanKey<T> key = new BeanKey<T>(instance.targetClass());
 
         Optional<BeanContext> cntx = Optional.of(this);
         while (cntx.isPresent()) {
             BeanContext beanContext = cntx.get();
             if(beanContext instanceof  DefaultBeanContext) {
-                if(((DefaultBeanContext) beanContext).instance.containsKey(key)) {
-                   return (T) ((DefaultBeanContext) beanContext).instance.get(key);
-                }
                 Optional<T> target =  ((DefaultBeanContext) beanContext).serviceGraph.resolve(instance, beanContext);
                 if(target.isPresent()) {
-                    ((DefaultBeanContext) beanContext).instance.put(key,target.get());
                     return target.get();
                 }
             }
@@ -56,6 +49,25 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return null;
     }
 
+    @Override
+    public <T> boolean contains(BeanIdentifier id){
+        return instance.containsKey(id);
+    }
+
+    @Override
+    public <T> void bind(BeanIdentifier id, T target) {
+        instance.put(id, target);
+    }
+
+    @Override
+    public <T> T get(BeanIdentifier id) {
+        return (T) instance.get(id);
+    }
+
+    @Override
+    public <T> void release(BeanIdentifier identifier) {
+        instance.remove(identifier);
+    }
 
     public void Configure() {
 

@@ -2,18 +2,18 @@ package org.terasology.gestalt.di;
 
 import org.terasology.context.BeanDefinition;
 import org.terasology.gestalt.di.instance.Instance;
+import org.terasology.gestalt.di.instance.ObjectInstance;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 public class ServiceGraph {
-    private Map<BeanIdentifier, Instance> instances;
-    private BeanContext context;
-    public ServiceGraph(BeanContext context) {
-        this.context = context;
-    }
+    private final Map<BeanIdentifier, Instance> instances = new HashMap<>();
+    private final BeanContext context;
 
-    public ServiceGraph(ServiceRegistry... registries) {
+    public ServiceGraph(BeanContext context, ServiceRegistry... registries) {
+        this.context = context;
         for (ServiceRegistry registry : registries) {
             this.bindRegistry(registry);
         }
@@ -21,19 +21,20 @@ public class ServiceGraph {
 
     private void bindRegistry(ServiceRegistry registry) {
         for(ServiceRegistry.InstanceExpression expression: registry.instanceExpressions) {
-            switch (expression.lifetime) {
-                case Scoped:
-                    break;
-                case Singleton:
-                    break;
-                case Transient:
-                    break;
+            BeanKey key = new BeanKey(expression.root);
+            if(expression.supplier == null) {
+
+            } else {
+                instances.put(key, new ObjectInstance(expression.lifetime, expression.supplier, context));
             }
         }
     }
 
-    public <T> Optional<T> resolve(BeanDefinition<T> beanKey, BeanContext from) {
-
+    public <T> Optional<T> resolve(BeanDefinition<T> beanKey, BeanContext current) {
+        if(!instances.containsKey(beanKey)) {
+            Instance instance = instances.get(beanKey);
+            return (Optional<T>) instance.get(beanKey,current);
+        }
         return Optional.empty();
     }
 
