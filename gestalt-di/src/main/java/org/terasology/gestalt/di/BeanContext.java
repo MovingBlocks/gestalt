@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public interface BeanContext {
 
-    Optional<BeanContext> getRoot();
+    Optional<BeanContext> getParent();
 
     <T> T inject(Annotation parent,T instance);
 

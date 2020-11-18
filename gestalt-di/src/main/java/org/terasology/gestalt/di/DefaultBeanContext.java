@@ -1,14 +1,12 @@
 package org.terasology.gestalt.di;
 
-import org.terasology.context.BeanDefinition;
-
 import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
-    private BeanContext root;
+    private BeanContext parent;
     private BeanEnvironment environment;
     private final Map<BeanIdentifier, Object> instance = new ConcurrentHashMap<>();
     private final ServiceGraph serviceGraph;
@@ -21,30 +19,28 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         this(null, new BeanEnvironment(), registries);
     }
 
-    public DefaultBeanContext(BeanContext root, BeanEnvironment environment, ServiceRegistry ... registries) {
-        this.root = root;
+    public DefaultBeanContext(BeanContext parent, BeanEnvironment environment, ServiceRegistry ... registries) {
+        this.parent = parent;
         this.environment = environment;
-        this.serviceGraph = new ServiceGraph(this,registries);
+        this.serviceGraph = new ServiceGraph(environment, this, registries);
     }
 
     public <T> T inject(T instance) {
-        //TODO: setup inject
+
         return null;
     }
 
-    private <T> T internalInject(Class<T> type) {
-        BeanDefinition<T> instance =  environment.getInstance(type);
-
+    private <T> T internalInject(BeanKey<T> beanKey) {
         Optional<BeanContext> cntx = Optional.of(this);
         while (cntx.isPresent()) {
             BeanContext beanContext = cntx.get();
             if(beanContext instanceof  DefaultBeanContext) {
-                Optional<T> target =  ((DefaultBeanContext) beanContext).serviceGraph.resolve(instance, beanContext);
+                Optional<T> target =  ((DefaultBeanContext) beanContext).serviceGraph.resolve(beanKey, beanContext);
                 if(target.isPresent()) {
                     return target.get();
                 }
             }
-            cntx = getRoot();
+            cntx = getParent();
         }
         return null;
     }
@@ -73,9 +69,14 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     }
 
-    public BeanContext GetNestedContainer() {
+    public BeanContext getNestedContainer() {
         return new DefaultBeanContext(this, environment);
     }
+
+    public BeanContext getNestedContainer(ServiceRegistry ... registries) {
+        return new DefaultBeanContext(this, environment, registries);
+    }
+
 
     private void readBeanDefinitions() {
 
@@ -87,8 +88,8 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
 
-    public Optional<BeanContext> getRoot() {
-        return Optional.ofNullable(root);
+    public Optional<BeanContext> getParent() {
+        return Optional.ofNullable(parent);
     }
 
     @Override

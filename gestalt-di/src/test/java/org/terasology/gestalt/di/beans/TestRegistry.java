@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 
 public class TestRegistry extends ServiceRegistry {
     public TestRegistry(){
-        this.with(Dep4.class).use(new Dep4());
+        this.with(Dep4.class).use(() -> new Dep4());
         this.with(Dep2.class).use(() -> new Dep2());
         this.with(Dep3.class)
             .lifetime(Lifetime.Singleton)

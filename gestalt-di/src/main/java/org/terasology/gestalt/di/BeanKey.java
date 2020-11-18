@@ -18,6 +18,10 @@ public class BeanKey<T> implements BeanIdentifier {
         this.hashCode = result;
     }
 
+    public <T> Class<T> getBeanType() {
+        return beanType;
+    }
+
     @Override
     public String toString() {
         return beanType.getName();

@@ -38,7 +38,8 @@ public class ServiceRegistry {
         protected final Class<T> root;
         protected Lifetime lifetime;
         protected String name;
-        protected Supplier<T> supplier;
+        protected Supplier<? extends T> supplier;
+        protected Class<? extends T> target;
 
 
         public InstanceExpression<T> lifetime(Lifetime lifetime) {
@@ -54,8 +55,14 @@ public class ServiceRegistry {
         public InstanceExpression<T> use(Supplier<T> instance) {
             this.supplier = instance;
             return this;
+        }
+
+        public InstanceExpression<T> use(Class<T> target) {
+            this.target = target;
+            return this;
 
         }
+
         public InstanceExpression<T> named(String name) {
             this.name = name;
             return this;

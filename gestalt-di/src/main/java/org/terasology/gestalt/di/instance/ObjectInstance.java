@@ -1,6 +1,7 @@
 package org.terasology.gestalt.di.instance;
 
 import org.terasology.gestalt.di.BeanContext;
+import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanIdentifier;
 import org.terasology.gestalt.di.Lifetime;
 import org.terasology.gestalt.di.ServiceGraph;
@@ -10,12 +11,10 @@ import java.util.function.Supplier;
 
 public class ObjectInstance<T> extends Instance<T> {
     private Supplier<T> supplier;
-    private BeanContext current;
 
-    public ObjectInstance(Lifetime lifetime, Supplier<T> supplier, BeanContext beanContext) {
-        super(lifetime);
+    public ObjectInstance(BeanEnvironment environment, Lifetime lifetime, ServiceGraph serviceGraph, Supplier<T> supplier) {
+        super(environment, lifetime,serviceGraph);
         this.supplier = supplier;
-        this.current = beanContext;
     }
 
     @Override
@@ -25,11 +24,12 @@ public class ObjectInstance<T> extends Instance<T> {
             case Transient:
                 return Optional.of(supplier.get());
             case Singleton:
-                if(current.contains(identifier)) {
-                    return Optional.of(current.get(identifier));
+                BeanContext serviceContext = serviceGraph.serviceContext();
+                if(serviceContext.contains(identifier)) {
+                    return Optional.of(serviceContext.get(identifier));
                 }
                 obj = supplier.get();
-                current.bind(identifier,obj);
+                serviceContext.bind(identifier,obj);
                 return Optional.of(obj);
             case Scoped:
                 if(context.contains(identifier)) {
