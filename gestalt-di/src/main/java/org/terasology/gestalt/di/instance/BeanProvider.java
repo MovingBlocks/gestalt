@@ -4,21 +4,24 @@ import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanIdentifier;
 import org.terasology.gestalt.di.Lifetime;
-import org.terasology.gestalt.di.ServiceGraph;
 
 import java.util.Optional;
 
-public abstract class Instance<T> implements AutoCloseable {
+public abstract class BeanProvider<T> implements AutoCloseable {
     protected final Lifetime lifetime;
     protected final BeanEnvironment environment;
-    protected final ServiceGraph serviceGraph;
+    protected final BeanContext parent;
 
-    public Instance(BeanEnvironment environment, Lifetime lifetime, ServiceGraph serviceGraph) {
+    public BeanProvider(BeanEnvironment environment, Lifetime lifetime, BeanContext parent) {
         this.lifetime = lifetime;
         this.environment = environment;
-        this.serviceGraph = serviceGraph;
+        this.parent = parent;
     }
 
-    public abstract Optional<T> get(BeanIdentifier identifier, BeanContext context);
+    public Lifetime getLifetime() {
+        return lifetime;
+    }
+
+    public abstract T get(BeanIdentifier identifier, BeanContext context);
 
 }
