@@ -8,6 +8,11 @@ public class EmptyAnnotationMetadata implements AnnotationMetadata {
    public final static EmptyAnnotationMetadata EMPTY_ARGUMENT = new EmptyAnnotationMetadata();
 
     @Override
+    public List<AnnotationValue> getAnnotationsByStereotype(Class<? extends Annotation> stereotype) {
+        return Collections.EMPTY_LIST;
+    }
+
+    @Override
     public List<AnnotationValue> getAnnotationsByStereotype(String stereotype) {
         return Collections.EMPTY_LIST;
     }

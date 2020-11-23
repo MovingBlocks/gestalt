@@ -54,11 +54,13 @@ public class ServiceRegistry {
 
         public InstanceExpression<T> use(Supplier<T> instance) {
             this.supplier = instance;
+            this.target = null;
             return this;
         }
 
         public InstanceExpression<T> use(Class<T> target) {
             this.target = target;
+            this.supplier = null;
             return this;
 
         }

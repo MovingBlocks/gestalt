@@ -10,13 +10,13 @@ import java.util.function.Supplier;
 public class SupplierProvider<T> extends BeanProvider<T> {
     private Supplier<T> supplier;
 
-    public SupplierProvider(BeanEnvironment environment, Lifetime lifetime, BeanContext parent, Supplier<T> supplier) {
-        super(environment, lifetime,parent);
+    public SupplierProvider(BeanEnvironment environment, Lifetime lifetime, Supplier<T> supplier) {
+        super(environment, lifetime);
         this.supplier = supplier;
     }
 
     @Override
-    public T get(BeanIdentifier identifier, BeanContext context) {
+    public T get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo) {
         return supplier.get();
     }
 

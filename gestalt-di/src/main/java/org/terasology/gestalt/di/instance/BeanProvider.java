@@ -10,18 +10,16 @@ import java.util.Optional;
 public abstract class BeanProvider<T> implements AutoCloseable {
     protected final Lifetime lifetime;
     protected final BeanEnvironment environment;
-    protected final BeanContext parent;
 
-    public BeanProvider(BeanEnvironment environment, Lifetime lifetime, BeanContext parent) {
+    public BeanProvider(BeanEnvironment environment, Lifetime lifetime) {
         this.lifetime = lifetime;
         this.environment = environment;
-        this.parent = parent;
     }
 
     public Lifetime getLifetime() {
         return lifetime;
     }
 
-    public abstract T get(BeanIdentifier identifier, BeanContext context);
+    public abstract T get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo);
 
 }

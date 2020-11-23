@@ -348,6 +348,16 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                         ).returns(ClassName.get("org.terasology.context", "AnnotationMetadata"))
                             .addCode("return $L;", CLASS_METADATA_FIELD).build()
                     )
+                    .addMethod(
+                        MethodSpec.overriding(beanDefinitionClass
+                            .getEnclosedElements().stream()
+                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getArguments"))
+                            .map((elem) -> (ExecutableElement) elem)
+                            .findFirst()
+                            .get()
+                        ).returns(ArrayTypeName.of(ClassName.get("org.terasology.context", "Argument")))
+                            .addCode("return $L;", ARGUMENT_FIELD).build()
+                    )
                     .addMethod(injectMethod.build())
                     .addMethod(
                         MethodSpec.overriding(beanDefinitionClass

@@ -36,6 +36,11 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
 
 
     @Override
+    public List<AnnotationValue> getAnnotationsByStereotype(Class<? extends Annotation> stereotype) {
+        return getAnnotationsByStereotype(stereotype.getName());
+    }
+
+    @Override
     public List<AnnotationValue> getAnnotationsByStereotype(String stereotype) {
         List<AnnotationValue> results = new ArrayList<>();
         if (annotations.containsKey(stereotype)) {

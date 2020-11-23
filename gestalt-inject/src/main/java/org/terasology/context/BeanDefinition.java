@@ -3,7 +3,13 @@ package org.terasology.context;
 public interface BeanDefinition<T> {
     AnnotationMetadata getAnnotationMetadata();
 
-//    boolean isSingleton();
+    T build(BeanResolution resolution);
+
+    T inject(T instance, BeanResolution resolution);
+
+    Argument[] getArguments();
+
+    Class[] getTypeArgument();
 
     Class<T> targetClass();
 }

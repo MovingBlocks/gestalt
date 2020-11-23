@@ -18,17 +18,17 @@ import java.util.Optional;
 public class ClassProvider<T> extends BeanProvider<T> {
     private final Class<T> target;
 
-    public ClassProvider(BeanEnvironment environment, Lifetime lifetime, BeanContext current, Class<T> target) {
-        super(environment, lifetime, current);
+    public ClassProvider(BeanEnvironment environment, Lifetime lifetime, Class<T> target) {
+        super(environment, lifetime);
         this.target = target;
         environment.getInstance(target);
     }
 
     @Override
-    public T get(BeanIdentifier identifier, BeanContext context) {
+    public T get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo) {
         BeanDefinition<T> definition = environment.getInstance(target);
         if (definition instanceof AbstractBeanDefinition) {
-            BeanContext cntx = lifetime == Lifetime.Singleton ? parent : context;
+            BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;
             return ((AbstractBeanDefinition<T>) definition).build(new BeanResolution() {
                 @Override
                 public <T> T resolveConstructorArgument(Class<T> target, Argument<T> argument) {

@@ -1,6 +1,7 @@
 package org.terasology.gestalt.di;
 
-import com.sun.istack.internal.Nullable;
+import org.terasology.context.BeanDefinition;
+import org.terasology.gestalt.di.qualifiers.Qualifier;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -8,12 +9,19 @@ import java.util.Objects;
 public class BeanKey<T> implements BeanIdentifier {
     private final Class beanType;
     private final Class[] typeArguments;
+    private final Qualifier<T> qualifier;
     private final int hashCode;
 
-    public BeanKey(Class<T> beanType, @Nullable Class... typeArguments) {
+
+    BeanKey(BeanDefinition<T> definition, Qualifier<T> qualifier) {
+        this(definition.targetClass(), qualifier, definition.getTypeArgument());
+    }
+
+    public BeanKey(Class<T> beanType, Qualifier<T> qualifier, Class... typeArguments) {
         this.beanType = beanType;
+        this.qualifier = qualifier;
         this.typeArguments = (typeArguments == null || typeArguments.length == 0) ? null : typeArguments;
-        int result = Objects.hash(beanType);
+        int result = Objects.hash(beanType, qualifier);
         result = 31 * result + Arrays.hashCode(this.typeArguments);
         this.hashCode = result;
     }

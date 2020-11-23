@@ -8,10 +8,6 @@ public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
         return new DefaultAnnotationMetadata(new AnnotationValue[]{});
     }
 
-//    public T build(BeanContext beanContext) {
-//        return null;
-//    }
-
     public T build(BeanResolution resolution) {
         return null;
     }
@@ -20,6 +16,17 @@ public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
         return instance;
     }
 
+    public abstract  Argument[] getArguments();
+
+    @Override
+    public Class[] getTypeArgument() {
+        Class[] results = new Class[getArguments().length];
+        Argument[] args = getArguments();
+        for (int i = 0; i < args.length; i++) {
+            results[i] = args[i].getType();
+        }
+        return results;
+    }
 
     public abstract Class<T> targetClass();
 }

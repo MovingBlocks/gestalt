@@ -7,9 +7,9 @@ public interface BeanContext {
 
     Optional<BeanContext> getParent();
 
-    <T> T inject(Annotation parent,T instance);
+    <T> T inject(T instance);
 
     <T> T inject(BeanKey<T> identifier);
 
-
+    <T> T fetch(Class<T> clazz);
 }
