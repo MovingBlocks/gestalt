@@ -1,10 +1,13 @@
+// Copyright 2020 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
+
 package org.terasology.context;
+
+import com.google.common.collect.Maps;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +17,7 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
     private String annotationName;
     private Map<String, Object> defaultValues;
     private Map<String, Object> values;
-    private Map<String, AnnotationValue[]> annotations;
+    private Map<String, AnnotationValue[]> annotations = Maps.newHashMap();
 
     public DefaultAnnotationValue(String name, Map<String, Object> values, Map<String, Object> defaultValues) {
         this(name, values, defaultValues, new AnnotationValue[]{});
