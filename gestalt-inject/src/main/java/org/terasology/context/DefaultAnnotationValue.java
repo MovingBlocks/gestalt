@@ -15,15 +15,17 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
     private Map<String, Object> defaultValues;
     private Map<String, Object> values;
     private Map<String, AnnotationValue[]> annotations;
+    private Class<S> annType;
 
-    public DefaultAnnotationValue(String name, Map<String, Object> values, Map<String, Object> defaultValues) {
-        this(name, values, defaultValues, new AnnotationValue[]{});
+    public DefaultAnnotationValue(Class<S> annType,String name, Map<String, Object> values, Map<String, Object> defaultValues) {
+        this(annType,name, values, defaultValues, new AnnotationValue[]{});
     }
 
-    public DefaultAnnotationValue(String name, Map<String, Object> values, Map<String, Object> defaultValues, AnnotationValue[] annotations) {
+    public DefaultAnnotationValue(Class<S> annType,String name, Map<String, Object> values, Map<String, Object> defaultValues, AnnotationValue[] annotations) {
         this.annotationName = name;
         this.defaultValues = defaultValues;
         this.values = values;
+        this.annType  = annType;
         Arrays.stream(annotations).collect(Collectors.groupingBy(k -> k.getAnnotationName())).forEach((k, v) -> {
             this.annotations.putIfAbsent(k, v.toArray(new DefaultAnnotationValue[0]));
         });
@@ -32,6 +34,11 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
     @Override
     public String getAnnotationName() {
         return annotationName;
+    }
+
+    @Override
+    public Class<S> getAnnotationType() {
+        return this.annType;
     }
 
 

@@ -12,4 +12,5 @@ public interface BeanDefinition<T> {
     Class[] getTypeArgument();
 
     Class<T> targetClass();
+
 }

@@ -12,4 +12,6 @@ public interface Qualifier<T> {
     default boolean contains(Qualifier<T> qualifier) {
         return equals(qualifier);
     }
+
+
 }

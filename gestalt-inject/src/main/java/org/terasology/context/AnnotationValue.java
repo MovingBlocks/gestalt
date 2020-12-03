@@ -8,6 +8,8 @@ public interface AnnotationValue<S extends Annotation> extends Iterable<Annotati
 
     String getAnnotationName();
 
+    Class<S> getAnnotationType();
+
     boolean hasAnnotation(String annotation);
 
     boolean hasAnnotation(Class<? extends Annotation> annotation);

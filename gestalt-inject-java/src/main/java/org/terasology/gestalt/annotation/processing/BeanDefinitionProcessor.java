@@ -204,8 +204,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     return !name.startsWith("java.lang");
                 }).collect(Collectors.toList());
 
-                annotationsBuilder.add(CodeBlock.builder().add("new $T($S,$T.of($L),$T.of($L),new $T[] {$L})",
+                annotationsBuilder.add(CodeBlock.builder().add("new $T($T.class,$S,$T.of($L),$T.of($L),new $T[] {$L})",
                     ClassName.get("org.terasology.context", "DefaultAnnotationValue"),
+                    declaredType,
                     declaredType.toString(),
                     ClassName.get("org.terasology.context", "AnnotationMetaUtil"),
                     CodeBlock.join(defaults, ","),

@@ -24,6 +24,7 @@ public class BeanKey<T> implements BeanIdentifier {
         int result = Objects.hash(beanType, qualifier);
         result = 31 * result + Arrays.hashCode(this.typeArguments);
         this.hashCode = result;
+
     }
 
     public <T> Class<T> getBeanType() {

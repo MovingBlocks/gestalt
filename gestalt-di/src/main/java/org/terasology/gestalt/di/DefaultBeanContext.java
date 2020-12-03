@@ -8,6 +8,7 @@ import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.InjectionUtility;
 import org.terasology.gestalt.di.instance.SupplierProvider;
+import org.terasology.gestalt.di.qualifiers.Qualifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -87,10 +88,25 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     @Override
-    public <T> T fetch(Class<T> clazz) {
-        BeanKey key = new BeanKey<T>(clazz, null);
-        return (T) inject(key);
+    public <T> T getBean(Class<T> clazz) {
+        return null;
     }
+
+    @Override
+    public <T> T getBean(Class<T> clazz, Qualifier<T> qualifier) {
+        return null;
+    }
+
+    @Override
+    public <T> T getBean(BeanDefinition<T> beanDefinition) {
+        return null;
+    }
+//
+//    @Override
+//    public <T> T inject(Class<T> clazz) {
+//        BeanKey key = new BeanKey<T>(clazz,null);
+//        return (T) inject(key);
+//    }
 
     private <T> T internalResolve(BeanIdentifier identifier, DefaultBeanContext context) {
         if (providers.containsKey(identifier)) {
