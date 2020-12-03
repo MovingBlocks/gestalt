@@ -1,3 +1,6 @@
+// Copyright 2020 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
+
 package org.terasology.gestalt.annotation.processing;
 
 import com.squareup.javapoet.ArrayTypeName;
@@ -321,6 +324,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             JavaFile.Builder builder = JavaFile.builder(
                 className.substring(0, className.lastIndexOf('.')),
                 TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "$BeanDefinition")
+                        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                     .superclass(ParameterizedTypeName.get(
                         ClassName.get(beanDefinitionClass),
                         TypeName.get(typeElement.asType()))
