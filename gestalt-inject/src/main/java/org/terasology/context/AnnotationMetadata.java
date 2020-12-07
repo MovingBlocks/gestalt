@@ -9,6 +9,10 @@ public interface AnnotationMetadata {
 
     List<AnnotationValue> getAnnotationsByStereotype(String stereotype);
 
+    List<AnnotationValue> findAnnotations(String annotation);
+
+    List<AnnotationValue> findAnnotations(Class<? extends Annotation> annotation);
+
     boolean hasAnnotation(Class<? extends Annotation> annotation);
 
     boolean hasAnnotation(String annotation);

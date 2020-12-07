@@ -18,6 +18,16 @@ public class EmptyAnnotationMetadata implements AnnotationMetadata {
     }
 
     @Override
+    public List<AnnotationValue> findAnnotations(String annotation) {
+        return null;
+    }
+
+    @Override
+    public List<AnnotationValue> findAnnotations(Class<? extends Annotation> annotation) {
+        return null;
+    }
+
+    @Override
     public boolean hasAnnotation(Class<? extends Annotation> annotation) {
         return false;
     }

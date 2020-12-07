@@ -1,6 +1,7 @@
 package org.terasology.context;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 public class DefaultAnnotationMetadata implements AnnotationMetadata {
@@ -34,7 +36,6 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
         return null;
     }
 
-
     @Override
     public List<AnnotationValue> getAnnotationsByStereotype(Class<? extends Annotation> stereotype) {
         return getAnnotationsByStereotype(stereotype.getName());
@@ -43,15 +44,35 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
     @Override
     public List<AnnotationValue> getAnnotationsByStereotype(String stereotype) {
         List<AnnotationValue> results = new ArrayList<>();
-        if (annotations.containsKey(stereotype)) {
-            results.addAll(Arrays.asList(annotations.get(stereotype)));
-        }
-        for (AnnotationValue[] annotations : annotations.values()) {
-            for (AnnotationValue annotation : annotations) {
-                results.addAll(annotation.getAnnotationsByStereotype(stereotype));
+        for(Map.Entry<String, AnnotationValue[]> pairs : annotations.entrySet()) {
+            if(pairs.getKey().equals(stereotype)) {
+                continue;
+            }
+            for (AnnotationValue ann : pairs.getValue()) {
+                results.addAll(ann.getAnnotationsByStereotype(stereotype));
             }
         }
         return results;
+    }
+
+    @Override
+    public List<AnnotationValue> findAnnotations(String annotation) {
+        List<AnnotationValue> results = new ArrayList<>();
+        for (Map.Entry<String, AnnotationValue[]> pairs : annotations.entrySet()) {
+            if (pairs.getKey().equals(annotation)) {
+                results.addAll(Arrays.asList(pairs.getValue()));
+            } else {
+                for (AnnotationValue metadata : pairs.getValue()) {
+                    results.addAll(metadata.findAnnotations(annotation));
+                }
+            }
+        }
+        return results;
+    }
+
+    @Override
+    public List<AnnotationValue> findAnnotations(Class<? extends Annotation> annotation) {
+        return findAnnotations(annotation.getName());
     }
 
     public boolean hasAnnotation(Class<? extends Annotation> annotation) {

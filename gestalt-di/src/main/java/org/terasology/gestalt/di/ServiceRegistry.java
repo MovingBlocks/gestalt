@@ -20,8 +20,10 @@ public class ServiceRegistry {
         this.expression = expression;
     }
 
-    public void includeRegistry(ServiceRegistry registry){
-
+    public void includeRegistry(ServiceRegistry registry) {
+        for (InstanceExpression expression : registry.instanceExpressions) {
+            instanceExpressions.add(expression);
+        }
     }
 
     public <T> InstanceExpression<T> with(Class<T> type) {

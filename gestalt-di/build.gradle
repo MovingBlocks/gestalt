@@ -8,6 +8,7 @@ repositories {
 dependencies {
     testAnnotationProcessor project(":gestalt-inject-java")
 
+    implementation "com.google.guava:guava:$guava_version"
     implementation project(":gestalt-inject")
 
     testImplementation "junit:junit:$junit_version"
