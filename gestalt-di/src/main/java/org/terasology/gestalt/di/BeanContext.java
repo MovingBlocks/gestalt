@@ -14,20 +14,17 @@ public interface BeanContext {
 
     <T> T inject(T instance, BeanTransaction transaction);
 
-    <T> T resolve(BeanKey<T> identifier);
+    <T> T getBean(BeanKey<T> identifier) throws Exception;
 
-    <T> T resolve(BeanKey<T> identifier, BeanTransaction transaction);
+    <T> T getBean(BeanKey<T> identifier, BeanTransaction transaction) throws Exception;
 
-    <T> T getBean(Class<T> clazz);
+    <T> T getBean(Class<T> clazz) throws Exception;
 
-    <T> T getBean(Class<T> clazz, BeanTransaction transaction);
+    <T> T getBean(Class<T> clazz, BeanTransaction transaction) throws Exception;
 
-    <T> T getBean(Class<T> clazz, Qualifier<T> qualifier);
+    <T> T getBean(Class<T> clazz, Qualifier<T> qualifier) throws Exception;
 
-    <T> T getBean(Class<T> clazz, Qualifier<T> qualifier, BeanTransaction transaction);
+    <T> T getBean(Class<T> clazz, Qualifier<T> qualifier, BeanTransaction transaction) throws Exception;
 
-    <T> T getBean(BeanDefinition<T> beanDefinition);
-
-    <T> T getBean(BeanDefinition<T> beanDefinition, BeanTransaction transaction);
 
 }

@@ -11,7 +11,8 @@ public class BeanTransaction implements AutoCloseable {
     private static class ContextTransaction {
         public final Map<BeanIdentifier, Object> boundObjects = new ConcurrentHashMap<>();
     }
-    public Map<BeanContext, ContextTransaction> transactionMap = new HashMap<>();
+    private Map<BeanContext, ContextTransaction> transactionMap = new HashMap<>();
+    private boolean isCommitted = false;
 
     <T> Optional<T> bind(BeanContext context, BeanIdentifier identifier, Supplier<T> supplier) throws Exception {
         ContextTransaction transaction = transactionMap.computeIfAbsent(context, (k) -> new ContextTransaction());
@@ -30,6 +31,7 @@ public class BeanTransaction implements AutoCloseable {
     }
 
     protected void commit() throws Exception {
+        isCommitted = true;
         for (Map.Entry<BeanContext, ContextTransaction> transactionEntry : transactionMap.entrySet()) {
             BeanContext context = transactionEntry.getKey();
             ContextTransaction trans = transactionEntry.getValue();
@@ -43,7 +45,16 @@ public class BeanTransaction implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        if (!isCommitted) {
+            for (ContextTransaction transaction : transactionMap.values()) {
+                for (Object o : transaction.boundObjects.values()) {
+                    if (o instanceof AutoCloseable) {
+                        ((AutoCloseable) o).close();
+                    }
+                }
 
+            }
+        }
     }
 
 

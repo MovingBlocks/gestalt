@@ -15,12 +15,12 @@ public class DefaultBeanResolution implements BeanResolution {
         }
 
         BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
-        return beanContext.resolve(key);
+        return beanContext.getBean(key);
     }
 
     @Override
     public <T> T resolveParameterArgument(Class<T> target, Argument<T> argument) {
         BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
-        return beanContext.resolve(key);
+        return beanContext.getBean(key);
     }
 }
