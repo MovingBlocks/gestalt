@@ -21,6 +21,6 @@ public abstract class BeanProvider<T> implements AutoCloseable {
         return lifetime;
     }
 
-    public abstract T get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo, BeanTransaction transaction);
+    public abstract Optional<T> get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo, BeanTransaction transaction);
 
 }

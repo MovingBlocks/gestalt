@@ -1,5 +1,9 @@
 package org.terasology.gestalt.di;
 
+import org.terasology.context.exception.CloseBeanException;
+import org.terasology.context.exception.DependencyInjectionException;
+import org.terasology.gestalt.di.exceptions.UnknownContextTypeException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -14,7 +18,7 @@ public class BeanTransaction implements AutoCloseable {
     private Map<BeanContext, ContextTransaction> transactionMap = new HashMap<>();
     private boolean isCommitted = false;
 
-    <T> Optional<T> bind(BeanContext context, BeanIdentifier identifier, Supplier<T> supplier) throws Exception {
+    <T> Optional<T> bind(BeanContext context, BeanIdentifier identifier, Supplier<T> supplier) throws UnknownContextTypeException {
         ContextTransaction transaction = transactionMap.computeIfAbsent(context, (k) -> new ContextTransaction());
         if (context instanceof DefaultBeanContext) {
             if (((DefaultBeanContext) context).boundObjects.containsKey(identifier)) {
@@ -27,10 +31,10 @@ public class BeanTransaction implements AutoCloseable {
             transaction.boundObjects.put(identifier, result);
             return Optional.of(result);
         }
-        throw new Exception("Unknown context type: " + context.getClass());
+        throw new UnknownContextTypeException(context);
     }
 
-    protected void commit() throws Exception {
+    protected void commit() throws UnknownContextTypeException {
         isCommitted = true;
         for (Map.Entry<BeanContext, ContextTransaction> transactionEntry : transactionMap.entrySet()) {
             BeanContext context = transactionEntry.getKey();
@@ -38,24 +42,26 @@ public class BeanTransaction implements AutoCloseable {
             if (context instanceof DefaultBeanContext) {
                 ((DefaultBeanContext) context).boundObjects.putAll(trans.boundObjects);
             } else {
-                throw new Exception("Unknown context type: " + context.getClass());
+                throw new UnknownContextTypeException(context);
             }
         }
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws DependencyInjectionException {
         if (!isCommitted) {
             for (ContextTransaction transaction : transactionMap.values()) {
                 for (Object o : transaction.boundObjects.values()) {
                     if (o instanceof AutoCloseable) {
-                        ((AutoCloseable) o).close();
+                        try {
+                            ((AutoCloseable) o).close();
+                        } catch (Exception e){
+                            throw new CloseBeanException("Cannot close bound bean", e);
+                        }
                     }
                 }
 
             }
         }
     }
-
-
 }

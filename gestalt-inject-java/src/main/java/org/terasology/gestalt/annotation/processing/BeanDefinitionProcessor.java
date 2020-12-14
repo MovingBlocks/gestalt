@@ -13,6 +13,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import org.terasology.context.exception.BeanNotFoundException;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -32,6 +33,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementScanner8;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -261,12 +263,17 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             } else {
                 builder.add("$T result = new $T();\n", targetClass, targetClass);
             }
-
             return builder.add("return this.inject(result,resolution);").build();
         }
 
         private CodeBlock buildResolution(String method, VariableElement element) {
-            return CodeBlock.builder().add("resolution.$L($T.class,$L)", method, ClassName.get(element.asType()), buildArgument(element)).build();
+            //TODO use `Optional#orThrowElse()`
+            return CodeBlock.builder().add("($T)resolution.$L($T.class,$L).get()",
+                    ClassName.get(element.asType()),
+                    method,
+                    ClassName.get(element.asType()),
+                    buildArgument(element)
+            ).build();
         }
 
         private CodeBlock buildInjectionBlock(TypeElement target) {
@@ -288,7 +295,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     }
                 }
             }
-            return builder.add("return $L;", name).build();
+            return builder.add("return $L.$L($L);",ClassName.get(Optional.class), "of", name).build();
         }
 
         private CodeBlock buildArgumentBlock() {
@@ -317,7 +324,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                 .map((elem) -> (ExecutableElement) elem)
                 .findFirst()
                 .get()
-            ).returns(ClassName.get(typeElement)).addCode(injectionBlock);
+            ).returns(TypeName.get(Optional.class)).addCode(injectionBlock);
             injectMethod.parameters.set(0, ParameterSpec.builder(TypeName.get(typeElement.asType()), "instance").build());
 
 
@@ -371,7 +378,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                             .map((elem) -> (ExecutableElement) elem)
                             .findFirst()
                             .get()
-                        ).returns(ClassName.get(typeElement)).addCode("$L", injectionCreationBuilder).build()
+                        ).returns(TypeName.get(Optional.class)).addCode("$L", injectionCreationBuilder).build()
                     )
                     .build());
             try {

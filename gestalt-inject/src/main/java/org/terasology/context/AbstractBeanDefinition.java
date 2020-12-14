@@ -1,6 +1,7 @@
 package org.terasology.context;
 
-import java.beans.beancontext.BeanContext;
+
+import java.util.Optional;
 
 public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
 
@@ -8,15 +9,15 @@ public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
         return new DefaultAnnotationMetadata(new AnnotationValue[]{});
     }
 
-    public T build(BeanResolution resolution) {
-        return null;
+    public Optional<T> build(BeanResolution resolution) {
+        return Optional.empty();
     }
 
-    public T inject(T instance, BeanResolution resolution) {
-        return instance;
+    public Optional<T> inject(T instance, BeanResolution resolution) {
+        return Optional.of(instance);
     }
 
-    public abstract  Argument[] getArguments();
+    public abstract Argument[] getArguments();
 
     @Override
     public Class[] getTypeArgument() {
