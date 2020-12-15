@@ -17,7 +17,7 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
                 .forEach((k, v) -> this.annotations.putIfAbsent(k, v.toArray(new AnnotationValue[0])));
     }
 
-    public static DefaultAnnotationMetadata build(AnnotationValue[] annotation) {
+    public static DefaultAnnotationMetadata build(AnnotationValue<Annotation>[] annotation) {
         return new DefaultAnnotationMetadata(annotation);
     }
 
