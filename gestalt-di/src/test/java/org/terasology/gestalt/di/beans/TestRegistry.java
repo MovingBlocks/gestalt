@@ -13,5 +13,6 @@ public class TestRegistry extends ServiceRegistry {
             .lifetime(Lifetime.Singleton)
             .named("dep3");
         this.with(Dep1.class);
+        this.with(ParentDep.class);
     }
 }

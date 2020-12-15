@@ -18,7 +18,7 @@ public class BeanTransaction implements AutoCloseable {
     private Map<BeanContext, ContextTransaction> transactionMap = new HashMap<>();
     private boolean isCommitted = false;
 
-    <T> Optional<T> bind(BeanContext context, BeanIdentifier identifier, Supplier<T> supplier) throws UnknownContextTypeException {
+    <T> Optional<T> bind(BeanContext context, BeanIdentifier identifier, Supplier<Optional<T>> supplier) throws UnknownContextTypeException {
         ContextTransaction transaction = transactionMap.computeIfAbsent(context, (k) -> new ContextTransaction());
         if (context instanceof DefaultBeanContext) {
             if (((DefaultBeanContext) context).boundObjects.containsKey(identifier)) {
@@ -27,9 +27,9 @@ public class BeanTransaction implements AutoCloseable {
             if (transaction.boundObjects.containsKey(identifier)) {
                 return Optional.of((T) transaction.boundObjects.get(identifier));
             }
-            T result = supplier.get();
-            transaction.boundObjects.put(identifier, result);
-            return Optional.of(result);
+            Optional<T> result = supplier.get();
+            result.ifPresent(t -> transaction.boundObjects.put(identifier, t));
+            return result;
         }
         throw new UnknownContextTypeException(context);
     }
@@ -60,7 +60,6 @@ public class BeanTransaction implements AutoCloseable {
                         }
                     }
                 }
-
             }
         }
     }

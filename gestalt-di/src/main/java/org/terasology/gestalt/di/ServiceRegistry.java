@@ -2,8 +2,6 @@ package org.terasology.gestalt.di;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -27,9 +25,9 @@ public class ServiceRegistry {
     }
 
     public <T> InstanceExpression<T> with(Class<T> type) {
-        InstanceExpression expr = new InstanceExpression<>(type);
+        InstanceExpression<T> expr = new InstanceExpression<>(type);
         instanceExpressions.add(expr);
-        return expr;
+        return expr.use(type);
     }
 
     public <T> InstanceExpression<T> singleton(Class<T> type) {
@@ -56,13 +54,11 @@ public class ServiceRegistry {
 
         public InstanceExpression<T> use(Supplier<T> instance) {
             this.supplier = instance;
-            this.target = null;
             return this;
         }
 
         public InstanceExpression<T> use(Class<T> target) {
             this.target = target;
-            this.supplier = null;
             return this;
 
         }

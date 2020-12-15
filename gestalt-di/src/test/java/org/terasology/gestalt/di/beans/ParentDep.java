@@ -20,5 +20,8 @@ public class ParentDep {
 
     }
 
+    public Dep3 getDep() {
+        return dep;
+    }
 }
 

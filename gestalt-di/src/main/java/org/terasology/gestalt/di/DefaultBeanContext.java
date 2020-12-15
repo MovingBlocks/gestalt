@@ -100,7 +100,9 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
             if (beanContext instanceof DefaultBeanContext) {
                 DefaultBeanContext defContext = ((DefaultBeanContext) beanContext);
                 Optional<T> target = defContext.internalResolve(identifier, this, transaction);
-                return target;
+                if(target.isPresent()){
+                    return target;
+                }
             }
             cntx = getParent();
         }
@@ -120,9 +122,9 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 case Transient:
                     return provider.<T>get(identifier, this, currentContext, transaction);
                 case Singleton:
-                    return transaction.bind(this, identifier, () -> (T) provider.get(identifier, this, currentContext, transaction));
+                    return transaction.bind(this, identifier, () ->  provider.<T>get(identifier, this, currentContext, transaction));
                 case Scoped:
-                    return transaction.bind(currentContext, identifier, () -> (T) provider.get(identifier, this, currentContext, transaction));
+                    return transaction.bind(currentContext, identifier, () -> provider.<T>get(identifier, this, currentContext, transaction));
             }
         }
         return Optional.empty();
