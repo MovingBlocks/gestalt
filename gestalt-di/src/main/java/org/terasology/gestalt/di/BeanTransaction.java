@@ -1,7 +1,6 @@
 package org.terasology.gestalt.di;
 
 import org.terasology.context.exception.CloseBeanException;
-import org.terasology.context.exception.DependencyInjectionException;
 import org.terasology.gestalt.di.exceptions.UnknownContextTypeException;
 
 import java.util.HashMap;
@@ -15,11 +14,11 @@ public class BeanTransaction implements AutoCloseable {
     private static class ContextTransaction {
         public final Map<BeanIdentifier, Object> boundObjects = new ConcurrentHashMap<>();
     }
-    private Map<BeanContext, ContextTransaction> transactionMap = new HashMap<>();
+    private final Map<BeanContext, ContextTransaction> transactionMap = new HashMap<>();
     private boolean isCommitted = false;
 
     <T> Optional<T> bind(BeanContext context, BeanIdentifier identifier, Supplier<Optional<T>> supplier) throws UnknownContextTypeException {
-        ContextTransaction transaction = transactionMap.computeIfAbsent(context, (k) -> new ContextTransaction());
+        ContextTransaction transaction = transactionMap.computeIfAbsent(context, k -> new ContextTransaction());
         if (context instanceof DefaultBeanContext) {
             if (((DefaultBeanContext) context).boundObjects.containsKey(identifier)) {
                 return Optional.of((T) ((DefaultBeanContext) context).boundObjects.get(identifier));
@@ -48,7 +47,7 @@ public class BeanTransaction implements AutoCloseable {
     }
 
     @Override
-    public void close() throws DependencyInjectionException {
+    public void close() {
         if (!isCommitted) {
             for (ContextTransaction transaction : transactionMap.values()) {
                 for (Object o : transaction.boundObjects.values()) {

@@ -13,7 +13,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import org.terasology.context.exception.BeanNotFoundException;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -28,12 +27,9 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementScanner8;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -53,14 +49,14 @@ import java.util.stream.Collectors;
 @SupportedOptions({"org.terasology.gestalt.annotation.processing"})
 public class BeanDefinitionProcessor extends AbstractProcessor {
 
-    private static final String Introspected = "org.terasology.context.annotation.Introspected";
+    private static final String INTROSPECTED_CLASS = "org.terasology.context.annotation.Introspected";
 
 
     private static final String[] TARGET_ANNOTATIONS = new String[]{
         "javax.inject.Inject",
         "javax.inject.Qualifier",
         "javax.inject.Singleton",
-        Introspected
+            INTROSPECTED_CLASS
     };
 
     private Filer filer;
@@ -68,8 +64,8 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     private ElementUtility utility;
     private Messager messager;
 
-    private Set<String> processed = new HashSet<>();
-    private Set<String> beanDefinitions = new HashSet<>();
+    private final Set<String> processed = new HashSet<>();
+    private final Set<String> beanDefinitions = new HashSet<>();
 
     protected Elements elementUtils;
     protected Types typeUtils;
@@ -110,10 +106,10 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     return;
                 }
                 String name = typeElement.getQualifiedName().toString();
-                if (!beanDefinitions.contains(name) && !processed.contains(name)) {
-                    if (typeElement.getKind() != ElementKind.INTERFACE) {
+                if (!beanDefinitions.contains(name)
+                        && !processed.contains(name)
+                        && typeElement.getKind() != ElementKind.INTERFACE) {
                         beanDefinitions.add(name);
-                    }
                 }
             }));
 
@@ -145,8 +141,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     }
 
     public class DefinitionWriter extends ElementScanner8<Object, String> {
+        public static final String BASE_PACKAGE = "org.terasology.context";
         private final TypeElement concreteClass;
-        private List<CodeBlock> arguments = new ArrayList<>();
+        private final List<CodeBlock> arguments = new ArrayList<>();
 
         public static final String ARGUMENT_FIELD = "$ARGUMENT";
         public static final String CLASS_METADATA_FIELD = "$CLASS_METADATA";
@@ -154,16 +151,6 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
         DefinitionWriter(TypeElement concreteClass) {
             this.concreteClass = concreteClass;
-        }
-
-        @Override
-        public Object visitVariable(VariableElement e, String o) {
-            return super.visitVariable(e, o);
-        }
-
-        @Override
-        public Object visitPackage(PackageElement e, String o) {
-            return super.visitPackage(e, o);
         }
 
         @Override
@@ -210,14 +197,14 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                 }).collect(Collectors.toList());
 
                 annotationsBuilder.add(CodeBlock.builder().add("new $T($T.class,$S,$T.of($L),$T.of($L),new $T[] {$L})",
-                    ClassName.get("org.terasology.context", "DefaultAnnotationValue"),
+                    ClassName.get(BASE_PACKAGE, "DefaultAnnotationValue"),
                     declaredType,
                     declaredType.toString(),
-                    ClassName.get("org.terasology.context", "AnnotationMetaUtil"),
+                    ClassName.get(BASE_PACKAGE, "AnnotationMetaUtil"),
                     CodeBlock.join(defaults, ","),
-                    ClassName.get("org.terasology.context", "AnnotationMetaUtil"),
+                    ClassName.get(BASE_PACKAGE, "AnnotationMetaUtil"),
                     CodeBlock.join(values, ","),
-                    ClassName.get("org.terasology.context", "AnnotationValue"),
+                    ClassName.get(BASE_PACKAGE, "AnnotationValue"),
                     CodeBlock.join(buildAnnotationValues(children), ",")).build());
             }
             return annotationsBuilder;
@@ -226,15 +213,15 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         private CodeBlock buildAnnotationMetadataBlock(Element element) {
             List<CodeBlock> blocks = buildAnnotationValues(element.getAnnotationMirrors());
             return CodeBlock.builder().add("new $T(new $T[]{$L})",
-                ClassName.get("org.terasology.context", "DefaultAnnotationMetadata"),
-                ClassName.get("org.terasology.context", "AnnotationValue"),
+                ClassName.get(BASE_PACKAGE, "DefaultAnnotationMetadata"),
+                ClassName.get(BASE_PACKAGE, "AnnotationValue"),
                 CodeBlock.join(blocks, ",")).build();
 
         }
 
         private CodeBlock buildArgument(VariableElement element) {
             arguments.add(CodeBlock.builder().add("new $T($T.class,$L)",
-                ClassName.get("org.terasology.context", "DefaultArgument"),
+                ClassName.get(BASE_PACKAGE, "DefaultArgument"),
                 element,
                 buildAnnotationMetadataBlock(element)).build());
             return CodeBlock.builder().add("$L[" + (arguments.size() - 1) + "]", ARGUMENT_FIELD).build();
@@ -245,7 +232,6 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             ClassName targetClass = ClassName.get(target);
 
             Element[] constructors = target.getEnclosedElements().stream().filter(k -> k.getKind() == ElementKind.CONSTRUCTOR).toArray(Element[]::new);
-            Optional<Element> emptyConstructor = Arrays.stream(constructors).filter(k -> k instanceof ExecutableElement && ((ExecutableElement) k).getParameters().size() == 0).findFirst();
             Element[] injectionConstructor = Arrays.stream(constructors)
                 .filter(k -> k.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName())))
                 .toArray(Element[]::new);
@@ -256,7 +242,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     builder.add("$T result = new $T($L); \n",
                         targetClass,
                         targetClass,
-                        CodeBlock.join(constructorParams.getParameters().stream().map((k) ->
+                        CodeBlock.join(constructorParams.getParameters().stream().map(k ->
                             buildResolution("resolveConstructorArgument", k)
                         ).collect(Collectors.toList()), ","));
                 }
@@ -269,9 +255,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         private CodeBlock buildResolution(String method, VariableElement element) {
             //TODO use `Optional#orThrowElse()`
             return CodeBlock.builder().add("($T)resolution.$L($T.class,$L).get()",
-                    ClassName.get(element.asType()),
+                    TypeName.get(element.asType()),
                     method,
-                    ClassName.get(element.asType()),
+                    TypeName.get(element.asType()),
                     buildArgument(element)
             ).build();
         }
@@ -279,7 +265,6 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         private CodeBlock buildInjectionBlock(TypeElement target) {
             String name = "instance";
             CodeBlock.Builder builder = CodeBlock.builder();
-            ClassName targetClass = ClassName.get(target);
 
             for (Element ele : target.getEnclosedElements()) {
                 if (ele.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName()))) {
@@ -300,7 +285,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
         private CodeBlock buildArgumentBlock() {
             return CodeBlock.builder().add("new $T[]{$L}",
-                ClassName.get("org.terasology.context", "Argument"),
+                ClassName.get(BASE_PACKAGE, "Argument"),
                 CodeBlock.join(this.arguments, ",")
             ).build();
         }
@@ -320,8 +305,8 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
             MethodSpec.Builder injectMethod = MethodSpec.overriding(beanDefinitionClass
                 .getEnclosedElements().stream()
-                .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("inject"))
-                .map((elem) -> (ExecutableElement) elem)
+                .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("inject"))
+                .map(elem -> (ExecutableElement) elem)
                 .findFirst()
                 .get()
             ).returns(TypeName.get(Optional.class)).addCode(injectionBlock);
@@ -336,15 +321,15 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                         ClassName.get(beanDefinitionClass),
                         TypeName.get(typeElement.asType()))
                     )
-                    .addField(FieldSpec.builder(ClassName.get("org.terasology.context", "AnnotationMetadata"), CLASS_METADATA_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
+                    .addField(FieldSpec.builder(ClassName.get(BASE_PACKAGE, "AnnotationMetadata"), CLASS_METADATA_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
                         .initializer(classAnnotationBuilder).build())
-                    .addField(FieldSpec.builder(ArrayTypeName.of(ClassName.get("org.terasology.context", "Argument")), ARGUMENT_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
+                    .addField(FieldSpec.builder(ArrayTypeName.of(ClassName.get(BASE_PACKAGE, "Argument")), ARGUMENT_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
                         .initializer(argumentBlockBuilder).build())
                     .addMethod(
                         MethodSpec.overriding(beanDefinitionClass
                             .getEnclosedElements().stream()
-                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("targetClass"))
-                            .map((elem) -> (ExecutableElement) elem)
+                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("targetClass"))
+                            .map(elem -> (ExecutableElement) elem)
                             .findFirst()
                             .get()
                         ).returns(ParameterizedTypeName.get(ClassName.get(Class.class), TypeName.get(typeElement.asType())))
@@ -353,29 +338,29 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     .addMethod(
                         MethodSpec.overriding(beanDefinitionClass
                             .getEnclosedElements().stream()
-                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getAnnotationMetadata"))
-                            .map((elem) -> (ExecutableElement) elem)
+                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getAnnotationMetadata"))
+                            .map(elem -> (ExecutableElement) elem)
                             .findFirst()
                             .get()
-                        ).returns(ClassName.get("org.terasology.context", "AnnotationMetadata"))
+                        ).returns(ClassName.get(BASE_PACKAGE, "AnnotationMetadata"))
                             .addCode("return $L;", CLASS_METADATA_FIELD).build()
                     )
                     .addMethod(
                         MethodSpec.overriding(beanDefinitionClass
                             .getEnclosedElements().stream()
-                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getArguments"))
-                            .map((elem) -> (ExecutableElement) elem)
+                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getArguments"))
+                            .map(elem -> (ExecutableElement) elem)
                             .findFirst()
                             .get()
-                        ).returns(ArrayTypeName.of(ClassName.get("org.terasology.context", "Argument")))
+                        ).returns(ArrayTypeName.of(ClassName.get(BASE_PACKAGE, "Argument")))
                             .addCode("return $L;", ARGUMENT_FIELD).build()
                     )
                     .addMethod(injectMethod.build())
                     .addMethod(
                         MethodSpec.overriding(beanDefinitionClass
                             .getEnclosedElements().stream()
-                            .filter((elem) -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("build"))
-                            .map((elem) -> (ExecutableElement) elem)
+                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("build"))
+                            .map(elem -> (ExecutableElement) elem)
                             .findFirst()
                             .get()
                         ).returns(TypeName.get(Optional.class)).addCode("$L", injectionCreationBuilder).build()
@@ -386,21 +371,6 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
-        }
-
-        @Override
-        public Object visitExecutable(ExecutableElement e, String o) {
-            return super.visitExecutable(e, o);
-        }
-
-        @Override
-        public Object visitTypeParameter(TypeParameterElement e, String o) {
-            return super.visitTypeParameter(e, o);
-        }
-
-        @Override
-        public Object visitUnknown(Element e, String o) {
-            return super.visitUnknown(e, o);
         }
     }
 }

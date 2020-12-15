@@ -71,7 +71,6 @@ public class ClassUtils {
         REFLECTION_LOGGER = getLogger(ClassUtils.class);
     }
 
-    @SuppressWarnings("unchecked")
     private static final Map<String, Class> PRIMITIVE_TYPE_MAP = new ImmutableMap.Builder<String,Class>()
         .put("int", Integer.TYPE)
         .put("boolean", Boolean.TYPE)
@@ -83,7 +82,6 @@ public class ClassUtils {
         .put("short", Short.TYPE)
         .put("void", void.class).build();
 
-    @SuppressWarnings("unchecked")
     private static final Map<String, Class> PRIMITIVE_ARRAY_MAP = new ImmutableMap.Builder<String,Class>()
         .put("int", int[].class)
         .put("boolean", boolean[].class)

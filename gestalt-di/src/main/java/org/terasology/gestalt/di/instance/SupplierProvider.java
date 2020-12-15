@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public class SupplierProvider<T> extends BeanProvider<T> {
-    private Supplier<T> supplier;
+    private final Supplier<T> supplier;
 
     public SupplierProvider(BeanEnvironment environment, Lifetime lifetime, Supplier<T> supplier) {
         super(environment, lifetime);
@@ -23,6 +23,6 @@ public class SupplierProvider<T> extends BeanProvider<T> {
 
     @Override
     public void close() throws Exception {
-
+        // nothing to close.
     }
 }

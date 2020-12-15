@@ -1,5 +1,6 @@
 package org.terasology.gestalt.di;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class DefaultBeanIdentifier implements BeanIdentifier {
@@ -14,6 +15,7 @@ public class DefaultBeanIdentifier implements BeanIdentifier {
     }
 
     @Override
+    @Nonnull
     public String toString() {
         return id;
     }

@@ -1,8 +1,10 @@
 package org.terasology.context;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -29,8 +31,8 @@ public class SoftServiceLoader<S> implements Iterable<S> {
 
 
     @Override
+    @Nonnull
     public Iterator<S> iterator() {
-
         try {
             Enumeration<URL> urls = classLoader.getResources(META_INF_SERVICES + '/' + target.getName());
             return new Iterator<S>() {
@@ -72,12 +74,16 @@ public class SoftServiceLoader<S> implements Iterable<S> {
                     }
                     String clazz = nameIterator.next();
                     try {
-                        return (S) Class.forName(clazz).newInstance();
+                        return (S) Class.forName(clazz).getDeclaredConstructor().newInstance();
                     } catch (ClassNotFoundException e) {
                         e.printStackTrace();
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchMethodException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
                         e.printStackTrace();
                     }
                     return null;

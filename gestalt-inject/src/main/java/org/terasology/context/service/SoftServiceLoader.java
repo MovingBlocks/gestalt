@@ -135,7 +135,7 @@ public final class SoftServiceLoader<S> implements Iterable<ServiceDefinition<S>
     @Override
     public Iterator<ServiceDefinition<S>> iterator() {
         return new Iterator<ServiceDefinition<S>>() {
-            Iterator<ServiceDefinition<S>> loaded = loadedServices.values().iterator();
+            private final Iterator<ServiceDefinition<S>>  loaded = loadedServices.values().iterator();
 
             @Override
             public boolean hasNext() {

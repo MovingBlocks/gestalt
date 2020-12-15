@@ -1,5 +1,7 @@
 package org.terasology.gestalt.di;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +11,7 @@ import java.util.function.Supplier;
 public class ServiceRegistry {
 
     Callable<ScannerExpression> expression;
-    protected List<InstanceExpression> instanceExpressions = new ArrayList<>();
+    protected List<InstanceExpression<?>> instanceExpressions = new ArrayList<>();
 
     public static class ScanExpression {
 
@@ -19,11 +21,10 @@ public class ServiceRegistry {
     }
 
     public void includeRegistry(ServiceRegistry registry) {
-        for (InstanceExpression expression : registry.instanceExpressions) {
-            instanceExpressions.add(expression);
-        }
+        instanceExpressions.addAll(registry.instanceExpressions);
     }
 
+    @CanIgnoreReturnValue
     public <T> InstanceExpression<T> with(Class<T> type) {
         InstanceExpression<T> expr = new InstanceExpression<>(type);
         instanceExpressions.add(expr);
@@ -52,17 +53,20 @@ public class ServiceRegistry {
             lifetime = Lifetime.Scoped;
         }
 
+        @CanIgnoreReturnValue
         public InstanceExpression<T> use(Supplier<T> instance) {
             this.supplier = instance;
             return this;
         }
 
+        @CanIgnoreReturnValue
         public InstanceExpression<T> use(Class<T> target) {
             this.target = target;
             return this;
 
         }
 
+        @CanIgnoreReturnValue
         public InstanceExpression<T> named(String name) {
             this.name = name;
             return this;
@@ -73,10 +77,6 @@ public class ServiceRegistry {
     public static class ScannerExpression {
         ClassLoader[] classLoaders = {};
         Class<? extends Annotation> annotation;
-
-        public void currentAssembly() {
-
-        }
 
         public void withClassLoader(ClassLoader loader){
             classLoaders = new ClassLoader[]{loader};

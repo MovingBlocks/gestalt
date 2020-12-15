@@ -16,8 +16,6 @@
 package org.terasology.context.service;
 
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Sets;
 import org.terasology.context.utils.ClassUtils;
 
 import java.io.BufferedReader;
@@ -93,7 +91,6 @@ public class StreamSoftServiceLoader {
      * @param <T>         The type
      * @return A stream with services loaded
      */
-    @SuppressWarnings("unchecked")
     public static <T> Stream<T> loadPresentParallel(Class<T> serviceType, ClassLoader classLoader) {
         return loadParallel(serviceType, classLoader)
             .filter(ServiceDefinition::isPresent)

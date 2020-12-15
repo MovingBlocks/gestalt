@@ -1,12 +1,11 @@
 package org.terasology.context;
 
 import java.lang.annotation.Annotation;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
-public interface AnnotationValue<S extends Annotation> extends Iterable<AnnotationValue[]> {
+public interface AnnotationValue<S extends Annotation> extends Iterable<AnnotationValue<Annotation>[]> {
 
     String getAnnotationName();
 
@@ -18,19 +17,19 @@ public interface AnnotationValue<S extends Annotation> extends Iterable<Annotati
 
     <T extends Annotation> AnnotationValue<T>[] getAnnotation(Class<T> annotation);
 
-    AnnotationValue[] getAnnotation(String annotation);
+    AnnotationValue<Annotation>[] getAnnotation(String annotation);
 
     boolean hasStereotype(Class<? extends Annotation> ann);
 
     boolean hasStereotype(String ann);
 
-    List<AnnotationValue> getAnnotationsByStereotype(String stereotype);
+    List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype);
 
-    List<AnnotationValue> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
+    List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
 
-    List<AnnotationValue> findAnnotations(String annotation);
+    List<AnnotationValue<Annotation>> findAnnotations(String annotation);
 
-    <T extends Annotation> List<AnnotationValue> findAnnotations(Class<T> annotation);
+    List<AnnotationValue<Annotation>> findAnnotations(Class<? extends Annotation> annotation);
 
     OptionalInt intValue(String field);
 

@@ -13,10 +13,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class BeanEnvironment {
-    private Map<Class, String> families = new HashMap<>();
-    private final Map<Class, BeanDefinition> definitions = new HashMap<>();
-    private final Multimap<ClassLoader, Class> classMapping = ArrayListMultimap.create();
-    private final Multimap<Class, Class> interfaceIndex = ArrayListMultimap.create();
+    private final Map<Class<?>, BeanDefinition<?>> definitions = new HashMap<>();
+    private final Multimap<ClassLoader, Class<?>> classMapping = ArrayListMultimap.create();
+    private final Multimap<Class<?>, Class<?>> interfaceIndex = ArrayListMultimap.create();
 
     public BeanEnvironment() {
         loadDefinitions(BeanEnvironment.class.getClassLoader());
@@ -24,25 +23,25 @@ public class BeanEnvironment {
 
     public void loadDefinitions(ClassLoader loader) {
         SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, loader);
-        for (BeanDefinition definition : definitions) {
+        for (BeanDefinition<?> definition : definitions) {
             this.classMapping.put(loader, definition.targetClass());
-            for (Class clazzInterface : definition.targetClass().getInterfaces()) {
+            for (Class<?> clazzInterface : definition.targetClass().getInterfaces()) {
                 interfaceIndex.put(clazzInterface, definition.targetClass());
             }
             this.definitions.put(definition.targetClass(), definition);
         }
     }
 
-    public Iterator<Class> implementedClasses(Class cls) {
+    public <T> Iterator<Class<? extends T>> implementedClasses(Class<T> cls) {
         if (cls.isInterface()) {
             return Collections.emptyIterator();
         }
-        return interfaceIndex.get(cls).iterator();
+        return (Iterator) interfaceIndex.get(cls).iterator();
     }
 
     public void releaseDefinitions(ClassLoader loader) {
-        Set<Class> toRelease = new HashSet<>();
-        for (BeanDefinition definition : definitions.values()) {
+        Set<Class<?>> toRelease = new HashSet<>();
+        for (BeanDefinition<?> definition : definitions.values()) {
             if (definition.targetClass().getClassLoader().equals(loader)) {
                 toRelease.add(definition.targetClass());
             }
@@ -50,10 +49,7 @@ public class BeanEnvironment {
     }
 
     public <T> BeanDefinition<T> getDefinitions(Class<T> beanType) {
-        return definitions.get(beanType);
+        return (BeanDefinition<T>) definitions.get(beanType);
     }
 
-    public void bindObject() {
-
-    }
 }

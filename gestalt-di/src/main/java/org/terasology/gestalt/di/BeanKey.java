@@ -3,11 +3,12 @@ package org.terasology.gestalt.di;
 import org.terasology.context.BeanDefinition;
 import org.terasology.gestalt.di.qualifiers.Qualifier;
 
+import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Objects;
 
 public class BeanKey<T> implements BeanIdentifier {
-    private final Class beanType;
+    private final Class<T> beanType;
     private final Class[] typeArguments;
     private final Qualifier<T> qualifier;
     private final int hashCode;
@@ -27,11 +28,12 @@ public class BeanKey<T> implements BeanIdentifier {
 
     }
 
-    public <T> Class<T> getBeanType() {
+    public Class<T> getBeanType() {
         return beanType;
     }
 
     @Override
+    @Nonnull
     public String toString() {
         return beanType.getName();
     }

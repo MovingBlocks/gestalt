@@ -14,7 +14,7 @@ public class DefaultBeanResolution implements BeanResolution {
     }
 
     @Override
-    public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) throws DependencyInjectionException {
+    public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
         if (target.isInterface()) {
 
         }

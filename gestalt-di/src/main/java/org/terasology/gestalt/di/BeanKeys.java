@@ -9,7 +9,7 @@ public final class BeanKeys {
     }
 
     public static <T> BeanKey<T> resolveBeanKey(Class<T> clazz, Argument<T> argument) {
-        Qualifier qualifier = Qualifiers.resolveQualifier(argument.getAnnotation());
-        return new BeanKey<T>(clazz, qualifier);
+        Qualifier<T> qualifier = Qualifiers.resolveQualifier(argument.getAnnotation());
+        return new BeanKey<>(clazz, qualifier);
     }
 }

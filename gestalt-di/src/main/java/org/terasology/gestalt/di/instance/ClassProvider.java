@@ -4,7 +4,6 @@ import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.Argument;
 import org.terasology.context.BeanDefinition;
 import org.terasology.context.BeanResolution;
-import org.terasology.context.exception.DependencyInjectionException;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanIdentifier;
@@ -34,13 +33,13 @@ public class ClassProvider<T> extends BeanProvider<T> {
             BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;
             return (definition).build(new BeanResolution() {
                 @Override
-                public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) throws DependencyInjectionException {
+                public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
                     BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
                     return cntx.getBean(key, transaction);
                 }
 
                 @Override
-                public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument) throws DependencyInjectionException {
+                public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument) {
                     BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
                     return cntx.getBean(key, transaction);
                 }
@@ -51,6 +50,6 @@ public class ClassProvider<T> extends BeanProvider<T> {
 
     @Override
     public void close() throws Exception {
-
+        // Noting to close
     }
 }

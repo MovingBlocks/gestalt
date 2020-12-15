@@ -5,13 +5,13 @@ import java.util.List;
 
 public interface AnnotationMetadata {
 
-    List<AnnotationValue> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
+    List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
 
-    List<AnnotationValue> getAnnotationsByStereotype(String stereotype);
+    List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype);
 
-    List<AnnotationValue> findAnnotations(String annotation);
+    List<AnnotationValue<Annotation>> findAnnotations(String annotation);
 
-    List<AnnotationValue> findAnnotations(Class<? extends Annotation> annotation);
+    List<AnnotationValue<Annotation>>  findAnnotations(Class<? extends Annotation> annotation);
 
     boolean hasAnnotation(Class<? extends Annotation> annotation);
 
