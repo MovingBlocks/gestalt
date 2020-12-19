@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
     protected final Map<BeanIdentifier, Object> boundObjects = new ConcurrentHashMap<>();
@@ -48,18 +49,18 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         }
     }
 
-    @Override
-    public <T> Optional<T> inject(T instance){
-        try (BeanTransaction transaction = new BeanTransaction()) {
-            Optional<T> result = this.inject(instance, transaction);
-            transaction.commit();
-            return result;
+    static <T> Optional<T> bindBean(DefaultBeanContext context, BeanIdentifier identifier, Supplier<Optional<T>> supplier) {
+        if (context.boundObjects.containsKey(identifier)) {
+            return Optional.of((T) context.boundObjects.get(identifier));
         }
+        Optional<T> result = supplier.get();
+        result.ifPresent(t -> context.boundObjects.put(identifier, t));
+        return result;
     }
 
 
     @Override
-    public <T> Optional<T> inject(T instance, BeanTransaction transaction) {
+    public <T> Optional<T> inject(T instance) {
         BeanDefinition<T> definition = (BeanDefinition<T>) environment.getDefinitions(instance.getClass());
 
         if (definition instanceof AbstractBeanDefinition) {
@@ -67,13 +68,13 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 @Override
                 public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
                     BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
-                    return getBean(key, transaction);
+                    return getBean(key);
                 }
 
                 @Override
                 public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument) {
                     BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
-                    return getBean(key, transaction);
+                    return getBean(key);
                 }
             });
         }
@@ -81,26 +82,16 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
 
-    @Override
-    public <T> Optional<T> getBean(BeanKey<T> identifier) {
-        try (BeanTransaction transaction = new BeanTransaction()) {
-            Optional<T> result = getBean(identifier, transaction);
-            transaction.commit();
-            return result;
-        } catch (DependencyInjectionException e) {
-            throw e;
-        }
-    }
 
     @Override
-    public <T> Optional<T> getBean(BeanKey<T> identifier, BeanTransaction transaction) {
+    public <T> Optional<T> getBean(BeanKey<T> identifier) {
         Optional<BeanContext> cntx = Optional.of(this);
         while (cntx.isPresent()) {
             BeanContext beanContext = cntx.get();
             if (beanContext instanceof DefaultBeanContext) {
                 DefaultBeanContext defContext = ((DefaultBeanContext) beanContext);
-                Optional<T> target = defContext.internalResolve(identifier, this, transaction);
-                if(target.isPresent()){
+                Optional<T> target = defContext.internalResolve(identifier, this);
+                if (target.isPresent()) {
                     return target;
                 }
             }
@@ -111,20 +102,20 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     /**
      * @param identifier
-     * @param currentContext the context that the object is being resolve to
+     * @param targetContext the context that the object is being resolve to
      * @param <T>
      * @return
      */
-    private <T> Optional<T> internalResolve(BeanIdentifier identifier, DefaultBeanContext currentContext, BeanTransaction transaction) {
+    private <T> Optional<T> internalResolve(BeanIdentifier identifier, DefaultBeanContext targetContext) {
         if (providers.containsKey(identifier)) {
             BeanProvider<T> provider = (BeanProvider<T>) this.providers.get(identifier);
             switch (provider.getLifetime()) {
                 case Transient:
-                    return provider.get(identifier, this, currentContext, transaction);
+                    return provider.get(identifier, this, targetContext);
                 case Singleton:
-                    return transaction.bind(this, identifier, () ->  provider.get(identifier, this, currentContext, transaction));
+                    return DefaultBeanContext.bindBean(this, identifier, () -> provider.get(identifier, this, targetContext));
                 case Scoped:
-                    return transaction.bind(currentContext, identifier, () -> provider.get(identifier, this, currentContext, transaction));
+                    return DefaultBeanContext.bindBean(targetContext, identifier, () -> provider.get(identifier, this, targetContext));
             }
         }
         return Optional.empty();
@@ -132,36 +123,14 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     @Override
     public <T> Optional<T> getBean(Class<T> clazz) {
-        try (BeanTransaction transaction = new BeanTransaction()) {
-            Optional<T> result = getBean(clazz, transaction);
-            transaction.commit();
-            return result;
-        } catch (DependencyInjectionException e) {
-            throw e;
-        }
-    }
-
-    @Override
-    public <T> Optional<T> getBean(Class<T> clazz, BeanTransaction transaction) {
         BeanKey<T> identifier = new BeanKey<>(clazz, null);
-        return getBean(identifier, transaction);
+        return getBean(identifier);
     }
 
     @Override
     public <T> Optional<T> getBean(Class<T> clazz, Qualifier<T> qualifier) {
-        try (BeanTransaction transaction = new BeanTransaction()) {
-            Optional<T> result = getBean(clazz, qualifier, transaction);
-            transaction.commit();
-            return result;
-        } catch (Exception e) {
-            throw e;
-        }
-    }
-
-    @Override
-    public <T> Optional<T> getBean(Class<T> clazz, Qualifier<T> qualifier, BeanTransaction transaction) {
         BeanKey<T> identifier = new BeanKey<>(clazz, qualifier);
-        return getBean(identifier, transaction);
+        return getBean(identifier);
     }
 
     public BeanContext getNestedContainer() {

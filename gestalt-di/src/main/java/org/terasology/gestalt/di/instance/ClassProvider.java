@@ -9,7 +9,6 @@ import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanIdentifier;
 import org.terasology.gestalt.di.BeanKey;
 import org.terasology.gestalt.di.BeanKeys;
-import org.terasology.gestalt.di.BeanTransaction;
 import org.terasology.gestalt.di.Lifetime;
 
 import java.util.Optional;
@@ -27,7 +26,7 @@ public class ClassProvider<T> extends BeanProvider<T> {
     }
 
     @Override
-    public Optional<T> get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo, BeanTransaction transaction) {
+    public Optional<T> get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo) {
         BeanDefinition<T> definition = environment.getDefinitions(target);
         if (definition instanceof AbstractBeanDefinition) {
             BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;
@@ -35,13 +34,13 @@ public class ClassProvider<T> extends BeanProvider<T> {
                 @Override
                 public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
                     BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
-                    return cntx.getBean(key, transaction);
+                    return cntx.getBean(key);
                 }
 
                 @Override
                 public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument) {
                     BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
-                    return cntx.getBean(key, transaction);
+                    return cntx.getBean(key);
                 }
             });
         }
