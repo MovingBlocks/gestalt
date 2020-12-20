@@ -50,13 +50,17 @@ import java.util.stream.Collectors;
 public class BeanDefinitionProcessor extends AbstractProcessor {
 
     private static final String INTROSPECTED_CLASS = "org.terasology.context.annotation.Introspected";
+    private static final String SCOPED_CLASS = "org.terasology.context.annotation.Scoped";
+    private static final String TRANSIENT_CLASS = "org.terasology.context.annotation.Transient";
 
 
     private static final String[] TARGET_ANNOTATIONS = new String[]{
         "javax.inject.Inject",
         "javax.inject.Qualifier",
         "javax.inject.Singleton",
-            INTROSPECTED_CLASS
+        INTROSPECTED_CLASS,
+        SCOPED_CLASS,
+        TRANSIENT_CLASS
     };
 
     private Filer filer;

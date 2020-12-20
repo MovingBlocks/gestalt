@@ -4,7 +4,6 @@ import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.Argument;
 import org.terasology.context.BeanDefinition;
 import org.terasology.context.BeanResolution;
-import org.terasology.context.exception.DependencyInjectionException;
 import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.SupplierProvider;
@@ -115,7 +114,12 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 case Singleton:
                     return DefaultBeanContext.bindBean(this, identifier, () -> provider.get(identifier, this, targetContext));
                 case Scoped:
+                case ScopedToChildren:
+                    if (provider.getLifetime() == Lifetime.ScopedToChildren && targetContext == this) {
+                        return Optional.empty();
+                    }
                     return DefaultBeanContext.bindBean(targetContext, identifier, () -> provider.get(identifier, this, targetContext));
+
             }
         }
         return Optional.empty();

@@ -3,6 +3,7 @@ package org.terasology.gestalt.di.beans;
 import org.terasology.context.annotation.Introspected;
 
 import javax.inject.Inject;
+import javax.inject.Scope;
 import javax.inject.Singleton;
 
 @Introspected

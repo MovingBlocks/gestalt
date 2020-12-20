@@ -28,8 +28,6 @@ public class SoftServiceLoader<S> implements Iterable<S> {
         return new SoftServiceLoader<>(target, SoftServiceLoader.class.getClassLoader());
     }
 
-
-
     @Override
     @Nonnull
     public Iterator<S> iterator() {
