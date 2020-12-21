@@ -29,7 +29,7 @@ public class BeanEnvironment {
     private final Map<ClassLoader, ClassLookup> beanLookup = new HashMap<>();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final Lock readLock = readWriteLock.readLock();
-    private final Lock writeLock = readWriteLock.readLock();
+    private final Lock writeLock = readWriteLock.writeLock();
 
 
     public BeanEnvironment() {
