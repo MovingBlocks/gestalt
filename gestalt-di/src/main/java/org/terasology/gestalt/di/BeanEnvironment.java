@@ -17,7 +17,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class BeanEnvironment {
     private static class ClassLookup {
@@ -93,22 +92,7 @@ public class BeanEnvironment {
 
     public <T> Iterable<BeanDefinition<T>> definitionsByInterface(ClassLoader loader, Class<T> target) {
         final ClassLookup lookup = beanLookup.get(loader);
-        return lookup.interfaceIndex.get(target).stream().map(k -> (BeanDefinition<T>) getDefinitions(k))::iterator;
-    }
-
-    public <T> Iterable<BeanDefinition<T>> definitionsByPrefixAndInterface(ClassLoader loader, String prefix, Class<T> target) {
-        return () -> {
-            return StreamSupport.stream(definitionsByPrefix(loader, prefix).spliterator(), false).filter(
-                k -> {
-                    for (Class<?> intr : k.targetClass().getInterfaces()) {
-                        if (intr == target) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            ).map(k -> (BeanDefinition<T>) k).iterator();
-        };
+        return lookup.interfaceIndex.get(target).stream().map(k -> (BeanDefinition<T>) getDefinition(k))::iterator;
     }
 
     public Iterable<BeanDefinition<?>> definitionsByPrefix(String prefix) {
@@ -192,8 +176,8 @@ public class BeanEnvironment {
         return true;
     }
 
-    public <T> BeanDefinition<T> getDefinitions(Class<T> beanType) {
-        ClassLookup lookup = beanLookup.get(beanType.getClassLoader());
+    public <T> BeanDefinition<T> getDefinition(Class<T> beanType) {
+        final ClassLookup lookup = beanLookup.get(beanType.getClassLoader());
         return (BeanDefinition<T>) lookup.definitions.get(beanType.getName());
     }
 }

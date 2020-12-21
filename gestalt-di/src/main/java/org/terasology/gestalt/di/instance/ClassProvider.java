@@ -22,12 +22,12 @@ public class ClassProvider<T> extends BeanProvider<T> {
     public ClassProvider(BeanEnvironment environment, Lifetime lifetime, Class<T> target) {
         super(environment, lifetime);
         this.target = target;
-        environment.getDefinitions(target);
+        environment.getDefinition(target);
     }
 
     @Override
     public Optional<T> get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo) {
-        BeanDefinition<T> definition = environment.getDefinitions(target);
+        BeanDefinition<T> definition = environment.getDefinition(target);
         if (definition instanceof AbstractBeanDefinition) {
             BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;
             return (definition).build(new BeanResolution() {
