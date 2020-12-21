@@ -1,10 +1,7 @@
-package org.terasology.gestalt.di.tests;
+package org.terasology.gestalt.di;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.terasology.gestalt.di.BeanContext;
-import org.terasology.gestalt.di.BeanKey;
-import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.di.beans.Dep2;
 import org.terasology.gestalt.di.beans.ParentDep;
 import org.terasology.gestalt.di.beans.TestRegistry;
@@ -20,6 +17,7 @@ public class TestRegistryTests {
         Optional<Dep2> dep = beanContext.getBean(Dep2.class);
         Assert.assertTrue(dep.isPresent());
         Assert.assertTrue(dep.get() instanceof Dep2);
+
     }
 
     @Test

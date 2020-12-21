@@ -29,4 +29,7 @@ jar {
 
 dependencies {
     implementation project(":testpack:testpack-api")
+
+    annotationProcessor project(":gestalt-inject-java")
+    implementation project(":gestalt-inject")
 }

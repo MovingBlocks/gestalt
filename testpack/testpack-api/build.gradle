@@ -22,3 +22,8 @@
  */
 
 apply plugin: 'java'
+
+dependencies {
+    annotationProcessor project(":gestalt-inject-java")
+    implementation project(":gestalt-inject")
+}

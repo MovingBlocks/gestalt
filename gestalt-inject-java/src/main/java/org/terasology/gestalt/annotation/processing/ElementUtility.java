@@ -1,8 +1,10 @@
 package org.terasology.gestalt.annotation.processing;
 
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.List;
@@ -44,9 +46,10 @@ public class ElementUtility {
         if (stereotype.contains(element.toString())) {
             return true;
         }
-        for (Element ele : element.getEnclosedElements()) {
-            if (ele.getKind() == ElementKind.ANNOTATION_TYPE) {
-                return hasStereotype(ele, stereotype);
+        for (AnnotationMirror ele : element.getAnnotationMirrors()) {
+            DeclaredType declaredType = ele.getAnnotationType();
+            if (stereotype.contains(declaredType.toString())) {
+                return hasStereotype(declaredType.asElement(), stereotype);
             }
         }
         return false;

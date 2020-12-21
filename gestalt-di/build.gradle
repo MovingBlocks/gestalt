@@ -1,8 +1,8 @@
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 
-repositories {
-}
+
+task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar', ':testpack:moduleD:jar'], type: Copy)
 
 // Primary dependencies definition
 dependencies {
@@ -14,5 +14,22 @@ dependencies {
     testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
+
+    testImplementation project(":gestalt-module")
+    testImplementation project(":testpack:testpack-api")
+    testImplementation project(":gestalt-entity-system")
+
 }
 
+
+gatherJarModules {
+    from '../testpack/moduleA/build/libs/'
+    from '../testpack/moduleB/build/libs/'
+    from '../testpack/moduleC/build/libs/'
+    from '../testpack/moduleD/build/libs/'
+    from '../testpack/moduleF/build/libs/'
+    into 'test-modules'
+    include('*.jar')
+}
+
+test.dependsOn gatherJarModules

@@ -72,7 +72,7 @@ public class SoftServiceLoader<S> implements Iterable<S> {
                     }
                     String clazz = nameIterator.next();
                     try {
-                        return (S) Class.forName(clazz).getDeclaredConstructor().newInstance();
+                        return (S) classLoader.loadClass(clazz).getDeclaredConstructor().newInstance();
                     } catch (ClassNotFoundException e) {
                         e.printStackTrace();
                     } catch (IllegalAccessException e) {
