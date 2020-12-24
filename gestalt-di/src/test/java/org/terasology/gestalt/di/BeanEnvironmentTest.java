@@ -15,6 +15,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -49,7 +50,7 @@ public class BeanEnvironmentTest {
             results.add(it.targetClass().getName());
         }
         Assert.assertArrayEquals(Arrays.asList(
-            "org.module.a.DepC"
+            "org.module.b.DepByInterface"
         ).toArray(),results.toArray());
     }
 
@@ -59,7 +60,7 @@ public class BeanEnvironmentTest {
         for (BeanDefinition<?> it: environment.definitionsByPrefix("org.module.a")) {
             results.add(it.targetClass().getName());
         }
-        // dependencies are sorted alphabetically
+        results.sort(Comparator.naturalOrder());
         Assert.assertArrayEquals(Arrays.asList(
             "org.module.a.DepA",
             "org.module.a.DepB",

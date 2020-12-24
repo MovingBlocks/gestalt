@@ -95,6 +95,16 @@ public class BeanEnvironment {
         return lookup.interfaceIndex.get(target).stream().map(k -> (BeanDefinition<T>) getDefinition(k))::iterator;
     }
 
+
+    public <T> Iterable<BeanDefinition<?>> definitionsByInterface(String prefix, Class<T> target) {
+        return Iterables.concat(beanLookup.keySet().stream().map(k -> definitionsByInterface(k, prefix, target)).collect(Collectors.toList()));
+    }
+
+    public <T> Iterable<BeanDefinition<?>> definitionsByInterface(ClassLoader loader, String prefix, Class<T> target) {
+        final ClassLookup lookup = beanLookup.get(loader);
+        return Iterables.filter(definitionsByPrefix(loader, prefix), k -> lookup.interfaceIndex.containsKey(target));
+    }
+
     public Iterable<BeanDefinition<?>> definitionsByPrefix(String prefix) {
         return Iterables.concat(beanLookup.keySet().stream().map(k -> definitionsByPrefix(k, prefix)).collect(Collectors.toList()));
     }
@@ -105,7 +115,7 @@ public class BeanEnvironment {
         int startPoint = 0;
         int endpoint = input.size() - 1;
         if (input.size() == 0) {
-            return () -> Collections.emptyIterator();
+            return Collections::emptyIterator;
         }
         while (true) {
             String stringToTest = input.get((endpoint - startPoint) / 2);
@@ -123,14 +133,14 @@ public class BeanEnvironment {
                 break;
             }
             if (startPoint == endpoint) {
-                return () -> Collections.emptyIterator();
+                return Collections::emptyIterator;
             }
             if (stringToTest.compareTo(prefix) > 0) {
                 endpoint = (endpoint - startPoint) / 2;
             }
             if (stringToTest.compareTo(prefix) < 0) {
                 if (input.get(endpoint).compareTo(prefix) < 0) {
-                    return () -> Collections.emptyIterator();
+                    return Collections::emptyIterator;
                 }
                 startPoint = (endpoint - startPoint) / 2;
             }
@@ -138,7 +148,7 @@ public class BeanEnvironment {
 
         while (!input.get(endpoint).startsWith(prefix)) {
             if (endpoint < startPoint) {
-                return () -> Collections.emptyIterator();
+                return Collections::emptyIterator;
             }
             endpoint--;
         }
