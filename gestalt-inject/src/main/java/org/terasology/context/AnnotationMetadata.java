@@ -3,7 +3,7 @@ package org.terasology.context;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
-public interface AnnotationMetadata {
+public interface AnnotationMetadata extends Iterable<AnnotationValue<Annotation>[]> {
 
     List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
 

@@ -46,7 +46,7 @@ public class BeanEnvironmentTest {
     @Test
     public void lookupByInterface() {
         List<String> results = new ArrayList<>();
-        for(BeanDefinition<TestImplementation1> it:  environment.definitionsByInterface(TestImplementation1.class)){
+        for(BeanDefinition<?> it:  environment.byInterface(TestImplementation1.class)){
             results.add(it.targetClass().getName());
         }
         Assert.assertArrayEquals(Arrays.asList(
@@ -57,7 +57,7 @@ public class BeanEnvironmentTest {
     @Test
     public void testAllDefinitionsByPrefix() {
         List<String> results = new ArrayList<>();
-        for (BeanDefinition<?> it: environment.definitionsByPrefix("org.module.a")) {
+        for (BeanDefinition<?> it: environment.byPrefix("org.module.a")) {
             results.add(it.targetClass().getName());
         }
         results.sort(Comparator.naturalOrder());

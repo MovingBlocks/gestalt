@@ -1,28 +1,73 @@
 package org.terasology.gestalt.di;
 
-import com.google.common.collect.ArrayListMultimap;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Range;
 import org.terasology.context.BeanDefinition;
 import org.terasology.context.SoftServiceLoader;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class BeanEnvironment {
+
+    private static class ClassRef<T> {
+        public final Class<T> target;
+        public final String prefix;
+        public final BeanDefinition<T> definition;
+
+        public ClassRef(BeanDefinition<T> definition) {
+            this.target = definition.targetClass();
+            this.prefix = target.getName();
+            this.definition = definition;
+        }
+
+        public ClassRef(Class<T> target) {
+            this.target = target;
+            this.prefix = target.getName();
+            this.definition = null;
+        }
+
+        public ClassRef(String prefix) {
+            target = null;
+            this.definition = null;
+            this.prefix = prefix;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ClassRef<?> that = (ClassRef<?>) o;
+            return Objects.equals(target, that.target);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(target);
+        }
+    }
+
     private static class ClassLookup {
-        private final Map<String, BeanDefinition<?>> definitions = new HashMap<>();
-        private final List<String> targetLookup = Lists.newArrayList();
-        private final Multimap<Class<?>, Class<?>> interfaceIndex = ArrayListMultimap.create();
+        private ClassRef<?>[] namespaceIndex;
+        private Map<Class<?>, ClassRef<?>[]> interfaceIndex;
+        private Map<Class<?>, BeanDefinition<?>> definitions;
     }
 
     public static final ClassLoader BaseClassLoader = BeanEnvironment.class.getClassLoader();
@@ -31,30 +76,45 @@ public class BeanEnvironment {
     private final Lock readLock = readWriteLock.readLock();
     private final Lock writeLock = readWriteLock.writeLock();
 
-
     public BeanEnvironment() {
         loadDefinitions(BeanEnvironment.BaseClassLoader);
     }
 
-
     public void loadDefinitions(ClassLoader loader) {
+        if (beanLookup.containsKey(loader)) {
+            return;
+        }
         writeLock.lock();
         try {
             beanLookup.computeIfAbsent(loader, (ld) -> {
-                ClassLookup lookup = new ClassLookup();
                 SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, ld);
+                ClassLookup lookup = new ClassLookup();
+
+                List<ClassRef<?>> namespaceIndex = new ArrayList<>();
+                Map<Class<?>, BeanDefinition<?>> definitionLookup = Maps.newHashMap();
+                Multimap<Class<?>, ClassRef> interfaceIndex = HashMultimap.create();
                 for (BeanDefinition<?> definition : definitions) {
                     // exclude objects that are from a different classloader
                     if (definition.targetClass().getClassLoader() != loader) {
                         continue;
                     }
-                    lookup.targetLookup.add(definition.targetClass().getName());
-                    lookup.definitions.put(definition.targetClass().getName(), definition);
+                    namespaceIndex.add(new ClassRef<>(definition));
+                    definitionLookup.put(definition.targetClass(), definition);
                     for (Class<?> clazzInterface : definition.targetClass().getInterfaces()) {
-                        lookup.interfaceIndex.put(clazzInterface, definition.targetClass());
+                        interfaceIndex.put(clazzInterface, new ClassRef<>(definition));
                     }
                 }
-                lookup.targetLookup.sort(Comparator.naturalOrder());
+                namespaceIndex.sort((Comparator<ClassRef>) (a1, a2) -> a1.prefix.compareTo(a2.prefix));
+                lookup.namespaceIndex = namespaceIndex.toArray(new ClassRef[0]);
+                lookup.interfaceIndex = interfaceIndex.asMap().entrySet().stream().collect(
+                    Collectors.toMap(k -> k.getKey(), v -> {
+                        ClassRef[] result = v.getValue().toArray(new ClassRef[0]);
+                        Arrays.sort(result, (classRef, t1) -> classRef.prefix.compareTo(t1.prefix));
+                        return result;
+                    })
+                );
+                lookup.definitions = definitionLookup;
+
                 return lookup;
             });
         } finally {
@@ -76,52 +136,25 @@ public class BeanEnvironment {
 
     public boolean containsClass(Class<?> clazz) {
         final ClassLookup lookup = beanLookup.get(clazz.getClassLoader());
-        if (lookup == null) {
-            return false;
+        return lookup.definitions.containsKey(clazz);
+    }
+
+    private Optional<Range<Integer>> findPrefixBounds(String prefix, ClassRef<?>[] input) {
+        if (input.length == 0) {
+            return Optional.empty();
         }
-        if (!lookup.definitions.containsKey(clazz.getName())) {
-            return false;
+
+        if (Strings.isNullOrEmpty(prefix)) {
+            return Optional.of(Range.closed(0, input.length - 1));
         }
-        return lookup.definitions.get(clazz.getName()).targetClass() == clazz;
 
-    }
-
-    public <T> Iterable<BeanDefinition<T>> definitionsByInterface(Class<T> target) {
-        return Iterables.concat(beanLookup.keySet().stream().map(k -> definitionsByInterface(k, target)).collect(Collectors.toList()));
-    }
-
-    public <T> Iterable<BeanDefinition<T>> definitionsByInterface(ClassLoader loader, Class<T> target) {
-        final ClassLookup lookup = beanLookup.get(loader);
-        return lookup.interfaceIndex.get(target).stream().map(k -> (BeanDefinition<T>) getDefinition(k))::iterator;
-    }
-
-
-    public <T> Iterable<BeanDefinition<?>> definitionsByInterface(String prefix, Class<T> target) {
-        return Iterables.concat(beanLookup.keySet().stream().map(k -> definitionsByInterface(k, prefix, target)).collect(Collectors.toList()));
-    }
-
-    public <T> Iterable<BeanDefinition<?>> definitionsByInterface(ClassLoader loader, String prefix, Class<T> target) {
-        final ClassLookup lookup = beanLookup.get(loader);
-        return Iterables.filter(definitionsByPrefix(loader, prefix), k -> lookup.interfaceIndex.containsKey(target));
-    }
-
-    public Iterable<BeanDefinition<?>> definitionsByPrefix(String prefix) {
-        return Iterables.concat(beanLookup.keySet().stream().map(k -> definitionsByPrefix(k, prefix)).collect(Collectors.toList()));
-    }
-
-    public Iterable<BeanDefinition<?>> definitionsByPrefix(ClassLoader loader, String prefix) {
-        final ClassLookup lookup = beanLookup.get(loader);
-        final List<String> input = lookup.targetLookup;
         int startPoint = 0;
-        int endpoint = input.size() - 1;
-        if (input.size() == 0) {
-            return Collections::emptyIterator;
-        }
+        int endpoint = input.length - 1;
         while (true) {
-            String stringToTest = input.get((endpoint - startPoint) / 2);
+            String stringToTest = input[(endpoint - startPoint) / 2].prefix;
             if (stringToTest.startsWith(prefix)) {
                 while (true) {
-                    if (!input.get(startPoint).startsWith(prefix)) {
+                    if (!input[startPoint].prefix.startsWith(prefix)) {
                         startPoint++;
                         break;
                     }
@@ -133,46 +166,94 @@ public class BeanEnvironment {
                 break;
             }
             if (startPoint == endpoint) {
-                return Collections::emptyIterator;
+                return Optional.empty();
             }
             if (stringToTest.compareTo(prefix) > 0) {
                 endpoint = (endpoint - startPoint) / 2;
             }
             if (stringToTest.compareTo(prefix) < 0) {
-                if (input.get(endpoint).compareTo(prefix) < 0) {
-                    return Collections::emptyIterator;
+                if (input[endpoint].prefix.compareTo(prefix) < 0) {
+                    return Optional.empty();
                 }
                 startPoint = (endpoint - startPoint) / 2;
             }
         }
 
-        while (!input.get(endpoint).startsWith(prefix)) {
+        while (!input[endpoint].prefix.startsWith(prefix)) {
             if (endpoint < startPoint) {
-                return Collections::emptyIterator;
+                return Optional.empty();
             }
             endpoint--;
         }
 
-        final int startIndex = startPoint;
-        final int endIndex = endpoint;
+        return Optional.of(Range.closed(startPoint, endpoint));
+    }
 
-        return () -> {
-            return new Iterator<BeanDefinition<?>>() {
-                private int index = startIndex;
+    public <T> Iterable<BeanDefinition<?>> byInterface(ClassLoader loader, Class<T> targetInterface) {
+        final ClassLookup lookup = beanLookup.get(loader);
+        if (!lookup.interfaceIndex.containsKey(targetInterface)) {
+            return Collections::emptyIterator;
+        }
+        return Arrays.stream(lookup.interfaceIndex.get(targetInterface)).map(k -> k.definition).collect(Collectors.toList());
+    }
+
+    public <T> Iterable<BeanDefinition<?>> byInterface(Class<T> targetInterface) {
+        return Iterables.concat(beanLookup.keySet().stream().map(k -> byInterface(k, targetInterface)).collect(Collectors.toList()));
+    }
+
+    public <T> Iterable<BeanDefinition<?>> byPrefixAndInterface(ClassLoader loader, String prefix, Class<T> targetInterface) {
+        final ClassLookup lookup = beanLookup.get(loader);
+        ClassRef<?>[] targetClasses = lookup.interfaceIndex.get(targetInterface);
+        Optional<Range<Integer>> range = findPrefixBounds(prefix, targetClasses);
+        if (range.isPresent()) {
+            Range<Integer> itr = range.get();
+            return () -> new Iterator<BeanDefinition<?>>() {
+                private int index = itr.lowerEndpoint();
 
                 @Override
                 public boolean hasNext() {
-                    return index <= endIndex;
+                    return index <= itr.upperEndpoint();
                 }
 
                 @Override
                 public BeanDefinition<?> next() {
-                    BeanDefinition<?> def = lookup.definitions.get(input.get(index));
+                    BeanDefinition<?> def = targetClasses[index].definition;
                     index++;
                     return def;
                 }
             };
-        };
+        }
+        return Collections::emptyIterator;
+    }
+
+    public Iterable<BeanDefinition<?>> byPrefix(String prefix) {
+        return Iterables.concat(beanLookup.keySet().stream().map(k -> byPrefix(k, prefix)).collect(Collectors.toList()));
+    }
+
+    public <T> Iterable<BeanDefinition<?>> byPrefix(ClassLoader loader, String prefix) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix));
+        final ClassLookup lookup = beanLookup.get(loader);
+
+        Optional<Range<Integer>> range = findPrefixBounds(prefix, lookup.namespaceIndex);
+        if (range.isPresent()) {
+            Range<Integer> itr = range.get();
+            return () -> new Iterator<BeanDefinition<?>>() {
+                private int index = itr.lowerEndpoint();
+
+                @Override
+                public boolean hasNext() {
+                    return index <= itr.upperEndpoint();
+                }
+
+                @Override
+                public BeanDefinition<?> next() {
+                    BeanDefinition<?> def = lookup.namespaceIndex[index].definition;
+                    index++;
+                    return def;
+                }
+            };
+        }
+        return Collections::emptyIterator;
     }
 
     public boolean releaseDefinitions(ClassLoader loader) {
@@ -186,8 +267,12 @@ public class BeanEnvironment {
         return true;
     }
 
-    public <T> BeanDefinition<T> getDefinition(Class<T> beanType) {
+    public Iterable<ClassLoader> classLoaders() {
+        return beanLookup.keySet();
+    }
+
+    public <T> Optional<BeanDefinition<?>> getDefinition(Class<T> beanType) {
         final ClassLookup lookup = beanLookup.get(beanType.getClassLoader());
-        return (BeanDefinition<T>) lookup.definitions.get(beanType.getName());
+        return Optional.ofNullable(lookup.definitions.get(beanType));
     }
 }

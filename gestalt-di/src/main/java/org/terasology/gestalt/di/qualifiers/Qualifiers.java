@@ -8,20 +8,24 @@ import javax.inject.Named;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
 
-public class Qualifiers {
+public final class Qualifiers {
+    private Qualifiers() {
 
-    private Qualifiers(){
-        //Util class, don't create
     }
+
     public static <T> Qualifier<T> byName(String name) {
         return new NameQualifier<>(name);
     }
 
-    public static <T> Qualifier<T>  resolveQualifier(Argument<T> argument) {
+    public static <T> Qualifier<T> byStereotype(Class<? extends Annotation> ann) {
+        return new StereotypeQualifier(ann);
+    }
+
+    public static <T> Qualifier<T> resolveQualifier(Argument<T> argument) {
         return resolveQualifier(argument.getAnnotation());
     }
 
-    public static <T> Qualifier<T>  resolveQualifier(AnnotationMetadata metadata) {
+    public static <T> Qualifier<T> resolveQualifier(AnnotationMetadata metadata) {
         if (metadata.hasStereotype(javax.inject.Qualifier.class)) {
             AnnotationValue<Annotation> ann = metadata.getAnnotationsByStereotype(javax.inject.Qualifier.class).stream().findFirst().get();
             return new StereotypeQualifier(ann.getAnnotationType());
@@ -33,4 +37,6 @@ public class Qualifiers {
             }
         }
         return null;
-    }}
+    }
+
+}

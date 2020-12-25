@@ -1,7 +1,15 @@
 package org.terasology.gestalt.di;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import org.terasology.context.AnnotationMetadata;
+import org.terasology.context.AnnotationValue;
+import org.terasology.context.BeanDefinition;
+import org.terasology.context.annotation.Scoped;
+import org.terasology.context.annotation.Transient;
+import org.terasology.gestalt.di.qualifiers.Qualifier;
+import org.terasology.gestalt.di.qualifiers.Qualifiers;
 
+import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +21,7 @@ import java.util.function.Supplier;
 public class ServiceRegistry {
 
     protected List<InstanceExpression<?>> instanceExpressions = new ArrayList<>();
-    protected List<ScannerExpression> scanners = new ArrayList<>();
+    protected List<BeanScanner> scanners = new ArrayList<>();
     protected HashSet<ClassLoader> classLoaders = new HashSet<>();
 
     public void includeRegistry(ServiceRegistry registry) {
@@ -21,6 +29,7 @@ public class ServiceRegistry {
         scanners.addAll(registry.scanners);
         classLoaders.addAll(registry.classLoaders);
     }
+
 
     @CanIgnoreReturnValue
     public <T> InstanceExpression<T> with(Class<T> type) {
@@ -33,42 +42,8 @@ public class ServiceRegistry {
         classLoaders.add(loader);
     }
 
-    public ScannerExpression registerScanner(ClassLoader loader) {
-        ScannerExpression expression = new ScannerExpression().byClassloader(loader);
-        scanners.add(expression);
-        return expression;
-    }
-
-    public ScannerExpression registerScanner(String namespace) {
-        ScannerExpression expression = new ScannerExpression()
-            .byNamespace(namespace);
-        scanners.add(expression);
-        return expression;
-    }
-
-    public ScannerExpression registerScanner(ClassLoader loader, String namespace) {
-        ScannerExpression expression = new ScannerExpression()
-            .byClassloader(loader)
-            .byNamespace(namespace);
-        scanners.add(expression);
-        return expression;
-    }
-
-    public ScannerExpression registerScanner(String namespace, Class<? extends Annotation>... qualifiers) {
-        ScannerExpression expression = new ScannerExpression()
-            .byNamespace(namespace)
-            .byQualifier(qualifiers);
-        scanners.add(expression);
-        return expression;
-    }
-
-    public ScannerExpression registerScanner(ClassLoader loader, String namespace, Class<? extends Annotation>... qualifiers) {
-        ScannerExpression expression = new ScannerExpression()
-            .byClassloader(loader)
-            .byNamespace(namespace)
-            .byQualifier(qualifiers);
-        scanners.add(expression);
-        return expression;
+    public void registerScanner(BeanScanner scanner) {
+        scanners.add(scanner);
     }
 
     public <T> InstanceExpression<T> singleton(Class<T> type) {
@@ -81,7 +56,7 @@ public class ServiceRegistry {
         protected String name;
         protected Supplier<? extends T> supplier;
         protected Class<? extends T> target;
-
+        private Qualifier<?> qualifier;
 
         public InstanceExpression<T> lifetime(Lifetime lifetime) {
             this.lifetime = lifetime;
@@ -90,6 +65,7 @@ public class ServiceRegistry {
 
         public InstanceExpression(Class<T> root) {
             this.root = root;
+            this.target = root;
             lifetime = Lifetime.Scoped;
         }
 
@@ -107,40 +83,20 @@ public class ServiceRegistry {
         }
 
         @CanIgnoreReturnValue
+        public InstanceExpression<T> byQualifier(Qualifier qualifier) {
+            this.qualifier = qualifier;
+            return this;
+        }
+
+        @CanIgnoreReturnValue
+        public InstanceExpression<T> byStereotype(Class<? extends Annotation> qualifier) {
+            this.qualifier = Qualifiers.byStereotype(qualifier);
+            return this;
+        }
+
+        @CanIgnoreReturnValue
         public InstanceExpression<T> named(String name) {
-            this.name = name;
-            return this;
-        }
-
-    }
-
-    public static class ScannerExpression {
-        protected HashSet<ClassLoader> classLoaders = new HashSet<>();
-        protected List<Class<? extends Annotation>> annotations = new ArrayList<>();
-        protected String targetNamespace = "";
-
-        public ScannerExpression byClassloader(ClassLoader loader) {
-            classLoaders.add(loader);
-            return this;
-        }
-
-        public ScannerExpression byClassloader(ClassLoader... loaders) {
-            this.classLoaders.addAll(Arrays.asList(loaders));
-            return this;
-        }
-
-        public ScannerExpression byQualifier(Class<? extends Annotation> annotation) {
-            this.annotations.add(annotation);
-            return this;
-        }
-
-        public ScannerExpression byQualifier(Class<? extends Annotation>... annotation) {
-            this.annotations.addAll(Arrays.asList(annotation));
-            return this;
-        }
-
-        public ScannerExpression byNamespace(String namespace) {
-            this.targetNamespace = namespace;
+            this.qualifier = Qualifiers.byName(name);
             return this;
         }
     }

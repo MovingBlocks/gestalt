@@ -10,6 +10,7 @@ import org.terasology.gestalt.di.instance.SupplierProvider;
 import org.terasology.gestalt.di.qualifiers.Qualifier;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +39,13 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     private void bindRegistry(ServiceRegistry registry) {
+        for(ClassLoader loader: registry.classLoaders) {
+            this.environment.loadDefinitions(loader);
+        }
+
+        for(BeanScanner scanner: registry.scanners) {
+            scanner.apply(registry, environment);
+        }
         for (ServiceRegistry.InstanceExpression<?> expression : registry.instanceExpressions) {
             BeanKey<?> key = new BeanKey<>(expression.root, null);
             if (expression.supplier == null) {
@@ -60,27 +68,12 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     @Override
     public <T> Optional<T> inject(T instance) {
-        BeanDefinition<T> definition = (BeanDefinition<T>) environment.getDefinition(instance.getClass());
-
-        if (definition instanceof AbstractBeanDefinition) {
-            return definition.build(new BeanResolution() {
-                @Override
-                public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
-                    BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
-                    return getBean(key);
-                }
-
-                @Override
-                public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument) {
-                    BeanKey<T> key = BeanKeys.resolveBeanKey(argument.getType(), argument);
-                    return getBean(key);
-                }
-            });
+        Optional<BeanDefinition<?>> definition =  environment.getDefinition(instance.getClass());
+        if (definition.isPresent() && definition.get() instanceof AbstractBeanDefinition) {
+            return (Optional<T>) definition.get().build(new DefaultBeanResolution(this, environment));
         }
         return Optional.empty();
     }
-
-
 
     @Override
     public <T> Optional<T> getBean(BeanKey<T> identifier) {
