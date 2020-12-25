@@ -1,4 +1,4 @@
-package org.terasology.gestalt.di.qualifiers;
+package org.terasology.gestalt.di.injection;
 
 import java.util.Objects;
 

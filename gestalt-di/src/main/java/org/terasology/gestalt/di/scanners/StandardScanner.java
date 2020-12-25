@@ -5,7 +5,7 @@ import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanScanner;
 import org.terasology.gestalt.di.BeanUtilities;
 import org.terasology.gestalt.di.ServiceRegistry;
-import org.terasology.gestalt.di.qualifiers.Qualifiers;
+import org.terasology.gestalt.di.injection.Qualifiers;
 
 public class StandardScanner implements BeanScanner {
     private final String prefix;
@@ -39,6 +39,12 @@ public class StandardScanner implements BeanScanner {
     }
 
     private void loadDefinition(BeanDefinition definition, ServiceRegistry registry) {
+        for (Class implInter : definition.targetClass().getInterfaces()) {
+            registry.with(implInter)
+                .use(definition.targetClass())
+                .lifetime(BeanUtilities.resolveLifetime(definition.getAnnotationMetadata()))
+                .byQualifier(Qualifiers.resolveQualifier(definition.getAnnotationMetadata()));
+        }
         registry.with(definition.targetClass())
             .lifetime(BeanUtilities.resolveLifetime(definition.getAnnotationMetadata()))
             .byQualifier(Qualifiers.resolveQualifier(definition.getAnnotationMetadata()));

@@ -27,7 +27,7 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
         this(annType, name, values, defaultValues, new AnnotationValue[]{});
     }
 
-    public DefaultAnnotationValue(Class<S> annType, String name, Map<String, Object> values, Map<String, Object> defaultValues, AnnotationValue[] annotations) {
+    public DefaultAnnotationValue(Class<S> annType, String name, Map<String, Object> defaultValues, Map<String, Object> values, AnnotationValue[] annotations) {
         this.annotationName = name;
         this.defaultValues = defaultValues;
         this.values = values;

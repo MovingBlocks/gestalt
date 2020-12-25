@@ -5,8 +5,8 @@ import org.terasology.context.AnnotationValue;
 import org.terasology.context.Argument;
 import org.terasology.context.annotation.Scoped;
 import org.terasology.context.annotation.Transient;
-import org.terasology.gestalt.di.qualifiers.Qualifier;
-import org.terasology.gestalt.di.qualifiers.Qualifiers;
+import org.terasology.gestalt.di.injection.Qualifier;
+import org.terasology.gestalt.di.injection.Qualifiers;
 
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
@@ -16,7 +16,12 @@ public final class BeanUtilities {
 
     }
 
-    public static <T> BeanKey<?> resolveBeanKey(Class<?> clazz, Argument<?> argument) {
+    public static <T> BeanKey<? extends T> resolveBeanKey(Class<T> implClass, Class<? extends T> clazz, Argument<?> argument) {
+        Qualifier<T> qualifier = Qualifiers.resolveQualifier(argument.getAnnotation());
+        return new BeanKey(implClass, clazz, qualifier);
+    }
+
+    public static <T> BeanKey<T> resolveBeanKey(Class<T> clazz, Argument<?> argument) {
         Qualifier<T> qualifier = Qualifiers.resolveQualifier(argument.getAnnotation());
         return new BeanKey(clazz, qualifier);
     }

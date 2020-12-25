@@ -21,13 +21,14 @@ public class DefaultBeanResolution implements BeanResolution {
         BeanKey<?> key = BeanUtilities.resolveBeanKey(target, argument);
         Optional<T> result = Optional.empty();
         if(argument.getType().isInterface()) {
-            for(BeanDefinition<?> def: environment.byInterface(argument.getType())) {
-                key = BeanUtilities.resolveBeanKey(def.targetClass(), argument);
+            for(BeanDefinition<? extends T> def: environment.byInterface(argument.getType())) {
+                key = BeanUtilities.resolveBeanKey(target, def.targetClass(), argument);
                 Optional<T> tg = (Optional<T>) beanContext.getBean(key);
                 if(tg.isPresent() && result.isPresent()) {
                     throw new DependencyInjectionException("multiple possible beans resolved");
+                } else if(tg.isPresent()) {
+                    result = tg;
                 }
-                result = tg;
             }
         } else {
             result =  (Optional<T>) beanContext.getBean(key);
@@ -40,13 +41,14 @@ public class DefaultBeanResolution implements BeanResolution {
         BeanKey<?> key = BeanUtilities.resolveBeanKey(target, argument);
         Optional<T> result = Optional.empty();
         if(argument.getType().isInterface()) {
-            for(BeanDefinition<?> def: environment.byInterface(argument.getType())) {
-                key = BeanUtilities.resolveBeanKey(def.targetClass(), argument);
+            for(BeanDefinition<? extends T> def: environment.byInterface(argument.getType())) {
+                key = BeanUtilities.resolveBeanKey(target, def.targetClass(), argument);
                 Optional<T> tg = (Optional<T>) beanContext.getBean(key);
-                if(tg.isPresent() && result.isPresent()) {
+                if (tg.isPresent() && result.isPresent()) {
                     throw new DependencyInjectionException("multiple possible beans resolved");
+                } else if(tg.isPresent()) {
+                    result = tg;
                 }
-                result = tg;
             }
         } else {
             result =  (Optional<T>) beanContext.getBean(key);

@@ -1,21 +1,13 @@
 package org.terasology.gestalt.di;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import org.terasology.context.AnnotationMetadata;
-import org.terasology.context.AnnotationValue;
-import org.terasology.context.BeanDefinition;
-import org.terasology.context.annotation.Scoped;
-import org.terasology.context.annotation.Transient;
-import org.terasology.gestalt.di.qualifiers.Qualifier;
-import org.terasology.gestalt.di.qualifiers.Qualifiers;
+import org.terasology.gestalt.di.injection.Qualifier;
+import org.terasology.gestalt.di.injection.Qualifiers;
 
-import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 public class ServiceRegistry {
@@ -56,7 +48,7 @@ public class ServiceRegistry {
         protected String name;
         protected Supplier<? extends T> supplier;
         protected Class<? extends T> target;
-        private Qualifier<?> qualifier;
+        protected Qualifier<?> qualifier;
 
         public InstanceExpression<T> lifetime(Lifetime lifetime) {
             this.lifetime = lifetime;
@@ -76,7 +68,7 @@ public class ServiceRegistry {
         }
 
         @CanIgnoreReturnValue
-        public InstanceExpression<T> use(Class<T> target) {
+        public InstanceExpression<T> use(Class<? extends T> target) {
             this.target = target;
             return this;
 

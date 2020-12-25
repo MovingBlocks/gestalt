@@ -1,16 +1,13 @@
 package org.terasology.gestalt.di;
 
 import org.terasology.context.AbstractBeanDefinition;
-import org.terasology.context.Argument;
 import org.terasology.context.BeanDefinition;
-import org.terasology.context.BeanResolution;
 import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.SupplierProvider;
-import org.terasology.gestalt.di.qualifiers.Qualifier;
+import org.terasology.gestalt.di.injection.Qualifier;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,15 +36,15 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     private void bindRegistry(ServiceRegistry registry) {
-        for(ClassLoader loader: registry.classLoaders) {
+        for (ClassLoader loader : registry.classLoaders) {
             this.environment.loadDefinitions(loader);
         }
 
-        for(BeanScanner scanner: registry.scanners) {
+        for (BeanScanner scanner : registry.scanners) {
             scanner.apply(registry, environment);
         }
         for (ServiceRegistry.InstanceExpression<?> expression : registry.instanceExpressions) {
-            BeanKey<?> key = new BeanKey<>(expression.root, null);
+            BeanKey<?> key = new BeanKey(expression.root, expression.target, expression.qualifier);
             if (expression.supplier == null) {
                 providers.put(key, new ClassProvider(environment, expression.lifetime, expression.target));
             } else {
@@ -68,7 +65,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     @Override
     public <T> Optional<T> inject(T instance) {
-        Optional<BeanDefinition<?>> definition =  environment.getDefinition(instance.getClass());
+        Optional<BeanDefinition<?>> definition = environment.getDefinition(instance.getClass());
         if (definition.isPresent() && definition.get() instanceof AbstractBeanDefinition) {
             return (Optional<T>) definition.get().build(new DefaultBeanResolution(this, environment));
         }
@@ -121,13 +118,40 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     @Override
     public <T> Optional<T> getBean(Class<T> clazz) {
         BeanKey<T> identifier = new BeanKey<>(clazz, null);
-        return getBean(identifier);
+        Optional<T> result = Optional.empty();
+        if (clazz.isInterface()) {
+            for (BeanDefinition<? extends T> definition : environment.byInterface(clazz)) {
+                identifier = new BeanKey(clazz, definition.targetClass(), null);
+                result = getBean(identifier);
+                if (result.isPresent()) {
+                    break;
+                }
+            }
+
+        } else {
+            result = getBean(identifier);
+        }
+        return result;
     }
 
     @Override
-    public <T> Optional<T> getBean(Class<T> clazz, Qualifier<T> qualifier) {
-        BeanKey<T> identifier = new BeanKey<>(clazz, qualifier);
-        return getBean(identifier);
+    public <T> Optional<T> getBean(Class<T> clazz, Qualifier qualifier) {
+        Optional<T> result = Optional.empty();
+        if (clazz.isInterface()) {
+            for (BeanDefinition<? extends T> definition : environment.byInterface(clazz)) {
+                BeanKey<T> identifier = new BeanKey(clazz, definition.targetClass(), qualifier);
+                result = getBean(identifier);
+                if (result.isPresent()) {
+                    break;
+                }
+            }
+
+        } else {
+            BeanKey<T> identifier = new BeanKey<>(clazz, qualifier);
+            result = getBean(identifier);
+        }
+
+        return result;
     }
 
     public BeanContext getNestedContainer() {

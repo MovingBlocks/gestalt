@@ -1,4 +1,4 @@
-package org.terasology.gestalt.di.qualifiers;
+package org.terasology.gestalt.di.injection;
 
 import org.terasology.context.AnnotationMetadata;
 import org.terasology.context.AnnotationValue;

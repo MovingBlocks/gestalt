@@ -1,6 +1,4 @@
-package org.terasology.gestalt.di.qualifiers;
-
-import org.terasology.gestalt.di.BeanKey;
+package org.terasology.gestalt.di.injection;
 
 public interface Qualifier<T> {
 

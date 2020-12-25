@@ -189,15 +189,15 @@ public class BeanEnvironment {
         return Optional.of(Range.closed(startPoint, endpoint));
     }
 
-    public <T> Iterable<BeanDefinition<?>> byInterface(ClassLoader loader, Class<T> targetInterface) {
+    public <T> Iterable<BeanDefinition<?  extends T>> byInterface(ClassLoader loader, Class<T> targetInterface) {
         final ClassLookup lookup = beanLookup.get(loader);
         if (!lookup.interfaceIndex.containsKey(targetInterface)) {
             return Collections::emptyIterator;
         }
-        return Arrays.stream(lookup.interfaceIndex.get(targetInterface)).map(k -> k.definition).collect(Collectors.toList());
+        return Arrays.stream(lookup.interfaceIndex.get(targetInterface)).map(k -> (BeanDefinition<? extends T>) k.definition).collect(Collectors.toList());
     }
 
-    public <T> Iterable<BeanDefinition<?>> byInterface(Class<T> targetInterface) {
+    public <T> Iterable<BeanDefinition<? extends T>> byInterface(Class<T> targetInterface) {
         return Iterables.concat(beanLookup.keySet().stream().map(k -> byInterface(k, targetInterface)).collect(Collectors.toList()));
     }
 

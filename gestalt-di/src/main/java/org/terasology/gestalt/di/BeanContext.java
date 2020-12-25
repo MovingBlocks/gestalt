@@ -1,9 +1,8 @@
 package org.terasology.gestalt.di;
 
-import org.terasology.gestalt.di.qualifiers.Qualifier;
+import org.terasology.gestalt.di.injection.Qualifier;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 public interface BeanContext {
 
@@ -15,6 +14,6 @@ public interface BeanContext {
 
     <T> Optional<T> getBean(Class<T> clazz);
 
-    <T> Optional<T> getBean(Class<T> clazz, Qualifier<T> qualifier);
+    <T> Optional<T> getBean(Class<T> clazz, Qualifier qualifier);
 
 }
