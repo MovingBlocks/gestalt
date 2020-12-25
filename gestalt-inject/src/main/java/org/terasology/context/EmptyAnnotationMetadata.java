@@ -1,7 +1,10 @@
 package org.terasology.context;
 
+import com.google.common.collect.Iterators;
+
 import java.lang.annotation.Annotation;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class EmptyAnnotationMetadata implements AnnotationMetadata {
@@ -50,5 +53,10 @@ public class EmptyAnnotationMetadata implements AnnotationMetadata {
     @Override
     public Object getRawSingleValue(String annotation, String field) {
         return null;
+    }
+
+    @Override
+    public Iterator<AnnotationValue<Annotation>[]> iterator() {
+        return Collections.emptyIterator();
     }
 }

@@ -1,14 +1,10 @@
 package org.terasology.gestalt.di.instance;
 
 import org.terasology.context.AbstractBeanDefinition;
-import org.terasology.context.Argument;
 import org.terasology.context.BeanDefinition;
-import org.terasology.context.BeanResolution;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanIdentifier;
-import org.terasology.gestalt.di.BeanKey;
-import org.terasology.gestalt.di.BeanKeys;
 import org.terasology.gestalt.di.DefaultBeanResolution;
 import org.terasology.gestalt.di.Lifetime;
 
