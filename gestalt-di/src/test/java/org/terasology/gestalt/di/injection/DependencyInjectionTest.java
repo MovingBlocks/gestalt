@@ -1,14 +1,11 @@
 package org.terasology.gestalt.di.injection;
 
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.di.Lifetime;
 import org.terasology.gestalt.di.ServiceRegistry;
-import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 import org.terasology.gestalt.di.injection.beans.Counter1;
 import org.terasology.gestalt.di.injection.beans.Counter2;
 import org.terasology.gestalt.di.injection.beans.CounterTester;
@@ -17,10 +14,6 @@ import org.terasology.gestalt.di.injection.beans.ICounter;
 import java.util.Optional;
 
 public class DependencyInjectionTest {
-
-    @Rule
-    public final ExpectedException exception = ExpectedException.none();
-
 
     @Test
     public void testBeanInjection() {
@@ -47,44 +40,7 @@ public class DependencyInjectionTest {
 
         test.get().addToCounter1();
 
-        Assert.assertEquals(0,c2.get().getCount());
-        Assert.assertEquals(1,c1.get().getCount());
-    }
-
-    @Test
-    public void testBeanInjectionWithInterfaceFromConcreteType() {
-        ServiceRegistry registry = new ServiceRegistry();
-        registry.with(Counter1.class)
-            .lifetime(Lifetime.Singleton);
-
-        BeanContext beanContext = new DefaultBeanContext(registry);
-        Optional<ICounter> counter = beanContext.getBean(ICounter.class);
-        Assert.assertTrue(counter.isPresent());
-    }
-
-    @Test
-    public void testFailedBeanResolutionWithDuplicateImplementations() {
-        ServiceRegistry registry = new ServiceRegistry();
-        registry.with(Counter1.class)
-            .lifetime(Lifetime.Singleton);
-        registry.with(Counter2.class)
-            .lifetime(Lifetime.Singleton);
-
-        BeanContext beanContext = new DefaultBeanContext(registry);
-        exception.expect(BeanResolutionException.class);
-        beanContext.getBean(ICounter.class);
-    }
-
-    @Test
-    public void testBeanResolutionWithMultipleImplementationsByConcrete() {
-        ServiceRegistry registry = new ServiceRegistry();
-        registry.with(Counter1.class)
-            .lifetime(Lifetime.Singleton);
-        registry.with(Counter2.class)
-            .lifetime(Lifetime.Singleton);
-
-        BeanContext beanContext = new DefaultBeanContext(registry);
-        Assert.assertTrue(beanContext.getBean(Counter2.class).isPresent());
-
+        Assert.assertEquals(0, c2.get().getCount());
+        Assert.assertEquals(1, c1.get().getCount());
     }
 }

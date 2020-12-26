@@ -22,7 +22,7 @@ public class StandardScannerTest {
         Optional<SingletonBean> bean2 = beanContext.getBean(SingletonBean.class);
         Assert.assertTrue(bean.isPresent());
         Assert.assertTrue(bean2.isPresent());
-        Assert.assertTrue(bean.get() == bean2.get());
+        Assert.assertSame(bean.get(), bean2.get());
     }
 
 }

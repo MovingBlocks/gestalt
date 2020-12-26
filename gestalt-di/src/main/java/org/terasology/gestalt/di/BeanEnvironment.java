@@ -153,16 +153,6 @@ public class BeanEnvironment {
         while (true) {
             String stringToTest = input[startPoint + (endpoint - startPoint) / 2].prefix;
             if (stringToTest.startsWith(prefix)) {
-                while (true) {
-                    if (!input[startPoint].prefix.startsWith(prefix)) {
-                        startPoint++;
-                        break;
-                    }
-                    if (startPoint == 0) {
-                        break;
-                    }
-                    startPoint--;
-                }
                 break;
             }
             if (startPoint == endpoint) {
@@ -184,6 +174,13 @@ public class BeanEnvironment {
                 return Optional.empty();
             }
             endpoint--;
+        }
+
+        while (!input[startPoint].prefix.startsWith(prefix)) {
+            if (endpoint < startPoint) {
+                return Optional.empty();
+            }
+            startPoint++;
         }
 
         return Optional.of(Range.closed(startPoint, endpoint));

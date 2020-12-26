@@ -113,6 +113,10 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     private Optional<BeanKey> findConcreteBeanKey(BeanKey identifier) {
         Collection<BeanKey> result = null;
+        if(providers.containsKey(identifier)){
+            return Optional.of(identifier);
+        }
+
         if (identifier.qualifier != null) {
             result = Sets.newHashSet(qualifierMapping.get(identifier.qualifier));
         }
@@ -127,19 +131,28 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 result = Sets.newHashSet(interfaceMapping.get(identifier.baseType));
             }
         } else if (identifier.baseType == identifier.implementingType) {
-            if (providers.containsKey(identifier)) {
-                return Optional.of(identifier);
+            Collection<BeanKey> implementing = interfaceMapping.get(identifier.baseType);
+            for (Class implType : identifier.baseType.getInterfaces()) {
+                Collection<BeanKey> temp = interfaceMapping.get(implType);
+                if (temp == null || temp.size() == 0) {
+                    continue;
+                }
+                implementing.addAll(temp.stream().filter(k -> k.baseType == identifier.baseType).collect(Collectors.toSet()));
             }
-            return Optional.empty();
+            if (result != null && implementing != null) {
+                result.retainAll(implementing);
+            } else if (implementing != null) {
+                result = implementing;
+            }
         } else {
             Collection<BeanKey> implementing = interfaceMapping.get(identifier.implementingType);
-            if (result != null) {
+            if (result != null && implementing != null) {
                 result.retainAll(implementing);
-            } else {
+            } else if (implementing != null) {
                 result = implementing.stream().filter(k -> k.baseType == identifier.baseType).collect(Collectors.toSet());
             }
         }
-        if (result.size() == 0) {
+        if (result == null || result.size() == 0) {
             return Optional.empty();
         }
         if (result.size() > 1) {
