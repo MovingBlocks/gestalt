@@ -2,7 +2,7 @@ package org.terasology.gestalt.di.instance;
 
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.BeanEnvironment;
-import org.terasology.gestalt.di.BeanIdentifier;
+import org.terasology.gestalt.di.BeanKey;
 import org.terasology.gestalt.di.Lifetime;
 
 import java.util.Optional;
@@ -20,6 +20,6 @@ public abstract class BeanProvider<T> implements AutoCloseable {
         return lifetime;
     }
 
-    public abstract Optional<T> get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo);
+    public abstract Optional<T> get(BeanKey identifier, BeanContext current, BeanContext scopedTo);
 
 }

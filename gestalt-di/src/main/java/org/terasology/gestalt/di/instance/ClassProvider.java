@@ -4,7 +4,7 @@ import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.BeanDefinition;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.BeanEnvironment;
-import org.terasology.gestalt.di.BeanIdentifier;
+import org.terasology.gestalt.di.BeanKey;
 import org.terasology.gestalt.di.DefaultBeanResolution;
 import org.terasology.gestalt.di.Lifetime;
 
@@ -22,7 +22,7 @@ public class ClassProvider<T> extends BeanProvider<T> {
     }
 
     @Override
-    public Optional<T> get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo) {
+    public Optional<T> get(BeanKey identifier, BeanContext current, BeanContext scopedTo) {
         Optional<BeanDefinition<?>> definition = environment.getDefinition(target);
         if (definition.isPresent() && definition.get() instanceof AbstractBeanDefinition) {
             BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;

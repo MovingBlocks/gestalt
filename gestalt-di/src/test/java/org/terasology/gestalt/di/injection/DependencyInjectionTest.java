@@ -10,7 +10,6 @@ import org.terasology.gestalt.di.injection.beans.Counter1;
 import org.terasology.gestalt.di.injection.beans.Counter2;
 import org.terasology.gestalt.di.injection.beans.CounterTester;
 import org.terasology.gestalt.di.injection.beans.ICounter;
-import org.terasology.gestalt.di.injection.beans.ICounter2;
 
 import java.util.Optional;
 

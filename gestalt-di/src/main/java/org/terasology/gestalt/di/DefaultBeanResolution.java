@@ -19,40 +19,12 @@ public class DefaultBeanResolution implements BeanResolution {
     @Override
     public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
         BeanKey<?> key = BeanUtilities.resolveBeanKey(target, argument);
-        Optional<T> result = Optional.empty();
-        if(argument.getType().isInterface()) {
-            for(BeanDefinition<? extends T> def: environment.byInterface(argument.getType())) {
-                key = BeanUtilities.resolveBeanKey(target, def.targetClass(), argument);
-                Optional<T> tg = (Optional<T>) beanContext.getBean(key);
-                if(tg.isPresent() && result.isPresent()) {
-                    throw new DependencyInjectionException("multiple possible beans resolved");
-                } else if(tg.isPresent()) {
-                    result = tg;
-                }
-            }
-        } else {
-            result =  (Optional<T>) beanContext.getBean(key);
-        }
-        return result;
+        return  (Optional<T>) beanContext.getBean(key);
     }
 
     @Override
     public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument)  throws DependencyInjectionException{
         BeanKey<?> key = BeanUtilities.resolveBeanKey(target, argument);
-        Optional<T> result = Optional.empty();
-        if(argument.getType().isInterface()) {
-            for(BeanDefinition<? extends T> def: environment.byInterface(argument.getType())) {
-                key = BeanUtilities.resolveBeanKey(target, def.targetClass(), argument);
-                Optional<T> tg = (Optional<T>) beanContext.getBean(key);
-                if (tg.isPresent() && result.isPresent()) {
-                    throw new DependencyInjectionException("multiple possible beans resolved");
-                } else if(tg.isPresent()) {
-                    result = tg;
-                }
-            }
-        } else {
-            result =  (Optional<T>) beanContext.getBean(key);
-        }
-        return result;
+        return  (Optional<T>) beanContext.getBean(key);
     }
 }

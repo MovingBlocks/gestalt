@@ -22,7 +22,6 @@ public class ServiceRegistry {
         classLoaders.addAll(registry.classLoaders);
     }
 
-
     @CanIgnoreReturnValue
     public <T> InstanceExpression<T> with(Class<T> type) {
         InstanceExpression<T> expr = new InstanceExpression<>(type);
@@ -44,10 +43,9 @@ public class ServiceRegistry {
 
     public static class InstanceExpression<T> {
         protected final Class<T> root;
-        protected Lifetime lifetime;
-        protected String name;
-        protected Supplier<? extends T> supplier;
         protected Class<? extends T> target;
+        protected Lifetime lifetime;
+        protected Supplier<? extends T> supplier;
         protected Qualifier<?> qualifier;
 
         public InstanceExpression<T> lifetime(Lifetime lifetime) {

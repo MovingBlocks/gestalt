@@ -39,12 +39,6 @@ public class StandardScanner implements BeanScanner {
     }
 
     private void loadDefinition(BeanDefinition definition, ServiceRegistry registry) {
-        for (Class implInter : definition.targetClass().getInterfaces()) {
-            registry.with(implInter)
-                .use(definition.targetClass())
-                .lifetime(BeanUtilities.resolveLifetime(definition.getAnnotationMetadata()))
-                .byQualifier(Qualifiers.resolveQualifier(definition.getAnnotationMetadata()));
-        }
         registry.with(definition.targetClass())
             .lifetime(BeanUtilities.resolveLifetime(definition.getAnnotationMetadata()))
             .byQualifier(Qualifiers.resolveQualifier(definition.getAnnotationMetadata()));

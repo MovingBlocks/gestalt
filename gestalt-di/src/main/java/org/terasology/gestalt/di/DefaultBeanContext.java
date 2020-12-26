@@ -1,12 +1,18 @@
 package org.terasology.gestalt.di;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Sets;
 import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.BeanDefinition;
+import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.SupplierProvider;
 import org.terasology.gestalt.di.injection.Qualifier;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -14,8 +20,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
-    protected final Map<BeanIdentifier, Object> boundObjects = new ConcurrentHashMap<>();
-    private final Map<BeanIdentifier, BeanProvider<?>> providers = new HashMap<>();
+    protected final Map<BeanKey, Object> boundObjects = new ConcurrentHashMap<>();
+    protected final Map<BeanKey, BeanProvider<?>> providers = new ConcurrentHashMap<>();
+    private final Multimap<Qualifier, BeanKey> qualifierMapping = HashMultimap.create();
+    private final Multimap<Class, BeanKey> interfaceMapping = HashMultimap.create();
+
     private final BeanContext parent;
     private final BeanEnvironment environment;
 
@@ -39,12 +48,24 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         for (ClassLoader loader : registry.classLoaders) {
             this.environment.loadDefinitions(loader);
         }
-
         for (BeanScanner scanner : registry.scanners) {
             scanner.apply(registry, environment);
         }
         for (ServiceRegistry.InstanceExpression<?> expression : registry.instanceExpressions) {
-            BeanKey<?> key = new BeanKey(expression.root, expression.target, expression.qualifier);
+            BeanKey<?> key = new BeanKey(expression.target)
+                .use(expression.root)
+                .qualifiedBy(expression.qualifier);
+            if (expression.target == expression.root) {
+                for (Class impl : expression.target.getInterfaces()) {
+                    interfaceMapping.put(impl, key);
+                }
+            } else {
+                interfaceMapping.put(expression.root, key);
+            }
+            if (expression.qualifier != null) {
+                qualifierMapping.put(expression.qualifier, key);
+            }
+
             if (expression.supplier == null) {
                 providers.put(key, new ClassProvider(environment, expression.lifetime, expression.target));
             } else {
@@ -53,7 +74,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         }
     }
 
-    static <T> Optional<T> bindBean(DefaultBeanContext context, BeanIdentifier identifier, Supplier<Optional<T>> supplier) {
+    static <T> Optional<T> bindBean(DefaultBeanContext context, BeanKey identifier, Supplier<Optional<T>> supplier) {
         if (context.boundObjects.containsKey(identifier)) {
             return Optional.of((T) context.boundObjects.get(identifier));
         }
@@ -89,69 +110,74 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return Optional.empty();
     }
 
+    private Optional<BeanKey> findConcreteBeanKey(BeanKey identifier) {
+        Collection<BeanKey> result = null;
+        if (identifier.qualifier != null) {
+            result = Sets.newHashSet(qualifierMapping.get(identifier.qualifier));
+        }
+        if (identifier.baseType.isInterface()) {
+            if (result != null) {
+                Collection<BeanKey> implementing = interfaceMapping.get(identifier.baseType);
+                if (implementing != null) {
+                    result.retainAll(implementing);
+                }
+            } else {
+                result = interfaceMapping.get(identifier.baseType);
+            }
+        } else if (identifier.baseType == identifier.implementingType) {
+            if (providers.containsKey(identifier)) {
+                return Optional.of(identifier);
+            }
+            return Optional.empty();
+        }
+        if(result == null) {
+            throw new BeanResolutionException(identifier);
+        }
+        if (result.size() > 1) {
+            throw new BeanResolutionException(result);
+        }
+        return result.stream().findFirst();
+    }
+
     /**
      * @param identifier
      * @param targetContext the context that the object is being resolve to
      * @param <T>
      * @return
      */
-    private <T> Optional<T> internalResolve(BeanIdentifier identifier, DefaultBeanContext targetContext) {
-        if (providers.containsKey(identifier)) {
-            BeanProvider<T> provider = (BeanProvider<T>) this.providers.get(identifier);
+    private <T> Optional<T> internalResolve(BeanKey identifier, DefaultBeanContext targetContext) {
+        Optional<BeanKey> key =  findConcreteBeanKey(identifier);
+        if(key.isPresent()) {
+            BeanProvider<T> provider = (BeanProvider<T>)providers.get(key.get());
             switch (provider.getLifetime()) {
                 case Transient:
-                    return provider.get(identifier, this, targetContext);
+                    return provider.get(key.get(), this, targetContext);
                 case Singleton:
-                    return DefaultBeanContext.bindBean(this, identifier, () -> provider.get(identifier, this, targetContext));
+                    return DefaultBeanContext.bindBean(this, key.get(), () -> provider.get(key.get(), this, targetContext));
                 case Scoped:
                 case ScopedToChildren:
                     if (provider.getLifetime() == Lifetime.ScopedToChildren && targetContext == this) {
                         return Optional.empty();
                     }
-                    return DefaultBeanContext.bindBean(targetContext, identifier, () -> provider.get(identifier, this, targetContext));
+                    return DefaultBeanContext.bindBean(targetContext, key.get(), () -> provider.get(key.get(), this, targetContext));
 
             }
         }
+
         return Optional.empty();
     }
 
     @Override
     public <T> Optional<T> getBean(Class<T> clazz) {
-        BeanKey<T> identifier = new BeanKey<>(clazz, null);
-        Optional<T> result = Optional.empty();
-        if (clazz.isInterface()) {
-            for (BeanDefinition<? extends T> definition : environment.byInterface(clazz)) {
-                identifier = new BeanKey(clazz, definition.targetClass(), null);
-                result = getBean(identifier);
-                if (result.isPresent()) {
-                    break;
-                }
-            }
-
-        } else {
-            result = getBean(identifier);
-        }
-        return result;
+        BeanKey<T> identifier = new BeanKey<>(clazz);
+        return getBean(identifier);
     }
 
     @Override
     public <T> Optional<T> getBean(Class<T> clazz, Qualifier qualifier) {
-        Optional<T> result = Optional.empty();
-        if (clazz.isInterface()) {
-            for (BeanDefinition<? extends T> definition : environment.byInterface(clazz)) {
-                BeanKey<T> identifier = new BeanKey(clazz, definition.targetClass(), qualifier);
-                result = getBean(identifier);
-                if (result.isPresent()) {
-                    break;
-                }
-            }
-
-        } else {
-            BeanKey<T> identifier = new BeanKey<>(clazz, qualifier);
-            result = getBean(identifier);
-        }
-
-        return result;
+        BeanKey<T> identifier = new BeanKey<>(clazz)
+            .qualifiedBy(qualifier);
+        return getBean(identifier);
     }
 
     public BeanContext getNestedContainer() {

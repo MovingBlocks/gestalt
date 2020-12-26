@@ -2,7 +2,7 @@ package org.terasology.gestalt.di.instance;
 
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.BeanEnvironment;
-import org.terasology.gestalt.di.BeanIdentifier;
+import org.terasology.gestalt.di.BeanKey;
 import org.terasology.gestalt.di.Lifetime;
 
 import java.util.Optional;
@@ -16,7 +16,7 @@ public class SupplierProvider<T> extends BeanProvider<T> {
         this.supplier = supplier;
     }
     @Override
-    public Optional<T> get(BeanIdentifier identifier, BeanContext current, BeanContext scopedTo) {
+    public Optional<T> get(BeanKey identifier, BeanContext current, BeanContext scopedTo) {
         return Optional.ofNullable(supplier.get());
     }
 
