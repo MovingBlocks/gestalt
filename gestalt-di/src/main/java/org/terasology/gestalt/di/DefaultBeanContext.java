@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
     protected final Map<BeanKey, Object> boundObjects = new ConcurrentHashMap<>();
@@ -115,6 +116,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         if (identifier.qualifier != null) {
             result = Sets.newHashSet(qualifierMapping.get(identifier.qualifier));
         }
+
         if (identifier.baseType.isInterface()) {
             if (result != null) {
                 Collection<BeanKey> implementing = interfaceMapping.get(identifier.baseType);
@@ -122,16 +124,23 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                     result.retainAll(implementing);
                 }
             } else {
-                result = interfaceMapping.get(identifier.baseType);
+                result = Sets.newHashSet(interfaceMapping.get(identifier.baseType));
             }
         } else if (identifier.baseType == identifier.implementingType) {
             if (providers.containsKey(identifier)) {
                 return Optional.of(identifier);
             }
             return Optional.empty();
+        } else {
+            Collection<BeanKey> implementing = interfaceMapping.get(identifier.implementingType);
+            if (result != null) {
+                result.retainAll(implementing);
+            } else {
+                result = implementing.stream().filter(k -> k.baseType == identifier.baseType).collect(Collectors.toSet());
+            }
         }
-        if(result == null) {
-            throw new BeanResolutionException(identifier);
+        if (result.size() == 0) {
+            return Optional.empty();
         }
         if (result.size() > 1) {
             throw new BeanResolutionException(result);
@@ -146,9 +155,9 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
      * @return
      */
     private <T> Optional<T> internalResolve(BeanKey identifier, DefaultBeanContext targetContext) {
-        Optional<BeanKey> key =  findConcreteBeanKey(identifier);
-        if(key.isPresent()) {
-            BeanProvider<T> provider = (BeanProvider<T>)providers.get(key.get());
+        Optional<BeanKey> key = findConcreteBeanKey(identifier);
+        if (key.isPresent()) {
+            BeanProvider<T> provider = (BeanProvider<T>) providers.get(key.get());
             switch (provider.getLifetime()) {
                 case Transient:
                     return provider.get(key.get(), this, targetContext);
@@ -160,7 +169,6 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                         return Optional.empty();
                     }
                     return DefaultBeanContext.bindBean(targetContext, key.get(), () -> provider.get(key.get(), this, targetContext));
-
             }
         }
 

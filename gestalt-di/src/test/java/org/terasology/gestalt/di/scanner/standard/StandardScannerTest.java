@@ -11,14 +11,12 @@ import org.terasology.gestalt.di.scanners.StandardScanner;
 import java.util.Optional;
 
 public class StandardScannerTest {
-    public class ScannerRegistry extends ServiceRegistry {
-        public ScannerRegistry() {
-            this.registerScanner(new StandardScanner("org.terasology.gestalt.di.scanner.standard"));
-        }
-    }
     @Test
-    public void checkBeanRegistry() {
-        BeanContext beanContext = new DefaultBeanContext(new ScannerRegistry());
+    public void testSingletonBeanWithScanner() {
+        ServiceRegistry serviceRegistry = new ServiceRegistry();
+        serviceRegistry.registerScanner(new StandardScanner("org.terasology.gestalt.di.scanner.standard"));
+
+        BeanContext beanContext = new DefaultBeanContext(serviceRegistry);
 
         Optional<SingletonBean> bean = beanContext.getBean(SingletonBean.class);
         Optional<SingletonBean> bean2 = beanContext.getBean(SingletonBean.class);
