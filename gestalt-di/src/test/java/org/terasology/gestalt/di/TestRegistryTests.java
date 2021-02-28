@@ -17,7 +17,6 @@ public class TestRegistryTests {
         Optional<Dep2> dep = beanContext.getBean(Dep2.class);
         Assert.assertTrue(dep.isPresent());
         Assert.assertTrue(dep.get() instanceof Dep2);
-
     }
 
     @Test

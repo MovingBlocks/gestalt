@@ -62,8 +62,7 @@ public class BeanKey<T> implements Serializable, CharSequence {
         this.implementingType = implementingBean;
         this.qualifier = qualifier;
         this.typeArguments = (typeArguments == null || typeArguments.length == 0) ? null : typeArguments;
-        int result = Objects.hash(beanType, qualifier, implementingBean);
-        this.hashCode = 31 * result + Arrays.hashCode(this.typeArguments);
+        updateHash();
     }
 
     public BeanKey(Class<T> beanType, Qualifier<T> qualifier, Class... typeArguments) {

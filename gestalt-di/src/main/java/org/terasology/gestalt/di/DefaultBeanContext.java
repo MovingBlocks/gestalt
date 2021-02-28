@@ -1,19 +1,19 @@
 package org.terasology.gestalt.di;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.BeanDefinition;
+import org.terasology.context.annotation.Introspected;
 import org.terasology.gestalt.di.exceptions.BeanResolutionException;
+import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.SupplierProvider;
-import org.terasology.gestalt.di.injection.Qualifier;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +38,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     public DefaultBeanContext(BeanContext parent, BeanEnvironment environment, ServiceRegistry... registries) {
+        Preconditions.checkArgument(parent != this, "bean context can't refrence itself");
         this.parent = parent;
         this.environment = environment;
         for (ServiceRegistry registry : registries) {
@@ -53,25 +54,32 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
             scanner.apply(registry, environment);
         }
         for (ServiceRegistry.InstanceExpression<?> expression : registry.instanceExpressions) {
-            BeanKey<?> key = new BeanKey(expression.target)
+            bindExpression(expression);
+        }
+
+        // register self as a singleton instance that is scoped to current context
+        bindExpression(new ServiceRegistry.InstanceExpression<>(BeanContext.class).lifetime(Lifetime.Singleton).use(() -> this));
+    }
+
+    private <T> void bindExpression(ServiceRegistry.InstanceExpression<T> expression) {
+        BeanKey<?> key = new BeanKey(expression.target)
                 .use(expression.root)
                 .qualifiedBy(expression.qualifier);
-            if (expression.target == expression.root) {
-                for (Class impl : expression.target.getInterfaces()) {
-                    interfaceMapping.put(impl, key);
-                }
-            } else {
-                interfaceMapping.put(expression.root, key);
+        if (expression.target == expression.root) {
+            for (Class impl : expression.target.getInterfaces()) {
+                interfaceMapping.put(impl, key);
             }
-            if (expression.qualifier != null) {
-                qualifierMapping.put(expression.qualifier, key);
-            }
+        } else {
+            interfaceMapping.put(expression.root, key);
+        }
+        if (expression.qualifier != null) {
+            qualifierMapping.put(expression.qualifier, key);
+        }
 
-            if (expression.supplier == null) {
-                providers.put(key, new ClassProvider(environment, expression.lifetime, expression.target));
-            } else {
-                providers.put(key, new SupplierProvider(environment, expression.lifetime, expression.supplier));
-            }
+        if (expression.supplier == null) {
+            providers.put(key, new ClassProvider(environment, expression.lifetime, expression.target));
+        } else {
+            providers.put(key, new SupplierProvider(environment, expression.lifetime, expression.supplier));
         }
     }
 
@@ -201,10 +209,12 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return getBean(identifier);
     }
 
+    @Override
     public BeanContext getNestedContainer() {
         return new DefaultBeanContext(this, environment);
     }
 
+    @Override
     public BeanContext getNestedContainer(ServiceRegistry... registries) {
         return new DefaultBeanContext(this, environment, registries);
     }

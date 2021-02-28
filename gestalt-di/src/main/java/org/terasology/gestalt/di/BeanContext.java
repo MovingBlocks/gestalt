@@ -16,4 +16,8 @@ public interface BeanContext {
 
     <T> Optional<T> getBean(Class<T> clazz, Qualifier qualifier);
 
+    BeanContext getNestedContainer();
+
+    BeanContext getNestedContainer(ServiceRegistry... registries);
+
 }
