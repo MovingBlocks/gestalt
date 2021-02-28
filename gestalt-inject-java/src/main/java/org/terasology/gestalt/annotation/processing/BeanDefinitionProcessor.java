@@ -27,6 +27,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -159,6 +160,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
         @Override
         public Object visitType(TypeElement e, String className) {
+            if (!e.equals(this.concreteClass)) {
+                return super.visitType(e, className);
+            }
             writeBeanDefinition(e, className);
             return super.visitType(e, className);
         }
@@ -316,9 +320,10 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             ).returns(TypeName.get(Optional.class)).addCode(injectionBlock);
             injectMethod.parameters.set(0, ParameterSpec.builder(TypeName.get(typeElement.asType()), "instance").build());
 
+            PackageElement packageElement = processingEnv.getElementUtils().getPackageOf(typeElement);
 
             JavaFile.Builder builder = JavaFile.builder(
-                className.substring(0, className.lastIndexOf('.')),
+                packageElement.getQualifiedName().toString(),
                 TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "$BeanDefinition")
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                     .superclass(ParameterizedTypeName.get(
