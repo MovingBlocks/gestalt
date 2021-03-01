@@ -28,7 +28,7 @@ public class DependencyResolutionTest {
             .lifetime(Lifetime.Singleton);
 
         BeanContext beanContext = new DefaultBeanContext(registry);
-        Optional<ICounter> counter = beanContext.getBean(ICounter.class);
+        Optional<ICounter> counter = beanContext.findBean(ICounter.class);
         Assert.assertTrue(counter.isPresent());
     }
 
@@ -54,7 +54,7 @@ public class DependencyResolutionTest {
             .lifetime(Lifetime.Singleton);
 
         BeanContext beanContext = new DefaultBeanContext(registry);
-        Assert.assertTrue(beanContext.getBean(Counter2.class).isPresent());
+        Assert.assertTrue(beanContext.findBean(Counter2.class).isPresent());
     }
 
     @Test
@@ -66,7 +66,7 @@ public class DependencyResolutionTest {
         registry.with(Counter2.class);
 
         BeanContext beanContext = new DefaultBeanContext(registry);
-        Assert.assertTrue(beanContext.getBean(ICounter.class, Qualifiers.byStereotype(SampleQualifier.class)).isPresent());
+        Assert.assertTrue(beanContext.findBean(ICounter.class, Qualifiers.byStereotype(SampleQualifier.class)).isPresent());
 
         exception.expect(BeanResolutionException.class);
         beanContext.getBean(ICounter.class);
@@ -81,10 +81,10 @@ public class DependencyResolutionTest {
             .byQualifier(Qualifiers.byStereotype(SampleQualifier.class));
         BeanContext beanContext = new DefaultBeanContext(registry);
 
-        Assert.assertTrue(beanContext.getBean(ICounter.class, Qualifiers.byStereotype(SampleQualifier.class)).isPresent());
-        Assert.assertTrue(beanContext.getBean(Counter3.class, Qualifiers.byStereotype(SampleQualifier.class)).isPresent());
-        Assert.assertTrue(beanContext.getBean(Counter3.class).isPresent());
-        Assert.assertTrue(beanContext.getBean(ICounter.class).isPresent());
+        Assert.assertTrue(beanContext.findBean(ICounter.class, Qualifiers.byStereotype(SampleQualifier.class)).isPresent());
+        Assert.assertTrue(beanContext.findBean(Counter3.class, Qualifiers.byStereotype(SampleQualifier.class)).isPresent());
+        Assert.assertTrue(beanContext.findBean(Counter3.class).isPresent());
+        Assert.assertTrue(beanContext.findBean(ICounter.class).isPresent());
     }
 
 }

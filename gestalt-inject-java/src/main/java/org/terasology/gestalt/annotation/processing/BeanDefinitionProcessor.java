@@ -251,7 +251,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                         targetClass,
                         targetClass,
                         CodeBlock.join(constructorParams.getParameters().stream().map(k ->
-                            buildResolution("resolveConstructorArgument", k)
+                            buildResolution("resolveConstructorArgument", k, ClassName.get(target))
                         ).collect(Collectors.toList()), ","));
                 }
             } else {
@@ -260,13 +260,16 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             return builder.add("return this.inject(result,resolution);").build();
         }
 
-        private CodeBlock buildResolution(String method, VariableElement element) {
+        private CodeBlock buildResolution(String method, VariableElement element, ClassName target) {
             //TODO use `Optional#orThrowElse()`
-            return CodeBlock.builder().add("($T)resolution.$L($T.class,$L).get()",
+            return CodeBlock.builder().add("($T)requiredDependency(resolution.$L($T.class,$L),() -> new $T($T.class, $T.class))",
                     TypeName.get(element.asType()),
                     method,
                     TypeName.get(element.asType()),
-                    buildArgument(element)
+                    buildArgument(element),
+                    ClassName.get("org.terasology.gestalt.di.exceptions", "DependencyResolutionException"),
+                    target,
+                    TypeName.get(element.asType())
             ).build();
         }
 
@@ -280,11 +283,11 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                         List<? extends VariableElement> parameters = ((ExecutableElement) ele).getParameters();
 
                         if (ele.getSimpleName().toString().startsWith("set") && parameters.size() == 1) {
-                            builder.add("$L.$L($L); \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", parameters.get(0)));
+                            builder.add("$L.$L($L); \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", parameters.get(0), ClassName.get(target)));
                         }
                     }
                     if (ele instanceof VariableElement) {
-                        builder.add("$L.$L = $L; \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", (VariableElement) ele));
+                        builder.add("$L.$L = $L; \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", (VariableElement) ele, ClassName.get(target)));
                     }
                 }
             }
@@ -300,9 +303,11 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
 
         private void writeBeanDefinition(TypeElement typeElement, String className) {
+            PackageElement packageElement = processingEnv.getElementUtils().getPackageOf(typeElement);
 
             TypeElement beanDefinitionClass = utility.getElements().getTypeElement("org.terasology.context.AbstractBeanDefinition");
-            writer.writeService("org.terasology.context.BeanDefinition", className + "$BeanDefinition");
+            // TODO: flattened class tree can have collisions
+            writer.writeService("org.terasology.context.BeanDefinition", packageElement.getQualifiedName() + "." + typeElement.getSimpleName() + "$BeanDefinition");
 
             CodeBlock injectionCreationBuilder = buildObjectPointCreationBlock(typeElement);
             CodeBlock injectionBlock = buildInjectionBlock(typeElement);
@@ -319,8 +324,6 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                 .get()
             ).returns(TypeName.get(Optional.class)).addCode(injectionBlock);
             injectMethod.parameters.set(0, ParameterSpec.builder(TypeName.get(typeElement.asType()), "instance").build());
-
-            PackageElement packageElement = processingEnv.getElementUtils().getPackageOf(typeElement);
 
             JavaFile.Builder builder = JavaFile.builder(
                 packageElement.getQualifiedName().toString(),

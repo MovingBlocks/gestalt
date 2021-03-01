@@ -15,4 +15,8 @@ public class BeanResolutionException extends DependencyInjectionException {
         super("Resolved Multiple Beans: " + StreamSupport.stream(providers.spliterator(), false).map(Object::toString).collect(Collectors.joining(",")));
     }
 
+    public BeanResolutionException(Class clazz) {
+        super("Failed to Resolve Bean" + clazz.toString());
+    }
+
 }

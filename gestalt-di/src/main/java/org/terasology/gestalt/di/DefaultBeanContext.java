@@ -6,7 +6,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.BeanDefinition;
-import org.terasology.context.annotation.Introspected;
 import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.instance.BeanProvider;
@@ -103,7 +102,13 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     @Override
-    public <T> Optional<T> getBean(BeanKey<T> identifier) {
+    public <T> T getBean(BeanKey<T> identifier) {
+        Optional<T> result = findBean(identifier);
+        return result.orElseThrow(() -> new BeanResolutionException(identifier));
+    }
+
+    @Override
+    public <T> Optional<T> findBean(BeanKey<T> identifier) {
         Optional<BeanContext> cntx = Optional.of(this);
         while (cntx.isPresent()) {
             BeanContext beanContext = cntx.get();
@@ -197,17 +202,31 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     @Override
-    public <T> Optional<T> getBean(Class<T> clazz) {
+    public <T> T getBean(Class<T> clazz) {
         BeanKey<T> identifier = new BeanKey<>(clazz);
         return getBean(identifier);
     }
 
     @Override
-    public <T> Optional<T> getBean(Class<T> clazz, Qualifier qualifier) {
+    public <T> Optional<T> findBean(Class<T> clazz) {
+        BeanKey<T> identifier = new BeanKey<>(clazz);
+        return findBean(identifier);
+    }
+
+    @Override
+    public <T> T getBean(Class<T> clazz, Qualifier qualifier) {
         BeanKey<T> identifier = new BeanKey<>(clazz)
             .qualifiedBy(qualifier);
         return getBean(identifier);
     }
+
+    @Override
+    public <T> Optional<T> findBean(Class<T> clazz, Qualifier qualifier) {
+        BeanKey<T> identifier = new BeanKey<>(clazz)
+                .qualifiedBy(qualifier);
+        return findBean(identifier);
+    }
+
 
     @Override
     public BeanContext getNestedContainer() {

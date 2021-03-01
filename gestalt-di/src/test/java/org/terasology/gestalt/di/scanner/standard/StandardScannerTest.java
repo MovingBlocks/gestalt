@@ -18,8 +18,8 @@ public class StandardScannerTest {
 
         BeanContext beanContext = new DefaultBeanContext(serviceRegistry);
 
-        Optional<SingletonBean> bean = beanContext.getBean(SingletonBean.class);
-        Optional<SingletonBean> bean2 = beanContext.getBean(SingletonBean.class);
+        Optional<SingletonBean> bean = beanContext.findBean(SingletonBean.class);
+        Optional<SingletonBean> bean2 = beanContext.findBean(SingletonBean.class);
         Assert.assertTrue(bean.isPresent());
         Assert.assertTrue(bean2.isPresent());
         Assert.assertSame(bean.get(), bean2.get());

@@ -17,7 +17,7 @@ public class BeanContextResolutionTest {
         BeanContext beanContext = new DefaultBeanContext(registry);
         BeanContext child = beanContext.getNestedContainer();
 
-        Optional<ContextDep> target = child.getBean(ContextDep.class);
+        Optional<ContextDep> target = child.findBean(ContextDep.class);
         assertTrue(target.isPresent());
         assertNotNull(target.get().context);
         assertEquals(target.get().context, beanContext);

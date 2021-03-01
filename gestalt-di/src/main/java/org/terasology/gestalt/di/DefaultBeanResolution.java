@@ -18,13 +18,13 @@ public class DefaultBeanResolution implements BeanResolution {
 
     @Override
     public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
-        BeanKey<?> key = BeanUtilities.resolveBeanKey(target, argument);
-        return  (Optional<T>) beanContext.getBean(key);
+        BeanKey<T> key = BeanUtilities.resolveBeanKey(target, argument);
+        return beanContext.findBean(key);
     }
 
     @Override
-    public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument)  throws DependencyInjectionException{
-        BeanKey<?> key = BeanUtilities.resolveBeanKey(target, argument);
-        return  (Optional<T>) beanContext.getBean(key);
+    public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument)  throws DependencyInjectionException {
+        BeanKey<T> key = BeanUtilities.resolveBeanKey(target, argument);
+        return beanContext.findBean(key);
     }
 }

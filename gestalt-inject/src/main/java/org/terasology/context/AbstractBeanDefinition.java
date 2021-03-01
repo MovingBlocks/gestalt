@@ -9,11 +9,11 @@ public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
         return new DefaultAnnotationMetadata(new AnnotationValue[]{});
     }
 
-    public Optional<T> build(BeanResolution resolution) {
+    public Optional<T> build(BeanResolution resolution){
         return Optional.empty();
     }
 
-    public Optional<T> inject(T instance, BeanResolution resolution) {
+    public Optional<T> inject(T instance, BeanResolution resolution){
         return Optional.of(instance);
     }
 

@@ -30,9 +30,9 @@ public class DependencyInjectionTest {
         registry.with(CounterTester.class).lifetime(Lifetime.Singleton);
 
         BeanContext beanContext = new DefaultBeanContext(registry);
-        Optional<CounterTester> test = beanContext.getBean(CounterTester.class);
-        Optional<ICounter> c1 = beanContext.getBean(ICounter.class, Qualifiers.byName("Counter1"));
-        Optional<ICounter> c2 = beanContext.getBean(ICounter.class, Qualifiers.byName("Counter2"));
+        Optional<CounterTester> test = beanContext.findBean(CounterTester.class);
+        Optional<ICounter> c1 = beanContext.findBean(ICounter.class, Qualifiers.byName("Counter1"));
+        Optional<ICounter> c2 = beanContext.findBean(ICounter.class, Qualifiers.byName("Counter2"));
 
         Assert.assertTrue(test.isPresent());
         Assert.assertTrue(c1.isPresent());

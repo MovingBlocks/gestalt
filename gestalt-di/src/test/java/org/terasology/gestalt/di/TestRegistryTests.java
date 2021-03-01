@@ -14,7 +14,7 @@ public class TestRegistryTests {
 
     @Test
     public void checkDirectResolving() {
-        Optional<Dep2> dep = beanContext.getBean(Dep2.class);
+        Optional<Dep2> dep = beanContext.findBean(Dep2.class);
         Assert.assertTrue(dep.isPresent());
         Assert.assertTrue(dep.get() instanceof Dep2);
     }
@@ -22,14 +22,14 @@ public class TestRegistryTests {
     @Test
     public void checkChildBeanContextResolving() {
         BeanContext childBeanContext = new DefaultBeanContext(beanContext);
-        Optional<Dep2> dep = childBeanContext.getBean(Dep2.class);
+        Optional<Dep2> dep = childBeanContext.findBean(Dep2.class);
         Assert.assertTrue(dep.isPresent());
         Assert.assertTrue(dep.get() instanceof Dep2);
     }
 
     @Test
     public void checkDependencyBean() {
-        Optional<ParentDep> dep = beanContext.getBean(ParentDep.class);
+        Optional<ParentDep> dep = beanContext.findBean(ParentDep.class);
         Assert.assertTrue(dep.isPresent());
         Assert.assertNotNull(dep.get().getDep());
     }

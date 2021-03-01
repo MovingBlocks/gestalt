@@ -10,11 +10,17 @@ public interface BeanContext {
 
     <T> Optional<T> inject(T instance);
 
-    <T> Optional<T> getBean(BeanKey<T> identifier);
+    <T> T getBean(BeanKey<T> identifier);
 
-    <T> Optional<T> getBean(Class<T> clazz);
+    <T> T getBean(Class<T> clazz);
 
-    <T> Optional<T> getBean(Class<T> clazz, Qualifier qualifier);
+    <T> T getBean(Class<T> clazz, Qualifier qualifier);
+
+    <T> Optional<T> findBean(BeanKey<T> identifier);
+
+    <T> Optional<T> findBean(Class<T> clazz);
+
+    <T> Optional<T> findBean(Class<T> clazz, Qualifier qualifier);
 
     BeanContext getNestedContainer();
 
