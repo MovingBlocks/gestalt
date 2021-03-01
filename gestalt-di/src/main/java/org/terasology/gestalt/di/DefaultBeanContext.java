@@ -94,9 +94,9 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     @Override
     public <T> Optional<T> inject(T instance) {
-        Optional<BeanDefinition<?>> definition = environment.getDefinition(instance.getClass());
-        if (definition.isPresent() && definition.get() instanceof AbstractBeanDefinition) {
-            return (Optional<T>) definition.get().build(new DefaultBeanResolution(this, environment));
+        BeanDefinition<T> definition = (BeanDefinition<T>) environment.getDefinition(instance.getClass());
+        if (definition instanceof AbstractBeanDefinition) {
+            return definition.inject(instance, new DefaultBeanResolution(this, environment));
         }
         return Optional.empty();
     }

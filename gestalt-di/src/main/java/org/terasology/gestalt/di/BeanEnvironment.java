@@ -268,8 +268,8 @@ public class BeanEnvironment {
         return beanLookup.keySet();
     }
 
-    public <T> Optional<BeanDefinition<?>> getDefinition(Class<T> beanType) {
+    public <T> BeanDefinition<?> getDefinition(Class<T> beanType) {
         final ClassLookup lookup = beanLookup.get(beanType.getClassLoader());
-        return Optional.ofNullable(lookup.definitions.get(beanType));
+        return lookup.definitions.get(beanType);
     }
 }

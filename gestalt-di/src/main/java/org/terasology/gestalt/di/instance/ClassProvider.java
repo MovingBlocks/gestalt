@@ -23,10 +23,10 @@ public class ClassProvider<T> extends BeanProvider<T> {
 
     @Override
     public Optional<T> get(BeanKey identifier, BeanContext current, BeanContext scopedTo) {
-        Optional<BeanDefinition<?>> definition = environment.getDefinition(target);
-        if (definition.isPresent() && definition.get() instanceof AbstractBeanDefinition) {
+        BeanDefinition<T> definition = (BeanDefinition<T>)environment.getDefinition(target);
+        if (definition instanceof AbstractBeanDefinition) {
             BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;
-            return (Optional<T>) (definition.get()).build(new DefaultBeanResolution(cntx, environment));
+            return (Optional<T>) definition.build(new DefaultBeanResolution(cntx, environment));
         }
         return Optional.empty();
     }
