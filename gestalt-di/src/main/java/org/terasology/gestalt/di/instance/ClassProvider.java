@@ -33,6 +33,6 @@ public class ClassProvider<T> extends BeanProvider<T> {
 
     @Override
     public void close() throws Exception {
-        // Noting to close
+        // nothing to close
     }
 }

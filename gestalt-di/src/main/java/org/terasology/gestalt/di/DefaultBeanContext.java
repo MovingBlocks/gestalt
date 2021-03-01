@@ -78,7 +78,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         if (expression.supplier == null) {
             providers.put(key, new ClassProvider(environment, expression.lifetime, expression.target));
         } else {
-            providers.put(key, new SupplierProvider(environment, expression.lifetime, expression.supplier));
+            providers.put(key, new SupplierProvider(environment, expression.lifetime, expression.target, expression.supplier));
         }
     }
 
