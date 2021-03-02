@@ -31,6 +31,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementScanner8;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -56,24 +57,21 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
 
     private static final String[] TARGET_ANNOTATIONS = new String[]{
-        "javax.inject.Inject",
-        "javax.inject.Qualifier",
-        "javax.inject.Singleton",
-        INTROSPECTED_CLASS,
-        SCOPED_CLASS,
-        TRANSIENT_CLASS
+            "javax.inject.Inject",
+            "javax.inject.Qualifier",
+            "javax.inject.Singleton",
+            INTROSPECTED_CLASS,
+            SCOPED_CLASS,
+            TRANSIENT_CLASS
     };
-
+    private final Set<String> processed = new HashSet<>();
+    private final Set<String> beanDefinitions = new HashSet<>();
+    protected Elements elementUtils;
+    protected Types typeUtils;
     private Filer filer;
     private ServiceTypeWriter writer;
     private ElementUtility utility;
     private Messager messager;
-
-    private final Set<String> processed = new HashSet<>();
-    private final Set<String> beanDefinitions = new HashSet<>();
-
-    protected Elements elementUtils;
-    protected Types typeUtils;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -97,26 +95,26 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment environment) {
 
         Set<? extends TypeElement> filteredAnnotation = annotations.stream()
-            .filter(ann -> utility.hasStereotype(ann, Arrays.asList(TARGET_ANNOTATIONS)))
-            .collect(Collectors.toSet());
+                .filter(ann -> utility.hasStereotype(ann, Arrays.asList(TARGET_ANNOTATIONS)))
+                .collect(Collectors.toSet());
 
         filteredAnnotation.forEach(annotation -> environment.getElementsAnnotatedWith(annotation)
-            .stream().filter(element -> element.getKind() != ElementKind.ANNOTATION_TYPE)
-            .forEach(element -> {
-                TypeElement typeElement = utility.classElementFor(element);
-                if (element.getKind() == ElementKind.ENUM) {
-                    return;
-                }
-                if (typeElement == null) {
-                    return;
-                }
-                String name = typeElement.getQualifiedName().toString();
-                if (!beanDefinitions.contains(name)
-                        && !processed.contains(name)
-                        && typeElement.getKind() != ElementKind.INTERFACE) {
+                .stream().filter(element -> element.getKind() != ElementKind.ANNOTATION_TYPE)
+                .forEach(element -> {
+                    TypeElement typeElement = utility.classElementFor(element);
+                    if (element.getKind() == ElementKind.ENUM) {
+                        return;
+                    }
+                    if (typeElement == null) {
+                        return;
+                    }
+                    String name = typeElement.getQualifiedName().toString();
+                    if (!beanDefinitions.contains(name)
+                            && !processed.contains(name)
+                            && typeElement.getKind() != ElementKind.INTERFACE) {
                         beanDefinitions.add(name);
-                }
-            }));
+                    }
+                }));
 
         for (String name : processed) {
             beanDefinitions.remove(name);
@@ -147,11 +145,10 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
     public class DefinitionWriter extends ElementScanner8<Object, String> {
         public static final String BASE_PACKAGE = "org.terasology.context";
-        private final TypeElement concreteClass;
-        private final List<CodeBlock> arguments = new ArrayList<>();
-
         public static final String ARGUMENT_FIELD = "$ARGUMENT";
         public static final String CLASS_METADATA_FIELD = "$CLASS_METADATA";
+        private final TypeElement concreteClass;
+        private final List<CodeBlock> arguments = new ArrayList<>();
 
 
         DefinitionWriter(TypeElement concreteClass) {
@@ -205,15 +202,15 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                 }).collect(Collectors.toList());
 
                 annotationsBuilder.add(CodeBlock.builder().add("new $T($T.class,$S,$T.of($L),$T.of($L),new $T[] {$L})",
-                    ClassName.get(BASE_PACKAGE, "DefaultAnnotationValue"),
-                    declaredType,
-                    declaredType.toString(),
-                    ClassName.get(BASE_PACKAGE, "AnnotationMetaUtil"),
-                    CodeBlock.join(defaults, ","),
-                    ClassName.get(BASE_PACKAGE, "AnnotationMetaUtil"),
-                    CodeBlock.join(values, ","),
-                    ClassName.get(BASE_PACKAGE, "AnnotationValue"),
-                    CodeBlock.join(buildAnnotationValues(children), ",")).build());
+                        ClassName.get(BASE_PACKAGE, "DefaultAnnotationValue"),
+                        declaredType,
+                        declaredType.toString(),
+                        ClassName.get(BASE_PACKAGE, "AnnotationMetaUtil"),
+                        CodeBlock.join(defaults, ","),
+                        ClassName.get(BASE_PACKAGE, "AnnotationMetaUtil"),
+                        CodeBlock.join(values, ","),
+                        ClassName.get(BASE_PACKAGE, "AnnotationValue"),
+                        CodeBlock.join(buildAnnotationValues(children), ",")).build());
             }
             return annotationsBuilder;
         }
@@ -221,18 +218,31 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         private CodeBlock buildAnnotationMetadataBlock(Element element) {
             List<CodeBlock> blocks = buildAnnotationValues(element.getAnnotationMirrors());
             return CodeBlock.builder().add("new $T(new $T[]{$L})",
-                ClassName.get(BASE_PACKAGE, "DefaultAnnotationMetadata"),
-                ClassName.get(BASE_PACKAGE, "AnnotationValue"),
-                CodeBlock.join(blocks, ",")).build();
+                    ClassName.get(BASE_PACKAGE, "DefaultAnnotationMetadata"),
+                    ClassName.get(BASE_PACKAGE, "AnnotationValue"),
+                    CodeBlock.join(blocks, ",")).build();
 
         }
 
         private CodeBlock buildArgument(VariableElement element) {
-            arguments.add(CodeBlock.builder().add("new $T($T.class,$L)",
-                ClassName.get(BASE_PACKAGE, "DefaultArgument"),
-                element,
-                buildAnnotationMetadataBlock(element)).build());
-            return CodeBlock.builder().add("$L[" + (arguments.size() - 1) + "]", ARGUMENT_FIELD).build();
+            TypeMirror type = element.asType();
+            if (type instanceof DeclaredType && !((DeclaredType) type).getTypeArguments().isEmpty()) {
+                DeclaredType declaredType = (DeclaredType) type; //GENERIC!
+                if (declaredType.asElement().toString().equals("javax.inject.Provider")) {
+                    arguments.add(CodeBlock.builder().add("new $T($T.class,$L)",
+                            ClassName.get(BASE_PACKAGE, "ProviderArgument"),
+                            declaredType.getTypeArguments().get(0),
+                            buildAnnotationMetadataBlock(element)).build());
+                    return CodeBlock.builder().add("$L[" + (arguments.size() - 1) + "]", ARGUMENT_FIELD).build();
+                }
+                return null;
+            } else {
+                arguments.add(CodeBlock.builder().add("new $T($T.class,$L)",
+                        ClassName.get(BASE_PACKAGE, "DefaultArgument"),
+                        element,
+                        buildAnnotationMetadataBlock(element)).build());
+                return CodeBlock.builder().add("$L[" + (arguments.size() - 1) + "]", ARGUMENT_FIELD).build();
+            }
         }
 
         private CodeBlock buildObjectPointCreationBlock(TypeElement target) {
@@ -241,18 +251,18 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
             Element[] constructors = target.getEnclosedElements().stream().filter(k -> k.getKind() == ElementKind.CONSTRUCTOR).toArray(Element[]::new);
             Element[] injectionConstructor = Arrays.stream(constructors)
-                .filter(k -> k.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName())))
-                .toArray(Element[]::new);
+                    .filter(k -> k.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName())))
+                    .toArray(Element[]::new);
             if (injectionConstructor.length == 1) {
                 Element c = injectionConstructor[0];
                 if (c instanceof ExecutableElement) {
                     ExecutableElement constructorParams = (ExecutableElement) c;
                     builder.add("$T result = new $T($L); \n",
-                        targetClass,
-                        targetClass,
-                        CodeBlock.join(constructorParams.getParameters().stream().map(k ->
-                            buildResolution("resolveConstructorArgument", k, ClassName.get(target))
-                        ).collect(Collectors.toList()), ","));
+                            targetClass,
+                            targetClass,
+                            CodeBlock.join(constructorParams.getParameters().stream().map(k ->
+                                    buildResolution("resolveConstructorArgument", k, ClassName.get(target))
+                            ).collect(Collectors.toList()), ","));
                 }
             } else {
                 builder.add("$T result = new $T();\n", targetClass, targetClass);
@@ -265,11 +275,11 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             return CodeBlock.builder().add("($T)requiredDependency(resolution.$L($T.class,$L),() -> new $T($T.class, $T.class))",
                     TypeName.get(element.asType()),
                     method,
-                    TypeName.get(element.asType()),
+                    processingEnv.getTypeUtils().erasure(element.asType()),
                     buildArgument(element),
                     ClassName.get("org.terasology.gestalt.di.exceptions", "DependencyResolutionException"),
                     target,
-                    TypeName.get(element.asType())
+                    processingEnv.getTypeUtils().erasure(element.asType())
             ).build();
         }
 
@@ -291,13 +301,13 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     }
                 }
             }
-            return builder.add("return $L.$L($L);",ClassName.get(Optional.class), "of", name).build();
+            return builder.add("return $L.$L($L);", ClassName.get(Optional.class), "of", name).build();
         }
 
         private CodeBlock buildArgumentBlock() {
             return CodeBlock.builder().add("new $T[]{$L}",
-                ClassName.get(BASE_PACKAGE, "Argument"),
-                CodeBlock.join(this.arguments, ",")
+                    ClassName.get(BASE_PACKAGE, "Argument"),
+                    CodeBlock.join(this.arguments, ",")
             ).build();
         }
 
@@ -317,67 +327,67 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             CodeBlock argumentBlockBuilder = buildArgumentBlock();
 
             MethodSpec.Builder injectMethod = MethodSpec.overriding(beanDefinitionClass
-                .getEnclosedElements().stream()
-                .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("inject"))
-                .map(elem -> (ExecutableElement) elem)
-                .findFirst()
-                .get()
+                    .getEnclosedElements().stream()
+                    .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("inject"))
+                    .map(elem -> (ExecutableElement) elem)
+                    .findFirst()
+                    .get()
             ).returns(TypeName.get(Optional.class)).addCode(injectionBlock);
             injectMethod.parameters.set(0, ParameterSpec.builder(TypeName.get(typeElement.asType()), "instance").build());
 
             JavaFile.Builder builder = JavaFile.builder(
-                packageElement.getQualifiedName().toString(),
-                TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "$BeanDefinition")
-                        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                    .superclass(ParameterizedTypeName.get(
-                        ClassName.get(beanDefinitionClass),
-                        TypeName.get(typeElement.asType()))
-                    )
-                    .addField(FieldSpec.builder(ClassName.get(BASE_PACKAGE, "AnnotationMetadata"), CLASS_METADATA_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
-                        .initializer(classAnnotationBuilder).build())
-                    .addField(FieldSpec.builder(ArrayTypeName.of(ClassName.get(BASE_PACKAGE, "Argument")), ARGUMENT_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
-                        .initializer(argumentBlockBuilder).build())
-                    .addMethod(
-                        MethodSpec.overriding(beanDefinitionClass
-                            .getEnclosedElements().stream()
-                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("targetClass"))
-                            .map(elem -> (ExecutableElement) elem)
-                            .findFirst()
-                            .get()
-                        ).returns(ParameterizedTypeName.get(ClassName.get(Class.class), TypeName.get(typeElement.asType())))
-                            .addCode("return $T.class;", typeElement).build()
-                    )
-                    .addMethod(
-                        MethodSpec.overriding(beanDefinitionClass
-                            .getEnclosedElements().stream()
-                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getAnnotationMetadata"))
-                            .map(elem -> (ExecutableElement) elem)
-                            .findFirst()
-                            .get()
-                        ).returns(ClassName.get(BASE_PACKAGE, "AnnotationMetadata"))
-                            .addCode("return $L;", CLASS_METADATA_FIELD).build()
-                    )
-                    .addMethod(
-                        MethodSpec.overriding(beanDefinitionClass
-                            .getEnclosedElements().stream()
-                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getArguments"))
-                            .map(elem -> (ExecutableElement) elem)
-                            .findFirst()
-                            .get()
-                        ).returns(ArrayTypeName.of(ClassName.get(BASE_PACKAGE, "Argument")))
-                            .addCode("return $L;", ARGUMENT_FIELD).build()
-                    )
-                    .addMethod(injectMethod.build())
-                    .addMethod(
-                        MethodSpec.overriding(beanDefinitionClass
-                            .getEnclosedElements().stream()
-                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("build"))
-                            .map(elem -> (ExecutableElement) elem)
-                            .findFirst()
-                            .get()
-                        ).returns(TypeName.get(Optional.class)).addCode("$L", injectionCreationBuilder).build()
-                    )
-                    .build());
+                    packageElement.getQualifiedName().toString(),
+                    TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "$BeanDefinition")
+                            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                            .superclass(ParameterizedTypeName.get(
+                                    ClassName.get(beanDefinitionClass),
+                                    TypeName.get(typeElement.asType()))
+                            )
+                            .addField(FieldSpec.builder(ClassName.get(BASE_PACKAGE, "AnnotationMetadata"), CLASS_METADATA_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
+                                    .initializer(classAnnotationBuilder).build())
+                            .addField(FieldSpec.builder(ArrayTypeName.of(ClassName.get(BASE_PACKAGE, "Argument")), ARGUMENT_FIELD, Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
+                                    .initializer(argumentBlockBuilder).build())
+                            .addMethod(
+                                    MethodSpec.overriding(beanDefinitionClass
+                                            .getEnclosedElements().stream()
+                                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("targetClass"))
+                                            .map(elem -> (ExecutableElement) elem)
+                                            .findFirst()
+                                            .get()
+                                    ).returns(ParameterizedTypeName.get(ClassName.get(Class.class), TypeName.get(typeElement.asType())))
+                                            .addCode("return $T.class;", typeElement).build()
+                            )
+                            .addMethod(
+                                    MethodSpec.overriding(beanDefinitionClass
+                                            .getEnclosedElements().stream()
+                                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getAnnotationMetadata"))
+                                            .map(elem -> (ExecutableElement) elem)
+                                            .findFirst()
+                                            .get()
+                                    ).returns(ClassName.get(BASE_PACKAGE, "AnnotationMetadata"))
+                                            .addCode("return $L;", CLASS_METADATA_FIELD).build()
+                            )
+                            .addMethod(
+                                    MethodSpec.overriding(beanDefinitionClass
+                                            .getEnclosedElements().stream()
+                                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("getArguments"))
+                                            .map(elem -> (ExecutableElement) elem)
+                                            .findFirst()
+                                            .get()
+                                    ).returns(ArrayTypeName.of(ClassName.get(BASE_PACKAGE, "Argument")))
+                                            .addCode("return $L;", ARGUMENT_FIELD).build()
+                            )
+                            .addMethod(injectMethod.build())
+                            .addMethod(
+                                    MethodSpec.overriding(beanDefinitionClass
+                                            .getEnclosedElements().stream()
+                                            .filter(elem -> elem instanceof ExecutableElement && elem.getSimpleName().contentEquals("build"))
+                                            .map(elem -> (ExecutableElement) elem)
+                                            .findFirst()
+                                            .get()
+                                    ).returns(TypeName.get(Optional.class)).addCode("$L", injectionCreationBuilder).build()
+                            )
+                            .build());
             try {
                 builder.build().writeTo(filer);
             } catch (IOException ioException) {

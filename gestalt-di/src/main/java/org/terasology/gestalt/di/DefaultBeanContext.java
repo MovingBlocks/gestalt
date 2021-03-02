@@ -45,6 +45,15 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         }
     }
 
+    static <T> Optional<T> bindBean(DefaultBeanContext context, BeanKey identifier, Supplier<Optional<T>> supplier) {
+        if (context.boundObjects.containsKey(identifier)) {
+            return Optional.of((T) context.boundObjects.get(identifier));
+        }
+        Optional<T> result = supplier.get();
+        result.ifPresent(t -> context.boundObjects.put(identifier, t));
+        return result;
+    }
+
     private void bindRegistry(ServiceRegistry registry) {
         for (ClassLoader loader : registry.classLoaders) {
             this.environment.loadDefinitions(loader);
@@ -82,16 +91,6 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         }
     }
 
-    static <T> Optional<T> bindBean(DefaultBeanContext context, BeanKey identifier, Supplier<Optional<T>> supplier) {
-        if (context.boundObjects.containsKey(identifier)) {
-            return Optional.of((T) context.boundObjects.get(identifier));
-        }
-        Optional<T> result = supplier.get();
-        result.ifPresent(t -> context.boundObjects.put(identifier, t));
-        return result;
-    }
-
-
     @Override
     public <T> Optional<T> inject(T instance) {
         BeanDefinition<T> definition = (BeanDefinition<T>) environment.getDefinition(instance.getClass());
@@ -126,7 +125,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     private Optional<BeanKey> findConcreteBeanKey(BeanKey identifier) {
         Collection<BeanKey> result = null;
-        if(providers.containsKey(identifier)){
+        if (providers.containsKey(identifier)) {
             return Optional.of(identifier);
         }
 

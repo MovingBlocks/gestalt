@@ -1,10 +1,9 @@
 package org.terasology.gestalt.di;
 
 import org.terasology.context.Argument;
-import org.terasology.context.BeanDefinition;
 import org.terasology.context.BeanResolution;
-import org.terasology.context.exception.DependencyInjectionException;
 
+import javax.inject.Provider;
 import java.util.Optional;
 
 public class DefaultBeanResolution implements BeanResolution {
@@ -18,13 +17,22 @@ public class DefaultBeanResolution implements BeanResolution {
 
     @Override
     public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
-        BeanKey<T> key = BeanUtilities.resolveBeanKey(target, argument);
-        return beanContext.findBean(key);
+        return getBean(target, argument);
     }
 
     @Override
-    public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument)  throws DependencyInjectionException {
-        BeanKey<T> key = BeanUtilities.resolveBeanKey(target, argument);
-        return beanContext.findBean(key);
+    public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument) {
+        return getBean(target, argument);
+    }
+
+    private <T> Optional<T> getBean(Class<T> target, Argument<T> argument) {
+        if (target.equals(Provider.class)) {
+            BeanKey<T> key = BeanUtilities.resolveBeanKey(argument.getType(), argument);
+            return (Optional<T>) Optional.of((Provider<T>) () -> beanContext.getBean(key));
+        } else {
+            BeanKey<T> key = BeanUtilities.resolveBeanKey(target, argument);
+            return beanContext.findBean(key);
+        }
+
     }
 }
