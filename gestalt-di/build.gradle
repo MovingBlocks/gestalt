@@ -1,6 +1,8 @@
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar', ':testpack:moduleD:jar'], type: Copy)
 

@@ -30,6 +30,9 @@ repositories {
     }
 }
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 // Primary dependencies definition
 dependencies {
     api 'org.terasology:reflections:0.9.12-MB'
