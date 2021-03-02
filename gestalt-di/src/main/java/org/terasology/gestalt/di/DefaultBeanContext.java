@@ -13,11 +13,14 @@ import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.SupplierProvider;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
     protected final Map<BeanKey, Object> boundObjects = new ConcurrentHashMap<>();
@@ -124,9 +127,17 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     private Optional<BeanKey> findConcreteBeanKey(BeanKey identifier) {
+        List<BeanKey> beanKeys = getBeanKeys(identifier).collect(Collectors.toList());
+        if(beanKeys.size() > 1){
+            throw new BeanResolutionException(beanKeys);
+        }
+        return beanKeys.stream().findFirst();
+    }
+
+    private Stream<BeanKey> getBeanKeys(BeanKey identifier) {
         Collection<BeanKey> result = null;
         if (providers.containsKey(identifier)) {
-            return Optional.of(identifier);
+            return Stream.of(identifier);
         }
 
         if (identifier.qualifier != null) {
@@ -164,13 +175,10 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 result = implementing.stream().filter(k -> k.baseType == identifier.baseType).collect(Collectors.toSet());
             }
         }
-        if (result == null || result.size() == 0) {
-            return Optional.empty();
+        if (result == null) {
+            return Stream.of();
         }
-        if (result.size() > 1) {
-            throw new BeanResolutionException(result);
-        }
-        return result.stream().findFirst();
+        return result.stream();
     }
 
     /**
@@ -219,6 +227,59 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return getBean(identifier);
     }
 
+    
+    @Override
+    public <T> List<T> getBeans(BeanKey<T> identifier) {
+        Optional<BeanContext> cntx = Optional.of(this);
+        Stream<T> all = Stream.of();
+        while (cntx.isPresent()) {
+            BeanContext beanContext = cntx.get();
+            if (beanContext instanceof DefaultBeanContext) {
+                DefaultBeanContext defContext = ((DefaultBeanContext) beanContext);
+                Stream<T> target = defContext.internalMultipleResolve(identifier, this);
+                all = Stream.concat(all, target);
+            }
+            cntx = getParent();
+        }
+        return all.collect(Collectors.toList());
+    }
+
+    @Override
+    public <T> List<T> getBeans(Class<T> clazz) {
+        BeanKey<T> identifier = new BeanKey<>(clazz);
+        return getBeans(identifier);
+    }
+
+    @Override
+    public <T> List<T> getBeans(Class<T> clazz, Qualifier qualifier) {
+        BeanKey<T> identifier = new BeanKey<>(clazz)
+                .qualifiedBy(qualifier);
+        return getBeans(identifier);
+    }
+    
+    private <T> Stream<T> internalMultipleResolve(BeanKey identifier, DefaultBeanContext targetContext) {
+       return getBeanKeys(identifier)
+               .map( key -> {
+           BeanProvider<T> provider = (BeanProvider<T>) providers.get(key);
+           switch (provider.getLifetime()) {
+               case Transient:
+                   return provider.get(key, this, targetContext);
+               case Singleton:
+                   return DefaultBeanContext.bindBean(this, key, () -> provider.get(key, this, targetContext));
+               case Scoped:
+               case ScopedToChildren:
+                   if (provider.getLifetime() == Lifetime.ScopedToChildren && targetContext == this) {
+                       return Optional.empty();
+                   }
+                   return DefaultBeanContext.bindBean(targetContext, key, () -> provider.get(key, this, targetContext));
+           }
+           return Optional.empty();
+       })
+               .filter(Optional::isPresent)
+               .map(Optional::get)
+               .map(b -> (T)b);
+    }
+
     @Override
     public <T> Optional<T> findBean(Class<T> clazz, Qualifier qualifier) {
         BeanKey<T> identifier = new BeanKey<>(clazz)
@@ -236,6 +297,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     public BeanContext getNestedContainer(ServiceRegistry... registries) {
         return new DefaultBeanContext(this, environment, registries);
     }
+
 
     @Override
     public void close() throws Exception {
