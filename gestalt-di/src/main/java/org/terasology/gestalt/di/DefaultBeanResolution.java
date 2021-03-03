@@ -2,9 +2,15 @@ package org.terasology.gestalt.di;
 
 import org.terasology.context.Argument;
 import org.terasology.context.BeanResolution;
+import org.terasology.context.SingleGenericArgument;
+import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 
 import javax.inject.Provider;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DefaultBeanResolution implements BeanResolution {
     private final BeanContext beanContext;
@@ -26,13 +32,21 @@ public class DefaultBeanResolution implements BeanResolution {
     }
 
     private <T> Optional<T> getBean(Class<T> target, Argument<T> argument) {
-        if (target.equals(Provider.class)) {
+        if (argument instanceof SingleGenericArgument) {
             BeanKey<T> key = BeanUtilities.resolveBeanKey(argument.getType(), argument);
-            return (Optional<T>) Optional.of((Provider<T>) () -> beanContext.getBean(key));
+            if (target.isAssignableFrom(Provider.class)) {
+                return (Optional<T>) Optional.of((Provider<T>) () -> beanContext.getBean(key));
+            } else if (target.isAssignableFrom(List.class)) {
+                return (Optional<T>) Optional.ofNullable(beanContext.getBeans(key));
+            } else if (target.isAssignableFrom(Collection.class)) {
+                return (Optional<T>) Optional.ofNullable(beanContext.getBeans(key));
+            } else if (target.isAssignableFrom(Set.class)) {
+                return (Optional<T>) Optional.ofNullable(beanContext.getBeans(key).stream().collect(Collectors.toSet()));
+            }
+            throw new UnsupportedOperationException("Cannot resolve field with type "+ target);
         } else {
             BeanKey<T> key = BeanUtilities.resolveBeanKey(target, argument);
             return beanContext.findBean(key);
         }
-
     }
 }

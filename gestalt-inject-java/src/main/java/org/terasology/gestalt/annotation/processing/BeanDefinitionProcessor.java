@@ -228,9 +228,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             TypeMirror type = element.asType();
             if (type instanceof DeclaredType && !((DeclaredType) type).getTypeArguments().isEmpty()) {
                 DeclaredType declaredType = (DeclaredType) type; //GENERIC!
-                if (declaredType.asElement().toString().equals("javax.inject.Provider")) {
+                if (((DeclaredType) type).getTypeArguments().size() == 1) {
                     arguments.add(CodeBlock.builder().add("new $T($T.class,$L)",
-                            ClassName.get(BASE_PACKAGE, "ProviderArgument"),
+                            ClassName.get(BASE_PACKAGE, "SingleGenericArgument"),
                             declaredType.getTypeArguments().get(0),
                             buildAnnotationMetadataBlock(element)).build());
                     return CodeBlock.builder().add("$L[" + (arguments.size() - 1) + "]", ARGUMENT_FIELD).build();
