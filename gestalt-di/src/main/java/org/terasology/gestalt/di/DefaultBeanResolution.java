@@ -3,7 +3,6 @@ package org.terasology.gestalt.di;
 import org.terasology.context.Argument;
 import org.terasology.context.BeanResolution;
 import org.terasology.context.SingleGenericArgument;
-import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 
 import javax.inject.Provider;
 import java.util.Collection;

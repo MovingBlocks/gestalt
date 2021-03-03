@@ -121,7 +121,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                     return target;
                 }
             }
-            cntx = getParent();
+            cntx = cntx.get().getParent();
         }
         return Optional.empty();
     }
@@ -239,7 +239,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 Stream<T> target = defContext.internalMultipleResolve(identifier, this);
                 all = Stream.concat(all, target);
             }
-            cntx = getParent();
+            cntx = cntx.get().getParent();
         }
         return all.collect(Collectors.toList());
     }
