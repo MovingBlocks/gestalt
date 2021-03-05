@@ -1,6 +1,16 @@
 package org.terasology.gestalt.di;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import org.terasology.gestalt.di.function.BeanFunction;
+import org.terasology.gestalt.di.function.Function0;
+import org.terasology.gestalt.di.function.Function1;
+import org.terasology.gestalt.di.function.Function2;
+import org.terasology.gestalt.di.function.Function3;
+import org.terasology.gestalt.di.function.Function4;
+import org.terasology.gestalt.di.function.Function5;
+import org.terasology.gestalt.di.function.Function6;
+import org.terasology.gestalt.di.function.Function7;
+import org.terasology.gestalt.di.function.Function8;
 import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.injection.Qualifiers;
 
@@ -8,6 +18,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ServiceRegistry {
@@ -42,11 +53,14 @@ public class ServiceRegistry {
     }
 
     public static class InstanceExpression<T> {
+
+
         protected final Class<T> root;
         protected Class<? extends T> target;
         protected Lifetime lifetime;
-        protected Supplier<? extends T> supplier;
         protected Qualifier<?> qualifier;
+
+        protected BeanFunction function;
 
         public InstanceExpression<T> lifetime(Lifetime lifetime) {
             this.lifetime = lifetime;
@@ -60,8 +74,48 @@ public class ServiceRegistry {
         }
 
         @CanIgnoreReturnValue
-        public InstanceExpression<T> use(Supplier<T> instance) {
-            this.supplier = instance;
+        public InstanceExpression<T> use(Function0<T> instance) {
+            this.function = instance;
+            return this;
+        }
+        @CanIgnoreReturnValue
+        public <T1> InstanceExpression<T> use(Function1<T1,T> instance) {
+            this.function = instance;
+            return this;
+        }
+        @CanIgnoreReturnValue
+        public <T1,T2> InstanceExpression<T> use(Function2<T1, T2, T> instance) {
+            this.function = instance;
+            return this;
+        }
+        @CanIgnoreReturnValue
+        public <T1,T2,T3> InstanceExpression<T> use(Function3<T1,T2,T3,T> instance) {
+            this.function = instance;
+            return this;
+        }
+        @CanIgnoreReturnValue
+        public <T1,T2,T3,T4> InstanceExpression<T> use(Function4<T1,T2,T3,T4,T> instance) {
+            this.function = instance;
+            return this;
+        }
+        @CanIgnoreReturnValue
+        public <T1,T2,T3,T4,T5> InstanceExpression<T> use(Function5<T1,T2,T3,T4,T5,T> instance) {
+            this.function = instance;
+            return this;
+        }
+        @CanIgnoreReturnValue
+        public <T1,T2,T3,T4,T5,T6> InstanceExpression<T> use(Function6<T1,T2,T3,T4,T5,T6,T> instance) {
+            this.function = instance;
+            return this;
+        }
+        @CanIgnoreReturnValue
+        public <T1,T2,T3,T4,T5,T6,T7> InstanceExpression<T> use(Function7<T1,T2,T3,T4,T5,T6,T7,T> instance) {
+            this.function = instance;
+            return this;
+        }
+        @CanIgnoreReturnValue
+        public <T1,T2,T3,T4,T5,T6,T7,T8> InstanceExpression<T> use(Function8<T1,T2,T3,T4,T5,T6,T7,T8,T> instance) {
+            this.function = instance;
             return this;
         }
 

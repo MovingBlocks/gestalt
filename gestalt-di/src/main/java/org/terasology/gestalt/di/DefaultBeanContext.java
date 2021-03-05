@@ -7,6 +7,8 @@ import com.google.common.collect.Sets;
 import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.BeanDefinition;
 import org.terasology.gestalt.di.exceptions.BeanResolutionException;
+import org.terasology.gestalt.di.function.Function0;
+import org.terasology.gestalt.di.function.Function2;
 import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
@@ -87,10 +89,12 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
             qualifierMapping.put(expression.qualifier, key);
         }
 
-        if (expression.supplier == null) {
+        if (expression.function == null) {
             providers.put(key, new ClassProvider(environment, expression.lifetime, expression.target));
         } else {
-            providers.put(key, new SupplierProvider(environment, expression.lifetime, expression.target, expression.supplier));
+            if (expression.function instanceof Function0) {
+                providers.put(key, new SupplierProvider(environment, expression.lifetime, expression.target, (Function0) expression.function));
+            }
         }
     }
 
@@ -227,7 +231,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return getBean(identifier);
     }
 
-    
+
     @Override
     public <T> List<T> getBeans(BeanKey<T> identifier) {
         Optional<BeanContext> cntx = Optional.of(this);
@@ -256,7 +260,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 .qualifiedBy(qualifier);
         return getBeans(identifier);
     }
-    
+
     private <T> Stream<T> internalMultipleResolve(BeanKey identifier, DefaultBeanContext targetContext) {
        return getBeanKeys(identifier)
                .map( key -> {
