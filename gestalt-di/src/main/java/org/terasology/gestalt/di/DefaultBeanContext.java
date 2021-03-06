@@ -14,18 +14,18 @@ import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.SupplierProvider;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
-    protected final Map<BeanKey, Object> boundObjects = new ConcurrentHashMap<>();
-    protected final Map<BeanKey, BeanProvider<?>> providers = new ConcurrentHashMap<>();
-    protected final Map<Qualifier, BeanIntercept> beanInterceptMapping = new ConcurrentHashMap<>();
+    protected final Map<BeanKey, Object> boundObjects = new HashMap<>();
+    protected final Map<BeanKey, BeanProvider<?>> providers = new HashMap<>();
+    protected final Multimap<Qualifier, BeanIntercept> beanInterceptMapping = HashMultimap.create();
     private final Multimap<Qualifier, BeanKey> qualifierMapping = HashMultimap.create();
     private final Multimap<Class, BeanKey> interfaceMapping = HashMultimap.create();
 
@@ -193,11 +193,13 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         Optional<BeanKey> key = findConcreteBeanKey(identifier);
 
         if(identifier.annotation !=  EmptyAnnotationMetadata.EMPTY_ARGUMENT) {
-            BeanIntercept intercept = targetContext.beanInterceptMapping.get(identifier.qualifier);
+            Collection<BeanIntercept> intercept = targetContext.beanInterceptMapping.get(identifier.qualifier);
             if (intercept != null) {
-                Optional<T> result = intercept.single(identifier, identifier.annotation);
-                if(result.isPresent()) {
-                    return result;
+                for(BeanIntercept inter: intercept) {
+                    Optional<T> result = inter.single(identifier, identifier.annotation);
+                    if(result.isPresent()) {
+                        return result;
+                    }
                 }
             }
         }
@@ -272,8 +274,8 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     private <T> Stream<T> internalMultipleResolve(BeanKey identifier, DefaultBeanContext targetContext) {
         return getBeanKeys(identifier)
                 .map(key -> {
-                    BeanIntercept intercept = targetContext.beanInterceptMapping.get(identifier);
-                    if (intercept != null) {
+                    Collection<BeanIntercept> intercepts = targetContext.beanInterceptMapping.get(identifier.qualifier);
+                    for(BeanIntercept intercept: intercepts) {
                         Optional<T> result = intercept.single(identifier, identifier.annotation);
                         if(result.isPresent()) {
                             return result;

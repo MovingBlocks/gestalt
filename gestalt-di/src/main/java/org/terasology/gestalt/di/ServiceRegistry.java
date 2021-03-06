@@ -1,22 +1,22 @@
 package org.terasology.gestalt.di;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.injection.Qualifiers;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 public class ServiceRegistry {
 
     protected List<InstanceExpression<?>> instanceExpressions = new ArrayList<>();
     protected List<BeanScanner> scanners = new ArrayList<>();
-    protected Map<Qualifier, BeanIntercept> intercepts = new HashMap<>();
+    protected Multimap<Qualifier, BeanIntercept> intercepts = HashMultimap.create();
     protected HashSet<ClassLoader> classLoaders = new HashSet<>();
 
     public void includeRegistry(ServiceRegistry registry) {
