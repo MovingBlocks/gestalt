@@ -1,5 +1,6 @@
 package org.terasology.gestalt.di;
 
+import org.terasology.context.Argument;
 import org.terasology.gestalt.di.injection.Qualifier;
 
 import java.util.List;

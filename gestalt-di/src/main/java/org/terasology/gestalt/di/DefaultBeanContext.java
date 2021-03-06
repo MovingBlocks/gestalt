@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.BeanDefinition;
+import org.terasology.context.EmptyAnnotationMetadata;
 import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.instance.BeanProvider;
@@ -15,7 +16,6 @@ import org.terasology.gestalt.di.instance.SupplierProvider;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
     protected final Map<BeanKey, Object> boundObjects = new ConcurrentHashMap<>();
     protected final Map<BeanKey, BeanProvider<?>> providers = new ConcurrentHashMap<>();
+    protected final Map<Qualifier, BeanIntercept> beanInterceptMapping = new ConcurrentHashMap<>();
     private final Multimap<Qualifier, BeanKey> qualifierMapping = HashMultimap.create();
     private final Multimap<Class, BeanKey> interfaceMapping = HashMultimap.create();
 
@@ -40,7 +41,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     public DefaultBeanContext(BeanContext parent, BeanEnvironment environment, ServiceRegistry... registries) {
-        Preconditions.checkArgument(parent != this, "bean context can't refrence itself");
+        Preconditions.checkArgument(parent != this, "bean context can't reference itself");
         this.parent = parent;
         this.environment = environment;
         for (ServiceRegistry registry : registries) {
@@ -67,6 +68,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         for (ServiceRegistry.InstanceExpression<?> expression : registry.instanceExpressions) {
             bindExpression(expression);
         }
+        this.beanInterceptMapping.putAll(registry.intercepts);
 
         // register self as a singleton instance that is scoped to current context
         bindExpression(new ServiceRegistry.InstanceExpression<>(BeanContext.class).lifetime(Lifetime.Singleton).use(() -> this));
@@ -189,6 +191,17 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
      */
     private <T> Optional<T> internalResolve(BeanKey identifier, DefaultBeanContext targetContext) {
         Optional<BeanKey> key = findConcreteBeanKey(identifier);
+
+        if(identifier.annotation !=  EmptyAnnotationMetadata.EMPTY_ARGUMENT) {
+            BeanIntercept intercept = targetContext.beanInterceptMapping.get(identifier.qualifier);
+            if (intercept != null) {
+                Optional<T> result = intercept.single(identifier, identifier.annotation);
+                if(result.isPresent()) {
+                    return result;
+                }
+            }
+        }
+
         if (key.isPresent()) {
             BeanProvider<T> provider = (BeanProvider<T>) providers.get(key.get());
             switch (provider.getLifetime()) {
@@ -227,7 +240,6 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return getBean(identifier);
     }
 
-    
     @Override
     public <T> List<T> getBeans(BeanKey<T> identifier) {
         Optional<BeanContext> cntx = Optional.of(this);
@@ -256,28 +268,36 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 .qualifiedBy(qualifier);
         return getBeans(identifier);
     }
-    
+
     private <T> Stream<T> internalMultipleResolve(BeanKey identifier, DefaultBeanContext targetContext) {
-       return getBeanKeys(identifier)
-               .map( key -> {
-           BeanProvider<T> provider = (BeanProvider<T>) providers.get(key);
-           switch (provider.getLifetime()) {
-               case Transient:
-                   return provider.get(key, this, targetContext);
-               case Singleton:
-                   return DefaultBeanContext.bindBean(this, key, () -> provider.get(key, this, targetContext));
-               case Scoped:
-               case ScopedToChildren:
-                   if (provider.getLifetime() == Lifetime.ScopedToChildren && targetContext == this) {
-                       return Optional.empty();
-                   }
-                   return DefaultBeanContext.bindBean(targetContext, key, () -> provider.get(key, this, targetContext));
-           }
-           return Optional.empty();
-       })
-               .filter(Optional::isPresent)
-               .map(Optional::get)
-               .map(b -> (T)b);
+        return getBeanKeys(identifier)
+                .map(key -> {
+                    BeanIntercept intercept = targetContext.beanInterceptMapping.get(identifier);
+                    if (intercept != null) {
+                        Optional<T> result = intercept.single(identifier, identifier.annotation);
+                        if(result.isPresent()) {
+                            return result;
+                        }
+                    }
+
+                    BeanProvider<T> provider = (BeanProvider<T>) providers.get(key);
+                    switch (provider.getLifetime()) {
+                        case Transient:
+                            return provider.get(key, this, targetContext);
+                        case Singleton:
+                            return DefaultBeanContext.bindBean(this, key, () -> provider.get(key, this, targetContext));
+                        case Scoped:
+                        case ScopedToChildren:
+                            if (provider.getLifetime() == Lifetime.ScopedToChildren && targetContext == this) {
+                                return Optional.empty();
+                            }
+                            return DefaultBeanContext.bindBean(targetContext, key, () -> provider.get(key, this, targetContext));
+                    }
+                    return Optional.empty();
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(b -> (T) b);
     }
 
     @Override
@@ -297,7 +317,6 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     public BeanContext getNestedContainer(ServiceRegistry... registries) {
         return new DefaultBeanContext(this, environment, registries);
     }
-
 
     @Override
     public void close() throws Exception {

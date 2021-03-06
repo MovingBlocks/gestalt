@@ -6,14 +6,17 @@ import org.terasology.gestalt.di.injection.Qualifiers;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class ServiceRegistry {
 
     protected List<InstanceExpression<?>> instanceExpressions = new ArrayList<>();
     protected List<BeanScanner> scanners = new ArrayList<>();
+    protected Map<Qualifier, BeanIntercept> intercepts = new HashMap<>();
     protected HashSet<ClassLoader> classLoaders = new HashSet<>();
 
     public void includeRegistry(ServiceRegistry registry) {
@@ -35,6 +38,10 @@ public class ServiceRegistry {
 
     public void registerScanner(BeanScanner scanner) {
         scanners.add(scanner);
+    }
+
+    public void registerIntercept(Qualifier qualifier, BeanIntercept intercept){
+        this.intercepts.put(qualifier, intercept);
     }
 
     public <T> InstanceExpression<T> singleton(Class<T> type) {
@@ -69,7 +76,6 @@ public class ServiceRegistry {
         public InstanceExpression<T> use(Class<? extends T> target) {
             this.target = target;
             return this;
-
         }
 
         @CanIgnoreReturnValue
