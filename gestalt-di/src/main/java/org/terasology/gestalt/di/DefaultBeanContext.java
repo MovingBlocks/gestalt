@@ -11,6 +11,8 @@ import org.terasology.context.BeanDefinition;
 import org.terasology.context.exception.BeanNotFoundException;
 import org.terasology.context.exception.DependencyInjectionException;
 import org.terasology.gestalt.di.exceptions.BeanResolutionException;
+import org.terasology.gestalt.di.function.Function0;
+import org.terasology.gestalt.di.function.Function2;
 import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
@@ -90,10 +92,12 @@ public class DefaultBeanContext implements BeanContext {
             qualifierMapping.put(expression.qualifier, key);
         }
 
-        if (expression.supplier == null) {
+        if (expression.function == null) {
             providers.put(key, new ClassProvider(environment, expression.lifetime, expression.target));
         } else {
-            providers.put(key, new SupplierProvider(environment, expression.lifetime, expression.target, expression.supplier));
+            if (expression.function instanceof Function0) {
+                providers.put(key, new SupplierProvider(environment, expression.lifetime, expression.target, (Function0) expression.function));
+            }
         }
     }
 
