@@ -11,7 +11,7 @@ import java.util.Optional;
  * A context contains information about resolving an instance and a collection of objects that are bound
  * to this context.
  */
-public interface BeanContext {
+public interface BeanContext extends AutoCloseable {
 
     /**
      * The containing context that this context is parented to

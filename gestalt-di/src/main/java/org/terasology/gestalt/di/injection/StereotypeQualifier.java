@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.injection;
 
-import java.lang.annotation.Annotation;
 import java.util.Objects;
 
-public class StereotypeQualifier<T extends Annotation> implements Qualifier<T> {
+/**
+ * A annotation that extends {@link Qualifier} and tied to a bean is used help qualify a candidate when injecting.
+ * @param <T>
+ */
+public class StereotypeQualifier<T extends javax.inject.Qualifier> implements Qualifier<T> {
 
     private final Class<T> stereotype;
 

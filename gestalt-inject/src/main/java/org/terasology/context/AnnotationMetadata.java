@@ -6,7 +6,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 
 /**
- * Annotation data that is used to drive avoid reflection. 
+ * Annotation data that is used to drive avoid reflection.
  */
 public interface AnnotationMetadata extends Iterable<AnnotationValue<Annotation>[]> {
 

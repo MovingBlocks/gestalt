@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class DefaultBeanContext implements AutoCloseable, BeanContext {
+public class DefaultBeanContext implements BeanContext {
     protected final Map<BeanKey, Object> boundObjects = new ConcurrentHashMap<>();
     protected final Map<BeanKey, BeanProvider<?>> providers = new ConcurrentHashMap<>();
     private final Multimap<Qualifier, BeanKey> qualifierMapping = HashMultimap.create();

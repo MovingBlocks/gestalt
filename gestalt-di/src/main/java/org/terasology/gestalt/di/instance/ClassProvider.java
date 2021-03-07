@@ -28,7 +28,7 @@ public class ClassProvider<T> extends BeanProvider<T> {
         BeanDefinition<T> definition = (BeanDefinition<T>)environment.getDefinition(target);
         if (definition instanceof AbstractBeanDefinition) {
             BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;
-            return (Optional<T>) definition.build(new DefaultBeanResolution(cntx, environment));
+            return definition.build(new DefaultBeanResolution(cntx, environment));
         }
         return Optional.empty();
     }
