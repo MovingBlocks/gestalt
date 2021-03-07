@@ -10,6 +10,10 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * A key that is used to look up a Bean.
+ * @param <T>
+ */
 public class BeanKey<T> implements Serializable, CharSequence {
     protected Class<? extends T> baseType;
     protected Class<T> implementingType;

@@ -27,6 +27,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+/**
+ * A internal environment that has internal information that is shared between multiple context.
+ */
 public class BeanEnvironment {
 
     private static class ClassRef<T> {

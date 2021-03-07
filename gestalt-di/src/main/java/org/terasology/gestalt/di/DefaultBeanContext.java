@@ -8,6 +8,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.BeanDefinition;
+import org.terasology.context.exception.BeanNotFoundException;
+import org.terasology.context.exception.DependencyInjectionException;
 import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.instance.BeanProvider;
@@ -96,12 +98,12 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     }
 
     @Override
-    public <T> Optional<T> inject(T instance) {
+    public <T> T inject(T instance) {
         BeanDefinition<T> definition = (BeanDefinition<T>) environment.getDefinition(instance.getClass());
         if (definition instanceof AbstractBeanDefinition) {
-            return definition.inject(instance, new DefaultBeanResolution(this, environment));
+            return definition.inject(instance, new DefaultBeanResolution(this, environment)).get();
         }
-        return Optional.empty();
+        throw new BeanNotFoundException("unable to resolve BeanDefintion: " + instance.getClass());
     }
 
     @Override
@@ -299,6 +301,10 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return new DefaultBeanContext(this, environment, registries);
     }
 
+    @Override
+    public BeanEnvironment getEnvironment() {
+        return environment;
+    }
 
     @Override
     public void close() throws Exception {

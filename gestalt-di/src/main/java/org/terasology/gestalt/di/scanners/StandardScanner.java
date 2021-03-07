@@ -9,6 +9,10 @@ import org.terasology.gestalt.di.BeanUtilities;
 import org.terasology.gestalt.di.ServiceRegistry;
 import org.terasology.gestalt.di.injection.Qualifiers;
 
+/**
+ * A standard scanner that looks up by prefix loads them into the registry by common annotation ({@link org.terasology.context.annotation.Transient} , {@link javax.inject.Singleton}, {@link org.terasology.context.annotation.Scoped})
+ *
+ */
 public class StandardScanner implements BeanScanner {
     private final String prefix;
     private final ClassLoader[] loaders;

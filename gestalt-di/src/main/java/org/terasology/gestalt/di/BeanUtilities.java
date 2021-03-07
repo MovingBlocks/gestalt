@@ -13,6 +13,9 @@ import org.terasology.gestalt.di.injection.Qualifiers;
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 
+/**
+ * A set of utilities that helps with examining {@link AnnotationMetadata}
+ */
 public final class BeanUtilities {
     private BeanUtilities() {
 
