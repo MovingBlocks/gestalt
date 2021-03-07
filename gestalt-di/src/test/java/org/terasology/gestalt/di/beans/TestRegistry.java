@@ -1,9 +1,9 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.beans;
 
 import org.terasology.gestalt.di.Lifetime;
 import org.terasology.gestalt.di.ServiceRegistry;
-
-import java.util.function.Supplier;
 
 public class TestRegistry extends ServiceRegistry {
     public TestRegistry(){

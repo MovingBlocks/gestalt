@@ -1,3 +1,5 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
 import com.google.common.base.Preconditions;
@@ -15,7 +17,6 @@ import org.terasology.gestalt.di.instance.SupplierProvider;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -227,7 +228,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return getBean(identifier);
     }
 
-    
+
     @Override
     public <T> List<T> getBeans(BeanKey<T> identifier) {
         Optional<BeanContext> cntx = Optional.of(this);
@@ -256,7 +257,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 .qualifiedBy(qualifier);
         return getBeans(identifier);
     }
-    
+
     private <T> Stream<T> internalMultipleResolve(BeanKey identifier, DefaultBeanContext targetContext) {
        return getBeanKeys(identifier)
                .map( key -> {

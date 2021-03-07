@@ -1,3 +1,5 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
 import org.terasology.gestalt.di.injection.Qualifier;
@@ -5,8 +7,15 @@ import org.terasology.gestalt.di.injection.Qualifier;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ *
+ */
 public interface BeanContext {
 
+    /**
+     * The containing context that this context is parented to
+     * @return bean context
+     */
     Optional<BeanContext> getParent();
 
     <T> Optional<T> inject(T instance);
