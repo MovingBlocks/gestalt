@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
+import org.terasology.context.AnnotationMetadata;
 import org.terasology.context.BeanDefinition;
+import org.terasology.context.EmptyAnnotationMetadata;
 import org.terasology.gestalt.di.injection.Qualifier;
 
 import javax.annotation.Nonnull;
@@ -19,6 +21,7 @@ public class BeanKey<T> implements Serializable, CharSequence {
     protected Class<T> implementingType;
     protected Class[] typeArguments;
     protected Qualifier<T> qualifier;
+    protected AnnotationMetadata annotation = EmptyAnnotationMetadata.EMPTY_ARGUMENT;
     private int hashCode;
 
     private void updateHash() {
@@ -56,6 +59,11 @@ public class BeanKey<T> implements Serializable, CharSequence {
     public BeanKey<T> byArguments(Class... typeArguments) {
         this.typeArguments = typeArguments;
         updateHash();
+        return this;
+    }
+
+    public BeanKey<T> withAnnotations(AnnotationMetadata annotation) {
+        this.annotation = annotation;
         return this;
     }
 

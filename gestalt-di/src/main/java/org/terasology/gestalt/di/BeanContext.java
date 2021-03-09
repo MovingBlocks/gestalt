@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
+import org.terasology.context.Argument;
 import org.terasology.gestalt.di.injection.Qualifier;
 
 import java.util.List;

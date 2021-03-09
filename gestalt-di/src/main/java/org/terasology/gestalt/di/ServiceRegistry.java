@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import org.terasology.gestalt.di.injection.Qualifier;
 import org.terasology.gestalt.di.injection.Qualifiers;
@@ -16,6 +18,7 @@ public class ServiceRegistry {
 
     protected List<InstanceExpression<?>> instanceExpressions = new ArrayList<>();
     protected List<BeanScanner> scanners = new ArrayList<>();
+    protected Multimap<Qualifier, BeanIntercept> intercepts = HashMultimap.create();
     protected HashSet<ClassLoader> classLoaders = new HashSet<>();
 
     public void includeRegistry(ServiceRegistry registry) {
@@ -37,6 +40,10 @@ public class ServiceRegistry {
 
     public void registerScanner(BeanScanner scanner) {
         scanners.add(scanner);
+    }
+
+    public void registerIntercept(Qualifier qualifier, BeanIntercept intercept){
+        this.intercepts.put(qualifier, intercept);
     }
 
     public <T> InstanceExpression<T> singleton(Class<T> type) {
@@ -71,7 +78,6 @@ public class ServiceRegistry {
         public InstanceExpression<T> use(Class<? extends T> target) {
             this.target = target;
             return this;
-
         }
 
         @CanIgnoreReturnValue
