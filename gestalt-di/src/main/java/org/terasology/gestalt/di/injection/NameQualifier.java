@@ -1,8 +1,15 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.injection;
 
+import javax.inject.Named;
 import java.util.Objects;
 
-public class NameQualifier<T> implements Qualifier<T> {
+/**
+ * The value for {@link Named#value()} is tied to the target bean and the lookup is based off of the name of the target.
+ * @param <T>
+ */
+public class NameQualifier<T extends Named> implements Qualifier<T> {
     private final String name;
 
     public NameQualifier(String name) {

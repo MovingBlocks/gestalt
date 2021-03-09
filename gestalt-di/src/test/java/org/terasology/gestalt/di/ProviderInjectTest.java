@@ -1,3 +1,5 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
 import org.junit.Test;
@@ -24,7 +26,7 @@ public class ProviderInjectTest {
         ServiceRegistry registry = new ServiceRegistry();
         registry.with(ProviderInjectBean.class).lifetime(Lifetime.Singleton);
         // Dep1 should be after  dependent bean. it some kind Lazy resolution.
-        registry.with(Dep1.class).lifetime(Lifetime.Singleton); 
+        registry.with(Dep1.class).lifetime(Lifetime.Singleton);
 
         BeanContext cntx = new DefaultBeanContext(registry);
 

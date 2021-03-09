@@ -1,3 +1,5 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.injection;
 
 import org.terasology.context.AnnotationMetadata;
@@ -14,7 +16,7 @@ public final class Qualifiers {
     }
 
     public static <T> Qualifier<T> byName(String name) {
-        return new NameQualifier<>(name);
+        return new NameQualifier(name);
     }
 
     public static <T> Qualifier<T> byStereotype(Class<? extends Annotation> ann) {
@@ -33,7 +35,7 @@ public final class Qualifiers {
         for (AnnotationValue<Annotation> target : metadata.findAnnotations(Named.class)) {
             Optional<String> value = target.stringValue("value");
             if (value.isPresent()) {
-                return new NameQualifier<>(value.get());
+                return new NameQualifier(value.get());
             }
         }
         return null;

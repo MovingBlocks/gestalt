@@ -1,3 +1,5 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
 import com.google.common.base.Preconditions;
@@ -25,6 +27,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+/**
+ * A internal environment that has internal information that is shared between multiple context.
+ */
 public class BeanEnvironment {
 
     private static class ClassRef<T> {
@@ -72,9 +77,6 @@ public class BeanEnvironment {
 
     public static final ClassLoader BaseClassLoader = BeanEnvironment.class.getClassLoader();
     private final Map<ClassLoader, ClassLookup> beanLookup = new HashMap<>();
-    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    private final Lock readLock = readWriteLock.readLock();
-    private final Lock writeLock = readWriteLock.writeLock();
 
     public BeanEnvironment() {
         loadDefinitions(BeanEnvironment.BaseClassLoader);
@@ -84,50 +86,37 @@ public class BeanEnvironment {
         if (beanLookup.containsKey(loader)) {
             return;
         }
-        writeLock.lock();
-        try {
-            beanLookup.computeIfAbsent(loader, (ld) -> {
-                SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, ld);
-                ClassLookup lookup = new ClassLookup();
+        beanLookup.computeIfAbsent(loader, (ld) -> {
+            SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, ld);
+            ClassLookup lookup = new ClassLookup();
 
-                List<ClassRef<?>> namespaceIndex = new ArrayList<>();
-                Map<Class<?>, BeanDefinition<?>> definitionLookup = Maps.newHashMap();
-                Multimap<Class<?>, ClassRef> interfaceIndex = HashMultimap.create();
-                for (BeanDefinition<?> definition : definitions) {
-                    // exclude objects that are from a different classloader
-                    if (definition.targetClass().getClassLoader() != loader) {
-                        continue;
-                    }
-                    namespaceIndex.add(new ClassRef<>(definition));
-                    definitionLookup.put(definition.targetClass(), definition);
-                    for (Class<?> clazzInterface : definition.targetClass().getInterfaces()) {
-                        interfaceIndex.put(clazzInterface, new ClassRef<>(definition));
-                    }
+            List<ClassRef<?>> namespaceIndex = new ArrayList<>();
+            Map<Class<?>, BeanDefinition<?>> definitionLookup = Maps.newHashMap();
+            Multimap<Class<?>, ClassRef> interfaceIndex = HashMultimap.create();
+            for (BeanDefinition<?> definition : definitions) {
+                // exclude objects that are from a different classloader
+                if (definition.targetClass().getClassLoader() != loader) {
+                    continue;
                 }
-                namespaceIndex.sort((Comparator<ClassRef>) (a1, a2) -> a1.prefix.compareTo(a2.prefix));
-                lookup.namespaceIndex = namespaceIndex.toArray(new ClassRef[0]);
-                lookup.interfaceIndex = interfaceIndex.asMap().entrySet().stream().collect(
+                namespaceIndex.add(new ClassRef<>(definition));
+                definitionLookup.put(definition.targetClass(), definition);
+                for (Class<?> clazzInterface : definition.targetClass().getInterfaces()) {
+                    interfaceIndex.put(clazzInterface, new ClassRef<>(definition));
+                }
+            }
+            namespaceIndex.sort((Comparator<ClassRef>) (a1, a2) -> a1.prefix.compareTo(a2.prefix));
+            lookup.namespaceIndex = namespaceIndex.toArray(new ClassRef[0]);
+            lookup.interfaceIndex = interfaceIndex.asMap().entrySet().stream().collect(
                     Collectors.toMap(k -> k.getKey(), v -> {
                         ClassRef[] result = v.getValue().toArray(new ClassRef[0]);
                         Arrays.sort(result, (classRef, t1) -> classRef.prefix.compareTo(t1.prefix));
                         return result;
                     })
-                );
-                lookup.definitions = definitionLookup;
+            );
+            lookup.definitions = definitionLookup;
 
-                return lookup;
-            });
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    public void startRead() {
-        readLock.lock();
-    }
-
-    public void stopRead() {
-        readLock.unlock();
+            return lookup;
+        });
     }
 
     public Iterable<ClassLoader> definitions() {
@@ -186,7 +175,15 @@ public class BeanEnvironment {
         return Optional.of(Range.closed(startPoint, endpoint));
     }
 
-    public <T> Iterable<BeanDefinition<?  extends T>> byInterface(ClassLoader loader, Class<T> targetInterface) {
+    /**
+     * Filter bean Definitions by class that implements a targetInterface with a given classloader that is already loaded into the enviroment
+     *
+     * @param loader target class loader
+     * @param targetInterface target inerface
+     * @param <T>
+     * @return A collection of BeanDefinition
+     */
+    public <T> Iterable<BeanDefinition<? extends T>> byInterface(ClassLoader loader, Class<T> targetInterface) {
         final ClassLookup lookup = beanLookup.get(loader);
         if (!lookup.interfaceIndex.containsKey(targetInterface)) {
             return Collections::emptyIterator;
@@ -194,10 +191,26 @@ public class BeanEnvironment {
         return Arrays.stream(lookup.interfaceIndex.get(targetInterface)).map(k -> (BeanDefinition<? extends T>) k.definition).collect(Collectors.toList());
     }
 
+    /**
+     * Filter {@link BeanDefinition} by class that implements a targetInterface
+     *
+     * @param targetInterface the target interface
+     * @param <T>
+     * @return a collection of BeanDefinition
+     */
     public <T> Iterable<BeanDefinition<? extends T>> byInterface(Class<T> targetInterface) {
         return Iterables.concat(beanLookup.keySet().stream().map(k -> byInterface(k, targetInterface)).collect(Collectors.toList()));
     }
 
+    /**
+     * Filter {@link BeanDefinition} by a target classloader, part of a prefix and a target interface.
+     *
+     * @param loader
+     * @param prefix
+     * @param targetInterface
+     * @param <T>
+     * @return
+     */
     public <T> Iterable<BeanDefinition<?>> byPrefixAndInterface(ClassLoader loader, String prefix, Class<T> targetInterface) {
         final ClassLookup lookup = beanLookup.get(loader);
         ClassRef<?>[] targetClasses = lookup.interfaceIndex.get(targetInterface);
@@ -227,7 +240,7 @@ public class BeanEnvironment {
         return Iterables.concat(beanLookup.keySet().stream().map(k -> byPrefix(k, prefix)).collect(Collectors.toList()));
     }
 
-    public <T> Iterable<BeanDefinition<?>> byPrefix(ClassLoader loader, String prefix) {
+    public Iterable<BeanDefinition<?>> byPrefix(ClassLoader loader, String prefix) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix));
         final ClassLookup lookup = beanLookup.get(loader);
 
@@ -254,13 +267,10 @@ public class BeanEnvironment {
     }
 
     public boolean releaseDefinitions(ClassLoader loader) {
-        writeLock.lock();
         if (!beanLookup.containsKey(loader)) {
-            writeLock.unlock();
             return false;
         }
         beanLookup.remove(loader);
-        writeLock.unlock();
         return true;
     }
 

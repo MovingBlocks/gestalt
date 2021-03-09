@@ -1,3 +1,5 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.instance;
 
 import org.terasology.context.AbstractBeanDefinition;
@@ -26,7 +28,7 @@ public class ClassProvider<T> extends BeanProvider<T> {
         BeanDefinition<T> definition = (BeanDefinition<T>)environment.getDefinition(target);
         if (definition instanceof AbstractBeanDefinition) {
             BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;
-            return (Optional<T>) definition.build(new DefaultBeanResolution(cntx, environment));
+            return definition.build(new DefaultBeanResolution(cntx, environment));
         }
         return Optional.empty();
     }

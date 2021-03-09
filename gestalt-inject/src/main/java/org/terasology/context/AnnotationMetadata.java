@@ -1,8 +1,13 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.context;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
 
+/**
+ * Annotation data that is used to drive avoid reflection.
+ */
 public interface AnnotationMetadata extends Iterable<AnnotationValue<Annotation>[]> {
 
     List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
