@@ -51,8 +51,15 @@ dependencies {
     testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
-
 }
+
+compileJava {
+    options.compilerArgs = ["-Aresource=${sourceSets.main.resources.srcDirs[0]}"]
+}
+compileTestJava {
+    options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs[0]}"]
+}
+
 
 // Library and distribution config
 description = 'Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment'

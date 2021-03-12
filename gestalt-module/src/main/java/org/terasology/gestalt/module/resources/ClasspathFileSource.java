@@ -19,36 +19,34 @@ package org.terasology.gestalt.module.resources;
 import android.support.annotation.NonNull;
 import com.google.common.base.Joiner;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * ModuleFileSource that exposes the content from the classpath, using a Reflections manifest to
- * determine what files are available.
+ * ModuleFileSource that exposes the content from the classpath, using a
  */
 public class ClasspathFileSource implements ModuleFileSource {
 
+    public static final String RESOURCES = "META-INF/resources";
     private static final String CLASS_PATH_SEPARATOR = "/";
     private static final Joiner CLASS_PATH_JOINER = Joiner.on(CLASS_PATH_SEPARATOR);
-
     private final String basePath;
     private final ClassLoader classLoader;
-
+    private final List<String> files;
 
     public ClasspathFileSource() {
         this(CLASS_PATH_SEPARATOR, ClassLoader.getSystemClassLoader());
@@ -75,7 +73,24 @@ public class ClasspathFileSource implements ModuleFileSource {
             path = path.substring(1);
         }
         this.basePath = path;
-
+        List<String> files = new LinkedList<>();
+        try {
+            Enumeration<URL> resources = classLoader.getResources(RESOURCES);
+            while (resources.hasMoreElements()) {
+                URL url = resources.nextElement();
+                try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+                    String line = null;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        if (line.startsWith(path)) {
+                            files.add(line);
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        this.files = files;
     }
 
     @Override
@@ -85,7 +100,7 @@ public class ClasspathFileSource implements ModuleFileSource {
         }
         String fullpath = buildPathString(filepath);
         if (classLoader.getResource(fullpath) != null) {
-            return Optional.of(new ClasspathSourceFileReference(fullpath.substring(0, fullpath.length() - 1), extractSubpath(fullpath), classLoader));
+            return Optional.of(new ClasspathSourceFileReference(fullpath.substring(0, fullpath.length() - 1), extractSubpath(basePath, fullpath), classLoader));
         } else {
             return Optional.empty();
         }
@@ -93,51 +108,33 @@ public class ClasspathFileSource implements ModuleFileSource {
 
     @Override
     public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
-        if (path.stream().anyMatch(s -> s.equals(".."))) {
-            return Collections.emptySet();
-        }
         String fullPath = buildPathString(path);
-        URL resource = classLoader.getResource(fullPath);
-        if (resource == null) {
-            return Collections.emptyList();
+        Stream<String> candidates = files
+                .stream()
+                .filter(file -> file.startsWith(fullPath))
+                .filter(file -> file.matches(".+?/[a-zA-Z0-9]+\\.[a-zA-Z0-9]+"));
+
+        if (!recursive) {
+            candidates = candidates.filter(file -> !file.substring(fullPath.length()).contains("/"));
         }
 
-        try {
-            //TODO replaces with old  way. (android support)
-            Path root = Paths.get(resource.toURI());
-            return Files.walk(root, recursive ? 99 : 1)
-                    .filter(Files::isRegularFile)
-                    .filter(f -> !f.toFile().getName().endsWith(".class"))
-                    .map(p -> new ClasspathSourceFileReference(p.getFileName().toString(), extractSubpath(root.getParent().relativize(p).toString()), classLoader))
-                    .collect(Collectors.toList());
-        } catch (IOException | URISyntaxException e) {
-            return Collections.emptySet();
-        }
+        return candidates
+                .map(file -> new ClasspathSourceFileReference(file.substring(0, file.length() - 1), extractSubpath(basePath, file), classLoader))
+                .collect(Collectors.toSet());
     }
 
     @Override
     public Set<String> getSubpaths(List<String> path) {
-        if (path.stream().anyMatch(s -> s.equals(".."))) {
-            return Collections.emptySet();
-        }
         String fullPath = buildPathString(path);
-        URL resource = classLoader.getResource(fullPath);
-        if (resource == null) {
-            return Collections.emptySet();
-        }
-
-        try {
-            //TODO replaces with old  way. (android support)
-            Path root = Paths.get(resource.toURI());
-            return Files.walk(root, 1)
-                    .filter(Files::isDirectory)
-                    .filter(dir -> !dir.equals(root))
-                    .map(Path::toFile)
-                    .map(File::getName)
-                    .collect(Collectors.toSet());
-        } catch (IOException | URISyntaxException e) {
-            return Collections.emptySet();
-        }
+        return files
+                .stream()
+                .filter(file -> file.startsWith(fullPath))
+                .filter(file -> {
+                    String subpath = file.substring(fullPath.length());
+                    return !subpath.contains("/") && !subpath.contains(".");
+                })
+                .map(file -> file.substring(fullPath.length()))
+                .collect(Collectors.toSet());
     }
 
     private String buildPathString(List<String> path) {
@@ -150,8 +147,8 @@ public class ClasspathFileSource implements ModuleFileSource {
         return fullPath;
     }
 
-    private String extractSubpath(String path) {
-        return path.substring(basePath.length());
+    private String extractSubpath(String root, String path) {
+        return path.substring(root.length());
     }
 
     @NonNull
