@@ -31,6 +31,7 @@ import org.terasology.gestalt.assets.AssetType;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +47,17 @@ public final class MapAssetTypeManager implements AssetTypeManager {
     private final Map<Class<? extends Asset>, AssetType<?, ?>> assetTypes = new MapMaker().concurrencyLevel(1).makeMap();
     private final ListMultimap<Class<? extends Asset>, Class<? extends Asset>> subtypes =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.<Class<? extends Asset>, Class<? extends Asset>>create());
+
+    private static Iterable<Class<?>> getAllSuperTypesBetween(Class<?> upperBound, Class<?> lowerBound) {
+        Preconditions.checkArgument(lowerBound.isAssignableFrom(upperBound), "%s should be subtype of %s", upperBound, lowerBound);
+        List<Class<?>> subtypes = Lists.newArrayList();
+        Class<?> current = upperBound;
+        while (current != lowerBound) {
+            subtypes.add(current);
+            current = current.getSuperclass();
+        }
+        return subtypes;
+    }
 
     @Override
     @SuppressWarnings("unchecked")
@@ -104,11 +116,11 @@ public final class MapAssetTypeManager implements AssetTypeManager {
         Preconditions.checkState(assetTypes.get(assetType.getAssetClass()) == null, "Asset type already registered for - " + assetType.getAssetClass().getSimpleName());
 
         assetTypes.put(assetType.getAssetClass(), assetType);
-//        for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(assetType.getAssetClass(), (Predicate<Class<?>>) input -> Asset.class.isAssignableFrom(input) && input != Asset.class)) {
-//            subtypes.put((Class<? extends Asset>) parentType, assetType.getAssetClass());
-//            (subtypes.get((Class<? extends Asset>) parentType)).sort(Comparator.comparing(Class::getSimpleName));
-//
-//        }
+        for (Class<?> parentType : getAllSuperTypesBetween(assetType.getAssetClass(), Asset.class)) {
+            subtypes.put((Class<? extends Asset>) parentType, assetType.getAssetClass());
+            (subtypes.get((Class<? extends Asset>) parentType)).sort(Comparator.comparing(Class::getSimpleName));
+
+        }
     }
 
     /**
@@ -123,9 +135,9 @@ public final class MapAssetTypeManager implements AssetTypeManager {
         AssetType<?, ?> assetType = assetTypes.remove(type);
         if (assetType != null) {
             assetType.close();
-//            for (Class<?> parentType : ReflectionUtils.getAllSuperTypes(type, (Predicate<Class<?>>) input -> Asset.class.isAssignableFrom(input) && input != Asset.class)) {
-//                subtypes.remove(parentType, type);
-//            }
+            for (Class<?> parentType : getAllSuperTypesBetween(type, Asset.class)) {
+                subtypes.remove(parentType, type);
+            }
         }
         return assetType;
     }
@@ -140,6 +152,4 @@ public final class MapAssetTypeManager implements AssetTypeManager {
         assetTypes.clear();
         subtypes.clear();
     }
-
-
 }
