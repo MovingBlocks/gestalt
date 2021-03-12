@@ -16,7 +16,7 @@ public class UrlClassIndex implements ClassIndex {
     private static final String ANNOTATIONS = "annotations";
     private final URL url;
 
-    private UrlClassIndex(URL url) {
+    protected UrlClassIndex(URL url) {
         this.url = url;
     }
 
@@ -44,8 +44,12 @@ public class UrlClassIndex implements ClassIndex {
         return new UrlClassIndex(Thread.currentThread().getContextClassLoader().getResource(METAINF));
     }
 
-    public static ClassIndex byClassLoaderPrefix(String packageName) { // TODO implement
-        return new UrlClassIndex(Thread.currentThread().getContextClassLoader().getResource(METAINF));
+    public static ClassIndex byClassLoaderPrefix(String packagePrefix) {
+        return new PackagePrefixedUrlClassLoader(Thread.currentThread().getContextClassLoader().getResource(METAINF), packagePrefix);
+    }
+
+    protected URL getUrl() {
+        return url;
     }
 
     @Override
@@ -58,7 +62,7 @@ public class UrlClassIndex implements ClassIndex {
         return loadContent(ANNOTATIONS, annotation);
     }
 
-    private Set<String> loadContent(String type, String target) {
+    protected Set<String> loadContent(String type, String target) {
         try {
             URL fullUrl = new URL(String.format("%s/%s/%s", url, type, target));
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(fullUrl.openStream()))) {
