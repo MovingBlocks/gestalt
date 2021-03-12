@@ -16,9 +16,7 @@
 
 package org.terasology.gestalt.module;
 
-import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -27,18 +25,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.Reflection;
 import com.google.gson.JsonParseException;
-
-import org.reflections.Configuration;
-import org.reflections.Reflections;
-import org.reflections.scanners.ResourcesScanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.serializers.JsonSerializer;
-import org.reflections.serializers.Serializer;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.gestalt.di.index.ClassIndex;
+import org.terasology.gestalt.di.index.CompoundClassIndex;
+import org.terasology.gestalt.di.index.UrlClassIndex;
 import org.terasology.gestalt.module.exceptions.InvalidModulePathException;
 import org.terasology.gestalt.module.exceptions.MissingModuleMetadataException;
 import org.terasology.gestalt.module.resources.ArchiveFileSource;
@@ -53,10 +44,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -71,18 +60,16 @@ public class ModuleFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleFactory.class);
     private static final Joiner RESOURCE_PATH_JOINER = Joiner.on('/');
-    private static final Configuration EMPTY_CONFIG = new ConfigurationBuilder();
     private static final String STANDARD_CODE_SUBPATH = "build/classes";
     private static final String STANDARD_LIBS_SUBPATH = "libs";
     private final Map<String, ModuleMetadataLoader> moduleMetadataLoaderMap = Maps.newLinkedHashMap();
-    private final Map<String, Serializer> manifestSerializersByFilename = Maps.newLinkedHashMap();
     private final ClassLoader classLoader;
     private String defaultCodeSubpath;
     private String defaultLibsSubpath;
     private boolean scanningForClasses = true;
 
     public ModuleFactory() {
-        this(ClasspathHelper.contextClassLoader());
+        this(Thread.currentThread().getContextClassLoader());
     }
 
     /**
@@ -97,7 +84,7 @@ public class ModuleFactory {
      * @param defaultLibsSubpath The default subpath in a path module that contains libraries (jars)
      */
     public ModuleFactory(String defaultCodeSubpath, String defaultLibsSubpath) {
-        this(ClasspathHelper.contextClassLoader(), defaultCodeSubpath, defaultLibsSubpath, ImmutableMap.of("module.json", new ModuleMetadataJsonAdapter()));
+        this(Thread.currentThread().getContextClassLoader(), defaultCodeSubpath, defaultLibsSubpath, ImmutableMap.of("module.json", new ModuleMetadataJsonAdapter()));
     }
 
     /**
@@ -111,7 +98,6 @@ public class ModuleFactory {
         this.moduleMetadataLoaderMap.putAll(metadataLoaders);
         this.defaultCodeSubpath = defaultCodeSubpath;
         this.defaultLibsSubpath = defaultLibsSubpath;
-        manifestSerializersByFilename.put("manifest.json", new JsonSerializer());
     }
 
     /**
@@ -161,108 +147,10 @@ public class ModuleFactory {
     }
 
     /**
-     * Adds a deserializer for a manifest file.
-     *
-     * @param name         The name of the manifest file this loader will load
-     * @param deserializer The deserializer
-     */
-    public void setManifestFileType(String name, Serializer deserializer) {
-        this.manifestSerializersByFilename.put(name, deserializer);
-    }
-
-    /**
      * @return The map of paths to module metadata loaders used for loading metadata describing modules
      */
     public Map<String, ModuleMetadataLoader> getModuleMetadataLoaderMap() {
         return moduleMetadataLoaderMap;
-    }
-
-    @NonNull
-    private Reflections scanOrLoadClasspathReflections(String packagePath) {
-        String path = packagePath;
-        if (!path.isEmpty() && !path.endsWith("/")) {
-            path += "/";
-        }
-        Reflections manifest = new Reflections(EMPTY_CONFIG);
-        try {
-            boolean loaded = false;
-            for (Map.Entry<String, Serializer> manifestEntry : manifestSerializersByFilename.entrySet()) {
-                Enumeration<URL> resources = classLoader.getResources(path + manifestEntry.getKey());
-                while (resources.hasMoreElements()) {
-                    try (InputStream stream = resources.nextElement().openStream()) {
-                        manifest.merge(manifestEntry.getValue().read(stream));
-                        loaded = true;
-                    }
-                }
-            }
-            if (!loaded && scanningForClasses) {
-                Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).addClassLoader(classLoader).forPackages(packagePath);
-                Reflections reflections = new Reflections(config);
-                manifest.merge(reflections);
-            }
-
-        } catch (IOException e) {
-            logger.error("Failed to gather class manifest for classpath module", e);
-        }
-        return manifest;
-    }
-
-    @NonNull
-    private Reflections scanOrLoadDirectoryManifest(File directory) {
-        Reflections manifest = new Reflections(EMPTY_CONFIG);
-        try {
-            boolean loaded = false;
-            for (Map.Entry<String, Serializer> manifestEntry : manifestSerializersByFilename.entrySet()) {
-                File manifestFile = new File(directory, manifestEntry.getKey());
-                if (manifestFile.exists() && manifestFile.isFile()) {
-                    try (InputStream stream = new FileInputStream(manifestFile)) {
-                        manifest.merge(manifestEntry.getValue().read(stream));
-                        loaded = true;
-                    }
-                }
-            }
-            if (!loaded) {
-                scanContents(directory, manifest);
-            }
-
-        } catch (IOException e) {
-            logger.error("Failed to gather class manifest for classpath module", e);
-        }
-        return manifest;
-    }
-
-    private void scanContents(File directory, Reflections manifest) throws MalformedURLException {
-        if (scanningForClasses) {
-            Configuration config = new ConfigurationBuilder().addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()).addUrls(directory.toURI().toURL());
-            Reflections reflections = new Reflections(config);
-            manifest.merge(reflections);
-        }
-    }
-
-    @NonNull
-    private Reflections scanOrLoadArchiveManifest(File archive) {
-        Reflections manifest = new Reflections(EMPTY_CONFIG);
-        try {
-            boolean loaded = false;
-            try (ZipFile zipFile = new ZipFile(archive)) {
-                for (Map.Entry<String, Serializer> manifestEntry : manifestSerializersByFilename.entrySet()) {
-                    ZipEntry modInfoEntry = zipFile.getEntry(manifestEntry.getKey());
-                    if (modInfoEntry != null && !modInfoEntry.isDirectory()) {
-                        try (InputStream stream = zipFile.getInputStream(modInfoEntry)) {
-                            manifest.merge(manifestEntry.getValue().read(stream));
-                            loaded = true;
-                        }
-                    }
-                }
-            }
-
-            if (!loaded) {
-                scanContents(archive, manifest);
-            }
-        } catch (IOException e) {
-            logger.error("Failed to gather class manifest for classpath module", e);
-        }
-        return manifest;
     }
 
     /**
@@ -302,9 +190,9 @@ public class ModuleFactory {
      */
     public Module createPackageModule(ModuleMetadata metadata, String packageName) {
         List<String> packageParts = Arrays.asList(packageName.split(Pattern.quote(".")));
-        Reflections manifest = scanOrLoadClasspathReflections(RESOURCE_PATH_JOINER.join(packageParts));
+        ClassIndex manifest = UrlClassIndex.byClassLoaderPrefix(packageName);
 
-        return new Module(metadata, new ClasspathFileSource(manifest, RESOURCE_PATH_JOINER.join(packageParts), classLoader), Collections.emptyList(), manifest, x -> {
+        return new Module(metadata, new ClasspathFileSource(RESOURCE_PATH_JOINER.join(packageParts), classLoader), Collections.emptyList(), manifest, x -> {
             String classPackageName = Reflection.getPackageName(x);
             return packageName.equals(classPackageName) || classPackageName.startsWith(packageName + ".");
         });
@@ -341,13 +229,12 @@ public class ModuleFactory {
      */
     public Module createDirectoryModule(ModuleMetadata metadata, File directory) {
         Preconditions.checkArgument(directory.isDirectory());
-
-        Reflections manifest = new Reflections(EMPTY_CONFIG);
+        CompoundClassIndex classIndex = new CompoundClassIndex();
         List<File> codeLocations = Lists.newArrayList();
         File codeDir = new File(directory, getDefaultCodeSubpath());
         if (codeDir.exists() && codeDir.isDirectory()) {
             codeLocations.add(codeDir);
-            manifest.merge(scanOrLoadDirectoryManifest(codeDir));
+            classIndex.add(UrlClassIndex.byDirectory(codeDir));
         }
         File libDir = new File(directory, getDefaultLibsSubpath());
         if (libDir.exists() && libDir.isDirectory() && libDir.listFiles() != null) {
@@ -356,13 +243,13 @@ public class ModuleFactory {
                 for (File lib : libDirContents) {
                     if (lib.isFile()) {
                         codeLocations.add(lib);
-                        manifest.merge(scanOrLoadArchiveManifest(lib));
+                        classIndex.add(UrlClassIndex.byArchive(lib));
                     }
                 }
             }
         }
 
-        return new Module(metadata, new DirectoryFileSource(directory), codeLocations, manifest, x -> false);
+        return new Module(metadata, new DirectoryFileSource(directory), codeLocations, classIndex, x -> false);
     }
 
     /**
@@ -403,7 +290,7 @@ public class ModuleFactory {
         Preconditions.checkArgument(archive.isFile());
 
         try {
-            return new Module(metadata, new ArchiveFileSource(archive), Collections.singletonList(archive), scanOrLoadArchiveManifest(archive), x -> false);
+            return new Module(metadata, new ArchiveFileSource(archive), Collections.singletonList(archive), UrlClassIndex.byArchive(archive), x -> false);
         } catch (MalformedURLException e) {
             throw new InvalidModulePathException("Unable to convert file path to url for " + archive, e);
         }

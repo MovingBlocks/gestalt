@@ -1,1 +1,2 @@
 org.terasology.gestalt.annotation.processing.BeanDefinitionProcessor
+org.terasology.gestalt.annotation.processing.ClassIndexProcessor

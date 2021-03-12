@@ -17,14 +17,19 @@
 package org.terasology.gestalt.module.resources;
 
 import android.support.annotation.NonNull;
-
 import com.google.common.base.Joiner;
 
-import org.reflections.Reflections;
-
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -41,32 +46,26 @@ public class ClasspathFileSource implements ModuleFileSource {
     private static final String CLASS_PATH_SEPARATOR = "/";
     private static final Joiner CLASS_PATH_JOINER = Joiner.on(CLASS_PATH_SEPARATOR);
 
-    private final Reflections manifest;
     private final String basePath;
     private final ClassLoader classLoader;
 
-    /**
-     * @param resourceManifest A reflections manifest indicating what files are available on the classpath
-     */
-    public ClasspathFileSource(Reflections resourceManifest) {
-        this(resourceManifest, CLASS_PATH_SEPARATOR, ClassLoader.getSystemClassLoader());
+
+    public ClasspathFileSource() {
+        this(CLASS_PATH_SEPARATOR, ClassLoader.getSystemClassLoader());
     }
 
     /**
-     * @param resourceManifest A reflections manifest indicating what files are available on the classpath
-     * @param basePath         A subpath in the classpath to expose resources from
+     * @param basePath A subpath in the classpath to expose resources from
      */
-    public ClasspathFileSource(Reflections resourceManifest, String basePath) {
-        this(resourceManifest, basePath, ClassLoader.getSystemClassLoader());
+    public ClasspathFileSource(String basePath) {
+        this(basePath, ClassLoader.getSystemClassLoader());
     }
 
     /**
-     * @param resourceManifest A reflections manifest indicating what files are available on the classpath
-     * @param basePath         A subpath in the classpath to expose resources from
-     * @param classLoader      The classloader to use to access resources
+     * @param basePath    A subpath in the classpath to expose resources from
+     * @param classLoader The classloader to use to access resources
      */
-    public ClasspathFileSource(Reflections resourceManifest, String basePath, ClassLoader classLoader) {
-        this.manifest = resourceManifest;
+    public ClasspathFileSource(String basePath, ClassLoader classLoader) {
         this.classLoader = classLoader;
         String path = basePath;
         if (!path.isEmpty() && !path.endsWith(CLASS_PATH_SEPARATOR)) {
@@ -76,27 +75,69 @@ public class ClasspathFileSource implements ModuleFileSource {
             path = path.substring(1);
         }
         this.basePath = path;
+
     }
 
     @Override
     public Optional<FileReference> getFile(List<String> filepath) {
-        String path = basePath + CLASS_PATH_JOINER.join(filepath);
-        return manifest.getResources(x -> true).stream().filter(path::equals).<FileReference>map(x -> new ClasspathSourceFileReference(x, extractSubpath(x), classLoader)).findAny();
+        if (filepath.stream().anyMatch(s -> s.equals(".."))) {
+            return Optional.empty();
+        }
+        String fullpath = buildPathString(filepath);
+        if (classLoader.getResource(fullpath) != null) {
+            return Optional.of(new ClasspathSourceFileReference(fullpath.substring(0, fullpath.length() - 1), extractSubpath(fullpath), classLoader));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
     public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
+        if (path.stream().anyMatch(s -> s.equals(".."))) {
+            return Collections.emptySet();
+        }
         String fullPath = buildPathString(path);
-        return manifest.getResources(x -> true).stream().filter(x -> x.startsWith(fullPath) && (recursive || !x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR))).map(x -> new ClasspathSourceFileReference(x, extractSubpath(x), classLoader)).collect(Collectors.toList());
+        URL resource = classLoader.getResource(fullPath);
+        if (resource == null) {
+            return Collections.emptyList();
+        }
+
+        try {
+            //TODO replaces with old  way. (android support)
+            Path root = Paths.get(resource.toURI());
+            return Files.walk(root, recursive ? 99 : 1)
+                    .filter(Files::isRegularFile)
+                    .filter(f -> !f.toFile().getName().endsWith(".class"))
+                    .map(p -> new ClasspathSourceFileReference(p.getFileName().toString(), extractSubpath(root.getParent().relativize(p).toString()), classLoader))
+                    .collect(Collectors.toList());
+        } catch (IOException | URISyntaxException e) {
+            return Collections.emptySet();
+        }
     }
 
     @Override
     public Set<String> getSubpaths(List<String> path) {
+        if (path.stream().anyMatch(s -> s.equals(".."))) {
+            return Collections.emptySet();
+        }
         String fullPath = buildPathString(path);
-        return manifest.getResources(x -> true).stream().filter(x -> x.startsWith(fullPath) && x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR)).map(x -> {
-            String subpath = x.substring(fullPath.length());
-            return subpath.substring(0, subpath.indexOf(CLASS_PATH_SEPARATOR));
-        }).collect(Collectors.toSet());
+        URL resource = classLoader.getResource(fullPath);
+        if (resource == null) {
+            return Collections.emptySet();
+        }
+
+        try {
+            //TODO replaces with old  way. (android support)
+            Path root = Paths.get(resource.toURI());
+            return Files.walk(root, 1)
+                    .filter(Files::isDirectory)
+                    .filter(dir -> !dir.equals(root))
+                    .map(Path::toFile)
+                    .map(File::getName)
+                    .collect(Collectors.toSet());
+        } catch (IOException | URISyntaxException e) {
+            return Collections.emptySet();
+        }
     }
 
     private String buildPathString(List<String> path) {

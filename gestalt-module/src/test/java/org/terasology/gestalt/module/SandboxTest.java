@@ -17,13 +17,9 @@
 package org.terasology.gestalt.module;
 
 import com.google.common.collect.Lists;
-
 import org.junit.Before;
 import org.junit.Test;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
+import org.terasology.gestalt.di.index.UrlClassIndex;
 import org.terasology.gestalt.module.dependencyresolution.DependencyResolver;
 import org.terasology.gestalt.module.resources.EmptyFileSource;
 import org.terasology.gestalt.module.sandbox.ModuleSecurityManager;
@@ -142,8 +138,7 @@ public class SandboxTest {
         metadata.setId(new Name("PackageModule"));
         metadata.setVersion(Version.DEFAULT);
 
-        Reflections reflections = new Reflections(new ConfigurationBuilder().forPackages("org.terasology.gestalt.module.packageModule").addClassLoader(ClasspathHelper.contextClassLoader()).addScanners(new SubTypesScanner()));
-        Module module = new Module(metadata, new EmptyFileSource(), Collections.emptyList(), reflections, x -> com.google.common.reflect.Reflection.getPackageName(x).startsWith("org.terasology.gestalt.module.packageModule"));
+        Module module = new Module(metadata, new EmptyFileSource(), Collections.emptyList(), UrlClassIndex.byClassLoaderPrefix("org.terasology.gestalt.module.packageModule"), x -> com.google.common.reflect.Reflection.getPackageName(x).startsWith("org.terasology.gestalt.module.packageModule"));
         List<Module> modules = Lists.newArrayList(module);
         modules.addAll(resolver.resolve(new Name("moduleC")).getModules());
         ModuleEnvironment environment = new ModuleEnvironment(modules, permissionProviderFactory);

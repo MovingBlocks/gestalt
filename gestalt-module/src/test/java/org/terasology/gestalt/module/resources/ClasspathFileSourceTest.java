@@ -17,8 +17,6 @@
 package org.terasology.gestalt.module.resources;
 
 import org.junit.BeforeClass;
-import org.reflections.Reflections;
-import org.reflections.scanners.ResourcesScanner;
 
 public class ClasspathFileSourceTest extends BaseFileSourceTest {
 
@@ -26,10 +24,7 @@ public class ClasspathFileSourceTest extends BaseFileSourceTest {
 
     @BeforeClass
     public static void setup() {
-        ResourcesScanner resourcesScanner = new ResourcesScanner();
-        resourcesScanner.setResultFilter(x -> false);
-        Reflections manifest = new Reflections("content", resourcesScanner);
-        source = new ClasspathFileSource(manifest, "content");
+        source = new ClasspathFileSource("content");
     }
 
     @Override

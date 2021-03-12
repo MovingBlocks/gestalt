@@ -32,10 +32,13 @@ repositories {
 
 // Primary dependencies definition
 dependencies {
-    api 'org.terasology:reflections:0.9.12-MB'
-
+    implementation "org.javassist:javassist:3.27.0-GA" // TODO REMOVE this. replaces with gestalt's di generator.
+    
     implementation project(":gestalt-util")
     implementation project(":gestalt-inject")
+    implementation project(":gestalt-di")
+    annotationProcessor project(":gestalt-inject-java")
+
     implementation "com.google.guava:guava:$guava_version"
     implementation "com.google.code.gson:gson:$gson_version"
     implementation 'org.apache.commons:commons-vfs2:2.2'
@@ -44,6 +47,7 @@ dependencies {
     implementation "com.github.zafarkhaja:java-semver:0.10.0"
 
     testImplementation project(":testpack:testpack-api")
+    testAnnotationProcessor project(":gestalt-inject-java")
     testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
