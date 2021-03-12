@@ -10,6 +10,13 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Load index from {@link URL}.
+ * <p>Can load index from:</p>
+ * <p>1. directory</p>
+ * <p>2. archive</p>
+ * <p>3. ClassLoader</p>
+ */
 public class UrlClassIndex implements ClassIndex {
     private static final String METAINF = "META-INF";
     private static final String SUBTYPES = "subtypes";

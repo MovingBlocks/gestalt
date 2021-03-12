@@ -30,7 +30,7 @@ dependencies {
     implementation project(":gestalt-module")
     implementation project(":gestalt-asset-core")
 
-    implementation "com.google.guava:guava:$guava_version" // TODO remove it
+    implementation "com.google.guava:guava:$guava_version"
     implementation "org.slf4j:slf4j-api:$slf4j_version"
     implementation "com.android.support:support-annotations:$android_annotation_version"
     implementation "net.jcip:jcip-annotations:$jcip_annotation_version"

@@ -9,6 +9,9 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Loads only classes, which have concrete package prefix
+ */
 public class PackagePrefixedUrlClassLoader extends UrlClassIndex {
 
     private final String packagePrefix;

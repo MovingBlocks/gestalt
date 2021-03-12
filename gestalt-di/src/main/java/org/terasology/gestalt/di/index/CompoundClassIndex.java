@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Created for using multiple {@link ClassIndex} at once.
+ */
 public class CompoundClassIndex implements ClassIndex {
     private final List<ClassIndex> indexes;
 

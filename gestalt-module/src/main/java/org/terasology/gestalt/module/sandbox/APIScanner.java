@@ -17,6 +17,8 @@
 package org.terasology.gestalt.module.sandbox;
 
 import com.google.common.reflect.Reflection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.context.annotation.API;
 import org.terasology.gestalt.di.index.ClassIndex;
 
@@ -26,6 +28,8 @@ import org.terasology.gestalt.di.index.ClassIndex;
  * @author Immortius
  */
 public class APIScanner {
+
+    private static final Logger logger = LoggerFactory.getLogger(APIScanner.class);
 
     private StandardPermissionProviderFactory permissionProviderFactory;
     private ClassLoader forClassLoader;
@@ -45,10 +49,11 @@ public class APIScanner {
      * @param classIndex The class index.
      */
     public void scan(ClassIndex classIndex) {
+        logger.trace("Scan ClassIndex for @API classes");
         for (String apiClass : classIndex.getTypesAnnotatedWith(API.class.getName())) {
             try {
+                logger.trace("T");
                 Class<?> aClass = forClassLoader.loadClass(apiClass);
-
                 if (aClass != null) {
                     for (String permissionSetId : aClass.getAnnotation(API.class).permissionSet()) {
                         PermissionSet permissionSet = permissionProviderFactory.getPermissionSet(permissionSetId);
