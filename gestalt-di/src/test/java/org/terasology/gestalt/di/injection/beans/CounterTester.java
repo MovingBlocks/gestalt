@@ -7,7 +7,6 @@ import org.terasology.context.annotation.Introspected;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Introspected
 public class CounterTester {
     private final ICounter c1;
     private final ICounter c2;

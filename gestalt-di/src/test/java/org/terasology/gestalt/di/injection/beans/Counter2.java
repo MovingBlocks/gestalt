@@ -4,8 +4,13 @@ package org.terasology.gestalt.di.injection.beans;
 
 import org.terasology.context.annotation.Introspected;
 
-@Introspected
+import javax.inject.Inject;
+
 public class Counter2 implements ICounter {
+    @Inject
+    public Counter2() {
+
+    }
     private int count = 0;
 
     @Override

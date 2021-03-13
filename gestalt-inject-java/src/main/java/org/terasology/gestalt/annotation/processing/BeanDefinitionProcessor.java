@@ -94,8 +94,19 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment environment) {
 
         Set<? extends TypeElement> filteredAnnotation = annotations.stream()
-                .filter(ann -> utility.hasStereotype(ann, Arrays.asList(TARGET_ANNOTATIONS)))
+                .filter(target -> {
+                    for(Element encElement: target.getEnclosedElements()) {
+                        if(encElement instanceof  ExecutableElement || encElement instanceof  VariableElement) {
+                            if(utility.hasStereotype(encElement, Arrays.asList(TARGET_ANNOTATIONS))) {
+                                return true;
+                            }
+                        }
+
+                    }
+                   return utility.hasStereotype(target, Arrays.asList(TARGET_ANNOTATIONS));
+                })
                 .collect(Collectors.toSet());
+
 
         filteredAnnotation.forEach(annotation -> environment.getElementsAnnotatedWith(annotation)
                 .stream().filter(element -> element.getKind() != ElementKind.ANNOTATION_TYPE)

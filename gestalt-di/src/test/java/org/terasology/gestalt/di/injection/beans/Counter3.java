@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.injection.beans;
 
-import org.terasology.context.annotation.Introspected;
+import javax.inject.Inject;
 
-@Introspected
 public class Counter3 implements ICounter {
+
+    @Inject
+    public Counter3() {
+
+    }
+
     @Override
     public void add() {
 
