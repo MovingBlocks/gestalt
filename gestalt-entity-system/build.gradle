@@ -29,6 +29,8 @@ dependencies {
     implementation project(":gestalt-util")
     implementation project(":gestalt-module")
     implementation project(":gestalt-asset-core")
+    implementation project(":gestalt-inject")
+    annotationProcessor project(":gestalt-inject-java")
 
     implementation "com.google.guava:guava:$guava_version"
     implementation "org.slf4j:slf4j-api:$slf4j_version"
@@ -37,10 +39,21 @@ dependencies {
     implementation 'net.sf.trove4j:trove4j:3.0.3'
     implementation "com.google.code.gson:gson:$gson_version"
 
+    testAnnotationProcessor project(":gestalt-inject-java")
     testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
 }
+
+compileJava {
+    inputs.files sourceSets.main.resources.srcDirs
+    options.compilerArgs = ["-Aresource=${sourceSets.main.resources.srcDirs.join(File.pathSeparator)}"]
+}
+compileTestJava {
+    inputs.files sourceSets.test.resources.srcDirs
+    options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
+}
+
 
 buildscript {
     repositories {
