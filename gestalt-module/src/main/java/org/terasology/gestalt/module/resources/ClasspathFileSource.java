@@ -100,7 +100,7 @@ public class ClasspathFileSource implements ModuleFileSource {
         }
         String fullpath = buildPathString(filepath);
         if (classLoader.getResource(fullpath) != null) {
-            return Optional.of(new ClasspathSourceFileReference(fullpath.substring(0, fullpath.length() - 1), extractSubpath(basePath, fullpath), classLoader));
+            return Optional.of(new ClasspathSourceFileReference(fullpath, extractSubpath(basePath, fullpath), classLoader));
         } else {
             return Optional.empty();
         }
@@ -119,7 +119,7 @@ public class ClasspathFileSource implements ModuleFileSource {
         }
 
         return candidates
-                .map(file -> new ClasspathSourceFileReference(file.substring(0, file.length() - 1), extractSubpath(basePath, file), classLoader))
+                .map(file -> new ClasspathSourceFileReference(file, extractSubpath(basePath, file), classLoader))
                 .collect(Collectors.toSet());
     }
 
