@@ -54,10 +54,10 @@ dependencies {
 }
 
 compileJava {
-    options.compilerArgs = ["-Aresource=${sourceSets.main.resources.srcDirs[0]}"]
+    options.compilerArgs = ["-Aresource=${sourceSets.main.resources.srcDirs.join(File.pathSeparator)}"]
 }
 compileTestJava {
-    options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs[0]}"]
+    options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
 }
 
 

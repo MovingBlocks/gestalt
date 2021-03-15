@@ -4,6 +4,7 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.BufferedWriter;
@@ -30,27 +31,29 @@ public class ResourceProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (roundEnv.processingOver()) {
-            String path = processingEnv.getOptions().get("resource");
-            if (path != null) {
-                try {
-                    Path root = Paths.get(path);
-                    if (root.toFile().exists()) {
-                        List<String> files = Files.walk(root)
-                                .map(root::relativize)
-                                .map(Objects::toString)
-                                .filter(str -> !str.endsWith(".class"))
-                                .filter(str -> !str.isEmpty())
-                                .collect(Collectors.toList());
-                        FileObject fileObject = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", FILE);
-                        try (BufferedWriter writer = new BufferedWriter(fileObject.openWriter())) {
-                            for (String clazz : files) {
-                                writer.write(clazz);
-                                writer.newLine();
+            String paths = processingEnv.getOptions().get("resource");
+            if (paths != null) {
+                for (String path : paths.split(File.pathSeparator)) {
+                    try {
+                        Path root = Paths.get(path);
+                        if (root.toFile().exists()) {
+                            List<String> files = Files.walk(root)
+                                    .map(root::relativize)
+                                    .map(Objects::toString)
+                                    .filter(str -> !str.endsWith(".class"))
+                                    .filter(str -> !str.isEmpty())
+                                    .collect(Collectors.toList());
+                            FileObject fileObject = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", FILE);
+                            try (BufferedWriter writer = new BufferedWriter(fileObject.openWriter())) {
+                                for (String clazz : files) {
+                                    writer.write(clazz);
+                                    writer.newLine();
+                                }
                             }
                         }
+                    } catch (IOException e) {
+                        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, String.format("Cannot locate resources [%s] with error [%s]", path, e.getMessage()));
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
             }
         }
