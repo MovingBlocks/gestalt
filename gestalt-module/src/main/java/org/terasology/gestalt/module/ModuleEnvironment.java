@@ -43,7 +43,6 @@ import org.terasology.gestalt.module.sandbox.PermissionProvider;
 import org.terasology.gestalt.module.sandbox.PermissionProviderFactory;
 import org.terasology.gestalt.naming.Name;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -305,7 +304,10 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         for (ModuleClassLoader classLoader : managedClassLoaders) {
             try {
                 classLoader.close();
-            } catch (IOException e) {
+                classLoaderByModule.remove(classLoader.getModuleId());
+                classIndexByModule.remove(classLoader.getModuleId());
+                beanContextByModule.remove(classLoader.getModuleId()).close();
+            } catch (Exception e) {
                 logger.error("Failed to close classLoader for module '" + classLoader.getModuleId() + "'", e);
             }
         }
