@@ -21,6 +21,7 @@ import org.terasology.gestalt.naming.Name;
 import org.terasology.gestalt.naming.Version;
 import org.terasology.gestalt.naming.VersionRange;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -45,6 +46,7 @@ public class DependencyResolver {
      *
      * @param registry The registry to resolve modules from
      */
+    @Inject
     public DependencyResolver(ModuleRegistry registry) {
         this(registry, OptionalResolutionStrategy.INCLUDE_IF_REQUIRED);
     }

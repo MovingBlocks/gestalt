@@ -36,6 +36,7 @@ import org.terasology.gestalt.module.resources.ArchiveFileSource;
 import org.terasology.gestalt.module.resources.ClasspathFileSource;
 import org.terasology.gestalt.module.resources.DirectoryFileSource;
 
+import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -68,6 +69,7 @@ public class ModuleFactory {
     private String defaultLibsSubpath;
     private boolean scanningForClasses = true;
 
+    @Inject // TODO use another constructor.
     public ModuleFactory() {
         this(Thread.currentThread().getContextClassLoader());
     }

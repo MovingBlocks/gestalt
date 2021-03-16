@@ -33,10 +33,11 @@ repositories {
 // Primary dependencies definition
 dependencies {
     implementation "org.javassist:javassist:3.27.0-GA" // TODO REMOVE this. replaces with gestalt's di generator.
-    
+
+    api project(":gestalt-di")
+
     implementation project(":gestalt-util")
     implementation project(":gestalt-inject")
-    implementation project(":gestalt-di")
     annotationProcessor project(":gestalt-inject-java")
 
     implementation "com.google.guava:guava:$guava_version"

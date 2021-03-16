@@ -27,7 +27,12 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.context.BeanDefinition;
+import org.terasology.gestalt.di.BeanContext;
+import org.terasology.gestalt.di.BeanScanner;
+import org.terasology.gestalt.di.ServiceRegistry;
 import org.terasology.gestalt.di.index.ClassIndex;
+import org.terasology.gestalt.di.scanners.StandardScanner;
 import org.terasology.gestalt.module.dependencyresolution.DependencyInfo;
 import org.terasology.gestalt.module.resources.CompositeFileSource;
 import org.terasology.gestalt.module.resources.ModuleFileSource;
@@ -68,14 +73,103 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private final ImmutableMap<Name, Module> modules;
     private final ClassLoader apiClassLoader;
     private final ClassLoader finalClassLoader;
+    private final BeanContext finalBeanContext;
     private final ImmutableList<ModuleClassLoader> managedClassLoaders;
 
     private final ImmutableSetMultimap<Name, Name> moduleDependencies;
     private final Map<Name, ClassIndex> classIndexByModule;
     private final Map<Name, ClassLoader> classLoaderByModule;
+    private final Map<Name, BeanContext> beanContextByModule;
     private final ImmutableList<Module> modulesOrderByDependencies;
     private final ImmutableList<Name> moduleIdsOrderedByDependencies;
     private final ModuleFileSource resources;
+
+    /**
+     * @param modules                   The modules this environment should encompass.
+     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
+     * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
+     */
+    public ModuleEnvironment(BeanContext beanContext, Iterable<Module> modules, PermissionProviderFactory permissionProviderFactory) {
+        this(beanContext, modules, permissionProviderFactory, JavaModuleClassLoader::create);
+    }
+
+    /**
+     * @param modules                   The modules this environment should encompass.
+     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
+     * @param classLoaderSupplier       A supplier for producing a ModuleClassLoader for a module
+     * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
+     */
+    public ModuleEnvironment(BeanContext beanContext, Iterable<Module> modules, PermissionProviderFactory permissionProviderFactory, ClassLoaderSupplier classLoaderSupplier) {
+        this(beanContext, modules, permissionProviderFactory, classLoaderSupplier, ModuleEnvironment.class.getClassLoader());
+    }
+
+    /**
+     * @param modules                   The modules this environment should encompass.
+     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
+     * @param classLoaderSupplier       A supplier for producing a ModuleClassLoader for a module
+     * @param apiClassLoader            The base classloader the module environment should build upon.
+     * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
+     */
+    public ModuleEnvironment(BeanContext beanContext, Iterable<Module> modules, final PermissionProviderFactory permissionProviderFactory, ClassLoaderSupplier classLoaderSupplier, ClassLoader apiClassLoader) {
+
+        this.modules = buildModuleMap(modules);
+        this.apiClassLoader = apiClassLoader;
+        this.modulesOrderByDependencies = calculateModulesOrderedByDependencies();
+        this.moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(modulesOrderByDependencies, Module::getId));
+
+        Map<Name, ClassIndex> classIndexByModule = Maps.newLinkedHashMap();
+        Map<Name, ClassLoader> classLoaderByModule = Maps.newLinkedHashMap();
+        Map<Name, BeanContext> beanContextByModule = Maps.newLinkedHashMap();
+        ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
+        ClassLoader lastClassLoader = apiClassLoader;
+        BeanContext lastBeanContext = beanContext;
+        List<Module> orderedModules = getModulesOrderedByDependencies();
+        Predicate<Class<?>> classpathModuleClassesPredicate = orderedModules.stream().map(Module::getClassPredicate).reduce(x -> false, Predicate::or);
+        for (final Module module : orderedModules) {
+            // TODO return non-code module handling.
+
+            if (!module.getClasspaths().isEmpty()) {
+                // Directory and archive modules
+                ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, classLoaderSupplier, classpathModuleClassesPredicate);
+                managedClassLoaderListBuilder.add(classLoader);
+                lastClassLoader = classLoader.getClassLoader();
+                classIndexByModule.put(module.getId(), module.getClassIndex());
+                classLoaderByModule.put(module.getId(), classLoader.getClassLoader());
+                lastBeanContext.getEnvironment().loadDefinitions(lastClassLoader);
+                BeanScanner beanScanner = new StandardScanner("", lastClassLoader);
+                ServiceRegistry serviceRegistry = new ServiceRegistry();
+                serviceRegistry.registerScanner(beanScanner);
+                lastBeanContext = lastBeanContext.getNestedContainer(serviceRegistry);
+                beanContextByModule.put(module.getId(), lastBeanContext);
+            } else {
+                // Package modules
+                classIndexByModule.put(module.getId(), module.getClassIndex());
+                classLoaderByModule.put(module.getId(), apiClassLoader);
+                BeanScanner beanScanner = (registry, environment) -> {
+                    // TODO find right classloader for classpath modules.
+                    for (BeanDefinition<?> beanDefinition : environment.byPrefix(Thread.currentThread().getContextClassLoader(), "")) {
+                        Class<?> candidate = beanDefinition.targetClass();
+                        if (module.getClassPredicate().test(candidate)) {
+                            registry.with(candidate);
+                        }
+                    }
+                };
+                ServiceRegistry serviceRegistry = new ServiceRegistry();
+                serviceRegistry.registerScanner(beanScanner);
+                beanContextByModule.put(module.getId(), beanContext.getNestedContainer(serviceRegistry));
+            }
+            // Ignoring resources
+        }
+        this.finalClassLoader = lastClassLoader;
+        this.finalBeanContext = lastBeanContext;
+        this.classIndexByModule = classIndexByModule;
+        this.classLoaderByModule = classLoaderByModule;
+        this.beanContextByModule = beanContextByModule;
+        this.managedClassLoaders = managedClassLoaderListBuilder.build();
+        this.moduleDependencies = buildModuleDependencies();
+        this.resources = new CompositeFileSource(getModulesOrderedByDependencies().stream().map(Module::getResources).collect(Collectors.toList()));
+    }
+
 
     /**
      * @param modules                   The modules this environment should encompass.
@@ -112,6 +206,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
 
         Map<Name, ClassIndex> classIndexByModule = Maps.newLinkedHashMap();
         Map<Name, ClassLoader> classLoaderByModule = Maps.newLinkedHashMap();
+        Map<Name, BeanContext> beanContextByModule = Maps.newLinkedHashMap();
         ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
         ClassLoader lastClassLoader = apiClassLoader;
         List<Module> orderedModules = getModulesOrderedByDependencies();
@@ -136,6 +231,8 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         this.finalClassLoader = lastClassLoader;
         this.classIndexByModule = classIndexByModule;
         this.classLoaderByModule = classLoaderByModule;
+        this.beanContextByModule = beanContextByModule;
+        this.finalBeanContext = null;
         this.managedClassLoaders = managedClassLoaderListBuilder.build();
         this.moduleDependencies = buildModuleDependencies();
         this.resources = new CompositeFileSource(getModulesOrderedByDependencies().stream().map(Module::getResources).collect(Collectors.toList()));
@@ -337,6 +434,10 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     @Override
     public Iterator<Module> iterator() {
         return modules.values().iterator();
+    }
+
+    public <T> List<? extends T> getBeans(Class<T> interfaceClass) {
+        return finalBeanContext.getBeans(interfaceClass);
     }
 
     private Class<?> loadClass(ClassLoader classLoader, String clazzName) {

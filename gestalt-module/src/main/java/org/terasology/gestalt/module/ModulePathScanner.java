@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.util.Varargs;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -35,10 +36,7 @@ public class ModulePathScanner {
     private static final Logger logger = LoggerFactory.getLogger(ModulePathScanner.class);
     private final ModuleFactory moduleFactory;
 
-    public ModulePathScanner() {
-        this.moduleFactory = new ModuleFactory();
-    }
-
+    @Inject
     public ModulePathScanner(ModuleFactory factory) {
         this.moduleFactory = factory;
     }

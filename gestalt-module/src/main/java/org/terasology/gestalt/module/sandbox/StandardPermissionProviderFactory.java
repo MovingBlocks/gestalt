@@ -18,11 +18,11 @@ package org.terasology.gestalt.module.sandbox;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.module.Module;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -40,6 +40,7 @@ public class StandardPermissionProviderFactory implements PermissionProviderFact
     private static final Logger logger = LoggerFactory.getLogger(StandardPermissionProviderFactory.class);
     private final Map<String, PermissionSet> permissionSets = Maps.newHashMap();
 
+    @Inject
     public StandardPermissionProviderFactory() {
         permissionSets.put(BASE_PERMISSION_SET, new PermissionSet());
     }

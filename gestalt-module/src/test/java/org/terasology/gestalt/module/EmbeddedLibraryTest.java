@@ -17,7 +17,6 @@
 package org.terasology.gestalt.module;
 
 import com.google.common.collect.Sets;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.terasology.gestalt.module.dependencyresolution.DependencyResolver;
@@ -47,7 +46,7 @@ public class EmbeddedLibraryTest {
     @Before
     public void setup() {
         registry = new TableModuleRegistry();
-        new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
+        new ModulePathScanner(new ModuleFactory()).scan(registry, Paths.get("test-modules").toFile());
 
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");

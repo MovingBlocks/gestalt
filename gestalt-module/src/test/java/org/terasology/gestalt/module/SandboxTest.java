@@ -52,7 +52,7 @@ public class SandboxTest {
     @Before
     public void setup() {
         registry = new TableModuleRegistry();
-        new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
+        new ModulePathScanner(new ModuleFactory()).scan(registry, Paths.get("test-modules").toFile());
 
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.util");

@@ -44,7 +44,7 @@ public class PermissiveSandboxTest {
     @Before
     public void setup() {
         registry = new TableModuleRegistry();
-        new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
+        new ModulePathScanner(new ModuleFactory()).scan(registry, Paths.get("test-modules").toFile());
         StandardPermissionProviderFactory standardPermissionProviderFactory = new StandardPermissionProviderFactory();
 
         standardPermissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");

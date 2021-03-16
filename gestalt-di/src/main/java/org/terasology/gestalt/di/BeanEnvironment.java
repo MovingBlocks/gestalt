@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -224,7 +223,6 @@ public class BeanEnvironment {
     }
 
     public Iterable<BeanDefinition<?>> byPrefix(ClassLoader loader, String prefix) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix));
         final ClassLookup lookup = beanLookup.get(loader);
 
         Optional<Range<Integer>> range = findPrefixBounds(prefix, lookup.namespaceIndex);
