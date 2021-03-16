@@ -18,7 +18,6 @@ package org.terasology.gestalt.module.sandbox;
 
 import org.terasology.gestalt.module.Module;
 
-import javax.inject.Inject;
 import java.security.Permission;
 import java.util.function.Predicate;
 
@@ -27,11 +26,6 @@ import java.util.function.Predicate;
  * custom modules are not a factor.
  */
 public class PermitAllPermissionProviderFactory implements PermissionProviderFactory {
-
-    @Inject
-    public PermitAllPermissionProviderFactory() {
-
-    }
 
     @Override
     public PermissionProvider createPermissionProviderFor(Module module, Predicate<Class<?>> classpathModuleClasses) {

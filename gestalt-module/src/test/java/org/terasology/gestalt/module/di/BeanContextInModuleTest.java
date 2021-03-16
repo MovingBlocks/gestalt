@@ -12,7 +12,7 @@ import org.terasology.gestalt.module.ModuleRegistry;
 import org.terasology.gestalt.module.ModuleServiceRegistry;
 import org.terasology.gestalt.module.dependencyresolution.DependencyResolver;
 import org.terasology.gestalt.module.sandbox.PermissionProviderFactory;
-import org.terasology.gestalt.module.sandbox.PermitAllPermissionProviderFactory;
+import org.terasology.gestalt.module.sandbox.StandardPermissionProviderFactory;
 import org.terasology.gestalt.naming.Name;
 
 import java.nio.file.Paths;
@@ -24,7 +24,7 @@ public class BeanContextInModuleTest {
 
     @Before
     public void setup() {
-        BeanContext root = new DefaultBeanContext(new ModuleServiceRegistry(PermitAllPermissionProviderFactory.class));
+        BeanContext root = new DefaultBeanContext(new ModuleServiceRegistry(new StandardPermissionProviderFactory()));
 
         ModulePathScanner scanner = root.getBean(ModulePathScanner.class);
         ModuleRegistry registry = root.getBean(ModuleRegistry.class);
@@ -36,7 +36,7 @@ public class BeanContextInModuleTest {
     }
 
     @Test
-    public void lookupByInterface() {
+    public void findByInterface() {
         List<? extends TestImplementation1> list = environment.getBeans(TestImplementation1.class);
         Assert.assertFalse(list.isEmpty());
         Assert.assertEquals(
