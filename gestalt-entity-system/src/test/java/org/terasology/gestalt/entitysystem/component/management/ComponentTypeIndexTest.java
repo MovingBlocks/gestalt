@@ -19,6 +19,7 @@ package org.terasology.gestalt.entitysystem.component.management;
 import modules.test.components.Sample;
 import org.junit.Test;
 import org.terasology.gestalt.assets.ResourceUrn;
+import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.Module;
 import org.terasology.gestalt.module.ModuleEnvironment;
 import org.terasology.gestalt.module.ModuleFactory;
@@ -40,7 +41,7 @@ public class ComponentTypeIndexTest {
     public ComponentTypeIndexTest() throws Exception {
         ModuleFactory factory = new ModuleFactory();
         Module module = factory.createPackageModule("modules.test");
-        ModuleEnvironment moduleEnvironment = new ModuleEnvironment(Collections.singletonList(module), new PermitAllPermissionProviderFactory());
+        ModuleEnvironment moduleEnvironment = new ModuleEnvironment(new DefaultBeanContext(), Collections.singletonList(module), new PermitAllPermissionProviderFactory());
         index = new ComponentTypeIndex(moduleEnvironment);
     }
 

@@ -19,6 +19,9 @@ package org.terasology.gestalt.module;
 import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
+import org.module.Test1Scoped;
+import org.module.TestImplementation1;
+import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.dependencyresolution.DependencyResolver;
 import org.terasology.gestalt.module.sandbox.ModuleSecurityManager;
 import org.terasology.gestalt.module.sandbox.ModuleSecurityPolicy;
@@ -51,6 +54,15 @@ public class EmbeddedLibraryTest {
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.util");
+
+        // gestalt-di required
+        permissionProviderFactory.getBasePermissionSet().addAPIPackage("org.terasology.context");
+        permissionProviderFactory.getBasePermissionSet().addAPIPackage("javax.inject");
+
+        // Di's tests
+        permissionProviderFactory.getBasePermissionSet().addAPIClass(TestImplementation1.class);
+        permissionProviderFactory.getBasePermissionSet().addAPIClass(Test1Scoped.class);
+
         PermissionSet ioPermissionSet = new PermissionSet();
         ioPermissionSet.addAPIPackage("java.io");
         ioPermissionSet.addAPIPackage("java.nio.file");
@@ -66,7 +78,7 @@ public class EmbeddedLibraryTest {
     @Test
     public void loadedModuleContainsEmbeddedLibraryClasses() {
         DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleE")).getModules(), permissionProviderFactory);
+        ModuleEnvironment environment = new ModuleEnvironment(new DefaultBeanContext(), resolver.resolve(new Name("moduleE")).getModules(), permissionProviderFactory);
 
         LinkedHashSet<Class<?>> classes = Sets.newLinkedHashSet(environment.getTypesAnnotatedWith(IndexForTest.class));
 

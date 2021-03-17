@@ -36,11 +36,15 @@ public class BeanEnvironment {
     }
 
     public void loadDefinitions(ClassLoader loader) {
+        loadDefinitions(loader, true);
+    }
+
+    public void loadDefinitions(ClassLoader loader, boolean loadsFromParent) {
         if (beanLookup.containsKey(loader)) {
             return;
         }
         beanLookup.computeIfAbsent(loader, (ld) -> {
-            SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, ld);
+            SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, ld, loadsFromParent);
             ClassLookup lookup = new ClassLookup();
 
             List<ClassRef<?>> namespaceIndex = new ArrayList<>();

@@ -134,7 +134,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
                 lastClassLoader = classLoader.getClassLoader();
                 classIndexByModule.put(module.getId(), module.getClassIndex());
                 classLoaderByModule.put(module.getId(), classLoader.getClassLoader());
-                lastBeanContext.getEnvironment().loadDefinitions(lastClassLoader);
+                lastBeanContext.getEnvironment().loadDefinitions(lastClassLoader, false);
                 BeanScanner beanScanner = new StandardScanner("", lastClassLoader);
                 ServiceRegistry serviceRegistry = new ServiceRegistry();
                 serviceRegistry.registerScanner(beanScanner);
@@ -164,74 +164,6 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         this.classIndexByModule = classIndexByModule;
         this.classLoaderByModule = classLoaderByModule;
         this.beanContextByModule = beanContextByModule;
-        this.managedClassLoaders = managedClassLoaderListBuilder.build();
-        this.moduleDependencies = buildModuleDependencies();
-        this.resources = new CompositeFileSource(getModulesOrderedByDependencies().stream().map(Module::getResources).collect(Collectors.toList()));
-    }
-
-
-    /**
-     * @param modules                   The modules this environment should encompass.
-     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
-     * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
-     */
-    public ModuleEnvironment(Iterable<Module> modules, PermissionProviderFactory permissionProviderFactory) {
-        this(modules, permissionProviderFactory, JavaModuleClassLoader::create);
-    }
-
-    /**
-     * @param modules                   The modules this environment should encompass.
-     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
-     * @param classLoaderSupplier       A supplier for producing a ModuleClassLoader for a module
-     * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
-     */
-    public ModuleEnvironment(Iterable<Module> modules, PermissionProviderFactory permissionProviderFactory, ClassLoaderSupplier classLoaderSupplier) {
-        this(modules, permissionProviderFactory, classLoaderSupplier, ModuleEnvironment.class.getClassLoader());
-    }
-
-    /**
-     * @param modules                   The modules this environment should encompass.
-     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
-     * @param classLoaderSupplier       A supplier for producing a ModuleClassLoader for a module
-     * @param apiClassLoader            The base classloader the module environment should build upon.
-     * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
-     */
-    public ModuleEnvironment(Iterable<Module> modules, final PermissionProviderFactory permissionProviderFactory, ClassLoaderSupplier classLoaderSupplier, ClassLoader apiClassLoader) {
-
-        this.modules = buildModuleMap(modules);
-        this.apiClassLoader = apiClassLoader;
-        this.modulesOrderByDependencies = calculateModulesOrderedByDependencies();
-        this.moduleIdsOrderedByDependencies = ImmutableList.copyOf(Collections2.transform(modulesOrderByDependencies, Module::getId));
-
-        Map<Name, ClassIndex> classIndexByModule = Maps.newLinkedHashMap();
-        Map<Name, ClassLoader> classLoaderByModule = Maps.newLinkedHashMap();
-        Map<Name, BeanContext> beanContextByModule = Maps.newLinkedHashMap();
-        ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
-        ClassLoader lastClassLoader = apiClassLoader;
-        List<Module> orderedModules = getModulesOrderedByDependencies();
-        Predicate<Class<?>> classpathModuleClassesPredicate = orderedModules.stream().map(Module::getClassPredicate).reduce(x -> false, Predicate::or);
-        for (final Module module : orderedModules) {
-            // TODO return non-code module handling.
-
-            if (!module.getClasspaths().isEmpty()) {
-                // Directory and archive modules
-                ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, classLoaderSupplier, classpathModuleClassesPredicate);
-                managedClassLoaderListBuilder.add(classLoader);
-                lastClassLoader = classLoader.getClassLoader();
-                classIndexByModule.put(module.getId(), module.getClassIndex());
-                classLoaderByModule.put(module.getId(), classLoader.getClassLoader());
-            } else {
-                // Package modules
-                classIndexByModule.put(module.getId(), module.getClassIndex());
-                classLoaderByModule.put(module.getId(), apiClassLoader);
-            }
-            // Ignoring resources
-        }
-        this.finalClassLoader = lastClassLoader;
-        this.classIndexByModule = classIndexByModule;
-        this.classLoaderByModule = classLoaderByModule;
-        this.beanContextByModule = beanContextByModule;
-        this.finalBeanContext = null;
         this.managedClassLoaders = managedClassLoaderListBuilder.build();
         this.moduleDependencies = buildModuleDependencies();
         this.resources = new CompositeFileSource(getModulesOrderedByDependencies().stream().map(Module::getResources).collect(Collectors.toList()));
