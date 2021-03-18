@@ -100,9 +100,7 @@ public class ClassIndexProcessor extends AbstractProcessor {
                     annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), type.asType().toString());
                 } else if (type.getKind() == ElementKind.PACKAGE) {
                     PackageElement packageType = (PackageElement) type;
-                    for (Element enclosedElement : packageType.getEnclosedElements()) {
-                        annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), enclosedElement.asType().toString());
-                    }
+                    annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), packageType.getQualifiedName().toString() + ".package-info");
                 }
             }
         }
