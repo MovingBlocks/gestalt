@@ -11,7 +11,7 @@ dependencies {
     testAnnotationProcessor project(":gestalt-inject-java")
 
     implementation "com.google.guava:guava:$guava_version"
-    implementation project(":gestalt-inject")
+    api project(":gestalt-inject")
 
     testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"

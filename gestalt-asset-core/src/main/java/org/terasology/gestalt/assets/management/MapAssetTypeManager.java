@@ -49,10 +49,10 @@ public final class MapAssetTypeManager implements AssetTypeManager {
             Multimaps.synchronizedListMultimap(ArrayListMultimap.<Class<? extends Asset>, Class<? extends Asset>>create());
 
     private static Iterable<Class<?>> getAllSuperClasses(Class<?> from, Class<?> to) {
-        Preconditions.checkArgument(lowerBound.isAssignableFrom(upperBound), "%s should be subtype of %s", upperBound, lowerBound);
+        Preconditions.checkArgument(to.isAssignableFrom(from), "%s should be subtype of %s", from, to);
         List<Class<?>> subtypes = Lists.newArrayList();
-        Class<?> current = upperBound;
-        while (current != lowerBound) {
+        Class<?> current = from;
+        while (current != to) {
             subtypes.add(current);
             current = current.getSuperclass();
         }
@@ -116,7 +116,7 @@ public final class MapAssetTypeManager implements AssetTypeManager {
         Preconditions.checkState(assetTypes.get(assetType.getAssetClass()) == null, "Asset type already registered for - " + assetType.getAssetClass().getSimpleName());
 
         assetTypes.put(assetType.getAssetClass(), assetType);
-        for (Class<?> parentType : getAllSuperTypesBetween(assetType.getAssetClass(), Asset.class)) {
+        for (Class<?> parentType : getAllSuperClasses(assetType.getAssetClass(), Asset.class)) {
             subtypes.put((Class<? extends Asset>) parentType, assetType.getAssetClass());
             (subtypes.get((Class<? extends Asset>) parentType)).sort(Comparator.comparing(Class::getSimpleName));
 
@@ -135,7 +135,7 @@ public final class MapAssetTypeManager implements AssetTypeManager {
         AssetType<?, ?> assetType = assetTypes.remove(type);
         if (assetType != null) {
             assetType.close();
-            for (Class<?> parentType : getAllSuperTypesBetween(type, Asset.class)) {
+            for (Class<?> parentType : getAllSuperClasses(type, Asset.class)) {
                 subtypes.remove(parentType, type);
             }
         }

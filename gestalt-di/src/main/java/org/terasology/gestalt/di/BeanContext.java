@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
-import org.terasology.context.Argument;
 import org.terasology.gestalt.di.injection.Qualifier;
 
 import java.util.List;
@@ -106,12 +105,12 @@ public interface BeanContext extends AutoCloseable {
     <T> Optional<T> findBean(Class<T> clazz);
 
     /**
-     * tries to resolve a target object from its {@link Class<T>} and {@link Qualifier}. returns an empty optional if
+     * tries to resolve a target object from its {@link Class} and {@link Qualifier}. returns an empty optional if
      * a bean is not found.
      *
-     * @param clazz lookup by class
+     * @param clazz     lookup by class
      * @param qualifier qualifier to filer multiple implementations by
-     * @param <T> target
+     * @param <T>       target
      * @return the resolved object
      */
     <T> Optional<T> findBean(Class<T> clazz, Qualifier qualifier);

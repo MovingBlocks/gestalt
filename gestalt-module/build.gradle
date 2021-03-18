@@ -37,7 +37,6 @@ dependencies {
     api project(":gestalt-di")
 
     implementation project(":gestalt-util")
-    implementation project(":gestalt-inject")
     annotationProcessor project(":gestalt-inject-java")
 
     implementation "com.google.guava:guava:$guava_version"
