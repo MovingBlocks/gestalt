@@ -48,7 +48,7 @@ public final class MapAssetTypeManager implements AssetTypeManager {
     private final ListMultimap<Class<? extends Asset>, Class<? extends Asset>> subtypes =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.<Class<? extends Asset>, Class<? extends Asset>>create());
 
-    private static Iterable<Class<?>> getAllSuperTypesBetween(Class<?> upperBound, Class<?> lowerBound) {
+    private static Iterable<Class<?>> getAllSuperClasses(Class<?> from, Class<?> to) {
         Preconditions.checkArgument(lowerBound.isAssignableFrom(upperBound), "%s should be subtype of %s", upperBound, lowerBound);
         List<Class<?>> subtypes = Lists.newArrayList();
         Class<?> current = upperBound;
