@@ -112,7 +112,7 @@ public class ClasspathFileSource implements ModuleFileSource {
         Stream<String> candidates = files
                 .stream()
                 .filter(file -> file.startsWith(fullPath))
-                .filter(file -> file.matches(".+?/[a-zA-Z0-9-]+\\.[a-zA-Z-0-9]+"));
+                .filter(file -> file.matches(".+?/[a-zA-Z0-9-_]+\\.[a-zA-Z-0-9]+"));
 
         if (!recursive) {
             candidates = candidates.filter(file -> !file.substring(fullPath.length()).contains("/"));
