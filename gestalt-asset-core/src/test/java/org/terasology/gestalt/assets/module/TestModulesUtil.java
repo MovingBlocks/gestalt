@@ -17,7 +17,7 @@
 package org.terasology.gestalt.assets.module;
 
 import com.google.common.collect.Lists;
-
+import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.ModuleEnvironment;
 import org.terasology.gestalt.module.ModuleFactory;
 import org.terasology.gestalt.module.sandbox.PermitAllPermissionProviderFactory;
@@ -55,11 +55,11 @@ public final class TestModulesUtil {
 
     public static ModuleEnvironment createFullEnvironment() {
         ModuleFactory factory = new ModuleFactory();
-        return new ModuleEnvironment(VIRTUAL_MODULES.stream().map(x -> factory.createPackageModule(VIRTUAL_MODULE_ROOT + "." + x)).collect(Collectors.toList()), new PermitAllPermissionProviderFactory());
+        return new ModuleEnvironment(new DefaultBeanContext(), VIRTUAL_MODULES.stream().map(x -> factory.createPackageModule(VIRTUAL_MODULE_ROOT + "." + x)).collect(Collectors.toList()), new PermitAllPermissionProviderFactory());
     }
 
     public static ModuleEnvironment createEmptyEnvironment() {
-        return new ModuleEnvironment(Collections.emptyList(), new PermitAllPermissionProviderFactory());
+        return new ModuleEnvironment(new DefaultBeanContext(), Collections.emptyList(), new PermitAllPermissionProviderFactory());
     }
 
     public static ModuleEnvironment createEnvironment() {
@@ -72,11 +72,11 @@ public final class TestModulesUtil {
 
     public static ModuleEnvironment createEnvironment(List<String> modules) {
         ModuleFactory factory = new ModuleFactory();
-        return new ModuleEnvironment(modules.stream().map(x -> factory.createPackageModule(VIRTUAL_MODULE_ROOT + "." + x)).collect(Collectors.toList()), new PermitAllPermissionProviderFactory());
+        return new ModuleEnvironment(new DefaultBeanContext(), modules.stream().map(x -> factory.createPackageModule(VIRTUAL_MODULE_ROOT + "." + x)).collect(Collectors.toList()), new PermitAllPermissionProviderFactory());
     }
 
     public static ModuleEnvironment createEnvironment(Name... modules) {
         ModuleFactory factory = new ModuleFactory();
-        return new ModuleEnvironment(Arrays.stream(modules).map(x -> factory.createPackageModule(VIRTUAL_MODULE_ROOT + "." + x)).collect(Collectors.toList()), new PermitAllPermissionProviderFactory());
+        return new ModuleEnvironment(new DefaultBeanContext(), Arrays.stream(modules).map(x -> factory.createPackageModule(VIRTUAL_MODULE_ROOT + "." + x)).collect(Collectors.toList()), new PermitAllPermissionProviderFactory());
     }
 }

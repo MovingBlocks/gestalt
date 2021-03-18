@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.module.TestImplementation1;
 import org.terasology.context.BeanDefinition;
 import org.terasology.gestalt.module.Module;
+import org.terasology.gestalt.module.ModuleFactory;
 import org.terasology.gestalt.module.ModulePathScanner;
 import org.terasology.gestalt.module.TableModuleRegistry;
 
@@ -31,7 +32,7 @@ public class BeanEnvironmentTest {
         environment = new BeanEnvironment();
         registry = new TableModuleRegistry();
 
-        new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
+        new ModulePathScanner(new ModuleFactory()).scan(registry, Paths.get("test-modules").toFile());
         for (Iterator<Module> it = registry.iterator(); it.hasNext(); ) {
             Module m = it.next();
             URL[] urls = m.getClasspaths().stream().map(x -> {

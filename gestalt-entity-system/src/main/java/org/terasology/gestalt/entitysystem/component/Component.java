@@ -16,6 +16,8 @@
 
 package org.terasology.gestalt.entitysystem.component;
 
+import org.terasology.context.annotation.IndexInherited;
+
 /**
  * A component is an element that can be added to an entity. A component holds data, and implies a feature or behavior of the entity.
  * <p>
@@ -28,6 +30,7 @@ package org.terasology.gestalt.entitysystem.component;
  * you have two components with similar configuration requirements but different behavior. Note that the entity system does not take into consideration
  * inheritance - you cannot retrieve components via a super type - so and shared inheritance is much like private inheritance in C++.
  */
+@IndexInherited
 public interface Component<T extends Component> {
 
     /**

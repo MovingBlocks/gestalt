@@ -17,9 +17,10 @@
 package org.terasology.gestalt.module.sandbox;
 
 import com.google.common.reflect.Reflection;
-
-import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.context.annotation.API;
+import org.terasology.gestalt.di.index.ClassIndex;
 
 /**
  * Scans a reflections manifest for API annotated classes and packages, registering them with a {@link StandardPermissionProviderFactory}.
@@ -27,6 +28,8 @@ import org.terasology.context.annotation.API;
  * @author Immortius
  */
 public class APIScanner {
+
+    private static final Logger logger = LoggerFactory.getLogger(APIScanner.class);
 
     private StandardPermissionProviderFactory permissionProviderFactory;
     private ClassLoader forClassLoader;
@@ -43,26 +46,35 @@ public class APIScanner {
     /**
      * Scans a reflections manifest, adding any class or package marked with the @API annotation into appropriate permission sets. Permission sets will be created if necessary.
      *
-     * @param manifest The reflections manifest to scan
+     * @param classIndex The class index.
      */
-    public void scan(Reflections manifest) {
-        for (Class<?> apiClass : manifest.getTypesAnnotatedWith(API.class, true)) {
-            if (forClassLoader == apiClass.getClassLoader()) {
-                for (String permissionSetId : apiClass.getAnnotation(API.class).permissionSet()) {
-                    PermissionSet permissionSet = permissionProviderFactory.getPermissionSet(permissionSetId);
-                    if (permissionSet == null) {
-                        permissionSet = new PermissionSet();
-                        permissionProviderFactory.addPermissionSet(permissionSetId, permissionSet);
-                    }
-                    if (apiClass.isSynthetic()) {
-                        // This is a package-info
-                        permissionSet.addAPIPackage(Reflection.getPackageName(apiClass));
-                    } else {
-                        permissionSet.addAPIClass(apiClass);
+    public void scan(ClassIndex classIndex) {
+        logger.trace("Scan ClassIndex for @API classes");
+        for (String apiClass : classIndex.getTypesAnnotatedWith(API.class.getName())) {
+            try {
+                logger.trace("T");
+                Class<?> aClass = forClassLoader.loadClass(apiClass);
+                if (aClass != null) {
+                    for (String permissionSetId : aClass.getAnnotation(API.class).permissionSet()) {
+                        PermissionSet permissionSet = permissionProviderFactory.getPermissionSet(permissionSetId);
+                        if (permissionSet == null) {
+                            permissionSet = new PermissionSet();
+                            permissionProviderFactory.addPermissionSet(permissionSetId, permissionSet);
+                        }
+                        if (aClass.isSynthetic()) {
+                            // This is a package-info
+                            permissionSet.addAPIPackage(Reflection.getPackageName(apiClass));
+                        } else {
+                            permissionSet.addAPIClass(aClass);
+                        }
                     }
                 }
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                // TODO ignore
             }
         }
+
     }
 
 }

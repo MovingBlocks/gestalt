@@ -17,10 +17,7 @@
 package org.terasology.gestalt.module.sandbox;
 
 import org.junit.Test;
-import org.reflections.Reflections;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
+import org.terasology.gestalt.di.index.UrlClassIndex;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -39,10 +36,8 @@ public class APIScannerTest {
         PermissionSet permSet = new PermissionSet();
         when(permissionProviderFactory.getPermissionSet(any(String.class))).thenReturn(permSet);
 
-        ConfigurationBuilder config = new ConfigurationBuilder().addClassLoader(ClasspathHelper.contextClassLoader()).addUrls(ClasspathHelper.forClassLoader()).addScanners(new TypeAnnotationsScanner());
-        Reflections reflections = new Reflections(config);
 
-        new APIScanner(permissionProviderFactory).scan(reflections);
+        new APIScanner(permissionProviderFactory).scan(UrlClassIndex.byClassLoader());
         assertTrue(permSet.isPermitted(APIClass.class));
         assertFalse(permSet.isPermitted(NonAPIClassInheritingAPIClass.class));
     }

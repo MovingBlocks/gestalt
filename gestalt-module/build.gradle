@@ -32,10 +32,14 @@ repositories {
 
 // Primary dependencies definition
 dependencies {
-    api 'org.terasology:reflections:0.9.12-MB'
+    implementation "org.javassist:javassist:3.27.0-GA" // TODO REMOVE this. replaces with gestalt's di generator.
+
+    api project(":gestalt-di")
 
     implementation project(":gestalt-util")
     implementation project(":gestalt-inject")
+    annotationProcessor project(":gestalt-inject-java")
+
     implementation "com.google.guava:guava:$guava_version"
     implementation "com.google.code.gson:gson:$gson_version"
     implementation 'org.apache.commons:commons-vfs2:2.2'
@@ -44,11 +48,21 @@ dependencies {
     implementation "com.github.zafarkhaja:java-semver:0.10.0"
 
     testImplementation project(":testpack:testpack-api")
+    testAnnotationProcessor project(":gestalt-inject-java")
     testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
-
 }
+
+compileJava {
+    inputs.files sourceSets.main.resources.srcDirs
+    options.compilerArgs = ["-Aresource=${sourceSets.main.resources.srcDirs.join(File.pathSeparator)}"]
+}
+compileTestJava {
+    inputs.files sourceSets.test.resources.srcDirs
+    options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
+}
+
 
 // Library and distribution config
 description = 'Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment'

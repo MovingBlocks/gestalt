@@ -17,8 +17,7 @@
 package org.terasology.gestalt.module;
 
 import org.junit.Test;
-import org.reflections.Reflections;
-import org.reflections.util.ConfigurationBuilder;
+import org.terasology.gestalt.di.index.UrlClassIndex;
 import org.terasology.gestalt.module.resources.EmptyFileSource;
 import org.terasology.gestalt.naming.Name;
 import org.terasology.gestalt.naming.Version;
@@ -78,6 +77,6 @@ public class TableModuleRegistryTest {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(name);
         metadata.setVersion(version);
-        return new Module(metadata, new EmptyFileSource(), Collections.emptyList(), new Reflections(new ConfigurationBuilder()), x -> false);
+        return new Module(metadata, new EmptyFileSource(), Collections.emptyList(), UrlClassIndex.byClassLoader(), x -> false);
     }
 }

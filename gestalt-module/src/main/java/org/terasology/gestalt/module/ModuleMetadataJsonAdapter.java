@@ -28,7 +28,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
-
 import org.terasology.gestalt.i18n.I18nMap;
 import org.terasology.gestalt.i18n.gson.I18nMapTypeAdapter;
 import org.terasology.gestalt.module.dependencyresolution.DependencyInfo;
@@ -37,6 +36,7 @@ import org.terasology.gestalt.naming.Version;
 import org.terasology.gestalt.naming.gson.NameTypeAdapter;
 import org.terasology.gestalt.naming.gson.VersionTypeAdapter;
 
+import javax.inject.Inject;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Type;
@@ -81,6 +81,7 @@ public class ModuleMetadataJsonAdapter implements ModuleMetadataLoader {
     private final Map<String, Type> extensionMap = Maps.newHashMap();
     private volatile Gson cachedGson;
 
+    @Inject
     public ModuleMetadataJsonAdapter() {
         this.builder = new GsonBuilder()
                 .setPrettyPrinting()

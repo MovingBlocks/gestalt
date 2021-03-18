@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -22,58 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
  * A internal environment that has internal information that is shared between multiple context.
  */
 public class BeanEnvironment {
-
-    private static class ClassRef<T> {
-        public final Class<T> target;
-        public final String prefix;
-        public final BeanDefinition<T> definition;
-
-        public ClassRef(BeanDefinition<T> definition) {
-            this.target = definition.targetClass();
-            this.prefix = target.getName();
-            this.definition = definition;
-        }
-
-        public ClassRef(Class<T> target) {
-            this.target = target;
-            this.prefix = target.getName();
-            this.definition = null;
-        }
-
-        public ClassRef(String prefix) {
-            target = null;
-            this.definition = null;
-            this.prefix = prefix;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ClassRef<?> that = (ClassRef<?>) o;
-            return Objects.equals(target, that.target);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(target);
-        }
-    }
-
-    private static class ClassLookup {
-        private ClassRef<?>[] namespaceIndex;
-        private Map<Class<?>, ClassRef<?>[]> interfaceIndex;
-        private Map<Class<?>, BeanDefinition<?>> definitions;
-    }
 
     public static final ClassLoader BaseClassLoader = BeanEnvironment.class.getClassLoader();
     private final Map<ClassLoader, ClassLookup> beanLookup = new HashMap<>();
@@ -83,11 +36,15 @@ public class BeanEnvironment {
     }
 
     public void loadDefinitions(ClassLoader loader) {
+        loadDefinitions(loader, true);
+    }
+
+    public void loadDefinitions(ClassLoader loader, boolean loadsFromParent) {
         if (beanLookup.containsKey(loader)) {
             return;
         }
         beanLookup.computeIfAbsent(loader, (ld) -> {
-            SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, ld);
+            SoftServiceLoader<BeanDefinition> definitions = new SoftServiceLoader<>(BeanDefinition.class, ld, loadsFromParent);
             ClassLookup lookup = new ClassLookup();
 
             List<ClassRef<?>> namespaceIndex = new ArrayList<>();
@@ -178,7 +135,7 @@ public class BeanEnvironment {
     /**
      * Filter bean Definitions by class that implements a targetInterface with a given classloader that is already loaded into the enviroment
      *
-     * @param loader target class loader
+     * @param loader          target class loader
      * @param targetInterface target inerface
      * @param <T>
      * @return A collection of BeanDefinition
@@ -200,6 +157,35 @@ public class BeanEnvironment {
      */
     public <T> Iterable<BeanDefinition<? extends T>> byInterface(Class<T> targetInterface) {
         return Iterables.concat(beanLookup.keySet().stream().map(k -> byInterface(k, targetInterface)).collect(Collectors.toList()));
+    }
+
+    /**
+     * Filter bean Definitions by class that implements a targetAnnotation with a given classloader that is already loaded into the enviroment
+     *
+     * @param loader           target class loader
+     * @param targetAnnotation target inerface
+     * @return A collection of BeanDefinition
+     */
+    public Iterable<BeanDefinition<?>> byAnnotation(ClassLoader loader, Class<?> targetAnnotation) {
+        final ClassLookup lookup = beanLookup.get(loader);
+        if (!lookup.annotationIndex.containsKey(targetAnnotation)) {
+            return Collections::emptyIterator;
+        }
+        return Arrays.stream(lookup.annotationIndex.get(targetAnnotation))
+                .map(k -> (BeanDefinition<?>) k.definition)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Filter {@link BeanDefinition} by class that implements a targetAnnotation
+     *
+     * @param targetAnnotation the target interface
+     * @return a collection of BeanDefinition
+     */
+    public Iterable<BeanDefinition<?>> byAnnotation(Class<?> targetAnnotation) {
+        return Iterables.concat(beanLookup.keySet().stream()
+                .map(k -> byAnnotation(k, targetAnnotation))
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -241,7 +227,6 @@ public class BeanEnvironment {
     }
 
     public Iterable<BeanDefinition<?>> byPrefix(ClassLoader loader, String prefix) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix));
         final ClassLookup lookup = beanLookup.get(loader);
 
         Optional<Range<Integer>> range = findPrefixBounds(prefix, lookup.namespaceIndex);
@@ -281,5 +266,49 @@ public class BeanEnvironment {
     public <T> BeanDefinition<?> getDefinition(Class<T> beanType) {
         final ClassLookup lookup = beanLookup.get(beanType.getClassLoader());
         return lookup.definitions.get(beanType);
+    }
+
+    private static class ClassRef<T> {
+        public final Class<T> target;
+        public final String prefix;
+        public final BeanDefinition<T> definition;
+
+        public ClassRef(BeanDefinition<T> definition) {
+            this.target = definition.targetClass();
+            this.prefix = target.getName();
+            this.definition = definition;
+        }
+
+        public ClassRef(Class<T> target) {
+            this.target = target;
+            this.prefix = target.getName();
+            this.definition = null;
+        }
+
+        public ClassRef(String prefix) {
+            target = null;
+            this.definition = null;
+            this.prefix = prefix;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ClassRef<?> that = (ClassRef<?>) o;
+            return Objects.equals(target, that.target);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(target);
+        }
+    }
+
+    private static class ClassLookup {
+        private ClassRef<?>[] namespaceIndex;
+        private Map<Class<?>, ClassRef<?>[]> interfaceIndex;
+        private Map<Class<?>, BeanDefinition<?>> definitions;
+        private Map<Class<?>, ClassRef<?>[]> annotationIndex;
     }
 }

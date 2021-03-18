@@ -17,6 +17,7 @@
 package org.terasology.gestalt.assets.module.annotations;
 
 import org.terasology.context.annotation.API;
+import org.terasology.context.annotation.Index;
 import org.terasology.gestalt.assets.module.ModuleAwareAssetTypeManagerImpl;
 
 import java.lang.annotation.ElementType;
@@ -41,5 +42,6 @@ import java.lang.annotation.Target;
 @API
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@Index
 public @interface RegisterAssetDeltaFileFormat {
 }

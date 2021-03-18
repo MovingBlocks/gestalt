@@ -17,13 +17,13 @@
 package org.terasology.gestalt.assets.module.autoreload;
 
 import com.google.common.collect.SetMultimap;
-
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.assets.AssetType;
 import org.terasology.gestalt.assets.ResourceUrn;
 import org.terasology.gestalt.assets.format.producer.FileChangeSubscriber;
+import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.Module;
 import org.terasology.gestalt.module.ModuleEnvironment;
 import org.terasology.gestalt.module.ModuleFactory;
@@ -33,6 +33,9 @@ import org.terasology.gestalt.module.sandbox.PermitAllPermissionProviderFactory;
 import org.terasology.gestalt.naming.Name;
 import org.terasology.gestalt.naming.Version;
 import org.terasology.gestalt.util.io.FilesUtil;
+import virtualModules.test.stubs.text.Text;
+import virtualModules.test.stubs.text.TextData;
+import virtualModules.test.stubs.text.TextFactory;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -40,10 +43,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
-
-import virtualModules.test.stubs.text.Text;
-import virtualModules.test.stubs.text.TextData;
-import virtualModules.test.stubs.text.TextFactory;
 
 import static org.junit.Assert.assertTrue;
 
@@ -56,7 +55,7 @@ public class ModuleEnvironmentWatcherTest {
         Path tempDirectory = Files.createTempDirectory("gestalt-test");
         ModuleMetadata metadata = new ModuleMetadata(new Name("test"), Version.DEFAULT);
         Module module = new ModuleFactory().createDirectoryModule(metadata, tempDirectory.toFile());
-        ModuleEnvironment environment = new ModuleEnvironment(Collections.singletonList(module), new PermitAllPermissionProviderFactory());
+        ModuleEnvironment environment = new ModuleEnvironment(new DefaultBeanContext(), Collections.singletonList(module), new PermitAllPermissionProviderFactory());
         ModuleEnvironmentWatcher watcher = new ModuleEnvironmentWatcher(environment);
         FileChangeSubscriber subscriber = new FileChangeSubscriber() {
             @Override
