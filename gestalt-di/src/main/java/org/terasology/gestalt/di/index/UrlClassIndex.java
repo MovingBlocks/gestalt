@@ -7,7 +7,9 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -44,15 +46,31 @@ public class UrlClassIndex implements ClassIndex {
     }
 
     public static ClassIndex byClassLoader(ClassLoader classLoader) {
-        return new UrlClassIndex(classLoader.getResource(METAINF));
+        return createClassIndex(classLoader, UrlClassIndex::new);
     }
 
     public static ClassIndex byClassLoader() {
-        return new UrlClassIndex(Thread.currentThread().getContextClassLoader().getResource(METAINF));
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        return createClassIndex(contextClassLoader, UrlClassIndex::new);
     }
 
     public static ClassIndex byClassLoaderPrefix(String packagePrefix) {
-        return new PackagePrefixedUrlClassLoader(Thread.currentThread().getContextClassLoader().getResource(METAINF), packagePrefix);
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        return createClassIndex(contextClassLoader, url -> new PackagePrefixedUrlClassLoader(url, packagePrefix));
+    }
+
+    private static ClassIndex createClassIndex(ClassLoader classLoader, Function<URL, ClassIndex> classIndexCreator) {
+        try {
+            CompoundClassIndex classIndex = new CompoundClassIndex();
+            Enumeration<URL> resources = classLoader.getResources(METAINF);
+            while (resources.hasMoreElements()) {
+                URL resource = resources.nextElement();
+                classIndex.add(classIndexCreator.apply(resource));
+            }
+            return classIndex;
+        } catch (IOException e) {
+            return classIndexCreator.apply(classLoader.getResource(METAINF));
+        }
     }
 
     protected URL getUrl() {
