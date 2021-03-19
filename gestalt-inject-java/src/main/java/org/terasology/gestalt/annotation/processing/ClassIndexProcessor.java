@@ -64,7 +64,7 @@ public class ClassIndexProcessor extends AbstractProcessor {
                     if (candidate.getKind() != TypeKind.NONE) {
                         if (elementUtility.hasStereotype(elementUtility.getTypes().asElement(candidate),
                                 Collections.singletonList(IndexInherited.class.getName())))
-                            subtypesTypeWriter.writeSubType(elementUtility.getTypes().erasure(candidate).toString(), type.asType().toString());
+                            subtypesTypeWriter.writeSubType(elementUtility.getTypes().erasure(candidate).toString(), elementUtility.getTypes().erasure(type.asType()).toString());
                         supers.addAll(elementUtility.getTypes().directSupertypes(candidate));
                     }
                 }
@@ -84,7 +84,7 @@ public class ClassIndexProcessor extends AbstractProcessor {
                         if (candidate.getKind() != TypeKind.NONE) {
                             if (elementUtility.hasStereotype(elementUtility.getTypes().asElement(candidate),
                                     Collections.singletonList(IndexInherited.class.getName())))
-                                subtypesTypeWriter.writeSubType(elementUtility.getTypes().erasure(candidate).toString(), type.asType().toString());
+                                subtypesTypeWriter.writeSubType(elementUtility.getTypes().erasure(candidate).toString(), elementUtility.getTypes().erasure(type.asType()).toString());
                             supers.addAll(elementUtility.getTypes().directSupertypes(candidate));
                         }
                     }
@@ -97,7 +97,7 @@ public class ClassIndexProcessor extends AbstractProcessor {
         if (elementUtility.hasStereotype(annotation, Collections.singletonList(Index.class.getName()))) {
             for (Element type : roundEnv.getElementsAnnotatedWith(annotation)) {
                 if (type.getKind() == ElementKind.CLASS) {
-                    annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), type.asType().toString());
+                    annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), elementUtility.getTypes().erasure(type.asType()).toString());
                 } else if (type.getKind() == ElementKind.PACKAGE) {
                     PackageElement packageType = (PackageElement) type;
                     annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), packageType.getQualifiedName().toString() + ".package-info");
