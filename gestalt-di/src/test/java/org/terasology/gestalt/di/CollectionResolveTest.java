@@ -4,7 +4,7 @@ package org.terasology.gestalt.di;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.terasology.context.annotation.Introspected;
+import org.terasology.context.annotation.Service;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -89,12 +89,12 @@ public class CollectionResolveTest {
                         .toArray());
     }
 
-    @Introspected
+    @Service
     public interface SomeThing {
 
     }
 
-    @Introspected
+    @Service
     public static class ListUsageBean {
         private final List<SomeThing> list;
 
@@ -104,7 +104,7 @@ public class CollectionResolveTest {
         }
     }
 
-    @Introspected
+    @Service
     public static class SetUsageBean {
         private final Set<SomeThing> set;
 
@@ -114,7 +114,7 @@ public class CollectionResolveTest {
         }
     }
 
-    @Introspected
+    @Service
     public static class CollectionUsageBean {
         private final Collection<SomeThing> collection;
 
@@ -124,12 +124,12 @@ public class CollectionResolveTest {
         }
     }
 
-    @Introspected
+    @Service
     public static class Impl1 implements SomeThing {
 
     }
 
-    @Introspected
+    @Service
     public static class Impl2 implements SomeThing {
 
     }

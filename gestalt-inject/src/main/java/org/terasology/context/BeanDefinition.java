@@ -7,6 +7,11 @@ import org.terasology.context.exception.DependencyInjectionException;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/**
+ * Definition used to construct dependency.
+ *
+ * @param <T> target type
+ */
 public interface BeanDefinition<T> {
     AnnotationMetadata getAnnotationMetadata();
 

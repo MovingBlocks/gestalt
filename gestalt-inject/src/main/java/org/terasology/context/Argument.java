@@ -4,6 +4,10 @@ package org.terasology.context;
 
 import java.util.Optional;
 
+/**
+ * Argument definition
+ * @param <T> the argument type
+ */
 public interface Argument<T> {
 
     /**

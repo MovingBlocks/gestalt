@@ -37,7 +37,6 @@ public class ServiceTypeWriter {
                     writer.newLine();
                 }
             }
-
         }
     }
 }

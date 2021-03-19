@@ -1,15 +1,14 @@
 package org.terasology.gestalt.di;
 
-import org.junit.Assert;
 import org.junit.Test;
-import org.terasology.context.annotation.Introspected;
+import org.terasology.context.annotation.Service;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class AutoClosableTest {
 
-    @Introspected
+    @Service
     public static class AutoClosableBean implements AutoCloseable{
         protected boolean isClosed = false;
         public AutoClosableBean() {

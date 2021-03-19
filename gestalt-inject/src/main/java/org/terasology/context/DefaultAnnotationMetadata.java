@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Default annotation metadata
+ */
 public class DefaultAnnotationMetadata implements AnnotationMetadata {
     private final Map<String, AnnotationValue<Annotation>[]> annotations = new HashMap<>();
 

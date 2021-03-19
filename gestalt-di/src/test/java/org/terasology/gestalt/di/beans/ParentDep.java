@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.beans;
 
-import org.terasology.context.annotation.Introspected;
+import org.terasology.context.annotation.Service;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Scope;
-import javax.inject.Singleton;
 
-@Introspected
+@Service
 public class ParentDep {
     @Inject
     @Named("dep3")

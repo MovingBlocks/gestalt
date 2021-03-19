@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.beans;
 
-import org.terasology.context.annotation.Introspected;
+import org.terasology.context.annotation.Service;
 
-@Introspected
+@Service
 public class Dep3 {
 }

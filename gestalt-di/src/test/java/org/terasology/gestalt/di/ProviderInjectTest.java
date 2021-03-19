@@ -3,7 +3,7 @@
 package org.terasology.gestalt.di;
 
 import org.junit.Test;
-import org.terasology.context.annotation.Introspected;
+import org.terasology.context.annotation.Service;
 import org.terasology.gestalt.di.beans.Dep1;
 
 import javax.inject.Inject;
@@ -15,7 +15,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ProviderInjectTest {
 
-    @Introspected
+    @Service
     public static class ProviderInjectBean {
         @Inject
         Provider<Dep1> dep1;

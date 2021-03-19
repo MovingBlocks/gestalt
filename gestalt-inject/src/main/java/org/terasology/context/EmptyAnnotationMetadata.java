@@ -7,6 +7,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * blank argument definition
+ */
 public class EmptyAnnotationMetadata implements AnnotationMetadata {
    public final static EmptyAnnotationMetadata EMPTY_ARGUMENT = new EmptyAnnotationMetadata();
 

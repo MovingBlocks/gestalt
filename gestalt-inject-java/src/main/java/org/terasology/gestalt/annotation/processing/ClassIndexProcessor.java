@@ -23,7 +23,6 @@ import java.util.Set;
 
 public class ClassIndexProcessor extends AbstractProcessor {
 
-
     private Filer filer;
     private AnnotationTypeWriter annotationTypeWriter;
     private SubtypesTypeWriter subtypesTypeWriter;

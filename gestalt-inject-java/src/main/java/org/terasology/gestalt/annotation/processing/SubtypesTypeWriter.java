@@ -37,7 +37,6 @@ public class SubtypesTypeWriter {
                     writer.newLine();
                 }
             }
-
         }
     }
 }

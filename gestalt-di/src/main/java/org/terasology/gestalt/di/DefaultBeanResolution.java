@@ -13,6 +13,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Default Bean Resolution for resolving dependencies against {@link org.terasology.context.BeanDefinition}
+ *
+ * Depdencies are resolved against {@link BeanContext} and provided to {@link org.terasology.context.BeanDefinition} when building dependency
+ */
 public class DefaultBeanResolution implements BeanResolution {
     private final BeanContext beanContext;
     private final BeanEnvironment environment;

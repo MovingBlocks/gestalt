@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 @SupportedOptions({"org.terasology.gestalt.annotation.processing"})
 public class BeanDefinitionProcessor extends AbstractProcessor {
 
-    private static final String INTROSPECTED_CLASS = "org.terasology.context.annotation.Introspected";
+    private static final String SERVICE_CLASS = "org.terasology.context.annotation.Service";
     private static final String SCOPED_CLASS = "org.terasology.context.annotation.Scoped";
     private static final String TRANSIENT_CLASS = "org.terasology.context.annotation.Transient";
 
@@ -59,7 +59,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             "javax.inject.Inject",
             "javax.inject.Qualifier",
             "javax.inject.Singleton",
-            INTROSPECTED_CLASS,
+            SERVICE_CLASS,
             SCOPED_CLASS,
             TRANSIENT_CLASS
     };

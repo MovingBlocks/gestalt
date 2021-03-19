@@ -2,8 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.context;
 
+import org.terasology.context.annotation.UsedByGeneratedCode;
+
 import java.util.Optional;
 
+/**
+ * used by annotation processor to generate definition used to resolve dependencies for {@link java.beans.beancontext.BeanContext}
+ * @param <T> defenition
+ */
+@UsedByGeneratedCode
 public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {
 
     public AnnotationMetadata getAnnotationMetadata() {
