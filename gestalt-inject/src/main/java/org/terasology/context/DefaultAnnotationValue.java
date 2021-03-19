@@ -3,6 +3,7 @@
 package org.terasology.context;
 
 import com.google.common.collect.Maps;
+import org.terasology.context.annotation.UsedByGeneratedCode;
 
 import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
@@ -15,6 +16,11 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
+/**
+ * Generated annotation value usually filled by code generation.
+ * @param <S>
+ */
+@UsedByGeneratedCode
 public class DefaultAnnotationValue<S extends Annotation> implements AnnotationValue<S> {
     private final String annotationName;
     private final Map<String, Object> defaultValues;
@@ -64,14 +70,7 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
 
     @Override
     public boolean hasStereotype(String annotation) {
-        for (AnnotationValue[] annotations : annotations.values()) {
-            for (AnnotationValue metadata : annotations) {
-                if (metadata.hasStereotype(annotation)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return annotations.containsKey(annotation);
     }
 
     @Override

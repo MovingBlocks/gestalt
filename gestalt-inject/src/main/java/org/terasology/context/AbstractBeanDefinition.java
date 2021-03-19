@@ -8,7 +8,7 @@ import java.util.Optional;
 
 /**
  * used by annotation processor to generate definition used to resolve dependencies for {@link java.beans.beancontext.BeanContext}
- * @param <T> defenition
+ * @param <T> definition
  */
 @UsedByGeneratedCode
 public abstract class AbstractBeanDefinition<T> implements BeanDefinition<T> {

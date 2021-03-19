@@ -7,10 +7,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
+/**
+ * Single annotation value with properties.
+ * @param <S>
+ */
 public interface AnnotationValue<S extends Annotation> extends Iterable<AnnotationValue<Annotation>[]> {
 
+    /**
+     * the name of the annotation {@link Class#getName()}
+     * @return
+     */
     String getAnnotationName();
 
+    /**
+     * annotation {@link Class} type
+     * @return
+     */
     Class<S> getAnnotationType();
 
     boolean hasAnnotation(String annotation);
@@ -23,22 +35,62 @@ public interface AnnotationValue<S extends Annotation> extends Iterable<Annotati
 
     boolean hasStereotype(Class<? extends Annotation> ann);
 
+    /**
+     * test is representing annotation contains child stereotype
+     * @param ann
+     * @return
+     */
     boolean hasStereotype(String ann);
 
+    /**
+     * find annotation that is is child to the stereotype ({@link Class#getName()})
+     * @param stereotype the annotation
+     * @return
+     */
     List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype);
 
     List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
 
+    /**
+     * find annotations by base name({@link Class#getName()})
+     * @param annotation name of annotation
+     * @return annotation value representing annotation by name
+     */
     List<AnnotationValue<Annotation>> findAnnotations(String annotation);
 
+    /**
+     * find annotations by {@link Class}
+     * @param annotation target annotation
+     * @return annotation extended by {@link Class}
+     */
     List<AnnotationValue<Annotation>> findAnnotations(Class<? extends Annotation> annotation);
 
+    /**
+     * int from value defined in annotation
+     * @param field field to lookup from annotation
+     * @return an {@link Optional} value if existing for annotation
+     */
     OptionalInt intValue(String field);
 
+    /**
+     * string from value defined in annotation. If field is not string then {@link Optional#empty()}
+     * @param field field to lookup from annotation
+     * @return an {@link Optional} value if existing for annotation
+     */
     Optional<String> stringValue(String field);
 
+    /**
+     * check if field is defined in annotation
+     * @param field field to lookup from annotation
+     * @return does field exist
+     */
     boolean hasField(String field);
 
+    /**
+     * raw value by field. null if it doesn't exist or  default value if it is defined for the annotation
+     * @param field field to lookup from annotation
+     * @return the raw field
+     */
     Object getRawValue(String field);
 
 }
