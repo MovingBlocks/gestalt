@@ -215,9 +215,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                         ClassName.get(BASE_PACKAGE, "DefaultAnnotationValue"),
                         declaredType,
                         declaredType.toString(),
-                        ClassName.get(BASE_PACKAGE, "AnnotationMetaUtil"),
+                        ClassName.get(BASE_PACKAGE, "AnnotationValue"),
                         CodeBlock.join(defaults, ","),
-                        ClassName.get(BASE_PACKAGE, "AnnotationMetaUtil"),
+                        ClassName.get(BASE_PACKAGE, "AnnotationValue"),
                         CodeBlock.join(values, ","),
                         ClassName.get(BASE_PACKAGE, "AnnotationValue"),
                         CodeBlock.join(buildAnnotationValues(children), ",")).build());

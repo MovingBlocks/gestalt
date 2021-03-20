@@ -8,7 +8,7 @@ import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanKey;
 import org.terasology.gestalt.di.DefaultBeanResolution;
-import org.terasology.gestalt.di.Lifetime;
+import org.terasology.context.Lifetime;
 
 import java.util.Optional;
 import java.util.function.Supplier;

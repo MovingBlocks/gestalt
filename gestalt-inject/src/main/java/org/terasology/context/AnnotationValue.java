@@ -3,7 +3,10 @@
 package org.terasology.context;
 
 import java.lang.annotation.Annotation;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -12,6 +15,20 @@ import java.util.OptionalInt;
  * @param <S>
  */
 public interface AnnotationValue<S extends Annotation> extends Iterable<AnnotationValue<Annotation>[]> {
+
+    static Map<String,Object> of(Object... values){
+        if(values.length == 0){
+            return Collections.emptyMap();
+        }
+        HashMap<String,Object> result = new HashMap<>();
+        int i = 0;
+        while(i < values.length - 1){
+            String key = values[i++].toString();
+            Object value = values[i++];
+            result.put(key,value);
+        }
+        return result;
+    }
 
     /**
      * the name of the annotation {@link Class#getName()}

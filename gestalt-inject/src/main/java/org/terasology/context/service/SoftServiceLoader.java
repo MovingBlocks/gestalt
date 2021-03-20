@@ -3,7 +3,7 @@
 package org.terasology.context.service;
 
 
-import org.terasology.context.utils.ClassUtils;
+import org.terasology.context.utils.BeanUtilities;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -109,7 +109,7 @@ public final class SoftServiceLoader<S> implements Iterable<ServiceDefinition<S>
             return Optional.of(i.next());
         }
 
-        Optional<Class> alternativeClass = ClassUtils.forName(alternative, classLoader);
+        Optional<Class> alternativeClass = BeanUtilities.forName(alternative, classLoader);
         if (alternativeClass.isPresent()) {
             return Optional.of(newService(alternative, alternativeClass));
         }

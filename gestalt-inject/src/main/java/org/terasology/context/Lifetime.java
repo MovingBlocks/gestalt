@@ -1,6 +1,6 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-package org.terasology.gestalt.di;
+package org.terasology.context;
 
 /**
  * lifetime scope drives how persistent a bean will and how it will be reused between different scopes. a child scope that redfined a bean will shadow its parents even if a

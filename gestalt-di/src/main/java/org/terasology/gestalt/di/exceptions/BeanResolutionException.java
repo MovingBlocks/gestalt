@@ -4,7 +4,6 @@ package org.terasology.gestalt.di.exceptions;
 
 import org.terasology.context.exception.DependencyInjectionException;
 import org.terasology.gestalt.di.BeanKey;
-import org.terasology.gestalt.di.instance.BeanProvider;
 
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;

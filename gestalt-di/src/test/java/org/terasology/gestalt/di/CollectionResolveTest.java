@@ -4,6 +4,7 @@ package org.terasology.gestalt.di;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.terasology.context.Lifetime;
 import org.terasology.context.annotation.Service;
 
 import javax.inject.Inject;

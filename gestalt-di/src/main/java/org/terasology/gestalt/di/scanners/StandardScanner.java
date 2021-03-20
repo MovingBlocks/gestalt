@@ -5,9 +5,9 @@ package org.terasology.gestalt.di.scanners;
 import org.terasology.context.BeanDefinition;
 import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanScanner;
-import org.terasology.gestalt.di.BeanUtilities;
+import org.terasology.context.utils.BeanUtilities;
 import org.terasology.gestalt.di.ServiceRegistry;
-import org.terasology.gestalt.di.injection.Qualifiers;
+import org.terasology.context.injection.Qualifiers;
 
 /**
  * A standard scanner that looks up by prefix loads them into the registry by common annotation ({@link org.terasology.context.annotation.Transient} , {@link javax.inject.Singleton}, {@link org.terasology.context.annotation.Scoped})

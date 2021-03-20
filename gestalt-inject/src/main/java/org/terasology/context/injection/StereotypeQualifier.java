@@ -1,6 +1,6 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-package org.terasology.gestalt.di.injection;
+package org.terasology.context.injection;
 
 import java.util.Objects;
 

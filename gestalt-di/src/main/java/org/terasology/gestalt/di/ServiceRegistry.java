@@ -5,8 +5,9 @@ package org.terasology.gestalt.di;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import org.terasology.gestalt.di.injection.Qualifier;
-import org.terasology.gestalt.di.injection.Qualifiers;
+import org.terasology.context.Lifetime;
+import org.terasology.context.injection.Qualifier;
+import org.terasology.context.injection.Qualifiers;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;

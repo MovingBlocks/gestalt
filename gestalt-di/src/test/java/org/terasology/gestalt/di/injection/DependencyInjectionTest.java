@@ -4,9 +4,10 @@ package org.terasology.gestalt.di.injection;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.terasology.context.injection.Qualifiers;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.DefaultBeanContext;
-import org.terasology.gestalt.di.Lifetime;
+import org.terasology.context.Lifetime;
 import org.terasology.gestalt.di.ServiceRegistry;
 import org.terasology.gestalt.di.injection.beans.Counter1;
 import org.terasology.gestalt.di.injection.beans.Counter2;
@@ -33,16 +34,14 @@ public class DependencyInjectionTest {
 
         BeanContext beanContext = new DefaultBeanContext(registry);
         Optional<CounterTester> test = beanContext.findBean(CounterTester.class);
-        Optional<ICounter> c1 = beanContext.findBean(ICounter.class, Qualifiers.byName("Counter1"));
-        Optional<ICounter> c2 = beanContext.findBean(ICounter.class, Qualifiers.byName("Counter2"));
+        ICounter c1 = beanContext.getBean(ICounter.class, Qualifiers.byName("Counter1"));
+        ICounter c2 = beanContext.getBean(ICounter.class, Qualifiers.byName("Counter2"));
 
         Assert.assertTrue(test.isPresent());
-        Assert.assertTrue(c1.isPresent());
-        Assert.assertTrue(c2.isPresent());
 
         test.get().addToCounter1();
 
-        Assert.assertEquals(0, c2.get().getCount());
-        Assert.assertEquals(1, c1.get().getCount());
+        Assert.assertEquals(0, c2.getCount());
+        Assert.assertEquals(1, c1.getCount());
     }
 }

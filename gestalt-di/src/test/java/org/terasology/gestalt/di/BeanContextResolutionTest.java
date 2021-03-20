@@ -3,6 +3,7 @@
 package org.terasology.gestalt.di;
 
 import org.junit.Test;
+import org.terasology.context.Lifetime;
 import org.terasology.gestalt.di.beans.ContextDep;
 
 import java.util.Optional;

@@ -5,6 +5,7 @@ package org.terasology.gestalt.di;
 import org.terasology.context.Argument;
 import org.terasology.context.BeanResolution;
 import org.terasology.context.SingleGenericArgument;
+import org.terasology.context.utils.BeanUtilities;
 
 import javax.inject.Provider;
 import java.util.Collection;
@@ -39,7 +40,7 @@ public class DefaultBeanResolution implements BeanResolution {
 
     private <T> Optional<T> getBean(Class<T> target, Argument<T> argument) {
         if (argument instanceof SingleGenericArgument) {
-            BeanKey<T> key = BeanUtilities.resolveBeanKey(argument.getType(), argument)
+            BeanKey<T> key = BeanKey.resolveBeanKey(argument.getType(), argument)
                     .withAnnotations(argument.getAnnotation());
             if (target.isAssignableFrom(Provider.class)) {
                 return (Optional<T>) Optional.of((Provider<T>) () -> beanContext.getBean(key));
@@ -52,7 +53,7 @@ public class DefaultBeanResolution implements BeanResolution {
             }
             throw new UnsupportedOperationException("Cannot resolve field with type "+ target);
         } else {
-            BeanKey<T> key = BeanUtilities.resolveBeanKey(target, argument)
+            BeanKey<T> key = BeanKey.resolveBeanKey(target, argument)
                     .withAnnotations(argument.getAnnotation());
             return beanContext.findBean(key);
         }

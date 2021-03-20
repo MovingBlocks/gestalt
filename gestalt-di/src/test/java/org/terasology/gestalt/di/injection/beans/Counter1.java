@@ -4,7 +4,7 @@ package org.terasology.gestalt.di.injection.beans;
 
 import javax.inject.Inject;
 
-public class Counter1 implements ICounter , ICounter2{
+public class Counter1 implements ICounter, ICounter2{
     private int count = 0;
 
     @Inject

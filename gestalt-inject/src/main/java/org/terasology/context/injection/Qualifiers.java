@@ -1,6 +1,6 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-package org.terasology.gestalt.di.injection;
+package org.terasology.context.injection;
 
 import org.terasology.context.AnnotationMetadata;
 import org.terasology.context.AnnotationValue;
@@ -28,17 +28,16 @@ public final class Qualifiers {
     }
 
     public static <T> Qualifier<T> resolveQualifier(AnnotationMetadata metadata) {
-        if (metadata.hasStereotype(javax.inject.Qualifier.class)) {
-            AnnotationValue<Annotation> ann = metadata.getAnnotationsByStereotype(javax.inject.Qualifier.class).stream().findFirst().get();
-            return new StereotypeQualifier(ann.getAnnotationType());
-        }
         for (AnnotationValue<Annotation> target : metadata.findAnnotations(Named.class)) {
             Optional<String> value = target.stringValue("value");
             if (value.isPresent()) {
                 return new NameQualifier(value.get());
             }
         }
+        if (metadata.hasStereotype(javax.inject.Qualifier.class)) {
+            AnnotationValue<Annotation> ann = metadata.getAnnotationsByStereotype(javax.inject.Qualifier.class).stream().findFirst().get();
+            return new StereotypeQualifier(ann.getAnnotationType());
+        }
         return null;
     }
-
 }

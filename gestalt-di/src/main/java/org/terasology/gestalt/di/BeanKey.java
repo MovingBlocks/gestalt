@@ -3,9 +3,11 @@
 package org.terasology.gestalt.di;
 
 import org.terasology.context.AnnotationMetadata;
+import org.terasology.context.Argument;
 import org.terasology.context.BeanDefinition;
 import org.terasology.context.EmptyAnnotationMetadata;
-import org.terasology.gestalt.di.injection.Qualifier;
+import org.terasology.context.injection.Qualifier;
+import org.terasology.context.injection.Qualifiers;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
@@ -23,6 +25,16 @@ public class BeanKey<T> implements Serializable, CharSequence {
     protected Qualifier<T> qualifier;
     protected AnnotationMetadata annotation = EmptyAnnotationMetadata.EMPTY_ARGUMENT;
     private int hashCode;
+
+    public static <T> BeanKey<? extends T> resolveBeanKey(Class<T> implClass, Class<? extends T> clazz, Argument<?> argument) {
+        Qualifier<T> qualifier = Qualifiers.resolveQualifier(argument.getAnnotation());
+        return new BeanKey(implClass, clazz, qualifier);
+    }
+
+    public static <T> BeanKey<T> resolveBeanKey(Class<T> clazz, Argument<?> argument) {
+        Qualifier<T> qualifier = Qualifiers.resolveQualifier(argument.getAnnotation());
+        return new BeanKey(clazz, qualifier);
+    }
 
     private void updateHash() {
         int result = 1;

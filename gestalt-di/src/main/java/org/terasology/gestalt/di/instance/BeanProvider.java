@@ -5,7 +5,7 @@ package org.terasology.gestalt.di.instance;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.BeanEnvironment;
 import org.terasology.gestalt.di.BeanKey;
-import org.terasology.gestalt.di.Lifetime;
+import org.terasology.context.Lifetime;
 
 import java.util.Optional;
 

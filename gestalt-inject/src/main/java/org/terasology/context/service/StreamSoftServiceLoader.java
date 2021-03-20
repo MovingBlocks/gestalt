@@ -3,7 +3,7 @@
 package org.terasology.context.service;
 
 
-import org.terasology.context.utils.ClassUtils;
+import org.terasology.context.utils.BeanUtilities;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -67,7 +67,7 @@ public class StreamSoftServiceLoader {
                     return lines.stream();
                 }
             ).map(serviceName -> {
-                Optional<Class> loadedClass = ClassUtils.forName(serviceName, classLoader);
+                Optional<Class> loadedClass = BeanUtilities.forName(serviceName, classLoader);
                 return new DefaultServiceDefinition(name, loadedClass);
             });
     }
