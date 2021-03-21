@@ -5,7 +5,6 @@ package org.terasology.gestalt.di;
 import org.terasology.context.Argument;
 import org.terasology.context.BeanResolution;
 import org.terasology.context.SingleGenericArgument;
-import org.terasology.context.utils.BeanUtilities;
 
 import javax.inject.Provider;
 import java.util.Collection;
@@ -29,31 +28,34 @@ public class DefaultBeanResolution implements BeanResolution {
     }
 
     @Override
-    public <T> Optional<T> resolveConstructorArgument(Class<T> target, Argument<T> argument) {
-        return getBean(target, argument);
+    public <T> Optional<T> resolveConstructorArgument(Argument<T> argument) {
+        return getBean(argument);
     }
 
     @Override
-    public <T> Optional<T> resolveParameterArgument(Class<T> target, Argument<T> argument) {
-        return getBean(target, argument);
+    public <T> Optional<T> resolveParameterArgument(Argument<T> argument) {
+        return getBean(argument);
     }
 
-    private <T> Optional<T> getBean(Class<T> target, Argument<T> argument) {
+    private <T> Optional<T> getBean(Argument<T> argument) {
         if (argument instanceof SingleGenericArgument) {
             BeanKey<T> key = BeanKey.resolveBeanKey(argument.getType(), argument)
                     .withAnnotations(argument.getAnnotation());
-            if (target.isAssignableFrom(Provider.class)) {
+            Class genericType = ((SingleGenericArgument<?, ?>) argument).getGenericType();
+            if (genericType.isAssignableFrom(Provider.class)) {
                 return (Optional<T>) Optional.of((Provider<T>) () -> beanContext.getBean(key));
-            } else if (target.isAssignableFrom(List.class)) {
+            } else if (genericType.isAssignableFrom(List.class)) {
                 return (Optional<T>) Optional.ofNullable(beanContext.getBeans(key));
-            } else if (target.isAssignableFrom(Collection.class)) {
+            } else if (genericType.isAssignableFrom(Collection.class)) {
                 return (Optional<T>) Optional.ofNullable(beanContext.getBeans(key));
-            } else if (target.isAssignableFrom(Set.class)) {
+            } else if (genericType.isAssignableFrom(Set.class)) {
                 return (Optional<T>) Optional.ofNullable(beanContext.getBeans(key).stream().collect(Collectors.toSet()));
+            } else if(genericType.isAssignableFrom(Optional.class)) {
+                return beanContext.findBean(key);
             }
-            throw new UnsupportedOperationException("Cannot resolve field with type "+ target);
+            throw new UnsupportedOperationException("Cannot resolve field with type "+ argument.getType());
         } else {
-            BeanKey<T> key = BeanKey.resolveBeanKey(target, argument)
+            BeanKey<T> key = BeanKey.resolveBeanKey(argument.getType(), argument)
                     .withAnnotations(argument.getAnnotation());
             return beanContext.findBean(key);
         }

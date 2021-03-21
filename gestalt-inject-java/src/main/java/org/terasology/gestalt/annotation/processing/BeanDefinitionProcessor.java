@@ -239,8 +239,9 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             if (type instanceof DeclaredType && !((DeclaredType) type).getTypeArguments().isEmpty()) {
                 DeclaredType declaredType = (DeclaredType) type; //GENERIC!
                 if (((DeclaredType) type).getTypeArguments().size() == 1) {
-                    arguments.add(CodeBlock.builder().add("new $T($T.class,$L)",
+                    arguments.add(CodeBlock.builder().add("new $T($T.class,$T.class,$L)",
                             ClassName.get(BASE_PACKAGE, "SingleGenericArgument"),
+                            processingEnv.getTypeUtils().erasure(element.asType()),
                             declaredType.getTypeArguments().get(0),
                             buildAnnotationMetadataBlock(element)).build());
                     return CodeBlock.builder().add("$L[" + (arguments.size() - 1) + "]", ARGUMENT_FIELD).build();
@@ -281,11 +282,17 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         }
 
         private CodeBlock buildResolution(String method, VariableElement element, ClassName target) {
-            //TODO use `Optional#orThrowElse()`
-            return CodeBlock.builder().add("($T)requiredDependency(resolution.$L($T.class,$L),() -> new $T($T.class, $T.class))",
+
+            if(typeUtils.isAssignable(element.asType(), typeUtils.erasure(elementUtils.getTypeElement("java.util.Optional").asType()))) {
+                return CodeBlock.builder().add("resolution.$L($L)",
+                        method,
+                        buildArgument(element)
+                ).build();
+            }
+
+            return CodeBlock.builder().add("($T)requiredDependency(resolution.$L($L),() -> new $T($T.class, $T.class))",
                     TypeName.get(element.asType()),
                     method,
-                    processingEnv.getTypeUtils().erasure(element.asType()),
                     buildArgument(element),
                     ClassName.get("org.terasology.gestalt.di.exceptions", "DependencyResolutionException"),
                     target,

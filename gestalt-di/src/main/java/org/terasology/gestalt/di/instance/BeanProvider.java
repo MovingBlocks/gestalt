@@ -9,6 +9,10 @@ import org.terasology.context.Lifetime;
 
 import java.util.Optional;
 
+/**
+ * a bean provider provides objects to the {@link BeanContext}
+ * @param <T> the type
+ */
 public abstract class BeanProvider<T> implements AutoCloseable {
     protected final Lifetime lifetime;
     protected final BeanEnvironment environment;

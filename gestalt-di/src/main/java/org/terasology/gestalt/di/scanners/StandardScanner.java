@@ -11,7 +11,6 @@ import org.terasology.context.injection.Qualifiers;
 
 /**
  * A standard scanner that looks up by prefix loads them into the registry by common annotation ({@link org.terasology.context.annotation.Transient} , {@link javax.inject.Singleton}, {@link org.terasology.context.annotation.Scoped})
- *
  */
 public class StandardScanner implements BeanScanner {
     private final String prefix;

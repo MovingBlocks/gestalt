@@ -1,6 +1,7 @@
 package org.terasology.gestalt.di;
 
 import org.junit.Test;
+import org.terasology.context.Lifetime;
 import org.terasology.context.annotation.Service;
 
 import static org.junit.Assert.assertNotNull;
@@ -24,7 +25,7 @@ public class AutoClosableTest {
     @Test
     public void testAutoClose() {
         ServiceRegistry registry = new ServiceRegistry();
-        registry.singleton(AutoClosableBean.class);
+        registry.with(AutoClosableBean.class, Lifetime.Singleton);
 
         AutoClosableBean bean = null;
         try(BeanContext context = new DefaultBeanContext(registry)) {

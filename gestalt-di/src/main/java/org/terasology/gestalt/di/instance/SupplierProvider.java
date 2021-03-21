@@ -13,6 +13,10 @@ import org.terasology.context.Lifetime;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/**
+ * A supplier will provide an instance to the context when requested.
+ * @param <T>
+ */
 public class SupplierProvider<T> extends BeanProvider<T> {
     private final Supplier<T> supplier;
     private final Class<T> target;
@@ -22,14 +26,15 @@ public class SupplierProvider<T> extends BeanProvider<T> {
         this.supplier = supplier;
         this.target = target;
     }
+
     @Override
     public Optional<T> get(BeanKey identifier, BeanContext current, BeanContext scopedTo) {
         Optional<T> result = Optional.ofNullable(supplier.get());
         result.ifPresent(k -> {
-            BeanDefinition<T> definition = (BeanDefinition<T>)environment.getDefinition(target);
+            BeanDefinition<T> definition = (BeanDefinition<T>) environment.getDefinition(target);
             if (definition instanceof AbstractBeanDefinition) {
-                BeanContext cntx = lifetime == Lifetime.Singleton ? current : scopedTo;
-                definition.inject(k, new DefaultBeanResolution(cntx, environment));
+                BeanContext context = lifetime == Lifetime.Singleton ? current : scopedTo;
+                definition.inject(k, new DefaultBeanResolution(context, environment));
             }
         });
         return result;
