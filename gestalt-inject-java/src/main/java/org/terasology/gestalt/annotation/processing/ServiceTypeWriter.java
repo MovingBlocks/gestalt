@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class ServiceTypeWriter {
-    private static final String META_INF = "META-INF" + File.separator + "services";
+    private static final String META_INF = "META-INF/services";
 
     private final Filer filer;
     private final Map<String, HashSet<String>> results = new HashMap<>();
@@ -30,7 +30,7 @@ public class ServiceTypeWriter {
 
     public void finish() throws IOException {
         for (Map.Entry<String, HashSet<String>> pair : results.entrySet()) {
-            FileObject fileObject = filer.createResource(StandardLocation.CLASS_OUTPUT, "", META_INF + File.separator + pair.getKey());
+            FileObject fileObject = filer.createResource(StandardLocation.CLASS_OUTPUT, "", META_INF + "/" + pair.getKey());
             try (BufferedWriter writer = new BufferedWriter(fileObject.openWriter())) {
                 for (String clazz : pair.getValue()) {
                     writer.write(clazz);

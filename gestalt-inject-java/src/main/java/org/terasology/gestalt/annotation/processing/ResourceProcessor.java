@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @SupportedOptions("resource")
 public class ResourceProcessor extends AbstractProcessor {
-    private static final String FILE = "META-INF" + File.separator + "resources";
+    private static final String FILE = "META-INF/resources";
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
