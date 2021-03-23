@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-import com.google.common.base.Predicate
-import org.reflections.Reflections
-import org.reflections.scanners.ResourcesScanner
-import org.reflections.scanners.SubTypesScanner
-import org.reflections.scanners.TypeAnnotationsScanner
-import org.reflections.serializers.JsonSerializer
-import org.reflections.util.ConfigurationBuilder
-
-import java.util.regex.Pattern
-
 apply plugin: 'com.android.application'
 apply plugin: 'project-report'
 
@@ -41,23 +31,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    packagingOptions {
+        merge 'META-INF/annotations/*'
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-    }
-    applicationVariants.all {
-        variant ->
-            def t = task("reflect${variant.name.capitalize()}") {
-                description = "Generates reflections manifest for variant ${variant.name}"
-
-                doLast {
-                    reflectPackage("org.terasology.gestalt.android.testbed.packageModuleA", variant)
-                    reflectPackage("org.terasology.gestalt.android.testbed.packageModuleB", variant)
-                }
-            }
-            variant.assembleProvider.get().dependsOn(t)
     }
     lintOptions {
         abortOnError false
@@ -78,32 +59,6 @@ dependencies {
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-}
 
-def reflectPackage(packageName, variant) {
-    def resourcesPath = variant.sourceSets.find { it.name == 'main' }.resources.srcDirs
-    def classPath = files { variant.javaCompileProvider.get().destinationDir }
-    URL[] scanUrls = classPath.collect { it.toURI().toURL() } + resourcesPath.collect {
-        it.toURI().toURL()
-    }
-    URL[] classLoaderUrls = scanUrls + variant.javaCompileProvider.get().classpath.collect {
-        it.toURI().toURL()
-    } + [new File(android.sdkDirectory, "platforms/" + android.compileSdkVersion + "/android.jar").toURI().toURL()]
-
-    ClassLoader classLoader = new URLClassLoader(classLoaderUrls, getClass().getClassLoader())
-    org.reflections.Configuration config = new ConfigurationBuilder()
-    config.addClassLoader(classLoader)
-    config.setUrls(scanUrls)
-    config.filterInputsBy(new Predicate<String>() {
-        @Override
-        boolean apply(@javax.annotation.Nullable String s) {
-            return packageName.isEmpty() || s.startsWith(packageName + ".")
-        }
-    })
-
-    config.addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner().filterResultsBy())
-    Reflections reflections = new Reflections(config)
-    JsonSerializer serializer = new JsonSerializer()
-    def outPath = variant.javaCompileProvider.get().destinationDir.toString() + "/" + packageName.replaceAll(Pattern.quote("."), "/") + "/manifest.json"
-    serializer.save(reflections, outPath)
+    annotationProcessor project(":gestalt-inject-java")
 }
