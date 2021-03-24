@@ -8,8 +8,9 @@
 buildscript {
     repositories {
         google()
-        jcenter()
-        mavenLocal()
+        mavenCentral()
+        // org.jetbrains.trove4j:trove4j
+        gradlePluginPortal()
         maven {
             url 'https://heisluft.de/maven'
         }
@@ -44,8 +45,9 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
-        mavenLocal()
+        mavenCentral()
+        // org.jetbrains.trove4j:trove4j
+        gradlePluginPortal()
         maven {
             url "http://artifactory.terasology.org/artifactory/libs-release-local"
         }
