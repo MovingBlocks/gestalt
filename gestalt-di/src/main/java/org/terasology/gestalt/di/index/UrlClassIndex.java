@@ -21,6 +21,9 @@ import java.util.stream.Collectors;
  */
 public class UrlClassIndex implements ClassIndex {
     private static final String METAINF = "META-INF";
+    // HACK: Android always claims that the URL of the "META-INF" directory or any of its subdirectories doesn't exist.
+    //       It will return the URL of any files within the "META-INF" directory and its subdirectories though.
+    private static final String METAINF_TEST_FILE = METAINF + "/gestalt-indexes-present";
     private static final String SUBTYPES = "subtypes";
     private static final String ANNOTATIONS = "annotations";
     private final URL url;
@@ -59,17 +62,37 @@ public class UrlClassIndex implements ClassIndex {
         return createClassIndex(contextClassLoader, url -> new PackagePrefixedUrlClassLoader(url, packagePrefix));
     }
 
+    /**
+     * Returns the url of the parent directory of the url provided. This assumes that the URL uses a path
+     * separator of "/", which is probable for those returned by a classloader.
+     * @param url the url to process
+     * @return The url of the parent directory of the url provided, or null if invalid.
+     */
+    private static URL getParentURL(URL url) {
+        if (url == null) {
+            return null;
+        }
+
+        try {
+            String urlString = url.toString();
+            return new URL(urlString.substring(0, urlString.lastIndexOf('/')));
+        } catch (MalformedURLException e) {
+            return null;
+        }
+    }
+
     private static ClassIndex createClassIndex(ClassLoader classLoader, Function<URL, ClassIndex> classIndexCreator) {
         try {
             CompoundClassIndex classIndex = new CompoundClassIndex();
-            Enumeration<URL> resources = classLoader.getResources(METAINF);
+            Enumeration<URL> resources = classLoader.getResources(METAINF_TEST_FILE);
             while (resources.hasMoreElements()) {
-                URL resource = resources.nextElement();
+                URL resource = getParentURL(resources.nextElement());
                 classIndex.add(classIndexCreator.apply(resource));
             }
             return classIndex;
         } catch (IOException e) {
-            return classIndexCreator.apply(classLoader.getResource(METAINF));
+            URL resource = getParentURL(classLoader.getResource(METAINF_TEST_FILE));
+            return classIndexCreator.apply(resource);
         }
     }
 

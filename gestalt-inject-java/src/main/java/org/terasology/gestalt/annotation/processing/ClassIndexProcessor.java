@@ -15,7 +15,10 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Queue;
@@ -110,6 +113,10 @@ public class ClassIndexProcessor extends AbstractProcessor {
         try {
             annotationTypeWriter.finish();
             subtypesTypeWriter.finish();
+            FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", "META-INF/gestalt-indexes-present");
+            Writer writer = file.openWriter();
+            writer.write("true");
+            writer.close();
         } catch (IOException e) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Cannot write indexes: " + e.getMessage());
         }

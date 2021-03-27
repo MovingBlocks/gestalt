@@ -16,9 +16,12 @@
 
 package org.terasology.test.api;
 
+import org.terasology.context.annotation.IndexInherited;
+
 /**
  * @author Immortius
  */
+@IndexInherited
 public interface ApiInterface {
 
     String apiMethod();

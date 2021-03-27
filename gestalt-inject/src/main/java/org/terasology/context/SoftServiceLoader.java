@@ -35,8 +35,8 @@ public class SoftServiceLoader<S> implements Iterable<S> {
     }
 
     public SoftServiceLoader(Class<S> target, ClassLoader classLoader, boolean loadsFromParent) {
-        Preconditions.checkArgument(loadsFromParent || classLoader instanceof URLClassLoader,
-                "loadsFromParent == false implemented for UrlClassLoader only");
+        Preconditions.checkArgument(loadsFromParent || classLoader instanceof URLClassLoader || classLoader instanceof FindResourcesClassLoader,
+                "loadsFromParent == false implemented for UrlClassLoader or FindResourcesClassLoader only");
         this.target = target;
         this.classLoader = classLoader;
         this.loadsFromParent = loadsFromParent;
@@ -53,6 +53,8 @@ public class SoftServiceLoader<S> implements Iterable<S> {
             Enumeration<URL> urls;
             if (!loadsFromParent && classLoader instanceof URLClassLoader) {
                 urls = ((URLClassLoader) classLoader).findResources(META_INF_SERVICES + '/' + target.getName());
+            } else if (!loadsFromParent && classLoader instanceof FindResourcesClassLoader) {
+                urls = ((FindResourcesClassLoader) classLoader).findResources(META_INF_SERVICES + '/' + target.getName());
             } else {
                 urls = classLoader.getResources(META_INF_SERVICES + '/' + target.getName());
             }

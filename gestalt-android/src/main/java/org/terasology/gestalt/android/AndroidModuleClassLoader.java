@@ -20,6 +20,7 @@ import com.google.common.base.Joiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.context.FindResourcesClassLoader;
 import org.terasology.gestalt.module.Module;
 import org.terasology.gestalt.module.sandbox.JavaModuleClassLoader;
 import org.terasology.gestalt.module.sandbox.ModuleClassLoader;
@@ -28,7 +29,9 @@ import org.terasology.gestalt.module.sandbox.PermissionProvider;
 import org.terasology.gestalt.naming.Name;
 
 import java.io.File;
+import java.net.URL;
 import java.security.AccessController;
+import java.util.Enumeration;
 import java.util.List;
 
 import dalvik.system.DexClassLoader;
@@ -36,7 +39,7 @@ import dalvik.system.DexClassLoader;
 /**
  * A module class loader built on top of DexClassLoader, to support loading code under Android.
  */
-public class AndroidModuleClassLoader extends DexClassLoader implements ModuleClassLoader {
+public class AndroidModuleClassLoader extends DexClassLoader implements ModuleClassLoader, FindResourcesClassLoader {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaModuleClassLoader.class);
     private static final Joiner FILE_JOINER = Joiner.on(File.pathSeparatorChar);
@@ -92,6 +95,11 @@ public class AndroidModuleClassLoader extends DexClassLoader implements ModuleCl
     @Override
     public PermissionProvider getPermissionProvider() {
         return permissionProvider;
+    }
+
+    @Override
+    public Enumeration<URL> findResources(String name) {
+        return super.findResources(name);
     }
 
     /**
