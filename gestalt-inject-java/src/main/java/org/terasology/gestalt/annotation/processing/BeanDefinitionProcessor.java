@@ -196,14 +196,18 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     if (element.getKind() == ElementKind.METHOD) {
                         ExecutableElement executableElement = (ExecutableElement) element;
                         AnnotationValue value = executableElement.getDefaultValue();
-                        defaults.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(value.getValue())));
+                        if(value != null) {
+                            defaults.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(value.getValue())));
+                        }
                     }
                 }
 
                 for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : ann.getElementValues().entrySet()) {
                     ExecutableElement executableElement = entry.getKey();
                     AnnotationValue value = entry.getValue();
-                    values.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(value.getValue())));
+                    if(value != null) {
+                        values.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(value.getValue())));
+                    }
                 }
 
                 List<? extends AnnotationMirror> children = declaredType.asElement().getAnnotationMirrors().stream().filter(k -> {
