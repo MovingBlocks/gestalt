@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class AnnotationTypeWriter {
-    private static final String META_INF = "META-INF" + File.separator + "annotations";
+    private static final String META_INF = "META-INF/annotations";
 
     private final Filer filer;
     private final Map<String, HashSet<String>> results = new HashMap<>();
@@ -30,7 +30,7 @@ public class AnnotationTypeWriter {
 
     public void finish() throws IOException {
         for (Map.Entry<String, HashSet<String>> pair : results.entrySet()) {
-            FileObject fileObject = filer.createResource(StandardLocation.CLASS_OUTPUT, "", META_INF + File.separator + pair.getKey());
+            FileObject fileObject = filer.createResource(StandardLocation.CLASS_OUTPUT, "", META_INF + "/" + pair.getKey());
             try (BufferedWriter writer = new BufferedWriter(fileObject.openWriter())) {
                 for (String clazz : pair.getValue()) {
                     writer.write(clazz);

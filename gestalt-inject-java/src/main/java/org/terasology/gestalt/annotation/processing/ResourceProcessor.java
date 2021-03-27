@@ -17,11 +17,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @SupportedOptions("resource")
 public class ResourceProcessor extends AbstractProcessor {
-    private static final String FILE = "META-INF" + File.separator + "resources";
+    private static final String FILE = "META-INF/resources";
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
@@ -40,6 +41,9 @@ public class ResourceProcessor extends AbstractProcessor {
                             List<String> files = Files.walk(root)
                                     .map(root::relativize)
                                     .map(Objects::toString)
+                                    // Regularise paths to always use "/" as a path separator,
+                                    // as ClassLoader.getResources() always uses "/" in its returned paths.
+                                    .map(filePath -> String.join("/", filePath.split(Pattern.quote(File.separator))))
                                     .filter(str -> !str.endsWith(".class"))
                                     .filter(str -> !str.isEmpty())
                                     .collect(Collectors.toList());

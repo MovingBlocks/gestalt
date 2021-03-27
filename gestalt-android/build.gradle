@@ -51,6 +51,7 @@ dependencies {
     }
     implementation project(':gestalt-util')
     implementation "org.slf4j:slf4j-api:$slf4j_version"
+    implementation "com.google.guava:guava:$guava_version"
 
     implementation 'com.android.support:appcompat-v7:28.0.0'
     testImplementation "junit:junit:$junit_version"
