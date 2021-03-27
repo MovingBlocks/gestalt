@@ -28,7 +28,7 @@ public final class Qualifiers {
     }
 
     public static <T> Qualifier<T> resolveQualifier(AnnotationMetadata metadata) {
-        for (AnnotationValue<Annotation> target : metadata.findAnnotations(Named.class)) {
+        for (AnnotationValue<Named> target : metadata.findAnnotations(Named.class)) {
             Optional<String> value = target.stringValue("value");
             if (value.isPresent()) {
                 return new NameQualifier(value.get());

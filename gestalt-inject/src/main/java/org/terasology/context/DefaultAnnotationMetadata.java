@@ -37,9 +37,10 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
     }
 
     @Override
-    public  List<AnnotationValue<Annotation>>  getAnnotationsByStereotype(Class<? extends Annotation> stereotype) {
-        return getAnnotationsByStereotype(stereotype.getName());
+    public <T extends Annotation> List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<T> stereotype) {
+        return  getAnnotationsByStereotype(stereotype.getName());
     }
+
 
     @Override
     public List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype) {
@@ -56,11 +57,13 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
     }
 
     @Override
-    public List<AnnotationValue<Annotation>> findAnnotations(String annotation) {
-        List<AnnotationValue<Annotation>> results = new ArrayList<>();
+    public <T extends Annotation>  List<AnnotationValue<T>> findAnnotations(String annotation) {
+        List<AnnotationValue<T>> results = new ArrayList<>();
         for (Map.Entry<String, AnnotationValue<Annotation>[]> pairs : annotations.entrySet()) {
             if (pairs.getKey().equals(annotation)) {
-                results.addAll(Arrays.asList(pairs.getValue()));
+                for(AnnotationValue<Annotation> v: pairs.getValue()){
+                    results.add((AnnotationValue<T>) v);
+                }
             } else {
                 for (AnnotationValue<Annotation> metadata : pairs.getValue()) {
                     results.addAll(metadata.findAnnotations(annotation));
@@ -71,7 +74,7 @@ public class DefaultAnnotationMetadata implements AnnotationMetadata {
     }
 
     @Override
-    public List<AnnotationValue<Annotation>>  findAnnotations(Class<? extends Annotation> annotation) {
+    public <T extends Annotation>  List<AnnotationValue<T>>  findAnnotations(Class<T> annotation) {
         return findAnnotations(annotation.getName());
     }
 

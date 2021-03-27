@@ -13,4 +13,5 @@ public @interface WithProperties {
     String p1();
     int p2();
     long p3();
+    double p4();
 }

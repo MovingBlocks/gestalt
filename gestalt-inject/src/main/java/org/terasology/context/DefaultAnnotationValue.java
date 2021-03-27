@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
@@ -73,6 +74,7 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
         return annotations.containsKey(annotation);
     }
 
+
     @Override
     @Nonnull
     public Iterator<AnnotationValue<Annotation>[]> iterator() {
@@ -80,7 +82,7 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
     }
 
     @Override
-    public List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype) {
+    public <T extends Annotation> List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype) {
         List<AnnotationValue<Annotation>> result = new ArrayList<>(5);
         if (annotations.containsKey(stereotype)) {
             result.add((AnnotationValue<Annotation>) this);
@@ -95,7 +97,7 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
     }
 
     @Override
-    public List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<? extends Annotation> stereotype) {
+    public <T extends Annotation> List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<T> stereotype) {
         return getAnnotationsByStereotype(stereotype.getName());
     }
 
@@ -126,6 +128,15 @@ public class DefaultAnnotationValue<S extends Annotation> implements AnnotationV
             return OptionalInt.of(((Number) o).intValue());
         }
         return OptionalInt.empty();
+    }
+
+    @Override
+    public OptionalDouble doubleValue(String field) {
+        Object o = getRawValue(field);
+        if (o instanceof Number) {
+            return OptionalDouble.of(((Number) o).doubleValue());
+        }
+        return OptionalDouble.empty();
     }
 
     @Override

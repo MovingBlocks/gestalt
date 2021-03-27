@@ -10,13 +10,13 @@ import java.util.List;
  */
 public interface AnnotationMetadata extends Iterable<AnnotationValue<Annotation>[]> {
 
-    List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
+    <T extends Annotation> List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<T> stereotype);
 
     List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype);
 
-    List<AnnotationValue<Annotation>> findAnnotations(String annotation);
+    <T extends Annotation> List<AnnotationValue<T>> findAnnotations(String annotation);
 
-    List<AnnotationValue<Annotation>>  findAnnotations(Class<? extends Annotation> annotation);
+    <T extends Annotation> List<AnnotationValue<T>> findAnnotations(Class<T> annotation);
 
     boolean hasAnnotation(Class<? extends Annotation> annotation);
 

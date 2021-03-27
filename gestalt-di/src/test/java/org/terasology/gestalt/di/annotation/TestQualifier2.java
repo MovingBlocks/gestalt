@@ -11,6 +11,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.PACKAGE})
 @Documented
 @Qualifier
-@WithProperties(p1 = "Hello", p2 = 5, p3 = 10)
+@WithProperties(p1 = "Hello", p2 = 5, p3 = 10, p4 = 5.0)
 public @interface TestQualifier2 {
 }

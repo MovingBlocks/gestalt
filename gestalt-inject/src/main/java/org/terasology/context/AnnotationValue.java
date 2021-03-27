@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /**
@@ -64,16 +65,16 @@ public interface AnnotationValue<S extends Annotation> extends Iterable<Annotati
      * @param stereotype the annotation
      * @return
      */
-    List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype);
+    <T extends Annotation> List<AnnotationValue<Annotation>> getAnnotationsByStereotype(String stereotype);
 
-    List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<? extends Annotation> stereotype);
+    <T extends Annotation> List<AnnotationValue<Annotation>> getAnnotationsByStereotype(Class<T> stereotype);
 
     /**
      * find annotations by base name({@link Class#getName()})
      * @param annotation name of annotation
      * @return annotation value representing annotation by name
      */
-    List<AnnotationValue<Annotation>> findAnnotations(String annotation);
+    <T extends Annotation> List<AnnotationValue<T>> findAnnotations(String annotation);
 
     /**
      * find annotations by {@link Class}
@@ -85,9 +86,16 @@ public interface AnnotationValue<S extends Annotation> extends Iterable<Annotati
     /**
      * int from value defined in annotation
      * @param field field to lookup from annotation
-     * @return an {@link Optional} value if existing for annotation
+     * @return an {@link OptionalInt} value if existing for annotation
      */
     OptionalInt intValue(String field);
+
+    /**
+     * double from value defined in annotation
+     * @param field field ot lookup form annotation
+     * @return an {@link OptionalDouble} value if existing for annotation
+     */
+    OptionalDouble doubleValue(String field);
 
     /**
      * string from value defined in annotation. If field is not string then {@link Optional#empty()}
