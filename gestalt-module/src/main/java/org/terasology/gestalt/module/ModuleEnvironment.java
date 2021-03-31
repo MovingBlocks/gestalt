@@ -125,8 +125,6 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         List<Module> orderedModules = getModulesOrderedByDependencies();
         Predicate<Class<?>> classpathModuleClassesPredicate = orderedModules.stream().map(Module::getClassPredicate).reduce(x -> false, Predicate::or);
         for (final Module module : orderedModules) {
-            // TODO return non-code module handling.
-
             if (!module.getClasspaths().isEmpty()) {
                 // Directory and archive modules
                 ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, classLoaderSupplier, classpathModuleClassesPredicate);
@@ -145,8 +143,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
                 classIndexByModule.put(module.getId(), module.getClassIndex());
                 classLoaderByModule.put(module.getId(), apiClassLoader);
                 BeanScanner beanScanner = (registry, environment) -> {
-                    // TODO find right classloader for classpath modules.
-                    for (BeanDefinition<?> beanDefinition : environment.byPrefix(Thread.currentThread().getContextClassLoader(), "")) {
+                    for (BeanDefinition<?> beanDefinition : environment.byPrefix(apiClassLoader, "")) {
                         Class<?> candidate = beanDefinition.targetClass();
                         if (module.getClassPredicate().test(candidate)) {
                             registry.with(candidate);

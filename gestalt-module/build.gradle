@@ -32,7 +32,7 @@ repositories {
 
 // Primary dependencies definition
 dependencies {
-    implementation "org.javassist:javassist:3.27.0-GA" // TODO REMOVE this. replaces with gestalt's di generator.
+    implementation "org.javassist:javassist:3.27.0-GA" // TODO REMOVE this. replaces with gestalt's di generator. ( used by ByteCodeInjector)
 
     api project(":gestalt-di")
 
