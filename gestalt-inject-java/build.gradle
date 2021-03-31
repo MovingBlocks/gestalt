@@ -35,8 +35,6 @@ targetCompatibility = 1.8
 
 // Primary dependencies definition
 dependencies {
-    api 'org.terasology:reflections:0.9.12-MB'
-
     implementation project(":gestalt-util")
     implementation "com.google.guava:guava:$guava_version"
     implementation "com.google.code.gson:gson:$gson_version"

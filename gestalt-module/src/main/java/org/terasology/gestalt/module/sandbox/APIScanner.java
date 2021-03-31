@@ -49,10 +49,8 @@ public class APIScanner {
      * @param classIndex The class index.
      */
     public void scan(ClassIndex classIndex) {
-        logger.trace("Scan ClassIndex for @API classes");
         for (String apiClass : classIndex.getTypesAnnotatedWith(API.class.getName())) {
             try {
-                logger.trace("T");
                 Class<?> aClass = forClassLoader.loadClass(apiClass);
                 if (aClass != null) {
                     for (String permissionSetId : aClass.getAnnotation(API.class).permissionSet()) {
