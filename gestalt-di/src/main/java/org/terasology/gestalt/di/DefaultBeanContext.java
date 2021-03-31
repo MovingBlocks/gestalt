@@ -6,13 +6,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.context.AbstractBeanDefinition;
 import org.terasology.context.BeanDefinition;
 import org.terasology.context.EmptyAnnotationMetadata;
 import org.terasology.context.Lifetime;
 import org.terasology.context.exception.BeanNotFoundException;
-import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 import org.terasology.context.injection.Qualifier;
+import org.terasology.gestalt.di.exceptions.BeanResolutionException;
 import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.SupplierProvider;
@@ -27,6 +29,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DefaultBeanContext implements AutoCloseable, BeanContext {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultBeanContext.class);
+
     protected final Map<BeanKey, Object> boundObjects = new HashMap<>();
     protected final Map<BeanKey, BeanProvider<?>> providers = new HashMap<>();
     protected final Multimap<Qualifier, BeanIntercept> beanInterceptMapping = HashMultimap.create();
@@ -134,7 +139,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     private Optional<BeanKey> findConcreteBeanKey(BeanKey identifier) {
         List<BeanKey> beanKeys = getBeanKeys(identifier).collect(Collectors.toList());
-        if(beanKeys.size() > 1){
+        if (beanKeys.size() > 1) {
             throw new BeanResolutionException(beanKeys);
         }
         return beanKeys.stream().findFirst();
@@ -196,12 +201,12 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     private <T> Optional<T> internalResolve(BeanKey identifier, DefaultBeanContext targetContext) {
         Optional<BeanKey> key = findConcreteBeanKey(identifier);
 
-        if(identifier.annotation !=  EmptyAnnotationMetadata.EMPTY_ARGUMENT) {
+        if (identifier.annotation != EmptyAnnotationMetadata.EMPTY_ARGUMENT) {
             Collection<BeanIntercept> intercept = targetContext.beanInterceptMapping.get(identifier.qualifier);
             if (intercept != null) {
-                for(BeanIntercept inter: intercept) {
+                for (BeanIntercept inter : intercept) {
                     Optional<T> result = inter.single(identifier, identifier.annotation);
-                    if(result.isPresent()) {
+                    if (result.isPresent()) {
                         return result;
                     }
                 }
@@ -242,7 +247,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     @Override
     public <T> T getBean(Class<T> clazz, Qualifier qualifier) {
         BeanKey<T> identifier = new BeanKey<>(clazz)
-            .qualifiedBy(qualifier);
+                .qualifiedBy(qualifier);
         return getBean(identifier);
     }
 
@@ -279,9 +284,9 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         return getBeanKeys(identifier)
                 .map(key -> {
                     Collection<BeanIntercept> intercepts = targetContext.beanInterceptMapping.get(identifier.qualifier);
-                    for(BeanIntercept intercept: intercepts) {
+                    for (BeanIntercept intercept : intercepts) {
                         Optional<T> result = intercept.single(identifier, identifier.annotation);
-                        if(result.isPresent()) {
+                        if (result.isPresent()) {
                             return result;
                         }
                     }
@@ -336,7 +341,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
                 try {
                     ((AutoCloseable) o).close();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("Cannot close bean [" + o.getClass() + "]", e);
                     throw e;
                 }
             }

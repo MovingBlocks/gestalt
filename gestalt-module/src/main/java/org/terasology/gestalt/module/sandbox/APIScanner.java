@@ -31,8 +31,8 @@ public class APIScanner {
 
     private static final Logger logger = LoggerFactory.getLogger(APIScanner.class);
 
-    private StandardPermissionProviderFactory permissionProviderFactory;
-    private ClassLoader forClassLoader;
+    private final StandardPermissionProviderFactory permissionProviderFactory;
+    private final ClassLoader forClassLoader;
 
     public APIScanner(StandardPermissionProviderFactory permissionProviderFactory) {
         this(permissionProviderFactory, ClassLoader.getSystemClassLoader());
@@ -68,11 +68,8 @@ public class APIScanner {
                     }
                 }
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-                // TODO ignore
+                logger.warn("Class not found", e);
             }
         }
-
     }
-
 }

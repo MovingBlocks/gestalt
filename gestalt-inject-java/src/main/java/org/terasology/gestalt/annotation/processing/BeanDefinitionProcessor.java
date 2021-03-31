@@ -95,15 +95,15 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
         Set<? extends TypeElement> filteredAnnotation = annotations.stream()
                 .filter(target -> {
-                    for(Element encElement: target.getEnclosedElements()) {
-                        if(encElement instanceof  ExecutableElement || encElement instanceof  VariableElement) {
-                            if(utility.hasStereotype(encElement, Arrays.asList(TARGET_ANNOTATIONS))) {
+                    for (Element encElement : target.getEnclosedElements()) {
+                        if (encElement instanceof ExecutableElement || encElement instanceof VariableElement) {
+                            if (utility.hasStereotype(encElement, Arrays.asList(TARGET_ANNOTATIONS))) {
                                 return true;
                             }
                         }
 
                     }
-                   return utility.hasStereotype(target, Arrays.asList(TARGET_ANNOTATIONS));
+                    return utility.hasStereotype(target, Arrays.asList(TARGET_ANNOTATIONS));
                 })
                 .collect(Collectors.toSet());
 
@@ -147,7 +147,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             try {
                 this.writer.finish();
             } catch (IOException e) {
-                e.printStackTrace();
+                messager.printMessage(Diagnostic.Kind.ERROR, "Cannot write BeanDefinitions: " + e.getMessage());
             }
         }
         return false;
@@ -196,7 +196,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     if (element.getKind() == ElementKind.METHOD) {
                         ExecutableElement executableElement = (ExecutableElement) element;
                         AnnotationValue value = executableElement.getDefaultValue();
-                        if(value != null) {
+                        if (value != null) {
                             defaults.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(value.getValue())));
                         }
                     }
@@ -205,7 +205,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                 for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : ann.getElementValues().entrySet()) {
                     ExecutableElement executableElement = entry.getKey();
                     AnnotationValue value = entry.getValue();
-                    if(value != null) {
+                    if (value != null) {
                         values.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(value.getValue())));
                     }
                 }
@@ -287,7 +287,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
         private CodeBlock buildResolution(String method, VariableElement element, ClassName target) {
 
-            if(typeUtils.isAssignable(element.asType(), typeUtils.erasure(elementUtils.getTypeElement("java.util.Optional").asType()))) {
+            if (typeUtils.isAssignable(element.asType(), typeUtils.erasure(elementUtils.getTypeElement("java.util.Optional").asType()))) {
                 return CodeBlock.builder().add("resolution.$L($L)",
                         method,
                         buildArgument(element)

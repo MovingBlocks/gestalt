@@ -10,6 +10,7 @@ task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:ja
 dependencies {
     testAnnotationProcessor project(":gestalt-inject-java")
 
+    implementation "org.slf4j:slf4j-api:$slf4j_version"
     implementation "com.google.guava:guava:$guava_version"
     api project(":gestalt-inject")
 

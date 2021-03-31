@@ -18,6 +18,8 @@ package org.terasology.gestalt.module.resources;
 
 import android.support.annotation.NonNull;
 import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,6 +42,8 @@ import java.util.stream.Stream;
  * ModuleFileSource that exposes the content from the classpath, using a
  */
 public class ClasspathFileSource implements ModuleFileSource {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClasspathFileSource.class);
 
     public static final String RESOURCES = "META-INF/resources";
     private static final String CLASS_PATH_SEPARATOR = "/";
@@ -88,7 +92,7 @@ public class ClasspathFileSource implements ModuleFileSource {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.warn("Cannot read resource index", e);
         }
         this.files = files;
     }
