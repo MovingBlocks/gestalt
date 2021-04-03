@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.reflections.Reflections
-import org.reflections.scanners.ResourcesScanner
-import org.reflections.scanners.SubTypesScanner
-import org.reflections.scanners.TypeAnnotationsScanner
-import org.reflections.serializers.JsonSerializer
 
 /*
  * This is a Gradle build file:
@@ -33,28 +28,7 @@ jar {
 
 dependencies {
     implementation project(":testpack:testpack-api")
-}
 
-def reflect() {
-    def resourcesPath = sourceSets.find { it.name == 'main' }.resources.srcDirs
-    def classPath = files { compileJava.destinationDir }
-    URL[] scanUrls = classPath.collect { it.toURI().toURL() } + resourcesPath.collect {
-        it.toURI().toURL()
-    }
-    URL[] classLoaderUrls = scanUrls + compileJava.classpath.collect { it.toURI().toURL() }
-
-    ClassLoader classLoader = new URLClassLoader(classLoaderUrls, getClass().getClassLoader())
-    org.reflections.Configuration config = new org.reflections.util.ConfigurationBuilder()
-    config.addClassLoader(classLoader)
-    config.setUrls(scanUrls)
-
-    config.addScanners(new ResourcesScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner().filterResultsBy())
-    Reflections reflections = new Reflections(config)
-    JsonSerializer serializer = new JsonSerializer()
-    def outPath = compileJava.destinationDir.toString() + "/manifest.json"
-    serializer.save(reflections, outPath)
-}
-
-compileJava.doLast {
-    reflect()
+    annotationProcessor project(":gestalt-inject-java")
+    implementation project(":gestalt-inject")
 }

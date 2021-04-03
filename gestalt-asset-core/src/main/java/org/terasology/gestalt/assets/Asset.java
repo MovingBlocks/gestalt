@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 
 import net.jcip.annotations.ThreadSafe;
 
-import org.terasology.gestalt.module.sandbox.API;
+import org.terasology.context.annotation.API;
 
 import java.util.Optional;
 

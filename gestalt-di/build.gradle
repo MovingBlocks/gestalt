@@ -1,0 +1,78 @@
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar', ':testpack:moduleD:jar'], type: Copy)
+
+// Primary dependencies definition
+dependencies {
+    testAnnotationProcessor project(":gestalt-inject-java")
+
+    implementation "org.slf4j:slf4j-api:$slf4j_version"
+    implementation "com.google.guava:guava:$guava_version"
+    api project(":gestalt-inject")
+
+    testImplementation "junit:junit:$junit_version"
+    testImplementation "ch.qos.logback:logback-classic:$logback_version"
+    testImplementation "org.mockito:mockito-core:$mockito_version"
+
+    testImplementation project(":gestalt-module")
+    testImplementation project(":testpack:testpack-api")
+    testImplementation project(":gestalt-entity-system")
+
+}
+
+
+
+gatherJarModules {
+    from '../testpack/moduleA/build/libs/'
+    from '../testpack/moduleB/build/libs/'
+    from '../testpack/moduleC/build/libs/'
+    from '../testpack/moduleD/build/libs/'
+    from '../testpack/moduleF/build/libs/'
+    into 'test-modules'
+    include('*.jar')
+}
+
+test.dependsOn gatherJarModules
+
+
+/***
+ * Publishing
+ ***/
+
+task sourceJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+publishing {
+    repositories {
+        maven {
+            credentials {
+                username project.gestaltMavenRepoUsername
+                password project.gestaltMavenRepoPassword
+            }
+            name 'TerasologyTestRepo'
+            url project.version.endsWith('SNAPSHOT') ? project.snapshotPublishRepo : project.releasePublishRepo
+        }
+    }
+    publications {
+        mavenAssetCore(MavenPublication) {
+            artifactId = project.name
+            version = project.version
+
+            from components.java
+
+            artifact sourceJar
+            artifact javadocJar
+        }
+    }
+}

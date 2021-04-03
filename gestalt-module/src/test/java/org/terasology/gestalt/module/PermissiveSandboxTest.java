@@ -18,6 +18,7 @@ package org.terasology.gestalt.module;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.dependencyresolution.DependencyResolver;
 import org.terasology.gestalt.module.sandbox.ModuleSecurityManager;
 import org.terasology.gestalt.module.sandbox.ModuleSecurityPolicy;
@@ -44,7 +45,7 @@ public class PermissiveSandboxTest {
     @Before
     public void setup() {
         registry = new TableModuleRegistry();
-        new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
+        new ModulePathScanner(new ModuleFactory()).scan(registry, Paths.get("test-modules").toFile());
         StandardPermissionProviderFactory standardPermissionProviderFactory = new StandardPermissionProviderFactory();
 
         standardPermissionProviderFactory.getBasePermissionSet().addAPIPackage("sun.reflect");
@@ -68,7 +69,7 @@ public class PermissiveSandboxTest {
     public void accessToNormalMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment =
-                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
+                new ModuleEnvironment(new DefaultBeanContext(), resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
@@ -80,7 +81,7 @@ public class PermissiveSandboxTest {
     public void deniedAccessToRestrictedClass() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment =
-                new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
+                new ModuleEnvironment(new DefaultBeanContext(), resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
@@ -92,7 +93,7 @@ public class PermissiveSandboxTest {
     public void allowedAccessToClassFromRequiredPermissionSet() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment =
-                new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
+                new ModuleEnvironment(new DefaultBeanContext(), resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
@@ -104,7 +105,7 @@ public class PermissiveSandboxTest {
     public void deniedAccessToClassPermittedToParent() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment =
-                new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
+                new ModuleEnvironment(new DefaultBeanContext(), resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleCClass", environment);
         Object instance = type.newInstance();

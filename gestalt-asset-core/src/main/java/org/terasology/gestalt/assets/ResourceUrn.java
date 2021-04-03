@@ -20,8 +20,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import org.terasology.context.annotation.API;
 import org.terasology.gestalt.assets.exceptions.InvalidUrnException;
-import org.terasology.gestalt.module.sandbox.API;
 import org.terasology.gestalt.naming.Name;
 
 import java.util.regex.Matcher;

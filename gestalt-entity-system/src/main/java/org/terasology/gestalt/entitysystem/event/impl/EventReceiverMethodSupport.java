@@ -30,7 +30,6 @@ import org.terasology.gestalt.entitysystem.event.EventHandler;
 import org.terasology.gestalt.entitysystem.event.EventHandlerFactory;
 import org.terasology.gestalt.entitysystem.event.EventSystem;
 import org.terasology.gestalt.entitysystem.event.ReceiveEvent;
-import org.terasology.gestalt.entitysystem.event.exception.EventSystemException;
 import org.terasology.gestalt.entitysystem.event.exception.InvalidEventReceiverObjectException;
 
 import java.lang.reflect.Method;

@@ -17,56 +17,57 @@
 package org.terasology.gestalt.module.resources;
 
 import android.support.annotation.NonNull;
-
 import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import org.reflections.Reflections;
-
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * ModuleFileSource that exposes the content from the classpath, using a Reflections manifest to
- * determine what files are available.
+ * ModuleFileSource that exposes the content from the classpath, using a
  */
 public class ClasspathFileSource implements ModuleFileSource {
 
+    private static final Logger logger = LoggerFactory.getLogger(ClasspathFileSource.class);
+
+    public static final String RESOURCES = "META-INF/resources";
     private static final String CLASS_PATH_SEPARATOR = "/";
     private static final Joiner CLASS_PATH_JOINER = Joiner.on(CLASS_PATH_SEPARATOR);
-
-    private final Reflections manifest;
     private final String basePath;
     private final ClassLoader classLoader;
+    private final List<String> files;
 
-    /**
-     * @param resourceManifest A reflections manifest indicating what files are available on the classpath
-     */
-    public ClasspathFileSource(Reflections resourceManifest) {
-        this(resourceManifest, CLASS_PATH_SEPARATOR, ClassLoader.getSystemClassLoader());
+    public ClasspathFileSource() {
+        this(CLASS_PATH_SEPARATOR, ClassLoader.getSystemClassLoader());
     }
 
     /**
-     * @param resourceManifest A reflections manifest indicating what files are available on the classpath
-     * @param basePath         A subpath in the classpath to expose resources from
+     * @param basePath A subpath in the classpath to expose resources from
      */
-    public ClasspathFileSource(Reflections resourceManifest, String basePath) {
-        this(resourceManifest, basePath, ClassLoader.getSystemClassLoader());
+    public ClasspathFileSource(String basePath) {
+        this(basePath, ClassLoader.getSystemClassLoader());
     }
 
     /**
-     * @param resourceManifest A reflections manifest indicating what files are available on the classpath
-     * @param basePath         A subpath in the classpath to expose resources from
-     * @param classLoader      The classloader to use to access resources
+     * @param basePath    A subpath in the classpath to expose resources from
+     * @param classLoader The classloader to use to access resources
      */
-    public ClasspathFileSource(Reflections resourceManifest, String basePath, ClassLoader classLoader) {
-        this.manifest = resourceManifest;
+    public ClasspathFileSource(String basePath, ClassLoader classLoader) {
         this.classLoader = classLoader;
         String path = basePath;
         if (!path.isEmpty() && !path.endsWith(CLASS_PATH_SEPARATOR)) {
@@ -76,27 +77,68 @@ public class ClasspathFileSource implements ModuleFileSource {
             path = path.substring(1);
         }
         this.basePath = path;
+        List<String> files = new LinkedList<>();
+        try {
+            Enumeration<URL> resources = classLoader.getResources(RESOURCES);
+            while (resources.hasMoreElements()) {
+                URL url = resources.nextElement();
+                try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+                    String line = null;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        if (line.startsWith(path)) {
+                            files.add(line);
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("Cannot read resource index", e);
+        }
+        this.files = files;
     }
 
     @Override
     public Optional<FileReference> getFile(List<String> filepath) {
-        String path = basePath + CLASS_PATH_JOINER.join(filepath);
-        return manifest.getResources(x -> true).stream().filter(path::equals).<FileReference>map(x -> new ClasspathSourceFileReference(x, extractSubpath(x), classLoader)).findAny();
+        if (filepath.stream().anyMatch(s -> s.equals(".."))) {
+            return Optional.empty();
+        }
+        String fullpath = buildPathString(filepath);
+        if (classLoader.getResource(fullpath) != null) {
+            return Optional.of(new ClasspathSourceFileReference(fullpath, extractSubpath(basePath, fullpath), classLoader));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
     public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
         String fullPath = buildPathString(path);
-        return manifest.getResources(x -> true).stream().filter(x -> x.startsWith(fullPath) && (recursive || !x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR))).map(x -> new ClasspathSourceFileReference(x, extractSubpath(x), classLoader)).collect(Collectors.toList());
+        Stream<String> candidates = files
+                .stream()
+                .filter(file -> file.startsWith(fullPath))
+                .filter(file -> file.matches(".+?/[a-zA-Z0-9-_]+\\.[a-zA-Z-0-9]+"));
+
+        if (!recursive) {
+            candidates = candidates.filter(file -> !file.substring(fullPath.length()).contains("/"));
+        }
+
+        return candidates
+                .map(file -> new ClasspathSourceFileReference(file, extractSubpath(basePath, file), classLoader))
+                .collect(Collectors.toSet());
     }
 
     @Override
     public Set<String> getSubpaths(List<String> path) {
         String fullPath = buildPathString(path);
-        return manifest.getResources(x -> true).stream().filter(x -> x.startsWith(fullPath) && x.substring(fullPath.length()).contains(CLASS_PATH_SEPARATOR)).map(x -> {
-            String subpath = x.substring(fullPath.length());
-            return subpath.substring(0, subpath.indexOf(CLASS_PATH_SEPARATOR));
-        }).collect(Collectors.toSet());
+        return files
+                .stream()
+                .filter(file -> file.startsWith(fullPath))
+                .filter(file -> {
+                    String subpath = file.substring(fullPath.length());
+                    return !subpath.contains("/") && !subpath.contains(".");
+                })
+                .map(file -> file.substring(fullPath.length()))
+                .collect(Collectors.toSet());
     }
 
     private String buildPathString(List<String> path) {
@@ -109,8 +151,8 @@ public class ClasspathFileSource implements ModuleFileSource {
         return fullPath;
     }
 
-    private String extractSubpath(String path) {
-        return path.substring(basePath.length());
+    private String extractSubpath(String root, String path) {
+        return path.substring(root.length());
     }
 
     @NonNull

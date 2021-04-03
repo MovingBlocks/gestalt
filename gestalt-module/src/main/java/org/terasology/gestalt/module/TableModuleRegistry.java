@@ -21,12 +21,12 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.naming.Name;
 import org.terasology.gestalt.naming.Version;
 
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -44,6 +44,11 @@ public class TableModuleRegistry implements ModuleRegistry {
 
     private final Table<Name, Version, Module> modules = HashBasedTable.create();
     private final Map<Name, Module> latestModules = Maps.newHashMap();
+
+    @Inject
+    public TableModuleRegistry() {
+
+    }
 
     @Override
     public boolean add(Module module) {

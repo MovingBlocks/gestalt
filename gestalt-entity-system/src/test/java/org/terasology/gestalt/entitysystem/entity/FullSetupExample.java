@@ -18,9 +18,12 @@ package org.terasology.gestalt.entitysystem.entity;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
+import modules.test.components.BasicComponent;
+import modules.test.components.Empty;
+import modules.test.components.Second;
 import org.junit.Before;
 import org.junit.Test;
+import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.entitysystem.component.management.ComponentManager;
 import org.terasology.gestalt.entitysystem.component.store.ArrayComponentStore;
@@ -41,10 +44,6 @@ import org.terasology.gestalt.naming.Version;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Set;
-
-import modules.test.components.BasicComponent;
-import modules.test.components.Empty;
-import modules.test.components.Second;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -75,7 +74,7 @@ public class FullSetupExample {
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("org.terasology");
 
-        ModuleEnvironment environment = new ModuleEnvironment(moduleRegistry, new WarnOnlyProviderFactory(permissionProviderFactory), JavaModuleClassLoader::create);
+        ModuleEnvironment environment = new ModuleEnvironment(new DefaultBeanContext(), moduleRegistry, new WarnOnlyProviderFactory(permissionProviderFactory), JavaModuleClassLoader::create);
 
         // Create component stores. This gives an opportunity to set some component types to use ArrayComponentStore
         ComponentManager componentManager = new ComponentManager();

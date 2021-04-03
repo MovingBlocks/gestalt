@@ -21,11 +21,11 @@ import com.google.common.collect.Sets;
 
 import net.jcip.annotations.ThreadSafe;
 
+import org.terasology.context.annotation.API;
 import org.terasology.gestalt.assets.Asset;
 import org.terasology.gestalt.assets.AssetData;
 import org.terasology.gestalt.assets.AssetType;
 import org.terasology.gestalt.assets.ResourceUrn;
-import org.terasology.gestalt.module.sandbox.API;
 import org.terasology.gestalt.naming.Name;
 
 import java.util.Collections;

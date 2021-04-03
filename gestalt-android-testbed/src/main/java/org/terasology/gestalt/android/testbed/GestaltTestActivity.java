@@ -35,11 +35,13 @@ import org.terasology.gestalt.android.testbed.assettypes.Text;
 import org.terasology.gestalt.android.testbed.assettypes.TextData;
 import org.terasology.gestalt.android.testbed.assettypes.TextFactory;
 import org.terasology.gestalt.android.testbed.assettypes.TextFileFormat;
+import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.Module;
 import org.terasology.gestalt.module.ModuleEnvironment;
 import org.terasology.gestalt.module.ModuleFactory;
 import org.terasology.gestalt.module.ModuleMetadata;
 import org.terasology.gestalt.module.ModulePathScanner;
+import org.terasology.gestalt.module.ModuleServiceRegistry;
 import org.terasology.gestalt.module.TableModuleRegistry;
 import org.terasology.gestalt.module.resources.FileReference;
 import org.terasology.gestalt.module.sandbox.StandardPermissionProviderFactory;
@@ -93,7 +95,7 @@ public class GestaltTestActivity extends AppCompatActivity {
         StandardPermissionProviderFactory permissionProviderFactory = new StandardPermissionProviderFactory();
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("org.terasology.test.api");
-        ModuleEnvironment environment = new ModuleEnvironment(moduleRegistry, new WarnOnlyProviderFactory(permissionProviderFactory), (module, parent, permissionProvider) -> AndroidModuleClassLoader.create(module, parent, permissionProvider, getCodeCacheDir()));
+        ModuleEnvironment environment = new ModuleEnvironment(new DefaultBeanContext(new ModuleServiceRegistry(permissionProviderFactory)), moduleRegistry, new WarnOnlyProviderFactory(permissionProviderFactory), (module, parent, permissionProvider) -> AndroidModuleClassLoader.create(module, parent, permissionProvider, getCodeCacheDir()));
 
 
         displayText.append("-== Module Content ==-\n\n");

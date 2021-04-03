@@ -23,5 +23,9 @@
 
 apply plugin: 'java'
 
+dependencies {
+    annotationProcessor project(":gestalt-inject-java")
+    implementation project(":gestalt-inject")
+}
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

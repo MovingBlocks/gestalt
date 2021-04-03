@@ -16,9 +16,7 @@
 
 package org.terasology.gestalt.module;
 
-import org.reflections.Configuration;
-import org.reflections.Reflections;
-import org.reflections.util.ConfigurationBuilder;
+import org.terasology.gestalt.di.index.UrlClassIndex;
 import org.terasology.gestalt.module.dependencyresolution.DependencyInfo;
 import org.terasology.gestalt.module.resources.EmptyFileSource;
 import org.terasology.gestalt.naming.Name;
@@ -63,8 +61,7 @@ public class DependencyResolverTestBase {
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name(id));
         metadata.setVersion(new Version(version));
-        Configuration config = new ConfigurationBuilder();
-        Module module = new Module(metadata, new EmptyFileSource(), Collections.emptyList(), new Reflections(config), x -> false);
+        Module module = new Module(metadata, new EmptyFileSource(), Collections.emptyList(), UrlClassIndex.byClassLoader(), x -> false);
         forRegistry.add(module);
         return module;
     }

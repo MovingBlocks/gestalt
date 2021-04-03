@@ -17,13 +17,13 @@
 package org.terasology.gestalt.module;
 
 import com.google.common.collect.Lists;
-
 import org.junit.Before;
 import org.junit.Test;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
+import org.module.Test1Scoped;
+import org.module.TestImplementation1;
+import org.terasology.gestalt.di.BeanContext;
+import org.terasology.gestalt.di.DefaultBeanContext;
+import org.terasology.gestalt.di.index.UrlClassIndex;
 import org.terasology.gestalt.module.dependencyresolution.DependencyResolver;
 import org.terasology.gestalt.module.resources.EmptyFileSource;
 import org.terasology.gestalt.module.sandbox.ModuleSecurityManager;
@@ -50,16 +50,24 @@ import static org.junit.Assert.assertTrue;
  */
 public class SandboxTest {
 
-    private ModuleRegistry registry;
+    private DependencyResolver resolver;
     private StandardPermissionProviderFactory permissionProviderFactory = new StandardPermissionProviderFactory();
+    private BeanContext root;
 
     @Before
     public void setup() {
-        registry = new TableModuleRegistry();
-        new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
-
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.util");
+
+
+        // gestalt-di required
+        permissionProviderFactory.getBasePermissionSet().addAPIPackage("org.terasology.context");
+        permissionProviderFactory.getBasePermissionSet().addAPIPackage("javax.inject");
+
+        // Di's tests
+        permissionProviderFactory.getBasePermissionSet().addAPIClass(TestImplementation1.class);
+        permissionProviderFactory.getBasePermissionSet().addAPIClass(Test1Scoped.class);
+
         PermissionSet ioPermissionSet = new PermissionSet();
         ioPermissionSet.addAPIPackage("java.io");
         ioPermissionSet.addAPIPackage("java.nio.file");
@@ -71,13 +79,16 @@ public class SandboxTest {
 
         Policy.setPolicy(new ModuleSecurityPolicy());
         System.setSecurityManager(new ModuleSecurityManager());
+
+        root = new DefaultBeanContext(new ModuleServiceRegistry(permissionProviderFactory));
+        root.getBean(ModulePathScanner.class).scan(root.getBean(ModuleRegistry.class), Paths.get("test-modules").toFile());
+        resolver = root.getBean(DependencyResolver.class);
     }
 
     // Ensure a normal method using globally allowed classes works
     @Test
     public void accessToNormalMethod() throws Exception {
-        DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
+        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleA")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleAClass", environment);
         Object instance = type.newInstance();
@@ -87,8 +98,7 @@ public class SandboxTest {
     // Ensure access to disallowed classes fails
     @Test(expected = InvocationTargetException.class)
     public void deniedAccessToRestrictedClassInMethod() throws Exception {
-        DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
+        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
@@ -97,16 +107,14 @@ public class SandboxTest {
 
     @Test(expected = ClassNotFoundException.class)
     public void deniedAccessToClassImplementingRestrictedInterface() throws Exception {
-        DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory);
+        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory);
 
         findClass("ModuleDRestrictedClass", environment);
     }
 
     @Test
     public void allowedAccessToClassImplementingPermissionSetInterface() throws Exception {
-        DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
+        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBPermittedClass", environment);
         assertNotNull(type);
@@ -116,8 +124,7 @@ public class SandboxTest {
     // Ensures access to additionally required permission sets works (both classes and permissions)
     @Test
     public void allowedAccessToClassFromRequiredPermissionSet() throws Exception {
-        DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
+        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
@@ -127,8 +134,7 @@ public class SandboxTest {
     // Ensure that a module doesn't gain accesses required by the parent but not by itself
     @Test(expected = InvocationTargetException.class)
     public void deniedAccessToClassPermittedToParent() throws Exception {
-        DependencyResolver resolver = new DependencyResolver(registry);
-        ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
+        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleCClass", environment);
         Object instance = type.newInstance();
@@ -137,16 +143,14 @@ public class SandboxTest {
 
     @Test
     public void allowedAccessToPackageModuleClassViaModuleClassloader() throws Exception {
-        DependencyResolver resolver = new DependencyResolver(registry);
         ModuleMetadata metadata = new ModuleMetadata();
         metadata.setId(new Name("PackageModule"));
         metadata.setVersion(Version.DEFAULT);
 
-        Reflections reflections = new Reflections(new ConfigurationBuilder().forPackages("org.terasology.gestalt.module.packageModule").addClassLoader(ClasspathHelper.contextClassLoader()).addScanners(new SubTypesScanner()));
-        Module module = new Module(metadata, new EmptyFileSource(), Collections.emptyList(), reflections, x -> com.google.common.reflect.Reflection.getPackageName(x).startsWith("org.terasology.gestalt.module.packageModule"));
+        Module module = new Module(metadata, new EmptyFileSource(), Collections.emptyList(), UrlClassIndex.byClassLoaderPrefix("org.terasology.gestalt.module.packageModule"), x -> com.google.common.reflect.Reflection.getPackageName(x).startsWith("org.terasology.gestalt.module.packageModule"));
         List<Module> modules = Lists.newArrayList(module);
         modules.addAll(resolver.resolve(new Name("moduleC")).getModules());
-        ModuleEnvironment environment = new ModuleEnvironment(modules, permissionProviderFactory);
+        ModuleEnvironment environment = new ModuleEnvironment(root, modules, permissionProviderFactory);
         Object result = findClass("StandaloneClass", environment).newInstance();
         assertNotNull(result);
     }

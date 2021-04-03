@@ -18,10 +18,9 @@ package org.terasology.gestalt.module;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.gestalt.di.index.ClassIndex;
 import org.terasology.gestalt.module.resources.ModuleFileSource;
 import org.terasology.gestalt.naming.Name;
 import org.terasology.gestalt.naming.Version;
@@ -47,7 +46,7 @@ public final class Module {
     private final ImmutableList<File> moduleClasspaths;
     private final Predicate<Class<?>> classPredicate;
 
-    private final Reflections moduleManifest;
+    private final ClassIndex classIndex;
 
     /**
      * Creates a module composed of the given paths, classpaths, and described by the given metadata.
@@ -55,22 +54,20 @@ public final class Module {
      * @param metadata       The metadata describing the module
      * @param fileSources    Any sources of files that compose the module. Must not be null - can be {@link org.terasology.gestalt.module.resources.EmptyFileSource}
      * @param classpaths     Any extra classpaths to load for the module
-     * @param moduleManifest A manifest of the contents of the module. This should indicate all classes and any classpath provided resources.
+     * @param classIndex     A manifest of the contents of the module. This should indicate all classes and any classpath provided resources.
      *                       Additionally this provides additional information on classes such as what they inherit and what annotations they are flagged with.
      * @param classPredicate Predicate to determine what classes to include from the main classpath (classes from the unloaded classpaths will be included automatically)
      */
-    public Module(ModuleMetadata metadata, ModuleFileSource fileSources, Collection<File> classpaths, Reflections moduleManifest, Predicate<Class<?>> classPredicate) {
+    public Module(ModuleMetadata metadata, ModuleFileSource fileSources, Collection<File> classpaths, ClassIndex classIndex, Predicate<Class<?>> classPredicate) {
         Preconditions.checkNotNull(metadata);
         Preconditions.checkNotNull(fileSources);
-        Preconditions.checkNotNull(moduleManifest);
+        Preconditions.checkNotNull(classIndex);
         Preconditions.checkNotNull(classPredicate);
         this.metadata = metadata;
         this.moduleFileSources = fileSources;
         this.moduleClasspaths = ImmutableList.copyOf(classpaths);
         this.classPredicate = classPredicate;
-        this.moduleManifest = moduleManifest;
-        // Sometimes reflections loses the Resources store if it is empty? Debugging still, but this prevents it from breaking everything
-        moduleManifest.getStore().getOrCreate("ResourcesScanner");
+        this.classIndex = classIndex;
     }
 
     /**
@@ -118,8 +115,8 @@ public final class Module {
     /**
      * @return Information on the contents on this module
      */
-    public Reflections getModuleManifest() {
-        return moduleManifest;
+    public ClassIndex getClassIndex() {
+        return classIndex;
     }
 
     /**

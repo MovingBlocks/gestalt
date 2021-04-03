@@ -16,6 +16,8 @@
 
 package org.terasology.gestalt.entitysystem.prefab;
 
+import modules.test.components.Reference;
+import modules.test.components.Sample;
 import org.junit.Test;
 import org.terasology.gestalt.assets.AssetType;
 import org.terasology.gestalt.assets.ResourceUrn;
@@ -25,6 +27,7 @@ import org.terasology.gestalt.assets.module.ModuleAwareAssetTypeManager;
 import org.terasology.gestalt.assets.module.ModuleAwareAssetTypeManagerImpl;
 import org.terasology.gestalt.assets.module.ModuleDependencyResolutionStrategy;
 import org.terasology.gestalt.assets.module.ModuleEnvironmentDependencyProvider;
+import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.entitysystem.component.management.ComponentManager;
 import org.terasology.gestalt.entitysystem.component.management.ComponentTypeIndex;
 import org.terasology.gestalt.module.Module;
@@ -34,9 +37,6 @@ import org.terasology.gestalt.module.sandbox.PermitAllPermissionProviderFactory;
 
 import java.util.Collections;
 import java.util.Optional;
-
-import modules.test.components.Reference;
-import modules.test.components.Sample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -72,7 +72,7 @@ public class PrefabJsonFormatTest {
     public PrefabJsonFormatTest() throws Exception {
         ModuleFactory factory = new ModuleFactory();
         Module module = factory.createPackageModule("modules.test");
-        ModuleEnvironment moduleEnvironment = new ModuleEnvironment(Collections.singletonList(module), new PermitAllPermissionProviderFactory());
+        ModuleEnvironment moduleEnvironment = new ModuleEnvironment(new DefaultBeanContext(), Collections.singletonList(module), new PermitAllPermissionProviderFactory());
 
         componentManager = new ComponentManager();
         AssetType<Prefab, PrefabData> prefabAssetType = assetTypeManager.createAssetType(Prefab.class, Prefab::new, "prefabs");

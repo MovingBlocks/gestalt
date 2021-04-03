@@ -7,4 +7,7 @@ jar {
 
 dependencies {
     implementation project(":gestalt-entity-system")
+
+    annotationProcessor project(":gestalt-inject-java")
+    implementation project(":gestalt-inject")
 }
