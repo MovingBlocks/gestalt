@@ -46,10 +46,9 @@ dependencies {
     api "net.jcip:jcip-annotations:$jcip_annotation_version"
 
     testAnnotationProcessor project(":gestalt-inject-java")
-    testRuntime("junit:junit:$junit_version")
+    testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
-
 }
 
 compileJava {
@@ -60,9 +59,4 @@ compileTestJava {
     inputs.files sourceSets.test.resources.srcDirs
     options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
 }
-
-test {
-    useJUnitPlatform()
-}
-
 
