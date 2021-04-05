@@ -21,8 +21,22 @@
  * - View tasks for this project: $ gradlew tasks
  */
 
-apply plugin: 'java-library'
-apply plugin: 'maven-publish'
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.8"
+    }
+}
+
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+apply from: "$rootDir/gradle/common.gradle"
 
 // Primary dependencies definition
 dependencies {
@@ -52,60 +66,5 @@ compileJava {
 compileTestJava {
     inputs.files sourceSets.test.resources.srcDirs
     options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
-}
-
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.8"
-    }
-}
-
-description = 'A threadsafe entity system implementation. ' +
-        'An entity system is a component based data model.'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-
-/***
- * Publishing
- ***/
-
-task sourceJar(type: Jar, dependsOn: classes) {
-    classifier 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-publishing {
-    repositories {
-        maven {
-            credentials {
-                username project.gestaltMavenRepoUsername
-                password project.gestaltMavenRepoPassword
-            }
-            name 'TerasologyTestRepo'
-            url project.version.endsWith('SNAPSHOT') ? project.snapshotPublishRepo : project.releasePublishRepo
-        }
-    }
-    publications {
-        mavenEs(MavenPublication) {
-            artifactId = project.name
-            version = project.version
-
-            from components.java
-
-            artifact sourceJar
-            artifact javadocJar
-        }
-    }
 }
 

@@ -24,13 +24,21 @@
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 
+apply from: "$rootDir/gradle/common.gradle"
+
+repositories {
+    maven {
+        url 'https://heisluft.de/maven'
+    }
+}
+
 // Primary dependencies definition
 dependencies {
     implementation project(":gestalt-util")
     implementation project(":gestalt-module")
     implementation project(":gestalt-inject")
     annotationProcessor project(":gestalt-inject-java")
-    
+
 
     implementation "com.google.guava:guava:$guava_version"
     implementation "org.slf4j:slf4j-api:$slf4j_version"
@@ -38,12 +46,11 @@ dependencies {
     api "net.jcip:jcip-annotations:$jcip_annotation_version"
 
     testAnnotationProcessor project(":gestalt-inject-java")
-    testImplementation "junit:junit:$junit_version"
+    testRuntime("junit:junit:$junit_version")
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
 
 }
-
 
 compileJava {
     inputs.files sourceSets.main.resources.srcDirs
@@ -54,47 +61,8 @@ compileTestJava {
     options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
 }
 
-
-description = 'Provides support for assets - binary resources that can be loaded from modules or procedurally generated at runtime.'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-
-/***
- * Publishing
- ***/
-
-task sourceJar(type: Jar, dependsOn: classes) {
-    classifier 'sources'
-    from sourceSets.main.allSource
+test {
+    useJUnitPlatform()
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
 
-publishing {
-    repositories {
-        maven {
-            credentials {
-                username project.gestaltMavenRepoUsername
-                password project.gestaltMavenRepoPassword
-            }
-            name 'TerasologyTestRepo'
-            url project.version.endsWith('SNAPSHOT') ? project.snapshotPublishRepo : project.releasePublishRepo
-        }
-    }
-    publications {
-        mavenAssetCore(MavenPublication) {
-            artifactId = project.name
-            version = project.version
-
-            from components.java
-
-            artifact sourceJar
-            artifact javadocJar
-        }
-    }
-}

@@ -1,66 +1,24 @@
-/*
- * This is a Gradle build file:
- * - Gradle Homepage: http://gradle.org/
- * - Gradle Documentation: http://gradle.org/documentation
- * - View tasks for this project: $ gradlew tasks
- */
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-        // org.jetbrains.trove4j:trove4j
-        gradlePluginPortal()
-        maven {
-            url 'https://heisluft.de/maven'
-        }
-        maven {
-            url "http://artifactory.terasology.org/artifactory/libs-release-local"
-        }
-
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.3'
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-    }
-    ext {
-        // Android version support
-        android_annotation_version = "28.0.0"
-
-        // Standard Utility
-        guava_version = "27.0.1-android"
-        slf4j_version = "1.7.25"
-        gson_version = "2.8.5"
-        jcip_annotation_version = "1.0"
-
-        // Testing
-        junit_version = "4.12"
-        logback_version = "1.2.3"
-        mockito_version = "1.10.19"
-    }
+plugins {
+    id 'idea'
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        // org.jetbrains.trove4j:trove4j
-        gradlePluginPortal()
-        maven {
-            url "http://artifactory.terasology.org/artifactory/libs-release-local"
-        }
-        maven {
-            url 'https://heisluft.de/maven'
-        }
-    }
+ext {
+    // Overall version number for NUI's various elements
+    gestaltVersion = "8.0.0-SNAPSHOT"
+
+    // Android version support
+    android_annotation_version = "28.0.0"
+
+    // Standard Utility
+    guava_version = "27.0.1-android"
+    slf4j_version = "1.7.25"
+    gson_version = "2.8.5"
+    jcip_annotation_version = "1.0"
+
+    // Testing
+    junit_version = "4.12"
+    logback_version = "1.2.3"
+    mockito_version = "1.10.19"
 }
-
-// Library and distribution config
-description = 'A set of libraries providing core capabilities for games and game engines'
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
-
 
