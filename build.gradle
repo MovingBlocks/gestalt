@@ -1,3 +1,6 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * This is a Gradle build file:
  * - Gradle Homepage: http://gradle.org/
@@ -15,7 +18,9 @@ buildscript {
             url 'https://heisluft.de/maven'
         }
         maven {
-            url "http://artifactory.terasology.org/artifactory/libs-release-local"
+            name = "Terasology Artifactory"
+            url = "http://artifactory.terasology.org/artifactory/libs-release-local"
+            allowInsecureProtocol = true  // 😱
         }
 
     }
@@ -49,7 +54,9 @@ allprojects {
         // org.jetbrains.trove4j:trove4j
         gradlePluginPortal()
         maven {
-            url "http://artifactory.terasology.org/artifactory/libs-release-local"
+            name = "Terasology Artifactory"
+            url = "http://artifactory.terasology.org/artifactory/libs-release-local"
+            allowInsecureProtocol = true  // 😱
         }
         maven {
             url 'https://heisluft.de/maven'

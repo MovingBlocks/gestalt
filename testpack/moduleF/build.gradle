@@ -1,9 +1,8 @@
 
-apply plugin: 'java'
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
-jar {
-    version = ''
-}
+apply plugin: 'java'
 
 dependencies {
     implementation project(":gestalt-entity-system")
