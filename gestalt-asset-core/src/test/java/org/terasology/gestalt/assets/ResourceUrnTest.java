@@ -1,29 +1,17 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.gestalt.assets;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.assets.exceptions.InvalidUrnException;
 import org.terasology.gestalt.naming.Name;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 /**
  * @author Immortius
@@ -42,7 +30,7 @@ public class ResourceUrnTest {
     @Test
     public void moduleAndResourceConstructor() {
         ResourceUrn urn = new ResourceUrn(TEST_MODULE, TEST_RESOURCE);
-        Assert.assertEquals(new Name(TEST_MODULE), urn.getModuleName());
+        assertEquals(new Name(TEST_MODULE), urn.getModuleName());
         assertEquals(new Name(TEST_RESOURCE), urn.getResourceName());
         assertTrue(urn.getFragmentName().isEmpty());
         assertEquals(URN_STRING, urn.toString());
@@ -62,7 +50,7 @@ public class ResourceUrnTest {
         ResourceUrn urn = new ResourceUrn(TEST_MODULE, TEST_RESOURCE, true);
         assertEquals(new Name(TEST_MODULE), urn.getModuleName());
         assertEquals(new Name(TEST_RESOURCE), urn.getResourceName());
-        assertEquals(true, urn.isInstance());
+        assertTrue(urn.isInstance());
         assertEquals(URN_INSTANCE_STRING, urn.toString());
     }
 
@@ -101,13 +89,15 @@ public class ResourceUrnTest {
         assertEquals(new Name(TEST_MODULE), urn.getModuleName());
         assertEquals(new Name(TEST_RESOURCE), urn.getResourceName());
         assertEquals(new Name(TEST_FRAGMENT), urn.getFragmentName());
-        assertEquals(true, urn.isInstance());
+        assertTrue(urn.isInstance());
         assertEquals(URN_FRAGMENT_INSTANCE_STRING, urn.toString());
     }
 
-    @Test(expected = InvalidUrnException.class)
+    @Test
     public void invalidUrnStringConstructor() {
-        new ResourceUrn("blerg");
+        assertThrows(InvalidUrnException.class, () ->
+                new ResourceUrn("blerg")
+        );
     }
 
     @Test
