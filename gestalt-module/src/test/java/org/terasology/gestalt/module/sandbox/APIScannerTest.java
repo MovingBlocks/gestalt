@@ -8,6 +8,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.terasology.gestalt.module.sandbox.apipackage.ClassInApiPackage;
 
 import java.net.URL;
 import java.util.Collection;
@@ -41,5 +42,6 @@ public class APIScannerTest {
         new APIScanner(permissionProviderFactory).scan(reflections);
         assertTrue(permSet.isPermitted(APIClass.class));
         assertFalse(permSet.isPermitted(NonAPIClassInheritingAPIClass.class));
+        assertTrue(permSet.isPermitted(ClassInApiPackage.class));
     }
 }
