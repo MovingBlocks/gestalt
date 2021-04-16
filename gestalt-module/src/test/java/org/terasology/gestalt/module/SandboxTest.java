@@ -1,25 +1,11 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.gestalt.module;
 
 import com.google.common.collect.Lists;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -42,8 +28,9 @@ import java.security.Policy;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Immortius
@@ -53,7 +40,7 @@ public class SandboxTest {
     private ModuleRegistry registry;
     private StandardPermissionProviderFactory permissionProviderFactory = new StandardPermissionProviderFactory();
 
-    @Before
+    @BeforeEach
     public void setup() {
         registry = new TableModuleRegistry();
         new ModulePathScanner().scan(registry, Paths.get("test-modules").toFile());
@@ -85,22 +72,26 @@ public class SandboxTest {
     }
 
     // Ensure access to disallowed classes fails
-    @Test(expected = InvocationTargetException.class)
+    @Test
     public void deniedAccessToRestrictedClassInMethod() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleBClass", environment);
         Object instance = type.newInstance();
-        type.getMethod("illegalMethod").invoke(instance);
+        assertThrows(InvocationTargetException.class, () ->
+                type.getMethod("illegalMethod").invoke(instance)
+        );
     }
 
-    @Test(expected = ClassNotFoundException.class)
+    @Test
     public void deniedAccessToClassImplementingRestrictedInterface() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory);
 
-        findClass("ModuleDRestrictedClass", environment);
+        assertThrows(ClassNotFoundException.class, () ->
+                findClass("ModuleDRestrictedClass", environment)
+        );
     }
 
     @Test
@@ -125,14 +116,16 @@ public class SandboxTest {
     }
 
     // Ensure that a module doesn't gain accesses required by the parent but not by itself
-    @Test(expected = InvocationTargetException.class)
+    @Test
     public void deniedAccessToClassPermittedToParent() throws Exception {
         DependencyResolver resolver = new DependencyResolver(registry);
         ModuleEnvironment environment = new ModuleEnvironment(resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
 
         Class<?> type = findClass("ModuleCClass", environment);
         Object instance = type.newInstance();
-        type.getMethod("requiresIoMethod").invoke(instance);
+        assertThrows(InvocationTargetException.class, () ->
+                type.getMethod("requiresIoMethod").invoke(instance)
+        );
     }
 
     @Test

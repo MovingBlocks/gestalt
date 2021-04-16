@@ -30,10 +30,15 @@ dependencies {
     implementation "com.github.zafarkhaja:java-semver:0.10.0"
 
     testImplementation project(":testpack:testpack-api")
-    testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
-    testImplementation "org.mockito:mockito-core:$mockito_version"
-
+    testImplementation(platform("org.junit:junit-bom:5.7.1")) {
+        // junit-bom will set version numbers for the other org.junit dependencies.
+    }
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.mockito:mockito-inline:$mockito_version")
+    testImplementation("org.mockito:mockito-junit-jupiter:$mockito_version")
 }
 
 // Library and distribution config
@@ -70,7 +75,10 @@ gatherJarModules {
     include('*.jar')
 }
 
-test.dependsOn gatherModules
+tasks.named("test", Test) {
+    dependsOn(gatherModules)
+    useJUnitPlatform()
+}
 
 /***
  * Publishing
