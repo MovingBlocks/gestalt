@@ -16,6 +16,7 @@
 
 package org.terasology.gestalt.module.dependencyresolution;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -391,6 +392,16 @@ class ResolutionAttempt {
                 return missingAllowed;
             }
         }
+
+        @Override
+        public String toString() {
+            MoreObjects.ToStringHelper s = MoreObjects.toStringHelper(this)
+                    .addValue(versionRange);
+            if (missingAllowed) {
+                s.addValue("missingAllowed");
+            }
+            return s.toString();
+        }
     }
 
     private static class PossibleVersion implements Comparable<PossibleVersion> {
@@ -438,6 +449,13 @@ class ResolutionAttempt {
         @Override
         public int hashCode() {
             return Objects.hash(version);
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .addValue(version.map(Object::toString).orElse("empty"))
+                    .toString();
         }
     }
 
