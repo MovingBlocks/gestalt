@@ -1,18 +1,5 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.gestalt.module.dependencyresolution;
 
@@ -30,7 +17,6 @@ import org.terasology.gestalt.module.Module;
 import org.terasology.gestalt.module.ModuleRegistry;
 import org.terasology.gestalt.naming.Name;
 import org.terasology.gestalt.naming.Version;
-import org.terasology.gestalt.naming.VersionRange;
 import org.terasology.gestalt.util.collection.UniqueQueue;
 
 import java.util.Arrays;
@@ -42,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class ResolutionAttempt {
@@ -58,7 +45,7 @@ class ResolutionAttempt {
         this.optionalStrategy = optionalStrategy;
     }
 
-    ResolutionResult resolve(Map<Name, Optional<VersionRange>> validVersions) {
+    ResolutionResult resolve(Map<Name, Optional<Predicate<Version>>> validVersions) {
         rootModules = ImmutableSet.copyOf(validVersions.keySet());
         populateDomains(validVersions);
         populateConstraints();
@@ -80,7 +67,7 @@ class ResolutionAttempt {
     /**
      * Populates the domains (modules of interest) for resolution. Includes all versions of all modules depended on by any version of a module of interest, recursively.
      */
-    private void populateDomains(Map<Name, Optional<VersionRange>> validVersions) {
+    private void populateDomains(Map<Name, Optional<Predicate<Version>>> validVersions) {
         moduleVersionPool = HashMultimap.create();
         Set<Name> involvedModules = Sets.newHashSet();
         Deque<Name> moduleQueue = Queues.newArrayDeque();
@@ -92,8 +79,8 @@ class ResolutionAttempt {
         while (!moduleQueue.isEmpty()) {
             Name id = moduleQueue.pop();
             for (Module version : registry.getModuleVersions(id)) {
-                Optional<VersionRange> range = validVersions.getOrDefault(version.getId(), Optional.empty());
-                if (!range.isPresent() || range.get().contains(version.getVersion())) {
+                Optional<Predicate<Version>> range = validVersions.getOrDefault(version.getId(), Optional.empty());
+                if (!range.isPresent() || range.get().test(version.getVersion())) {
                     moduleVersionPool.put(id, new PossibleVersion(version.getVersion()));
                     for (DependencyInfo dependency : version.getMetadata().getDependencies()) {
                         if (involvedModules.add(dependency.getId())) {
@@ -125,7 +112,7 @@ class ResolutionAttempt {
                         Module versionedModule = registry.getModule(name, version.getVersion().get());
                         DependencyInfo info = versionedModule.getMetadata().getDependencyInfo(dependency);
                         if (info != null) {
-                            constraintTable.put(version.getVersion().get(), new CompatibleVersions(info.versionRange(), info.isOptional() && !optionalStrategy.isRequired()));
+                            constraintTable.put(version.getVersion().get(), new CompatibleVersions(info.versionPredicate(), info.isOptional() && !optionalStrategy.isRequired()));
                         }
                     }
                 }
@@ -376,17 +363,17 @@ class ResolutionAttempt {
     }
 
     private static class CompatibleVersions {
-        private final VersionRange versionRange;
+        private final Predicate<Version> versionRange;
         private final boolean missingAllowed;
 
-        public CompatibleVersions(VersionRange versionRange, boolean missingAllowed) {
+        public CompatibleVersions(Predicate<Version> versionRange, boolean missingAllowed) {
             this.versionRange = versionRange;
             this.missingAllowed = missingAllowed;
         }
 
         public boolean isCompatible(PossibleVersion version) {
             if (version.getVersion().isPresent()) {
-                return versionRange.contains(version.getVersion().get());
+                return versionRange.test(version.getVersion().get());
             } else {
                 return missingAllowed;
             }
