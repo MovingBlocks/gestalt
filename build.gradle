@@ -42,6 +42,7 @@ buildscript {
 
         // Testing
         junit_version = "4.13.2"
+        jupiter_version = "5.7.1"
         logback_version = "1.2.3"
         mockito_version = "3.7.7"
     }
