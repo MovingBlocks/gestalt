@@ -1,26 +1,17 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.gestalt.entitysystem.event;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-
-import org.junit.Test;
+import modules.test.TestChildEvent;
+import modules.test.TestEvent;
+import modules.test.components.Sample;
+import modules.test.components.Second;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.entitysystem.component.management.ComponentManager;
 import org.terasology.gestalt.entitysystem.component.store.ArrayComponentStore;
 import org.terasology.gestalt.entitysystem.component.store.ComponentStore;
@@ -33,12 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import modules.test.components.Sample;
-import modules.test.components.Second;
-import modules.test.TestChildEvent;
-import modules.test.TestEvent;
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -65,7 +51,7 @@ public class EventProcessorTest {
         entityManager = new CoreEntityManager(componentStores);
     }
 
-    @org.junit.Before
+    @BeforeEach
     public void startup() {
         testEntity = entityManager.createEntity();
         Sample comp = new Sample();

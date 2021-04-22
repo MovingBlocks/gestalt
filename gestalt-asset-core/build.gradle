@@ -20,10 +20,15 @@ dependencies {
     implementation "com.android.support:support-annotations:$android_annotation_version"
     implementation "net.jcip:jcip-annotations:$jcip_annotation_version"
 
-    testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
-    testImplementation "org.mockito:mockito-core:$mockito_version"
-
+    testImplementation(platform("org.junit:junit-bom:$jupiter_version")) {
+        // junit-bom will set version numbers for the other org.junit dependencies.
+    }
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.mockito:mockito-inline:$mockito_version")
+    testImplementation("org.mockito:mockito-junit-jupiter:$mockito_version")
 }
 
 description = 'Provides support for assets - binary resources that can be loaded from modules or procedurally generated at runtime.'
@@ -31,6 +36,9 @@ description = 'Provides support for assets - binary resources that can be loaded
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+tasks.named("test", Test) {
+    useJUnitPlatform()
+}
 
 /***
  * Publishing

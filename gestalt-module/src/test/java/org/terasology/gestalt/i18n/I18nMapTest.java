@@ -1,31 +1,17 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.gestalt.i18n;
 
 import com.google.common.collect.ImmutableMap;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Immortius
@@ -39,13 +25,13 @@ public class I18nMapTest {
 
     private static Locale originalDefault;
 
-    @BeforeClass
+    @BeforeAll
     public static void before() {
         originalDefault = Locale.getDefault(Locale.Category.DISPLAY);
         Locale.setDefault(Locale.Category.DISPLAY, DEFAULT_LOCALE);
     }
 
-    @AfterClass
+    @AfterAll
     public static void after() {
         Locale.setDefault(Locale.Category.DISPLAY, originalDefault);
     }

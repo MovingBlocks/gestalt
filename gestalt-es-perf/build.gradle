@@ -22,9 +22,15 @@ dependencies {
     implementation "com.android.support:support-annotations:$android_annotation_version"
     implementation "net.jcip:jcip-annotations:$jcip_annotation_version"
     
-    testImplementation "junit:junit:$junit_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
-    testImplementation "org.mockito:mockito-core:$mockito_version"
+    testImplementation(platform("org.junit:junit-bom:$jupiter_version")) {
+        // junit-bom will set version numbers for the other org.junit dependencies.
+    }
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.mockito:mockito-inline:$mockito_version")
+    testImplementation("org.mockito:mockito-junit-jupiter:$mockito_version")
 }
 
 description = 'High performance access methods to replace the use of reflections in gestalt-entity-system. Can be used in Java 7+ and Android API 26+.'
@@ -45,7 +51,10 @@ gatherJarModules {
     include('*.jar')
 }
 
-test.dependsOn gatherModules
+tasks.named("test", Test) {
+    dependsOn(gatherModules)
+    useJUnitPlatform()
+}
 
 /***
  * Publishing

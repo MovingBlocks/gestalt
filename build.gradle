@@ -41,9 +41,10 @@ buildscript {
         jcip_annotation_version = "1.0"
 
         // Testing
-        junit_version = "4.12"
+        junit_version = "4.13.2"
+        jupiter_version = "5.7.1"
         logback_version = "1.2.3"
-        mockito_version = "1.10.19"
+        mockito_version = "3.7.7"
     }
 }
 
