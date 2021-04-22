@@ -1,26 +1,15 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.gestalt.module.dependencyresolution;
 
 import org.terasology.gestalt.naming.Name;
+import org.terasology.gestalt.naming.SemverExpression;
 import org.terasology.gestalt.naming.Version;
 import org.terasology.gestalt.naming.VersionRange;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Describes a dependency on a module. Dependencies apply to a range of versions - anything from the min version (inclusive) to the max version (exclusive) are supported.
@@ -124,6 +113,21 @@ public class DependencyInfo {
      */
     public VersionRange versionRange() {
         return new VersionRange(getMinVersion(), getMaxVersion());
+    }
+
+    public Predicate<Version> versionPredicate() {
+        if (maxVersion != null) {
+            return versionRange();
+        } else {
+            String source;
+            if (minVersion.isSnapshot()) {
+                // semver doesn't like snapshots in caret ranges?
+                source = minVersion + " | ^" + minVersion.getNextPatchVersion();
+            } else {
+                source = "^" + minVersion;
+            }
+            return new SemverExpression(source);
+        }
     }
 
     @Override
