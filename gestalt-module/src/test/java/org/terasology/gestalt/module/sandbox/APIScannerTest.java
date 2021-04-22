@@ -8,10 +8,14 @@ import org.reflections.Reflections;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.terasology.gestalt.module.sandbox.apipackage.ClassInApiPackage;
+
+import java.net.URL;
+import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -21,16 +25,23 @@ import static org.mockito.Mockito.when;
 public class APIScannerTest {
 
     @Test
-    public void test() throws Exception {
+    public void testAnnotatedClassIsPermitted() {
         StandardPermissionProviderFactory permissionProviderFactory = mock(StandardPermissionProviderFactory.class);
         PermissionSet permSet = new PermissionSet();
         when(permissionProviderFactory.getPermissionSet(any(String.class))).thenReturn(permSet);
 
-        ConfigurationBuilder config = new ConfigurationBuilder().addClassLoader(ClasspathHelper.contextClassLoader()).addUrls(ClasspathHelper.forClassLoader()).addScanners(new TypeAnnotationsScanner());
+        Collection<URL> urls = ClasspathHelper.forJavaClassPath();
+        assertFalse(urls.isEmpty(), "Tried to construct test reflections with no URLs.");
+
+        ConfigurationBuilder config =
+                new ConfigurationBuilder()
+                        .addUrls(urls)
+                        .addScanners(new TypeAnnotationsScanner());
         Reflections reflections = new Reflections(config);
 
         new APIScanner(permissionProviderFactory).scan(reflections);
         assertTrue(permSet.isPermitted(APIClass.class));
         assertFalse(permSet.isPermitted(NonAPIClassInheritingAPIClass.class));
+        assertTrue(permSet.isPermitted(ClassInApiPackage.class));
     }
 }
