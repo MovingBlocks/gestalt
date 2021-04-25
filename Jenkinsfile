@@ -6,19 +6,27 @@ pipeline {
         stage('Build') {
             steps {
                 sh './gradlew --info --console=plain --parallel assemble compileTest'
-                recordIssues enabledForFailure: true, tools: [java()]
+            }
+            post {
+                always {
+                    recordIssues enabledForFailure: true, tools: [java()]
+                }
             }
         }
         stage('Analytics') {
             steps {
-                sh './gradlew --info --console=plain --parallel javadoc check'
-                junit testResults: '**/build/test-results/test/*.xml'
-                recordIssues tools: [
-                  javaDoc(),
-                  taskScanner(includePattern: '**/*.java,**/*.groovy,**/*.gradle,**/*.kts', lowTags: 'WIBNIF', normalTags: 'TODO', highTags: 'ASAP')
-                ]
-                //Note: Javadoc archiver only works for one directory :-(
-                javadoc javadocDir: 'gestalt-entity-system/build/docs/javadoc', keepAll: false
+                sh './gradlew --info --console=plain --parallel --continue javadoc check'
+            }
+            post {
+                always {
+                    junit testResults: '**/build/test-results/test/*.xml'
+                    recordIssues tools: [
+                      javaDoc(),
+                      taskScanner(includePattern: '**/*.java,**/*.groovy,**/*.gradle,**/*.kts', lowTags: 'WIBNIF', normalTags: 'TODO', highTags: 'ASAP')
+                    ]
+                    //Note: Javadoc archiver only works for one directory :-(
+                    javadoc javadocDir: 'gestalt-entity-system/build/docs/javadoc', keepAll: false
+                }
             }
         }
         stage('Publish') {
