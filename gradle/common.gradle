@@ -1,52 +1,13 @@
+// Most typical common config, but not quite global
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+
 java {
     withSourcesJar()
     withJavadocJar()
 
     sourceCompatibility(JavaVersion.VERSION_1_8)
     targetCompatibility(JavaVersion.VERSION_1_8)
-}
-
-// We use both Maven Central and our own Artifactory instance, which contains module builds, extra libs, and so on
-repositories {
-    // For development so you can publish binaries locally and have them grabbed from there
-    mavenLocal()
-
-    // External libs - jcenter is Bintray and is supposed to be a superset of Maven Central, but do both just in case
-    mavenCentral()
-    // org.jetbrains.trove4j:trove4j
-    gradlePluginPortal()
-
-    // Used for gestalt 7 - Android annotations
-    google()
-
-
-    maven {
-        url 'https://heisluft.de/maven'
-    }
-
-    // Terasology Artifactory instance for libs not readily available elsewhere plus our own libs
-    maven {
-        def repoViaEnv = System.getenv()["RESOLUTION_REPO"]
-        if (rootProject.hasProperty("alternativeResolutionRepo")) {
-            // If the user supplies an alternative repo via gradle.properties then use that
-            name "from alternativeResolutionRepo property"
-            url alternativeResolutionRepo
-        } else if (repoViaEnv != null && repoViaEnv != "") {
-            name "from \$RESOLUTION_REPO"
-            url = repoViaEnv
-        } else {
-            // Our default is the main virtual repo containing everything except repos for testing Artifactory itself
-            name "Terasology Artifactory"
-            url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
-            allowInsecureProtocol true  // 😱
-        }
-    }
-
-    maven {
-        name "snowplow (pre-0.9)"
-        url "http://maven.snplow.com/releases"
-        allowInsecureProtocol true  // 😱
-    }
 }
 
 // Extra details provided for unit tests

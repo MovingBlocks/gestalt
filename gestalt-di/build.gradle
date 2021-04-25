@@ -1,10 +1,6 @@
-apply plugin: 'java-library'
-apply plugin: 'maven-publish'
-
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 apply from: "$rootDir/gradle/common.gradle"
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar', ':testpack:moduleD:jar'], type: Copy)
 
@@ -26,8 +22,6 @@ dependencies {
 
 }
 
-
-
 gatherJarModules {
     from '../testpack/moduleA/build/libs/'
     from '../testpack/moduleB/build/libs/'
@@ -39,5 +33,3 @@ gatherJarModules {
 }
 
 test.dependsOn gatherJarModules
-
-

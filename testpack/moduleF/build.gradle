@@ -1,10 +1,7 @@
-
 apply plugin: 'java'
 
-// We use both Maven Central and our own Artifactory instance, which contains module builds, extra libs, and so on
 repositories {
-
-    // External libs - jcenter is Bintray and is supposed to be a superset of Maven Central, but do both just in case
+    // External libs
     mavenCentral()
     // org.jetbrains.trove4j:trove4j
     gradlePluginPortal()

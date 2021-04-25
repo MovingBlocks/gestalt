@@ -14,6 +14,19 @@
  * limitations under the License.
  */
 
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+
+        // Needed for the Android Gradle Plugin to work
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.3'
+    }
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
@@ -80,16 +93,49 @@ task androidSourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
 }
 
+group = 'org.terasology.gestalt'
+version = gestaltVersion
+
 project.afterEvaluate {
     publishing {
         repositories {
             maven {
-                credentials {
-                    username project.gestaltMavenRepoUsername
-                    password project.gestaltMavenRepoPassword
+                name = 'TerasologyOrg'
+                allowInsecureProtocol true // 😱 - no https on our Artifactory yet
+
+                if (rootProject.hasProperty("publishRepo")) {
+                    // This first option is good for local testing, you can set a full explicit target repo in gradle.properties
+                    url = "http://artifactory.terasology.org/artifactory/$publishRepo"
+
+                    logger.info("Changing PUBLISH repoKey set via Gradle property to {}", publishRepo)
+                } else {
+                    // Support override from the environment to use a different target publish org
+                    String deducedPublishRepo = System.getenv()["PUBLISH_ORG"]
+                    if (deducedPublishRepo == null || deducedPublishRepo == "") {
+                        // If not then default
+                        deducedPublishRepo = "libs"
+                    }
+
+                    // Base final publish repo on whether we're building a snapshot or a release
+                    if (project.version.endsWith('SNAPSHOT')) {
+                        deducedPublishRepo += "-snapshot-local"
+                    } else {
+                        deducedPublishRepo += "-release-local"
+                    }
+
+                    logger.info("The final deduced publish repo is {}", deducedPublishRepo)
+                    url = "http://artifactory.terasology.org/artifactory/$deducedPublishRepo"
                 }
-                name 'TerasologyTestRepo'
-                url project.version.endsWith('SNAPSHOT') ? project.snapshotPublishRepo : project.releasePublishRepo
+
+                if (rootProject.hasProperty("mavenUser") && rootProject.hasProperty("mavenPass")) {
+                    credentials {
+                        username = "$mavenUser"
+                        password = "$mavenPass"
+                    }
+                    authentication {
+                        basic(BasicAuthentication)
+                    }
+                }
             }
         }
         publications {

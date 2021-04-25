@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * This is a Gradle build file:
- * - Gradle Homepage: http://gradle.org/
- * - Gradle Documentation: http://gradle.org/documentation
- * - View tasks for this project: $ gradlew tasks
- */
 apply plugin: 'java'
 
-
-// We use both Maven Central and our own Artifactory instance, which contains module builds, extra libs, and so on
 repositories {
-
-    // External libs - jcenter is Bintray and is supposed to be a superset of Maven Central, but do both just in case
+    // External libs
     mavenCentral()
     // org.jetbrains.trove4j:trove4j
     gradlePluginPortal()
@@ -37,6 +27,7 @@ repositories {
         url 'https://heisluft.de/maven'
     }
 }
+
 jar {
     version = ''
 }

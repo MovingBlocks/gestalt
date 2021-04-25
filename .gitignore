@@ -21,6 +21,8 @@ hs_err_pid*
 /.gradle/
 build/
 local.properties
+gradle.properties
+# TODO: Last one is probably not a great pattern, may remove again - keeps user/pass bits from getting checked in, but they should probably live elsewhere
 
 # Ignore IntelliJ
 out/

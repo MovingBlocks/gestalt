@@ -1,10 +1,9 @@
-
 plugins {
     id 'idea'
 }
 
 ext {
-    // Overall version number for NUI's various elements
+    // Overall version number for Gestalt's various elements
     gestaltVersion = "8.0.0-SNAPSHOT"
 
     // Android version support
@@ -22,3 +21,33 @@ ext {
     mockito_version = "1.10.19"
 }
 
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        // org.jetbrains.trove4j:trove4j
+        gradlePluginPortal()
+
+        // Terasology Artifactory instance for libs not readily available elsewhere plus our own libs
+        maven {
+            def repoViaEnv = System.getenv()["RESOLUTION_REPO"]
+            if (rootProject.hasProperty("alternativeResolutionRepo")) {
+                // If the user supplies an alternative repo via gradle.properties then use that
+                name "from alternativeResolutionRepo property"
+                url alternativeResolutionRepo
+            } else if (repoViaEnv != null && repoViaEnv != "") {
+                name "from \$RESOLUTION_REPO"
+                url = repoViaEnv
+            } else {
+                // Our default is the main virtual repo containing everything except repos for testing Artifactory itself
+                name "Terasology Artifactory"
+                url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+                allowInsecureProtocol true  // 😱
+            }
+        }
+
+        maven {
+            url 'https://heisluft.de/maven'
+        }
+    }
+}
