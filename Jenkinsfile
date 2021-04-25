@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label "light-java"
+        label "lib && light && java8"
     }
     stages {
         stage('Build') {
@@ -16,7 +16,7 @@ pipeline {
         stage('Publish') {
             when {
                 anyOf {
-                    branch 'master'
+                    branch 'develop'
                     branch pattern: "release/v\\d+.x", comparator: "REGEXP"
                 }
             }
