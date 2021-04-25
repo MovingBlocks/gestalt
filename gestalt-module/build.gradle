@@ -1,21 +1,6 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-
-/*
- * This is a Gradle build file:
- * - Gradle Homepage: http://gradle.org/
- * - Gradle Documentation: http://gradle.org/documentation
- * - View tasks for this project: $ gradlew tasks
- */
-
-apply plugin: 'java-library'
-apply plugin: 'maven-publish'
-
-repositories {
-    maven {
-        url = 'https://heisluft.de/maven/'
-    }
-}
+apply from: "$rootDir/gradle/common.gradle"
 
 // Primary dependencies definition
 dependencies {
@@ -43,9 +28,6 @@ dependencies {
 
 // Library and distribution config
 description = 'Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar', ':testpack:moduleD:jar'], type: Copy)
 task createModuleE(dependsOn: [':gestalt-module:copyModuleEInfo', ':gestalt-module:copyModuleELibs'])
@@ -79,43 +61,3 @@ tasks.named("test", Test) {
     dependsOn(gatherModules)
     useJUnitPlatform()
 }
-
-/***
- * Publishing
- ***/
-
-task sourceJar(type: Jar, dependsOn: classes) {
-    classifier 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-publishing {
-    repositories {
-        maven {
-            credentials {
-                username project.gestaltMavenRepoUsername
-                password project.gestaltMavenRepoPassword
-            }
-            name 'TerasologyTestRepo'
-            allowInsecureProtocol = true  // 😱
-            url project.version.endsWith('SNAPSHOT') ? project.snapshotPublishRepo : project.releasePublishRepo
-        }
-    }
-    publications {
-        mavenModule(MavenPublication) {
-            artifactId = project.name
-            version = project.version
-
-            from components.java
-
-            artifact sourceJar
-            artifact javadocJar
-        }
-    }
-}
-

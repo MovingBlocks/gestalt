@@ -34,7 +34,7 @@ pipeline {
         stage('Publish') {
             when {
                 anyOf {
-                    branch 'master'
+                    branch 'develop'
                     branch pattern: "release/v\\d+.x", comparator: "REGEXP"
                 }
             }
