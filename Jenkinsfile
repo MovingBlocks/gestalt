@@ -15,14 +15,16 @@ pipeline {
         }
         stage('Analytics') {
             steps {
-                sh './gradlew --info --console=plain --parallel --continue javadoc check'
+                // `test` seems flaky when run with --parallel, so separate it from other checks
+                sh './gradlew --info --console=plain --continue test'
+                sh './gradlew --info --console=plain --parallel --continue javadoc check --exclude-task test'
             }
             post {
                 always {
                     junit testResults: '**/build/test-results/test/*.xml'
                     recordIssues tools: [
                       javaDoc(),
-                      taskScanner(includePattern: '**/*.java,**/*.groovy,**/*.gradle,**/*.kts', lowTags: 'WIBNIF', normalTags: 'TODO', highTags: 'ASAP')
+                      taskScanner(includePattern: '**/*.java,**/*.groovy,**/*.gradle,**/*.kts', lowTags: 'WIBNIF', normalTags: 'TODO, FIXME', highTags: 'ASAP')
                     ]
                     //Note: Javadoc archiver only works for one directory :-(
                     javadoc javadocDir: 'gestalt-entity-system/build/docs/javadoc', keepAll: false
