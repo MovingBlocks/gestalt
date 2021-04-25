@@ -1,15 +1,5 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-/*
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.8"
-    }
-}
-*/
 apply from: "$rootDir/gradle/common.gradle"
 
 // Primary dependencies definition

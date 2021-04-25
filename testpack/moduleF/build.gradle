@@ -1,18 +1,6 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 apply plugin: 'java'
-
-repositories {
-    // External libs
-    mavenCentral()
-    // org.jetbrains.trove4j:trove4j
-    gradlePluginPortal()
-    // Used for gestalt 7 - Android annotations
-    google()
-
-    maven {
-        url 'https://heisluft.de/maven'
-    }
-}
-
 
 jar {
     version = ''

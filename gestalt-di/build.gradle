@@ -19,7 +19,6 @@ dependencies {
     testImplementation project(":gestalt-module")
     testImplementation project(":testpack:testpack-api")
     testImplementation project(":gestalt-entity-system")
-
 }
 
 gatherJarModules {

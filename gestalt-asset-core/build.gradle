@@ -9,7 +9,6 @@ dependencies {
     implementation project(":gestalt-inject")
     annotationProcessor project(":gestalt-inject-java")
 
-
     implementation "com.google.guava:guava:$guava_version"
     implementation "org.slf4j:slf4j-api:$slf4j_version"
     implementation "com.android.support:support-annotations:$android_annotation_version"
@@ -29,4 +28,3 @@ compileTestJava {
     inputs.files sourceSets.test.resources.srcDirs
     options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
 }
-

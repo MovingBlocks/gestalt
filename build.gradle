@@ -25,8 +25,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        // org.jetbrains.trove4j:trove4j
-        gradlePluginPortal()
 
         // Terasology Artifactory instance for libs not readily available elsewhere plus our own libs
         maven {
@@ -46,6 +44,7 @@ allprojects {
             }
         }
 
+        // SemVer lib
         maven {
             url 'https://heisluft.de/maven'
         }

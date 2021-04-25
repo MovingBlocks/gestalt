@@ -1,3 +1,6 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
+
 // Most typical common config, but not quite global
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
@@ -16,11 +19,14 @@ test {
 
     // ignoreFailures: Specifies whether the build should break when the verifications performed by this task fail.
     ignoreFailures = true
+
     // showStandardStreams: makes the standard streams (err and out) visible at console when running tests
     testLogging.showStandardStreams = true
+
     reports {
         junitXml.enabled = true
     }
+
     // Arguments to include while running tests
     jvmArgs '-Xms512m', '-Xmx1024m'
 }
