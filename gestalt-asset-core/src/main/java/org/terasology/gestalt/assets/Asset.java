@@ -22,6 +22,9 @@ import net.jcip.annotations.ThreadSafe;
 
 import org.terasology.context.annotation.API;
 
+import java.lang.ref.PhantomReference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.util.Optional;
 
 /**
@@ -55,6 +58,40 @@ public abstract class Asset<T extends AssetData> {
     private final AssetType<?, T> assetType;
     private final DisposalHook disposalHook = new DisposalHook();
     private volatile boolean disposed;
+
+    protected AssetNode<Asset<T>> next;
+    protected Asset<?> parent;
+
+    protected static class AssetNode<U extends Asset<?>> {
+        public AssetNode(U root,U instance) {
+            this.reference = new SoftReference<>(instance);
+            instance.parent = root;
+        }
+        SoftReference<U> reference;
+        AssetNode<U> next;
+
+        protected void clearParent() {
+            U instance = reference == null ? null: reference.get();
+            if(instance != null) {
+                instance.parent = null;
+            }
+        }
+
+        protected void setParent(U parent) {
+            U instance = reference == null ? null: reference.get();
+            if(instance != null) {
+                instance.parent = parent;
+            }
+        }
+
+        protected boolean hasValidAsset() {
+            U instance = reference == null ? null: reference.get();
+            if(instance == null) {
+                return false;
+            }
+            return !instance.isDisposed();
+        }
+    }
 
     /**
      * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
