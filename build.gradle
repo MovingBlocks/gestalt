@@ -1,11 +1,24 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+// Only needed for the two Android modules as of April 2021
+buildscript {
+    repositories {
+        mavenCentral()
+
+        // Needed for the Android Gradle Plugin to work
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.3'
+    }
+}
+
 plugins {
     id 'idea'
 }
 
 ext {
-    // Overall version number for Gestalt's various elements
-    gestaltVersion = "8.0.0-SNAPSHOT"
-
     // Android version support
     android_annotation_version = "28.0.0"
 
@@ -49,4 +62,8 @@ allprojects {
             url 'https://heisluft.de/maven'
         }
     }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }

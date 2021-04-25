@@ -37,9 +37,6 @@ javadoc {
     failOnError = false
 }
 
-group = 'org.terasology.gestalt'
-version = gestaltVersion
-
 publishing {
     publications {
         "$project.name"(MavenPublication) {
