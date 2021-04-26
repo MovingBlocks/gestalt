@@ -1,15 +1,6 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-
-/*
- * This is a Gradle build file:
- * - Gradle Homepage: http://gradle.org/
- * - Gradle Documentation: http://gradle.org/documentation
- * - View tasks for this project: $ gradlew tasks
- */
-
-apply plugin: 'java-library'
-apply plugin: 'maven-publish'
+apply from: "$rootDir/gradle/common.gradle"
 
 // Primary dependencies definition
 dependencies {
@@ -34,61 +25,9 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter:$mockito_version")
 }
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.8"
-    }
-}
-
 description = 'A threadsafe entity system implementation. ' +
         'An entity system is a component based data model.'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 tasks.named("test", Test) {
     useJUnitPlatform()
 }
-
-/***
- * Publishing
- ***/
-
-task sourceJar(type: Jar, dependsOn: classes) {
-    classifier 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-publishing {
-    repositories {
-        maven {
-            credentials {
-                username project.gestaltMavenRepoUsername
-                password project.gestaltMavenRepoPassword
-            }
-            name 'TerasologyTestRepo'
-            allowInsecureProtocol = true  // 😱
-            url project.version.endsWith('SNAPSHOT') ? project.snapshotPublishRepo : project.releasePublishRepo
-        }
-    }
-    publications {
-        mavenEs(MavenPublication) {
-            artifactId = project.name
-            version = project.version
-
-            from components.java
-
-            artifact sourceJar
-            artifact javadocJar
-        }
-    }
-}
-
