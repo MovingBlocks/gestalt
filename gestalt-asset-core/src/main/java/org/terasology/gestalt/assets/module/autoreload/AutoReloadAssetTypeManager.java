@@ -1,23 +1,9 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.gestalt.assets.module.autoreload;
 
 import android.support.annotation.RequiresApi;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.gestalt.assets.Asset;
@@ -44,7 +30,7 @@ public class AutoReloadAssetTypeManager implements ModuleAwareAssetTypeManager {
 
     private static final Logger logger = LoggerFactory.getLogger(AutoReloadAssetTypeManager.class);
 
-    private ModuleAwareAssetTypeManager assetTypeManager;
+    private final ModuleAwareAssetTypeManager assetTypeManager;
     private AssetReloadOnChangeHandler reloadOnChangeHandler;
 
     public AutoReloadAssetTypeManager() {
@@ -71,13 +57,13 @@ public class AutoReloadAssetTypeManager implements ModuleAwareAssetTypeManager {
         }
     }
 
-    private <U extends AssetData, T extends Asset<U>> void registerAssetType(AssetType<T, U> assetType) {
+    private synchronized <U extends AssetData, T extends Asset<U>> void registerAssetType(AssetType<T, U> assetType) {
         if (reloadOnChangeHandler != null) {
             reloadOnChangeHandler.addAssetType(assetType, assetTypeManager.getAssetFileDataProducer(assetType));
         }
     }
 
-    private void openReloadOnChangeHandler(ModuleEnvironment newEnvironment) {
+    private synchronized void openReloadOnChangeHandler(ModuleEnvironment newEnvironment) {
         try {
             reloadOnChangeHandler = new AssetReloadOnChangeHandler(newEnvironment);
             for (AssetType<?, ?> assetType : getAssetTypes()) {
@@ -88,7 +74,7 @@ public class AutoReloadAssetTypeManager implements ModuleAwareAssetTypeManager {
         }
     }
 
-    private void closeReloadOnChangeHandler() {
+    private synchronized void closeReloadOnChangeHandler() {
         if (reloadOnChangeHandler != null) {
             try {
                 reloadOnChangeHandler.close();
@@ -138,8 +124,10 @@ public class AutoReloadAssetTypeManager implements ModuleAwareAssetTypeManager {
         assetTypeManager.getAssetType(type).ifPresent(
                 assetType -> {
                     assetTypeManager.removeAssetType(type);
-                    if (reloadOnChangeHandler != null) {
-                        reloadOnChangeHandler.removeAssetType(assetType);
+                    synchronized (this) {
+                        if (reloadOnChangeHandler != null) {
+                            reloadOnChangeHandler.removeAssetType(assetType);
+                        }
                     }
                 }
         );
@@ -151,7 +139,7 @@ public class AutoReloadAssetTypeManager implements ModuleAwareAssetTypeManager {
     }
 
     @Override
-    public void switchEnvironment(ModuleEnvironment newEnvironment) {
+    public synchronized void switchEnvironment(ModuleEnvironment newEnvironment) {
         closeReloadOnChangeHandler();
         assetTypeManager.clearAvailableAssetCache();
         assetTypeManager.switchEnvironment(newEnvironment);
