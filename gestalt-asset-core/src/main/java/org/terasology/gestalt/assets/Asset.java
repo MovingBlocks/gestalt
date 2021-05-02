@@ -54,15 +54,15 @@ import java.util.Optional;
 @ThreadSafe
 public abstract class Asset<T extends AssetData> {
 
+    AssetNode<Asset<T>> next;
+    Asset<?> parent;
+
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
     private final DisposalHook disposalHook = new DisposalHook();
     private volatile boolean disposed;
 
-    protected AssetNode<Asset<T>> next;
-    protected Asset<?> parent;
-
-    protected static class AssetNode<U extends Asset<?>> {
+    static class AssetNode<U extends Asset<?>> {
         public AssetNode(U root,U instance) {
             this.reference = new SoftReference<>(instance);
             instance.parent = root;
