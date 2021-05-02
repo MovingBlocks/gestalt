@@ -159,13 +159,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     public synchronized void disposeAll() {
         loadedAssets.values().forEach(k -> {
             Asset<U> asset = k.get();
-            if(asset != null) {
+            if (asset != null) {
                 asset.dispose();
                 Asset.AssetNode<Asset<U>> current = asset.next;
-                while(current != null){
+                while (current != null) {
                     SoftReference<Asset<U>> target = current.reference;
                     Asset<U> en = target.get();
-                    if(en != null) {
+                    if (en != null) {
                         en.dispose();
                     }
                     current = current.next;
@@ -288,9 +288,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         }
     }
 
-
     private boolean addAsset(T targetAsset) {
-
         ResourceUrn targetUrn = targetAsset.getUrn();
         ResourceUrn parentUrn = targetUrn.getParentUrn();
 
@@ -656,7 +654,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @return A list of all the loaded assets.
      */
     public Set<T> getLoadedAssets() {
-        return ImmutableSet.copyOf(loadedAssets.values().stream().map(Reference::get).filter(Objects::nonNull).collect(Collectors.toSet()));
+        return loadedAssets.values().stream().map(Reference::get).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     /**
@@ -717,7 +715,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         }
     }
 
-    public final class AssetReference<T extends Asset<?>> extends PhantomReference<T> {
+    private final class AssetReference<T extends Asset<?>> extends PhantomReference<T> {
 
         private final DisposalHook disposalHook;
         public final ResourceUrn parentUrn;
