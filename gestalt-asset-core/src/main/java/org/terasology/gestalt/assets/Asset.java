@@ -17,14 +17,13 @@
 package org.terasology.gestalt.assets;
 
 import com.google.common.base.Preconditions;
-
 import net.jcip.annotations.ThreadSafe;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.context.annotation.API;
 
-import java.lang.ref.PhantomReference;
-import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
+import java.security.PrivilegedActionException;
 import java.util.Optional;
 
 /**
@@ -53,43 +52,55 @@ import java.util.Optional;
 @API
 @ThreadSafe
 public abstract class Asset<T extends AssetData> {
+    private static final Logger logger = LoggerFactory.getLogger(Asset.class);
 
-    AssetNode<Asset<T>> next;
-    Asset<?> parent;
+    AssetNode<T> next;
+    Asset<T> parent;
 
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
     private final DisposalHook disposalHook = new DisposalHook();
     private volatile boolean disposed;
 
-    static class AssetNode<U extends Asset<?>> {
-        public AssetNode(U root,U instance) {
+    static class AssetNode<T extends AssetData> {
+        public AssetNode(Asset<T> root, Asset<T> instance) {
             this.reference = new SoftReference<>(instance);
             instance.parent = root;
         }
-        SoftReference<U> reference;
-        AssetNode<U> next;
+        SoftReference<Asset<T>> reference;
+        AssetNode<T> next;
 
         protected void clearParent() {
-            U instance = reference == null ? null: reference.get();
+            Asset<T> instance = reference == null ? null: reference.get();
             if(instance != null) {
                 instance.parent = null;
             }
         }
 
-        protected void setParent(U parent) {
-            U instance = reference == null ? null: reference.get();
+        protected void setParent(Asset<T> parent) {
+            Asset<T> instance = reference == null ? null: reference.get();
             if(instance != null) {
                 instance.parent = parent;
             }
         }
 
         protected boolean hasValidAsset() {
-            U instance = reference == null ? null: reference.get();
+            Asset<T> instance = reference == null ? null: reference.get();
             if(instance == null) {
                 return false;
             }
             return !instance.isDisposed();
+        }
+    }
+
+    void pushAsset(Asset<T> asset) {
+        if (next == null) {
+            Preconditions.checkArgument(!getUrn().isInstance());
+            next = new AssetNode<>(this, asset);
+        } else {
+            AssetNode node = new AssetNode<>(parent, asset);
+            node.next = next;
+            next = node;
         }
     }
 
@@ -150,12 +161,30 @@ public abstract class Asset<T extends AssetData> {
     @SuppressWarnings("unchecked")
     public final <U extends Asset<T>> Optional<U> createInstance() {
         Preconditions.checkState(!disposed);
-        return (Optional<U>) assetType.createInstance(this);
+        ResourceUrn instanceUrn = getUrn().getInstanceUrn();
+
+        Optional<? extends Asset<T>> assetCopy = doCreateCopy(instanceUrn, assetType);
+        if (!assetCopy.isPresent()) {
+            Optional<T> assetData;
+            try {
+                assetData = assetType.fetchAssetData(instanceUrn);
+            } catch (PrivilegedActionException e) {
+                logger.error("Failed to load asset '" + urn + "'", e.getCause());
+                return Optional.empty();
+            }
+            if (assetData.isPresent()) {
+                assetCopy = Optional.ofNullable(assetType.loadAsset(instanceUrn, assetData.get()));
+            }
+        }
+        assetCopy.ifPresent(this::pushAsset);
+        return (Optional<U>) assetCopy;
     }
 
-    final synchronized Optional<? extends Asset<T>> createCopy(ResourceUrn copyUrn) {
-        Preconditions.checkState(!disposed);
-        return doCreateCopy(copyUrn, assetType);
+    public final Asset<T> getNormalAsset() {
+        if(parent == null) {
+            return this;
+        }
+        return parent;
     }
 
     /**
