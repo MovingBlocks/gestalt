@@ -301,13 +301,19 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         if(!loadedAssets.containsKey(target)) {
             return;
         }
+
         Reference<T> reference = loadedAssets.get(target);
         Asset<U> current = reference.get();
-        if(current == null) {
+        if(current != null && current.isDisposed() && current.next != null) {
+            logger.warn("non instanced asset is disposed with instances. instances will become orphaned.");
+        }
+
+        if(current == null || current.isDisposed()) {
+            // disposing of a non instanced asset will orphan the instanced assets.
             loadedAssets.remove(target);
             return;
         }
-        boolean rootInstanceDisposed = current.isDisposed();
+
         Asset.AssetNode<U> node = current.next;
         while (node != null) {
             Asset.AssetNode<U> nextAsset = node.next;
@@ -315,20 +321,10 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                 nextAsset = nextAsset.next;
             }
             node.next = nextAsset;
-            if(rootInstanceDisposed) {
-                node.clearParent();
-            }
             node = nextAsset;
         }
-        if(rootInstanceDisposed) {
-            if(current.next != null && current.next.reference != null) {
-                loadedAssets.put(target, (Reference<T>) current.next.reference);
-            } else {
-                loadedAssets.remove(target);
-            }
-
-        }
     }
+
 
     /**
      * Creates and returns an instance of an asset, if possible. The following methods are used to create the copy, in order, with the first technique to succeeed used:
@@ -670,6 +666,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         public String toString() {
             return "lock(" + urn + ")";
         }
+
     }
 
     private final class AssetReference<T extends Asset<?>> extends PhantomReference<T> {
