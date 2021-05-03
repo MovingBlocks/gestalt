@@ -70,20 +70,6 @@ public abstract class Asset<T extends AssetData> {
         SoftReference<Asset<T>> reference;
         AssetNode<T> next;
 
-        protected void clearParent() {
-            Asset<T> instance = reference == null ? null: reference.get();
-            if(instance != null) {
-                instance.parent = null;
-            }
-        }
-
-        protected void setParent(Asset<T> parent) {
-            Asset<T> instance = reference == null ? null: reference.get();
-            if(instance != null) {
-                instance.parent = parent;
-            }
-        }
-
         protected boolean hasValidAsset() {
             Asset<T> instance = reference == null ? null: reference.get();
             if(instance == null) {
