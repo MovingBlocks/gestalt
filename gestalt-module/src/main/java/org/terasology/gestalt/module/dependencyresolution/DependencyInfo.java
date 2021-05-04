@@ -4,7 +4,6 @@
 package org.terasology.gestalt.module.dependencyresolution;
 
 import org.terasology.gestalt.naming.Name;
-import org.terasology.gestalt.naming.SemverExpression;
 import org.terasology.gestalt.naming.Version;
 import org.terasology.gestalt.naming.VersionRange;
 
