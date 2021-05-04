@@ -29,7 +29,7 @@ class DependencyInfoTest {
 
         assertFalse(predicate.test(new Version("0.2.3")), "inappropriately matched an earlier patch version");
         assertFalse(predicate.test(new Version("0.2.4-SNAPSHOT")), "inappropriately matched own snapshot version");
-
+        assertFalse(predicate.test(nextVersion.getNextMinorVersion().getSnapshot()), "inappropriately matched next 0.x minor snapshot");
         assertFalse(predicate.test(nextVersion.getNextMinorVersion()), "inappropriately matched next 0.x minor version");
     }
 
@@ -52,9 +52,9 @@ class DependencyInfoTest {
         assertTrue(predicate.test(new Version(nextMinorVersion + "-SNAPSHOT")), "failed to match the next minor snapshot");
 
         assertFalse(predicate.test(new Version("1.4.6")), "inappropriately matched an earlier patch version");
-        assertFalse(predicate.test(nextVersion.getNextMajorVersion()), "inappropriately matched next major version");
-
         assertFalse(predicate.test(new Version("1.4.7-SNAPSHOT")), "inappropriately matched own snapshot version");
+        assertFalse(predicate.test(nextVersion.getNextMajorVersion().getSnapshot()), "inappropriately matched next major snapshot");
+        assertFalse(predicate.test(nextVersion.getNextMajorVersion()), "inappropriately matched next major version");
     }
 
     @Test
@@ -72,6 +72,7 @@ class DependencyInfoTest {
         Version nextVersion = release.getNextPatchVersion();
         assertTrue(predicate.test(nextVersion), "failed to match the next patch version");
         assertTrue(predicate.test(new Version(nextVersion + "-SNAPSHOT")), "failed to match the next snapshot");
+        assertFalse(predicate.test(release.getNextMajorVersion().getSnapshot()), "inappropriately matched next major snapshot");
         assertFalse(predicate.test(release.getNextMajorVersion()), "inappropriately matched next major version");
     }
 }
