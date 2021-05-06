@@ -72,9 +72,9 @@ public class DependencyInfo {
     public Version getMaxVersion() {
         if (maxVersion == null) {
             if (minVersion.getMajor() == 0) {
-                return minVersion.getVersionCore().getNextMinorVersion();
+                return minVersion.getCoreVersion().getNextMinorVersion();
             }
-            return minVersion.getVersionCore().getNextMajorVersion();
+            return minVersion.getCoreVersion().getNextMajorVersion();
         }
         return maxVersion;
     }
@@ -109,8 +109,6 @@ public class DependencyInfo {
 
     /**
      * Returns a predicate that yields true when applied to version that is within the version range described by this dependency information
-     *
-     * @return
      */
     public Predicate<Version> versionPredicate() {
         return new VersionRange(getMinVersion(), getMaxVersion());

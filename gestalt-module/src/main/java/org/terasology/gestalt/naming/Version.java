@@ -111,7 +111,7 @@ public final class Version implements Comparable<Version> {
     /**
      * Returns the version core according to semver, i.e. the purely numerical version without any pre-release or build metadata info
      */
-    public Version getVersionCore() {
+    public Version getCoreVersion() {
         return new Version(semver.getNormalVersion());
     }
 
