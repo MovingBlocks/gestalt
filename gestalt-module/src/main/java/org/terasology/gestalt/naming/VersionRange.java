@@ -44,7 +44,7 @@ public class VersionRange implements Predicate<Version> {
      * @return Whether version falls within the range
      */
     public boolean contains(Version version) {
-        return version.compareTo(lowerBound.getSnapshot()) >= 0 && version.compareTo(upperBound.getSnapshot()) < 0;
+        return version.compareTo(lowerBound) >= 0 && version.compareTo(upperBound.getSnapshot()) < 0;
     }
 
     @Override

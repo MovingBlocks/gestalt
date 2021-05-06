@@ -4,7 +4,6 @@
 package org.terasology.gestalt.module.dependencyresolution;
 
 import org.terasology.gestalt.naming.Name;
-import org.terasology.gestalt.naming.SemverExpression;
 import org.terasology.gestalt.naming.Version;
 import org.terasology.gestalt.naming.VersionRange;
 
@@ -73,9 +72,9 @@ public class DependencyInfo {
     public Version getMaxVersion() {
         if (maxVersion == null) {
             if (minVersion.getMajor() == 0) {
-                return minVersion.getNextMinorVersion();
+                return minVersion.getCoreVersion().getNextMinorVersion();
             }
-            return minVersion.getNextMajorVersion();
+            return minVersion.getCoreVersion().getNextMajorVersion();
         }
         return maxVersion;
     }
@@ -109,25 +108,10 @@ public class DependencyInfo {
     }
 
     /**
-     * @return The range of supported versions
+     * Returns a predicate that yields true when applied to version that is within the version range described by this dependency information
      */
-    public VersionRange versionRange() {
-        return new VersionRange(getMinVersion(), getMaxVersion());
-    }
-
     public Predicate<Version> versionPredicate() {
-        if (maxVersion != null) {
-            return versionRange();
-        } else {
-            String source;
-            if (minVersion.isSnapshot()) {
-                // semver doesn't like snapshots in caret ranges?
-                source = minVersion + " | ^" + minVersion.getNextPatchVersion();
-            } else {
-                source = "^" + minVersion;
-            }
-            return new SemverExpression(source);
-        }
+        return new VersionRange(getMinVersion(), getMaxVersion());
     }
 
     @Override

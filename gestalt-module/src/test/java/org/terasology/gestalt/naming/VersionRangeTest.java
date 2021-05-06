@@ -55,8 +55,8 @@ public class VersionRangeTest {
     }
 
     @Test
-    public void lowerSnapshotInRange() {
-        assertTrue(range.contains(new Version("1.2.3-SNAPSHOT")));
+    public void lowerSnapshotOutOfRange() {
+        assertFalse(range.contains(new Version("1.2.3-SNAPSHOT")));
     }
 
     @Test
