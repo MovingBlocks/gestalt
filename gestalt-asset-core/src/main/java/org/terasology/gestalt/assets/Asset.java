@@ -17,8 +17,6 @@
 package org.terasology.gestalt.assets;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.sun.org.apache.xml.internal.dtm.ref.EmptyIterator;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
