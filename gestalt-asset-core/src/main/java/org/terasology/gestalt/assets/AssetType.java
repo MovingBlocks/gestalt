@@ -21,6 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Sets;
@@ -37,6 +38,7 @@ import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
@@ -157,15 +159,6 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             Asset<U> asset = k.get();
             if (asset != null) {
                 asset.dispose();
-                Asset.AssetNode<U> current = asset.next;
-                while (current != null) {
-                    SoftReference<Asset<U>> target = current.reference;
-                    Asset<U> en = target.get();
-                    if (en != null) {
-                        en.dispose();
-                    }
-                    current = current.next;
-                }
             }
         });
         loadedAssets.clear();
@@ -185,13 +178,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                 T asset = target.get();
                 if (asset != null && (!followRedirects(asset.getUrn()).equals(asset.getUrn()) || !reloadFromProducers(asset))) {
                     asset.dispose();
-                    Asset.AssetNode<U> current = asset.next;
-                    while (current != null){
-                        Asset value = current.reference.get();
-                        if(value != null) {
-                            value.dispose();
+                    for(WeakReference<Asset<U>> it :asset.instances()) {
+                        Asset<U> instance = it.get();
+                        if(instance != null) {
+                            instance.dispose();
                         }
-                        current = current.next;
                     }
                 }
             }
@@ -304,7 +295,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
 
         Reference<T> reference = loadedAssets.get(target);
         Asset<U> current = reference.get();
-        if(current != null && current.isDisposed() && current.next != null) {
+        if(current != null && current.isDisposed() && Iterables.isEmpty(current.instances())) {
             logger.warn("non instanced asset is disposed with instances. instances will become orphaned.");
         }
 
@@ -313,16 +304,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             loadedAssets.remove(target);
             return;
         }
-
-        Asset.AssetNode<U> node = current.next;
-        while (node != null) {
-            Asset.AssetNode<U> nextAsset = node.next;
-            while (nextAsset != null && !nextAsset.hasValidAsset()) {
-                nextAsset = nextAsset.next;
-            }
-            node.next = nextAsset;
-            node = nextAsset;
-        }
+        current.cleanup();
     }
 
 
@@ -570,13 +552,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                 Optional<U> data = producer.getAssetData(asset.getUrn());
                 if (data.isPresent()) {
                     asset.reload(data.get());
-                    Asset.AssetNode<U> current = asset.next;
-                    while (current != null) {
-                        Asset<U> inst = current.reference.get();
-                        if(inst != null) {
-                            inst.reload(data.get());
+                    for(WeakReference<Asset<U>> it :asset.instances()) {
+                        Asset<U> instance = it.get();
+                        if(instance != null) {
+                            instance.reload(data.get());
                         }
-                        current = current.next;
                     }
                     return true;
                 }

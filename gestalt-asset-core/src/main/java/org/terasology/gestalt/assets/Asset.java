@@ -17,13 +17,17 @@
 package org.terasology.gestalt.assets;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.sun.org.apache.xml.internal.dtm.ref.EmptyIterator;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.context.annotation.API;
 
-import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.security.PrivilegedActionException;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.Optional;
 
 /**
@@ -54,21 +58,22 @@ import java.util.Optional;
 public abstract class Asset<T extends AssetData> {
     private static final Logger logger = LoggerFactory.getLogger(Asset.class);
 
-    AssetNode<T> next;
-    Asset<T> parent;
+    private AssetNode<T> next;
+    private Asset<T> parent;
 
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
     private final DisposalHook disposalHook = new DisposalHook();
     private volatile boolean disposed;
 
-    static class AssetNode<T extends AssetData> {
+    private static class AssetNode<T extends AssetData> {
+        WeakReference<Asset<T>> reference;
+        AssetNode<T> next;
+
         public AssetNode(Asset<T> root, Asset<T> instance) {
-            this.reference = new SoftReference<>(instance);
+            this.reference = new WeakReference<>(instance);
             instance.parent = root;
         }
-        SoftReference<Asset<T>> reference;
-        AssetNode<T> next;
 
         protected boolean hasValidAsset() {
             Asset<T> instance = reference == null ? null: reference.get();
@@ -79,7 +84,8 @@ public abstract class Asset<T extends AssetData> {
         }
     }
 
-    void pushAsset(Asset<T> asset) {
+
+    private void pushAsset(Asset<T> asset) {
         if (next == null) {
             Preconditions.checkArgument(!getUrn().isInstance());
             next = new AssetNode<>(this, asset);
@@ -87,6 +93,53 @@ public abstract class Asset<T extends AssetData> {
             AssetNode node = new AssetNode<>(parent, asset);
             node.next = next;
             next = node;
+        }
+    }
+
+    protected Iterable<WeakReference<Asset<T>>> instances() {
+        if (this.parent != null) {
+            return parent.instances();
+        }
+        AssetNode<T> rootNode = this.next;
+        if(rootNode == null) {
+            return Collections::emptyIterator;
+        }
+        return () -> new Iterator<>() {
+            AssetNode<T> node = null;
+
+            @Override
+            public boolean hasNext() {
+                if (node == null) {
+                    return true;
+                }
+                return node.next != null;
+            }
+
+            @Override
+            public WeakReference<Asset<T>> next() {
+                if (node == null) {
+                    node = rootNode.next;
+                    return rootNode.reference;
+                }
+                node = node.next;
+                return node.reference;
+            }
+        };
+    }
+
+    protected void cleanup() {
+        if(this.parent != null) {
+            parent.cleanup();
+            return;
+        }
+        AssetNode<T> node = next;
+        while (node != null) {
+            AssetNode<T> nextAsset = node.next;
+            while (nextAsset != null && !nextAsset.hasValidAsset()) {
+                nextAsset = nextAsset.next;
+            }
+            node.next = nextAsset;
+            node = nextAsset;
         }
     }
 
@@ -181,6 +234,14 @@ public abstract class Asset<T extends AssetData> {
             disposed = true;
             assetType.onAssetDisposed(this);
             disposalHook.dispose();
+            if(parent == null) {
+                for (WeakReference<Asset<T>> inst : this.instances()) {
+                    Asset<T> current = inst.get();
+                    if (current != null) {
+                        current.dispose();
+                    }
+                }
+            }
         }
     }
 
