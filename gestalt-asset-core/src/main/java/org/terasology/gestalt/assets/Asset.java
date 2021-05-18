@@ -102,7 +102,7 @@ public abstract class Asset<T extends AssetData> {
         if(rootNode == null) {
             return Collections::emptyIterator;
         }
-        return () -> new Iterator<>() {
+        return () -> new Iterator<WeakReference<Asset<T>>>() {
             AssetNode<T> node = null;
 
             @Override
