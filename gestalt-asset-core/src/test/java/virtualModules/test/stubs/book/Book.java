@@ -35,7 +35,8 @@ public class Book extends Asset<BookData> {
     private ImmutableList<String> lines = ImmutableList.of();
 
     public Book(ResourceUrn urn, BookData data, AssetType<?, BookData> type) {
-        super(urn, type, new DisposalAction(urn));
+        super(urn, type);
+        setDisposableResource(new DisposalAction(urn));
         reload(data);
     }
 
