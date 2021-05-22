@@ -62,7 +62,7 @@ public abstract class Asset<T extends AssetData> {
      * @param urn       The urn identifying the asset.
      * @param assetType The asset type this asset belongs to.
      */
-    public Asset(ResourceUrn urn, AssetType<?, T> assetType) {
+    protected Asset(ResourceUrn urn, AssetType<?, T> assetType) {
         Preconditions.checkNotNull(urn);
         Preconditions.checkNotNull(assetType);
         this.urn = urn;
