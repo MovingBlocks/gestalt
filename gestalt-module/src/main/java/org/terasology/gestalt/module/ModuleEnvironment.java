@@ -1,23 +1,9 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
 package org.terasology.gestalt.module;
 
 import android.support.annotation.NonNull;
-
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -26,7 +12,6 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
-
 import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
 import org.reflections.scanners.SubTypesScanner;
@@ -118,10 +103,10 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         ImmutableList.Builder<ModuleClassLoader> managedClassLoaderListBuilder = ImmutableList.builder();
         ClassLoader lastClassLoader = apiClassLoader;
         List<Module> orderedModules = getModulesOrderedByDependencies();
-        Predicate<Class<?>> classpathModuleClassesPredicate = orderedModules.stream().map(Module::getClassPredicate).reduce(x -> false, Predicate::or);
+
         for (final Module module : orderedModules) {
             if (!module.getClasspaths().isEmpty() && !hasClassContent(module)) {
-                ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, classLoaderSupplier, classpathModuleClassesPredicate);
+                ModuleClassLoader classLoader = buildModuleClassLoader(module, lastClassLoader, permissionProviderFactory, classLoaderSupplier);
                 managedClassLoaderListBuilder.add(classLoader);
                 lastClassLoader = classLoader.getClassLoader();
             }
@@ -160,9 +145,8 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      */
     private ModuleClassLoader buildModuleClassLoader(final Module module, final ClassLoader parent,
                                                      final PermissionProviderFactory permissionProviderFactory,
-                                                     final ClassLoaderSupplier classLoaderSupplier,
-                                                     final Predicate<Class<?>> classpathModuleClassesPredicate) {
-        PermissionProvider permissionProvider = permissionProviderFactory.createPermissionProviderFor(module, classpathModuleClassesPredicate);
+                                                     final ClassLoaderSupplier classLoaderSupplier) {
+        PermissionProvider permissionProvider = permissionProviderFactory.createPermissionProviderFor(module, x -> false);
         return AccessController.doPrivileged((PrivilegedAction<ModuleClassLoader>) () -> classLoaderSupplier.create(module, parent, permissionProvider));
     }
 
@@ -173,6 +157,7 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
      */
     private Reflections buildFullReflections(Map<Name, Reflections> reflectionsByModule) {
         ConfigurationBuilder fullBuilder = new ConfigurationBuilder()
+                .addClassLoader(apiClassLoader)
                 .addClassLoader(finalClassLoader);
         Reflections reflections = new Reflections(fullBuilder);
         for (Reflections moduleReflection : reflectionsByModule.values()) {
