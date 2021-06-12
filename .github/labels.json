@@ -1,0 +1,158 @@
+[
+  {
+    "color": "FF0000",
+    "description": "Issue reporting or PR addressing a critical problem that blocks other efforts",
+    "name": "Blocker"
+  },
+  {
+    "color": "ba0000",
+    "description": "API breaking change requiring follow-up work in dependant areas",
+    "name": "Breaking Change"
+  },
+  {
+    "color": "f5a342",
+    "description": "Requests, Issues and Changes targeting gradle, groovy, Jenkins, etc.",
+    "name": "Category: Build/CI"
+  },
+  {
+    "color": "ff7332",
+    "description": "Requests, Issues and Changes targeting unexpected terminations, segfaults, etc.",
+    "name": "Category: Crash"
+  },
+  {
+    "color": "f5a342",
+    "description": "Requests, Issues and Changes targeting javadoc and module documentation",
+    "name": "Category: Doc"
+  },
+  {
+    "color": "f5a342",
+    "description": "Requests, Issues and Changes targeting performance",
+    "name": "Category: Performance"
+  },
+  {
+    "color": "f5a342",
+    "description": "Requests, Issues and Changes targeting security",
+    "name": "Category: Security"
+  },
+  {
+    "color": "f5a342",
+    "description": "Requests, Issues and Changes targeting tests and quality assurance",
+    "name": "Category: Test/QA"
+  },
+  {
+    "color": "94EC55",
+    "description": "Good for learners that are new to Terasology",
+    "name": "Good First Issue"
+  },
+  {
+    "color": "AAd9d2",
+    "description": "Very big effort likely requiring a lot of research and work in many areas across the codebase",
+    "name": "Size: L"
+  },
+  {
+    "color": "AAd9d2",
+    "description": "Medium-sized effort likely requiring some research and work in multiple areas",
+    "name": "Size: M"
+  },
+  {
+    "color": "AAd9d2",
+    "description": "Small effort likely only affecting a single area and requiring little to no research",
+    "name": "Size: S"
+  },
+  {
+    "color": "ff7d7d",
+    "description": "Is currently blocked by missing dependencies, pre-requisites, etc.",
+    "name": "Status: Blocked"
+  },
+  {
+    "color": "E99695",
+    "description": "Requires more information by the author on the reported issue or provided changes",
+    "name": "Status: Needs Author Input"
+  },
+  {
+    "color": "E99695",
+    "description": "Requires help discussing a reported issue or provided PR",
+    "name": "Status: Needs Discussion",
+    "aliases": ["help wanted"]
+  },
+  {
+    "color": "E99695",
+    "description": "Requires to be checked for feasibility, reproducability, etc.",
+    "name": "Status: Needs Investigation"
+  },
+  {
+    "color": "E99695",
+    "description": "Requires to be tested in-game",
+    "name": "Status: Needs Testing"
+  },
+  {
+    "color": "DDDDDD",
+    "description": "Wasn't reviewed or continued for a while",
+    "name": "Status: Stale"
+  },
+  {
+    "color": "3b808e",
+    "description": "Requests, Issues and Changes related to Android-specific features and code.",
+    "name": "Topic: Anddroid"
+  },
+  {
+    "color": "3b808e",
+    "description": "Requests, Issues and Changes related to software architecture, programming patterns, etc.",
+    "name": "Topic: Architecture"
+  },
+  {
+    "color": "3b808e",
+    "description": "Requests, Issues and Changes related to the asset handling library.",
+    "name": "Topic: Asset"
+  },
+  {
+    "color": "3b808e",
+    "description": "Requests, Issues and Changes related to dependency injection (DI) capabilities.",
+    "name": "Topic: Dependency Injection"
+  },
+  {
+    "color": "3b808e",
+    "description": "Requests, Issues and Changes related to improving stablity and reducing flakyness",
+    "name": "Topic: Stabilization"
+  },
+  {
+    "color": "3b808e",
+    "description": "Requests, Issues and Changes related to the entity component system (ECS)",
+    "name": "Topic: Entity System",
+    "aliases": ["entitysystem"]
+  },
+  {
+    "color": "3b808e",
+    "description": "Requests, Issues and Changes related to gestalt modules",
+    "name": "Topic: Module",
+    "aliases": ["gestalt-module"]
+  },
+  {
+    "color": "d73a4a",
+    "description": "Issues reporting and PRs fixing problems",
+    "name": "Type: Bug",
+    "aliases": ["bug"]
+  },
+  {
+    "color": "666666",
+    "description": "Request for or implementation of maintenance changes",
+    "name": "Type: Chore"
+  },
+  {
+    "color": "0E8A16",
+    "description": "Request for or addition/enhancement of a feature",
+    "name": "Type: Improvement",
+    "aliases": ["enhancement"]
+  },
+  {
+    "color": "66CBED",
+    "description": "Issue intended to help understanding something that is unclear",
+    "name": "Type: Question",
+    "aliases": ["question"]
+  },
+  {
+    "color": "fbca04",
+    "description": "Request for or implementation of pure and automatic refactorings, e.g. renaming, to improve clarity",
+    "name": "Type: Refactoring"
+  }
+]
