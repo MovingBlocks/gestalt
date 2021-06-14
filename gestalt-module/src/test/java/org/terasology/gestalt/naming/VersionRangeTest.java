@@ -63,4 +63,13 @@ public class VersionRangeTest {
     public void higherSnapshotOutOfRange() {
         assertFalse(range.contains(new Version("2.3.4-SNAPSHOT")));
     }
+
+    @Test
+    public void canMatchMajorSnapshot() {
+        Version majorSnapshot = new Version("2.0.0-SNAPSHOT");
+        Version majorRelease = new Version("2.0.0");
+
+        VersionRange snapshotRange = new VersionRange(majorSnapshot, majorRelease);
+        assertTrue(snapshotRange.contains(majorSnapshot));
+    }
 }
