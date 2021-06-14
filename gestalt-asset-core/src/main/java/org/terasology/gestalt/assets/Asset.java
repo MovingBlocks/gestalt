@@ -17,6 +17,7 @@
 package org.terasology.gestalt.assets;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import java.lang.ref.WeakReference;
 import java.security.PrivilegedActionException;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -56,7 +58,7 @@ import java.util.Optional;
 public abstract class Asset<T extends AssetData> {
     private static final Logger logger = LoggerFactory.getLogger(Asset.class);
 
-    private AssetNode<T> next;
+    private final List<WeakReference<Asset<T>>> instances;
     private Asset<T> parent;
 
     private final ResourceUrn urn;
@@ -64,33 +66,14 @@ public abstract class Asset<T extends AssetData> {
     private final DisposalHook disposalHook = new DisposalHook();
     private volatile boolean disposed;
 
-    private static class AssetNode<T extends AssetData> {
-        WeakReference<Asset<T>> reference;
-        AssetNode<T> next;
-
-        public AssetNode(Asset<T> root, Asset<T> instance) {
-            this.reference = new WeakReference<>(instance);
-            instance.parent = root;
-        }
-
-        protected boolean hasValidAsset() {
-            Asset<T> instance = reference == null ? null: reference.get();
-            if(instance == null) {
-                return false;
-            }
-            return !instance.isDisposed();
-        }
-    }
-
-
-    private void pushAsset(Asset<T> asset) {
-        if (next == null) {
+    private void appendInstance(Asset<T> asset) {
+        if (parent == null) {
             Preconditions.checkArgument(!getUrn().isInstance());
-            next = new AssetNode<>(this, asset);
+            asset.parent = this;
+            instances.add(new WeakReference<>(asset));
         } else {
-            AssetNode node = new AssetNode<>(parent, asset);
-            node.next = next;
-            next = node;
+            asset.parent = parent;
+            parent.instances.add(new WeakReference<>(asset));
         }
     }
 
@@ -98,31 +81,7 @@ public abstract class Asset<T extends AssetData> {
         if (this.parent != null) {
             return parent.instances();
         }
-        AssetNode<T> rootNode = this.next;
-        if(rootNode == null) {
-            return Collections::emptyIterator;
-        }
-        return () -> new Iterator<WeakReference<Asset<T>>>() {
-            AssetNode<T> node = null;
-
-            @Override
-            public boolean hasNext() {
-                if (node == null) {
-                    return true;
-                }
-                return node.next != null;
-            }
-
-            @Override
-            public WeakReference<Asset<T>> next() {
-                if (node == null) {
-                    node = rootNode.next;
-                    return rootNode.reference;
-                }
-                node = node.next;
-                return node.reference;
-            }
-        };
+        return instances;
     }
 
     protected void cleanup() {
@@ -130,14 +89,13 @@ public abstract class Asset<T extends AssetData> {
             parent.cleanup();
             return;
         }
-        AssetNode<T> node = next;
-        while (node != null) {
-            AssetNode<T> nextAsset = node.next;
-            while (nextAsset != null && !nextAsset.hasValidAsset()) {
-                nextAsset = nextAsset.next;
+        Iterator<WeakReference<Asset<T>>> iter = instances.iterator();
+        while(iter.hasNext()) {
+            WeakReference<Asset<T>> reference = iter.next();
+            Asset<T> inst = reference.get();
+            if(inst == null || inst.isDisposed()) {
+                iter.remove();
             }
-            node.next = nextAsset;
-            node = nextAsset;
         }
     }
 
@@ -150,6 +108,7 @@ public abstract class Asset<T extends AssetData> {
     protected Asset(ResourceUrn urn, AssetType<?, T> assetType) {
         Preconditions.checkNotNull(urn);
         Preconditions.checkNotNull(assetType);
+        instances = urn.isInstance() ? Collections.emptyList(): Lists.newArrayList();
         this.urn = urn;
         this.assetType = assetType;
         assetType.registerAsset(this, disposalHook);
@@ -161,8 +120,14 @@ public abstract class Asset<T extends AssetData> {
      *                       this would prevent it being garbage collected. It must be a static inner class, or not contained in the asset class
      *                       (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
      */
-    protected void setDisposableResource(DisposableResource resource) {
-        this.disposalHook.setDisposableResource(resource);
+    public Asset(ResourceUrn urn, AssetType<?, T> assetType, DisposableResource resource) {
+        Preconditions.checkNotNull(urn);
+        Preconditions.checkNotNull(assetType);
+        instances = urn.isInstance() ? Collections.emptyList(): Lists.newArrayList();
+        this.urn = urn;
+        this.assetType = assetType;
+        disposalHook.setDisposableResource(resource);
+        assetType.registerAsset(this, disposalHook);
     }
 
     /**
@@ -213,7 +178,7 @@ public abstract class Asset<T extends AssetData> {
                 assetCopy = Optional.ofNullable(assetType.loadAsset(instanceUrn, assetData.get()));
             }
         }
-        assetCopy.ifPresent(this::pushAsset);
+        assetCopy.ifPresent(this::appendInstance);
         return (Optional<U>) assetCopy;
     }
 
