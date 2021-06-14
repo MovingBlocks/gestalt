@@ -62,7 +62,7 @@ public abstract class Asset<T extends AssetData> {
      * @param urn       The urn identifying the asset.
      * @param assetType The asset type this asset belongs to.
      */
-    public Asset(ResourceUrn urn, AssetType<?, T> assetType) {
+    protected Asset(ResourceUrn urn, AssetType<?, T> assetType) {
         Preconditions.checkNotNull(urn);
         Preconditions.checkNotNull(assetType);
         this.urn = urn;
@@ -71,21 +71,13 @@ public abstract class Asset<T extends AssetData> {
     }
 
     /**
-     * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
-     *
-     * @param urn            The urn identifying the asset.
-     * @param assetType      The asset type this asset belongs to.
+     * set a resource handler so the disposable hook can clean up resources not managed by the JVM
      * @param resource        A resource to close when disposing this class.  The resource must not have a reference to this asset -
      *                       this would prevent it being garbage collected. It must be a static inner class, or not contained in the asset class
      *                       (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
      */
-    public Asset(ResourceUrn urn, AssetType<?, T> assetType, DisposableResource resource) {
-        Preconditions.checkNotNull(urn);
-        Preconditions.checkNotNull(assetType);
-        this.urn = urn;
-        this.assetType = assetType;
-        disposalHook.setDisposableResource(resource);
-        assetType.registerAsset(this, disposalHook);
+    protected void setDisposableResource(DisposableResource resource) {
+        this.disposalHook.setDisposableResource(resource);
     }
 
     /**
