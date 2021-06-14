@@ -1,0 +1,24 @@
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
+apply from: "$rootDir/gradle/common.gradle"
+
+// Primary dependencies definition
+dependencies {
+    implementation "org.joml:joml:$joml_version"
+    implementation "com.google.guava:guava:$guava_version"
+    implementation 'com.googlecode.gentyref:gentyref:1.2.0'
+    implementation "org.slf4j:slf4j-api:$slf4j_version"
+    implementation "com.android.support:support-annotations:$android_annotation_version"
+    implementation "org.lwjgl:lwjgl:$lwjgl_version"
+    implementation "org.lwjgl:lwjgl-opengl:$lwjgl_version"
+
+    // These dependencies are only needed for running tests
+    testImplementation "junit:junit:$junit_version"
+    testImplementation "ch.qos.logback:logback-classic:$logback_version"
+    testImplementation "org.mockito:mockito-core:$mockito_version"
+
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.6.2")
+    testImplementation("junit:junit:4.12")
+}
