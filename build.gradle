@@ -1,66 +1,69 @@
-/*
- * This is a Gradle build file:
- * - Gradle Homepage: http://gradle.org/
- * - Gradle Documentation: http://gradle.org/documentation
- * - View tasks for this project: $ gradlew tasks
- */
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 
+// Only needed for the two Android modules as of April 2021
 buildscript {
     repositories {
-        google()
         mavenCentral()
-        // org.jetbrains.trove4j:trove4j
-        gradlePluginPortal()
-        maven {
-            url 'https://heisluft.de/maven'
-        }
-        maven {
-            url "http://artifactory.terasology.org/artifactory/libs-release-local"
-        }
 
+        // Needed for the Android Gradle Plugin to work
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.3'
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        classpath 'com.android.tools.build:gradle:4.1.3'
     }
-    ext {
-        // Android version support
-        android_annotation_version = "28.0.0"
+}
 
-        // Standard Utility
-        guava_version = "27.0.1-android"
-        slf4j_version = "1.7.25"
-        gson_version = "2.8.5"
-        jcip_annotation_version = "1.0"
+plugins {
+    id 'idea'
+}
 
-        // Testing
-        junit_version = "4.12"
-        logback_version = "1.2.3"
-        mockito_version = "1.10.19"
-    }
+ext {
+    // Android version support
+    android_annotation_version = "28.0.0"
+
+    // Standard Utility
+    guava_version = "27.0.1-android"
+    slf4j_version = "1.7.25"
+    gson_version = "2.8.5"
+    jcip_annotation_version = "1.0"
+
+    // Testing
+    junit_version = "4.12"
+    logback_version = "1.2.3"
+    mockito_version = "1.10.19"
 }
 
 allprojects {
     repositories {
         google()
         mavenCentral()
-        // org.jetbrains.trove4j:trove4j
-        gradlePluginPortal()
+
+        // Terasology Artifactory instance for libs not readily available elsewhere plus our own libs
         maven {
-            url "http://artifactory.terasology.org/artifactory/libs-release-local"
+            def repoViaEnv = System.getenv()["RESOLUTION_REPO"]
+            if (rootProject.hasProperty("alternativeResolutionRepo")) {
+                // If the user supplies an alternative repo via gradle.properties then use that
+                name "from alternativeResolutionRepo property"
+                url alternativeResolutionRepo
+            } else if (repoViaEnv != null && repoViaEnv != "") {
+                name "from \$RESOLUTION_REPO"
+                url = repoViaEnv
+            } else {
+                // Our default is the main virtual repo containing everything except repos for testing Artifactory itself
+                name "Terasology Artifactory"
+                url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
+                allowInsecureProtocol true  // 😱
+            }
         }
+
+        // SemVer lib
         maven {
             url 'https://heisluft.de/maven'
         }
     }
 }
 
-// Library and distribution config
-description = 'A set of libraries providing core capabilities for games and game engines'
-
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
-

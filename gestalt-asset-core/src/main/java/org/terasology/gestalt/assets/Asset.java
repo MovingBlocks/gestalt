@@ -85,15 +85,15 @@ public abstract class Asset<T extends AssetData> {
     }
 
     protected void cleanup() {
-        if(this.parent != null) {
+        if (this.parent != null) {
             parent.cleanup();
             return;
         }
         Iterator<WeakReference<Asset<T>>> iter = instances.iterator();
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             WeakReference<Asset<T>> reference = iter.next();
             Asset<T> inst = reference.get();
-            if(inst == null || inst.isDisposed()) {
+            if (inst == null || inst.isDisposed()) {
                 iter.remove();
             }
         }
@@ -105,32 +105,24 @@ public abstract class Asset<T extends AssetData> {
      * @param urn       The urn identifying the asset.
      * @param assetType The asset type this asset belongs to.
      */
-    public Asset(ResourceUrn urn, AssetType<?, T> assetType) {
+    protected Asset(ResourceUrn urn, AssetType<?, T> assetType) {
         Preconditions.checkNotNull(urn);
         Preconditions.checkNotNull(assetType);
-        instances = urn.isInstance() ? Collections.emptyList(): Lists.newArrayList();
+        instances = urn.isInstance() ? Collections.emptyList() : Lists.newArrayList();
         this.urn = urn;
         this.assetType = assetType;
         assetType.registerAsset(this, disposalHook);
     }
 
     /**
-     * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
+     * set a resource handler so the disposable hook can clean up resources not managed by the JVM
      *
-     * @param urn            The urn identifying the asset.
-     * @param assetType      The asset type this asset belongs to.
-     * @param resource        A resource to close when disposing this class.  The resource must not have a reference to this asset -
-     *                       this would prevent it being garbage collected. It must be a static inner class, or not contained in the asset class
-     *                       (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
+     * @param resource A resource to close when disposing this class.  The resource must not have a reference to this asset -
+     *                 this would prevent it being garbage collected. It must be a static inner class, or not contained in the asset class
+     *                 (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
      */
-    public Asset(ResourceUrn urn, AssetType<?, T> assetType, DisposableResource resource) {
-        Preconditions.checkNotNull(urn);
-        Preconditions.checkNotNull(assetType);
-        instances = urn.isInstance() ? Collections.emptyList(): Lists.newArrayList();
-        this.urn = urn;
-        this.assetType = assetType;
-        disposalHook.setDisposableResource(resource);
-        assetType.registerAsset(this, disposalHook);
+    protected void setDisposableResource(DisposableResource resource) {
+        this.disposalHook.setDisposableResource(resource);
     }
 
     /**
@@ -186,7 +178,7 @@ public abstract class Asset<T extends AssetData> {
     }
 
     public final Asset<T> getNormalAsset() {
-        if(parent == null) {
+        if (parent == null) {
             return this;
         }
         return parent;
@@ -200,7 +192,7 @@ public abstract class Asset<T extends AssetData> {
             disposed = true;
             assetType.onAssetDisposed(this);
             disposalHook.dispose();
-            if(parent == null) {
+            if (parent == null) {
                 for (WeakReference<Asset<T>> inst : this.instances()) {
                     Asset<T> current = inst.get();
                     if (current != null) {
