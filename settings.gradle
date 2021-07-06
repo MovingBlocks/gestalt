@@ -5,3 +5,5 @@ if (rootProject.projectDir.toPath().resolve("local.properties").toFile().exists(
 } else {
     println "No local.properties file found, bypassing Android elements"
 }
+include 'gestalt-networking'
+
