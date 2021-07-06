@@ -34,7 +34,7 @@ public class UrlClassIndex implements ClassIndex {
 
     public static ClassIndex byDirectory(File file) {
         try {
-            return new UrlClassIndex(new URL(file.toURI().toURL(), "/" + METAINF));
+            return new UrlClassIndex(new URL(file.toURI().toURL(), METAINF));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
