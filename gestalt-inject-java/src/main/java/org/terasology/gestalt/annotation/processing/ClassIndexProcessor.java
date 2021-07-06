@@ -48,8 +48,11 @@ public class ClassIndexProcessor extends AbstractProcessor {
             // Subtypes index. classes under index.
             processSubtypeIndexByDirectMarked(roundEnv, annotation);
         }
+
         // Subtypes index. every class, which can have interface with `@IndexInherited` annotation.
-        processSubtypeIndexInReverseWay(roundEnv);
+        for (Element type : roundEnv.getRootElements()) {
+            processSubtypeIndexInReverseWay(type);
+        }
 
         if (roundEnv.processingOver()) {
             writeIndexes();
@@ -57,19 +60,24 @@ public class ClassIndexProcessor extends AbstractProcessor {
         return false;
     }
 
-    private void processSubtypeIndexInReverseWay(RoundEnvironment roundEnv) {
-        for (Element type : roundEnv.getRootElements()) {
+    private void processSubtypeIndexInReverseWay(Element type) {
+        if (type.getKind() == ElementKind.CLASS) {
             Queue<TypeMirror> supers = Queues.newArrayDeque();
-            if (type.getKind() == ElementKind.CLASS) {
-                supers.addAll(elementUtility.getTypes().directSupertypes(type.asType()));
-                while (!supers.isEmpty()) {
-                    TypeMirror candidate = supers.poll();
-                    if (candidate.getKind() != TypeKind.NONE) {
-                        if (elementUtility.hasStereotype(elementUtility.getTypes().asElement(candidate),
-                                Collections.singletonList(IndexInherited.class.getName())))
-                            subtypesTypeWriter.writeSubType(elementUtility.getTypes().erasure(candidate).toString(), elementUtility.getTypes().erasure(type.asType()).toString());
-                        supers.addAll(elementUtility.getTypes().directSupertypes(candidate));
+            for (Element subType : type.getEnclosedElements()) {
+                processSubtypeIndexInReverseWay(subType);
+            }
+            supers.addAll(elementUtility.getTypes().directSupertypes(type.asType()));
+            while (!supers.isEmpty()) {
+                TypeMirror candidate = supers.poll();
+                if (candidate.getKind() != TypeKind.NONE) {
+                    if (elementUtility.hasStereotype(elementUtility.getTypes().asElement(candidate),
+                            Collections.singletonList(IndexInherited.class.getName()))) {
+                        TypeElement candidateElement = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(candidate));
+                        TypeElement erasedType = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(type.asType()));
+                        subtypesTypeWriter.writeSubType(elementUtility.getElements().getBinaryName(candidateElement).toString(),
+                                elementUtility.getElements().getBinaryName(erasedType).toString());
                     }
+                    supers.addAll(elementUtility.getTypes().directSupertypes(candidate));
                 }
             }
         }
