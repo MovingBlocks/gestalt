@@ -1,19 +1,5 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.assets;
 
 import android.support.annotation.Nullable;
@@ -21,7 +7,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Sets;
@@ -140,7 +125,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             ref = disposalQueue.poll();
         }
         for (ResourceUrn urn : urns) {
-            compactResource(urn);
+            disposeAsset(urn);
         }
     }
 
@@ -269,7 +254,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         if (closed) {
             throw new IllegalStateException("Cannot create asset for disposed asset type: " + assetClass);
         } else {
-            if(!asset.getUrn().isInstance()) {
+            if (!asset.getUrn().isInstance()) {
                 loadedAssets.put(asset.getUrn(), new SoftReference<T>(assetClass.cast(asset)));
             }
             references.add(new AssetReference<>(asset, disposalQueue, disposer));
@@ -283,28 +268,34 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     void onAssetDisposed(Asset<U> asset) {
         if (!asset.getUrn().isInstance()) {
-            compactResource(asset.getUrn());
+            disposeAsset(asset.getUrn());
         }
     }
 
-    private void compactResource(ResourceUrn target) {
+    /**
+     * dispose asset and remove loaded asset from {@link #loadedAssets}
+     * @param target urn to free
+     */
+    private void disposeAsset(ResourceUrn target) {
         Preconditions.checkArgument(!target.isInstance());
-        if(!loadedAssets.containsKey(target)) {
+        if (!loadedAssets.containsKey(target)) {
             return;
         }
 
         Reference<T> reference = loadedAssets.get(target);
         Asset<U> current = reference.get();
-        if(current != null && current.isDisposed() && Iterables.isEmpty(current.instances())) {
-            logger.warn("non instanced asset is disposed with instances. instances will become orphaned.");
-        }
-
-        if(current == null || current.isDisposed()) {
-            // disposing of a non instanced asset will orphan the instanced assets.
+        if (current == null) {
             loadedAssets.remove(target);
-            return;
+        } else if (current.isDisposed()) {
+            for (WeakReference<Asset<U>> it : current.instances()) {
+                Asset<U> instance = it.get();
+                if (instance != null && !instance.isDisposed()) {
+                    logger.warn("non instanced asset is disposed with instances. instances will become orphaned.");
+                    break;
+                }
+            }
+            loadedAssets.remove(target);
         }
-        current.cleanup();
     }
 
 
@@ -649,7 +640,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
 
     }
 
-    private final class AssetReference<T extends Asset<?>> extends PhantomReference<T> {
+    private static final class AssetReference<T extends Asset<?>> extends PhantomReference<T> {
 
         private final DisposalHook disposalHook;
         public final ResourceUrn parentUrn;
