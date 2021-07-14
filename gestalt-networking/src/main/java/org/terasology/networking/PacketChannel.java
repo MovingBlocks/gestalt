@@ -22,14 +22,32 @@ public class PacketChannel {
 
     public static class SequenceBuffer<T> {
         int sequence;
-        T[] buffer;
-        int[] entries;
+        T[] entry;
+        int[] entry_sequence;
+
+        public T getEntry(int seq) {
+            return entry[seq % entry.length];
+        }
+
+        public int getSequence(int seq) {
+            return this.entry_sequence[seq % entry_sequence.length];
+        }
 
         public int getAcks() {
             return sequence - 1;
         }
 
-
+        public int ackBits() {
+            int bits = 0;
+            for(int i = 0; i < 32; ++i) {
+                int sequence = getAcks() - i;
+                if(getSequence(sequence) == sequence) {
+                    bits |= 1;
+                }
+                bits <<= 1;
+            }
+            return bits;
+        }
     }
 
     public static class SentPacketData {
