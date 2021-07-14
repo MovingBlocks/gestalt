@@ -1,19 +1,5 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.assets;
 
 import com.google.common.base.Preconditions;
@@ -77,16 +63,20 @@ public abstract class Asset<T extends AssetData> {
         }
     }
 
-    protected Iterable<WeakReference<Asset<T>>> instances() {
+    /**
+     * return all the instances that are associated with this type of asset.
+     * @return instances
+     */
+    protected final Iterable<WeakReference<Asset<T>>> instances() {
         if (this.parent != null) {
             return parent.instances();
         }
         return instances;
     }
 
-    protected void cleanup() {
-        if(this.parent != null) {
-            parent.cleanup();
+    private void compactInstances() {
+        if (this.parent != null) {
+            parent.compactInstances();
             return;
         }
         Iterator<WeakReference<Asset<T>>> iter = instances.iterator();
@@ -182,6 +172,11 @@ public abstract class Asset<T extends AssetData> {
         return (Optional<U>) assetCopy;
     }
 
+    /**
+     * return the non-instanced version of this asset. if the asset is already the normal
+     * type then it returns itself.
+     * @return non-instanced version of this Asset
+     */
     public final Asset<T> getNormalAsset() {
         if(parent == null) {
             return this;
@@ -194,6 +189,7 @@ public abstract class Asset<T extends AssetData> {
      */
     public final synchronized void dispose() {
         if (!disposed) {
+            compactInstances();
             disposed = true;
             assetType.onAssetDisposed(this);
             disposalHook.dispose();
