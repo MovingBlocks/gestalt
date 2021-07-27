@@ -52,6 +52,22 @@ public abstract class Asset<T extends AssetData> {
     private final DisposalHook disposalHook = new DisposalHook();
     private volatile boolean disposed;
 
+
+    /**
+     * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
+     *
+     * @param urn       The urn identifying the asset.
+     * @param assetType The asset type this asset belongs to.
+     */
+    protected Asset(ResourceUrn urn, AssetType<?, T> assetType) {
+        Preconditions.checkNotNull(urn);
+        Preconditions.checkNotNull(assetType);
+        instances = urn.isInstance() ? Collections.emptyList() : Lists.newArrayList();
+        this.urn = urn;
+        this.assetType = assetType;
+        assetType.registerAsset(this, disposalHook);
+    }
+
     private void appendInstance(Asset<T> asset) {
         if (parent == null) {
             Preconditions.checkArgument(!getUrn().isInstance());
@@ -87,21 +103,6 @@ public abstract class Asset<T extends AssetData> {
                 iter.remove();
             }
         }
-    }
-
-    /**
-     * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
-     *
-     * @param urn       The urn identifying the asset.
-     * @param assetType The asset type this asset belongs to.
-     */
-    protected Asset(ResourceUrn urn, AssetType<?, T> assetType) {
-        Preconditions.checkNotNull(urn);
-        Preconditions.checkNotNull(assetType);
-        instances = urn.isInstance() ? Collections.emptyList(): Lists.newArrayList();
-        this.urn = urn;
-        this.assetType = assetType;
-        assetType.registerAsset(this, disposalHook);
     }
 
     /**
@@ -177,8 +178,8 @@ public abstract class Asset<T extends AssetData> {
      * type then it returns itself.
      * @return non-instanced version of this Asset
      */
-    public final Asset<T> getNormalAsset() {
-        if(parent == null) {
+    public final Asset<T> getConcreteAsset() {
+        if (parent == null) {
             return this;
         }
         return parent;
