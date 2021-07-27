@@ -19,18 +19,10 @@ public class OutboundPacketHandler extends MessageToMessageEncoder<ByteBuf> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-        if (msg.readableBytes() <= config.fragmentAbove) {
+        int length = msg.readableBytes();
+        if (length <= config.fragmentAbove) {
+        } else {
 
         }
     }
-
-
-    //    @Override
-//    protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
-//        ByteBuf buffer = (ByteBuf) msg;
-//
-//
-//        if (buffer.readableBytes() <= config.fragmentAbove) {
-//        }
-//    }
 }
