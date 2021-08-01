@@ -175,10 +175,11 @@ public abstract class Asset<T extends AssetData> {
 
     /**
      * return the non-instanced version of this asset. if the asset is already the normal
-     * type then it returns itself.
+     * type then it returns itself. instanced assets are temporary copies from the normal loaded instances.
+     *
      * @return non-instanced version of this Asset
      */
-    public final Asset<T> getConcreteAsset() {
+    public final Asset<T> getNormalAsset() {
         if (parent == null) {
             return this;
         }
@@ -192,7 +193,6 @@ public abstract class Asset<T extends AssetData> {
         if (!disposed) {
             compactInstances();
             disposed = true;
-            assetType.onAssetDisposed(this);
             disposalHook.dispose();
             if(parent == null) {
                 for (WeakReference<Asset<T>> inst : this.instances()) {

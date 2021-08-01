@@ -115,14 +115,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     @SuppressWarnings("unchecked")
     public void processDisposal() {
-        Reference<? extends Asset<U>> ref = disposalQueue.poll();
         Set<ResourceUrn> urns = new HashSet<>();
-        while (ref != null) {
+        Reference<? extends Asset<U>> ref = null;
+        while ((ref = disposalQueue.poll()) != null) {
             AssetReference<? extends Asset<U>> assetRef = (AssetReference<? extends Asset<U>>) ref;
             urns.add(assetRef.parentUrn);
             assetRef.dispose();
             references.remove(assetRef);
-            ref = disposalQueue.poll();
         }
         for (ResourceUrn urn : urns) {
             disposeAsset(urn);
@@ -258,17 +257,6 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                 loadedAssets.put(asset.getUrn(), new SoftReference<T>(assetClass.cast(asset)));
             }
             references.add(new AssetReference<>(asset, disposalQueue, disposer));
-        }
-    }
-
-    /**
-     * Notifies the asset type when an asset is disposed
-     *
-     * @param asset The asset that was disposed.
-     */
-    void onAssetDisposed(Asset<U> asset) {
-        if (!asset.getUrn().isInstance()) {
-            disposeAsset(asset.getUrn());
         }
     }
 
