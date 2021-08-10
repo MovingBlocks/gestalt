@@ -59,7 +59,7 @@ public class SparseComponentStore<T extends Component<T>> implements ComponentSt
         if (source == null) {
             return false;
         }
-        into.copy(source);
+        into.copyFrom(source);
         return true;
     }
 
@@ -70,7 +70,7 @@ public class SparseComponentStore<T extends Component<T>> implements ComponentSt
             store.put(entityId, type.createCopy(component));
             return true;
         } else {
-            stored.copy(component);
+            stored.copyFrom(component);
             return false;
         }
     }
@@ -119,7 +119,7 @@ public class SparseComponentStore<T extends Component<T>> implements ComponentSt
 
         @Override
         public void getComponent(Component<T> component) {
-            component.copy(iterator.value());
+            component.copyFrom(iterator.value());
         }
     }
 

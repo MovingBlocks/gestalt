@@ -11,6 +11,6 @@ package org.terasology.gestalt.entitysystem.component;
 public abstract class EmptyComponent<T extends EmptyComponent> implements Component<T> {
 
     @Override
-    public void copy(T other) {
+    public void copyFrom(T other) {
     }
 }
