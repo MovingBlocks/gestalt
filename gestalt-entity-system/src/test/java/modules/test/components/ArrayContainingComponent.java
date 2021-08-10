@@ -10,7 +10,7 @@ public class ArrayContainingComponent implements Component<ArrayContainingCompon
     public List<String> strings = new ArrayList<>();
 
     @Override
-    public void copy(ArrayContainingComponent other) {
+    public void copyFrom(ArrayContainingComponent other) {
         strings.clear();
         strings.addAll(other.strings);
     }

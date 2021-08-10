@@ -118,7 +118,7 @@ public abstract class ComponentManagerTest {
         }
 
         @Override
-        public void copy(MismatchedPropertiesComponent other) {
+        public void copyFrom(MismatchedPropertiesComponent other) {
             this.stringProperty = other.stringProperty;
         }
     }

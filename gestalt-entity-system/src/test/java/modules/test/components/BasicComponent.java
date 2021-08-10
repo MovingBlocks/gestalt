@@ -42,7 +42,7 @@ public final class BasicComponent implements Component<BasicComponent> {
     }
 
     public BasicComponent(BasicComponent other) {
-        copy(other);
+        copyFrom(other);
         logger.info("Copy constructor called");
     }
 
@@ -78,7 +78,7 @@ public final class BasicComponent implements Component<BasicComponent> {
         this.count = count;
     }
 
-    public void copy(BasicComponent other) {
+    public void copyFrom(BasicComponent other) {
         this.name = other.name;
         this.description = other.description;
         this.count = other.count;

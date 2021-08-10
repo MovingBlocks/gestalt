@@ -34,5 +34,5 @@ public interface Component<T extends Component> {
      * Copies the values from another component. This is expected to be of the same type.
      * @param other The component to copy
      */
-    void copy(T other);
+    void copyFrom(T other);
 }

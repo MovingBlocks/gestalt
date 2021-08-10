@@ -14,7 +14,7 @@ public class MyComponent implements Component<MyComponent> {
     }
 
     @Override
-    public void copy(MyComponent other) {
+    public void copyFrom(MyComponent other) {
         this.name = other.name;
     }
 }

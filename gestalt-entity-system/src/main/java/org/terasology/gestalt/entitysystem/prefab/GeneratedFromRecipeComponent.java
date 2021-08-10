@@ -42,7 +42,7 @@ public final class GeneratedFromRecipeComponent implements Component<GeneratedFr
     }
 
     @Override
-    public void copy(GeneratedFromRecipeComponent other) {
+    public void copyFrom(GeneratedFromRecipeComponent other) {
         this.entityRecipe = other.entityRecipe;
     }
 }
