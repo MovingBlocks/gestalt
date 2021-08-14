@@ -30,7 +30,7 @@ public final class Sample implements Component<Sample> {
     }
 
     public Sample(Sample other) {
-        copy(other);
+        copyFrom(other);
     }
 
     public String getName() {
@@ -49,7 +49,7 @@ public final class Sample implements Component<Sample> {
         this.description = description;
     }
 
-    public void copy(Sample other) {
+    public void copyFrom(Sample other) {
         this.name = other.name;
         this.description = other.description;
     }

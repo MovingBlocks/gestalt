@@ -20,7 +20,6 @@ import android.support.annotation.NonNull;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Converter;
-import com.google.common.collect.Lists;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +34,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -66,7 +64,7 @@ public abstract class AbstractComponentTypeFactory implements ComponentTypeFacto
         if (copyConstructor == null) {
             copyConstructor = (T from) -> {
                 T result = emptyConstructor.get();
-                result.copy(from);
+                result.copyFrom(from);
                 return result;
             };
         }

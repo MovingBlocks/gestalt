@@ -27,9 +27,9 @@ public final class Empty implements Component<Empty> {
     }
 
     public Empty(Empty other) {
-        copy(other);
+        copyFrom(other);
     }
 
-    public void copy(Empty other) {
+    public void copyFrom(Empty other) {
     }
 }

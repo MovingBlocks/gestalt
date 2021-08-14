@@ -39,7 +39,7 @@ public final class Reference implements Component<Reference> {
     }
 
     public Reference(Reference other) {
-        copy(other);
+        copyFrom(other);
     }
 
     public EntityRef getReference() {
@@ -59,7 +59,7 @@ public final class Reference implements Component<Reference> {
         this.references.addAll(references);
     }
 
-    public void copy(Reference other) {
+    public void copyFrom(Reference other) {
         setReferences(other.references);
         this.reference = other.reference;
     }
