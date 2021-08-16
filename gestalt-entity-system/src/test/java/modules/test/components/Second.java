@@ -34,7 +34,7 @@ public final class Second implements Component<Second> {
     }
 
     public Second(Second other) {
-        copy(other);
+        copyFrom(other);
     }
 
     public String getName() {
@@ -55,7 +55,7 @@ public final class Second implements Component<Second> {
         this.dirty = true;
     }
 
-    public void copy(Second other) {
+    public void copyFrom(Second other) {
         this.name = other.name;
         this.description = other.description;
         this.dirty = true;

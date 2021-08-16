@@ -7,7 +7,7 @@ public class PublicAttributeComponent implements Component<PublicAttributeCompon
     public String name = "";
 
     @Override
-    public void copy(PublicAttributeComponent other) {
+    public void copyFrom(PublicAttributeComponent other) {
         this.name = other.name;
     }
 }

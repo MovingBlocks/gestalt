@@ -66,7 +66,7 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
     public boolean get(int entityId, T into) {
         T value = store[entityId];
         if (value != null) {
-            into.copy(store[entityId]);
+            into.copyFrom(store[entityId]);
             return true;
         }
         return false;
@@ -78,7 +78,7 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
             store[entityId] = type.createCopy(component);
             return true;
         } else {
-            store[entityId].copy(component);
+            store[entityId].copyFrom(component);
             return false;
         }
     }
@@ -126,7 +126,7 @@ public class ArrayComponentStore<T extends Component<T>> implements ComponentSto
 
         @Override
         public void getComponent(Component<T> component) {
-            component.copy(store[index]);
+            component.copyFrom(store[index]);
         }
 
         @Override
