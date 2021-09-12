@@ -32,7 +32,7 @@ public class TextComponent implements Component<TextComponent> {
     }
 
     @Override
-    public void copy(TextComponent other) {
+    public void copyFrom(TextComponent other) {
         this.text = other.text;
         this.dirty = true;
     }
