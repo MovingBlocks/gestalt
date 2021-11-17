@@ -266,6 +266,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             ClassName targetClass = ClassName.get(target);
 
             // abstract/interface classes can't be instantiated
+
             if(target.getModifiers().contains(Modifier.ABSTRACT) || target.getKind() == ElementKind.INTERFACE) {
                 return builder.add("return Optional.empty();").build();
             }
@@ -316,7 +317,11 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             CodeBlock.Builder builder = CodeBlock.builder();
 
             TypeElement targetElement = target;
-            while (true) {
+            TypeMirror mirror = null;
+            do {
+                if(mirror != null) {
+                    targetElement = (TypeElement) typeUtils.asElement(mirror);
+                }
 
                 for (Element ele : targetElement.getEnclosedElements()) {
                     if (ele.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName()))) {
@@ -333,12 +338,11 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     }
                 }
 
-                TypeMirror superType = targetElement.getSuperclass();
-                if(superType.getKind() == TypeKind.NONE) {
-                    break;
-                }
-                targetElement = (TypeElement) typeUtils.asElement(superType);
-            }
+                mirror = targetElement.getSuperclass();
+//                if(superType.getKind() == TypeKind.NONE) {
+//                    break;
+//                }
+            } while (mirror.getKind() != TypeKind.NONE);
             return builder.add("return $L.$L($L);", ClassName.get(Optional.class), "of", name).build();
         }
 
