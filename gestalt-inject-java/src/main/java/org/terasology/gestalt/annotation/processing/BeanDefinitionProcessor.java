@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.annotation.processing;
 
+import com.google.common.collect.Lists;
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -45,7 +46,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 @SupportedOptions({"org.terasology.gestalt.annotation.processing"})
 public class BeanDefinitionProcessor extends AbstractProcessor {
@@ -333,12 +333,22 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         }
 
 
+        private String resolveUniqueName(TypeElement element) {
+            Element parentElement = element;
+            List<Element> results = Lists.newArrayList();
+            do {
+                results.add(0, parentElement);
+                parentElement = parentElement.getEnclosingElement();
+            } while (parentElement.getKind() == ElementKind.CLASS);
+
+            return results.stream().map(k -> k.getSimpleName().toString()).collect(Collectors.joining("$$"));
+        }
+
         private void writeBeanDefinition(TypeElement typeElement, String className) {
             PackageElement packageElement = processingEnv.getElementUtils().getPackageOf(typeElement);
 
             TypeElement beanDefinitionClass = utility.getElements().getTypeElement("org.terasology.context.AbstractBeanDefinition");
-            // TODO: flattened class tree can have collisions
-            writer.writeService("org.terasology.context.BeanDefinition", packageElement.getQualifiedName() + "." + typeElement.getSimpleName() + "$BeanDefinition");
+            writer.writeService("org.terasology.context.BeanDefinition", packageElement.getQualifiedName() + "." + resolveUniqueName(typeElement) + "$BeanDefinition");
 
             CodeBlock injectionCreationBuilder = buildObjectPointCreationBlock(typeElement);
             CodeBlock injectionBlock = buildInjectionBlock(typeElement);
@@ -358,7 +368,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
 
             JavaFile.Builder builder = JavaFile.builder(
                     packageElement.getQualifiedName().toString(),
-                    TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "$BeanDefinition")
+                    TypeSpec.classBuilder(resolveUniqueName(typeElement) + "$BeanDefinition")
                             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                             .superclass(ParameterizedTypeName.get(
                                     ClassName.get(beanDefinitionClass),
