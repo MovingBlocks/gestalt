@@ -19,6 +19,7 @@ import org.terasology.gestalt.di.instance.BeanProvider;
 import org.terasology.gestalt.di.instance.ClassProvider;
 import org.terasology.gestalt.di.instance.SupplierProvider;
 
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     protected final Multimap<Qualifier, BeanIntercept> beanInterceptMapping = HashMultimap.create();
     private final Multimap<Qualifier, BeanKey> qualifierMapping = HashMultimap.create();
     private final Multimap<Class, BeanKey> interfaceMapping = HashMultimap.create();
+    private final Multimap<Class, BeanKey> abstractMapping = HashMultimap.create();
 
     private final BeanContext parent;
     private final BeanEnvironment environment;
@@ -83,6 +85,16 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
         bindExpression(new ServiceRegistry.InstanceExpression<>(BeanContext.class).lifetime(Lifetime.Singleton).use(() -> this));
     }
 
+    private <T> void loadAbstract(BeanKey<?> key, Class<T> clazz) {
+        Class parentClass = clazz;
+        do {
+            if((parentClass.getModifiers() & Modifier.ABSTRACT) > 0) {
+                abstractMapping.put(parentClass, key);
+            }
+            parentClass = parentClass.getSuperclass();
+        } while (parentClass != null);
+    }
+
     private <T> void bindExpression(ServiceRegistry.InstanceExpression<T> expression) {
         BeanKey<?> key = new BeanKey(expression.target)
                 .use(expression.root)
@@ -91,6 +103,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
             for (Class impl : expression.target.getInterfaces()) {
                 interfaceMapping.put(impl, key);
             }
+            loadAbstract(key, expression.target);
         } else {
             interfaceMapping.put(expression.root, key);
         }
@@ -166,6 +179,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
             }
         } else if (identifier.baseType == identifier.implementingType) {
             Collection<BeanKey> implementing = interfaceMapping.get(identifier.baseType);
+            Collection<BeanKey> abstractImpl = abstractMapping.get(identifier.baseType);
             for (Class implType : identifier.baseType.getInterfaces()) {
                 Collection<BeanKey> temp = interfaceMapping.get(implType);
                 if (temp == null || temp.size() == 0) {
@@ -178,6 +192,13 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
             } else if (implementing != null) {
                 result = implementing;
             }
+
+            if (result != null && abstractImpl != null) {
+                result.addAll(abstractImpl);
+            } else if(abstractImpl != null) {
+                result = abstractImpl;
+            }
+
         } else {
             Collection<BeanKey> implementing = interfaceMapping.get(identifier.implementingType);
             if (result != null && implementing != null) {

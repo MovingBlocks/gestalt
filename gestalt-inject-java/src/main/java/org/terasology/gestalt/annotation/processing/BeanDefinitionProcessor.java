@@ -30,6 +30,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementScanner8;
 import javax.lang.model.util.Elements;
@@ -264,6 +265,12 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             CodeBlock.Builder builder = CodeBlock.builder();
             ClassName targetClass = ClassName.get(target);
 
+            // abstract/interface classes can't be instantiated
+
+            if(target.getModifiers().contains(Modifier.ABSTRACT) || target.getKind() == ElementKind.INTERFACE) {
+                return builder.add("return Optional.empty();").build();
+            }
+
             Element[] constructors = target.getEnclosedElements().stream().filter(k -> k.getKind() == ElementKind.CONSTRUCTOR).toArray(Element[]::new);
             Element[] injectionConstructor = Arrays.stream(constructors)
                     .filter(k -> k.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName())))
@@ -304,24 +311,38 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             ).build();
         }
 
+
         private CodeBlock buildInjectionBlock(TypeElement target) {
             String name = "instance";
             CodeBlock.Builder builder = CodeBlock.builder();
 
-            for (Element ele : target.getEnclosedElements()) {
-                if (ele.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName()))) {
-                    if (ele instanceof ExecutableElement) {
-                        List<? extends VariableElement> parameters = ((ExecutableElement) ele).getParameters();
+            TypeElement targetElement = target;
+            TypeMirror mirror = null;
+            do {
+                if(mirror != null) {
+                    targetElement = (TypeElement) typeUtils.asElement(mirror);
+                }
 
-                        if (ele.getSimpleName().toString().startsWith("set") && parameters.size() == 1) {
-                            builder.add("$L.$L($L); \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", parameters.get(0), ClassName.get(target)));
+                for (Element ele : targetElement.getEnclosedElements()) {
+                    if (ele.getAnnotationMirrors().stream().anyMatch(in -> in.getAnnotationType().toString().equals(Inject.class.getName()))) {
+                        if (ele instanceof ExecutableElement) {
+                            List<? extends VariableElement> parameters = ((ExecutableElement) ele).getParameters();
+
+                            if (ele.getSimpleName().toString().startsWith("set") && parameters.size() == 1) {
+                                builder.add("$L.$L($L); \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", parameters.get(0), ClassName.get(target)));
+                            }
+                        }
+                        if (ele instanceof VariableElement) {
+                            builder.add("$L.$L = $L; \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", (VariableElement) ele, ClassName.get(target)));
                         }
                     }
-                    if (ele instanceof VariableElement) {
-                        builder.add("$L.$L = $L; \n", name, ele.getSimpleName(), buildResolution("resolveParameterArgument", (VariableElement) ele, ClassName.get(target)));
-                    }
                 }
-            }
+
+                mirror = targetElement.getSuperclass();
+//                if(superType.getKind() == TypeKind.NONE) {
+//                    break;
+//                }
+            } while (mirror.getKind() != TypeKind.NONE);
             return builder.add("return $L.$L($L);", ClassName.get(Optional.class), "of", name).build();
         }
 
