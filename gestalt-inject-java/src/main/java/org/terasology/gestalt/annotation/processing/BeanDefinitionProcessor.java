@@ -341,7 +341,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                 parentElement = parentElement.getEnclosingElement();
             } while (parentElement.getKind() == ElementKind.CLASS);
 
-            return results.stream().map(k -> k.getSimpleName().toString()).collect(Collectors.joining("$$"));
+            return results.stream().map(k -> k.getSimpleName().toString()).collect(Collectors.joining("$"));
         }
 
         private void writeBeanDefinition(TypeElement typeElement, String className) {
