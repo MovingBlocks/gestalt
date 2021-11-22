@@ -301,7 +301,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     @SuppressWarnings("unchecked")
     public Optional<T> getInstanceAsset(ResourceUrn urn) {
         Optional<? extends T> parentAsset = getAsset(urn.getParentUrn());
-        if (parentAsset.isPresent()) {
+        if (parentAsset.isPresent() && !parentAsset.get().isDisposed()) {
             return parentAsset.get().createInstance();
         } else {
             return Optional.empty();
@@ -411,9 +411,12 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private Optional<T> getNormalAsset(ResourceUrn urn) {
         ResourceUrn redirectUrn = followRedirects(urn);
         Reference<T> reference = loadedAssets.get(redirectUrn);
-        T asset = reference == null ? null: reference.get();
+        T asset = reference == null ? null : reference.get();
         if (asset == null) {
             return reload(redirectUrn);
+        }
+        if (asset.isDisposed()) {
+            return Optional.empty();
         }
         return Optional.ofNullable(asset);
     }
