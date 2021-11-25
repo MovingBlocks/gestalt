@@ -19,9 +19,10 @@ package org.terasology.gestalt.android;
 import android.content.res.AssetManager;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terasology.gestalt.di.index.CompoundClassIndex;
+import org.terasology.gestalt.di.index.UrlClassIndex;
 import org.terasology.gestalt.module.Module;
 import org.terasology.gestalt.module.ModuleMetadata;
 import org.terasology.gestalt.module.ModuleMetadataJsonAdapter;
@@ -30,7 +31,6 @@ import org.terasology.gestalt.module.ModuleRegistry;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,22 +44,24 @@ import java.util.List;
  * A {@link ModulePathScanner} derivative that scans the APK assets directory on Android for modules.
  * It uses {@link AndroidAssetsFileSource} to create modules that directly use these files, removing the need to copy
  * the modules into the app's data directory first.
+ *
+ * For code modules, the dexes/jars are copied into app storage but everything else is read directly from the APK.
  */
 public class AndroidModulePathScanner extends ModulePathScanner {
     private static final Logger logger = LoggerFactory.getLogger(AndroidModulePathScanner.class);
     private final AssetManager assetManager;
-    private final File moduleDexesCache;
+    private final File moduleCodeCache;
 
-    public AndroidModulePathScanner(AssetManager assetManager, File moduleDexesCache) {
-        super();
+    public AndroidModulePathScanner(AssetManager assetManager, File moduleCodeCache) {
+        super(null);
         this.assetManager = assetManager;
-        this.moduleDexesCache = moduleDexesCache;
+        this.moduleCodeCache = moduleCodeCache;
     }
 
-    private void deleteModuleDexesCache(File file) {
+    private void deleteModuleCodeCache(File file) {
         if (file.isDirectory()) {
             for (String subPath : file.list()) {
-                deleteModuleDexesCache(new File(file, subPath));
+                deleteModuleCodeCache(new File(file, subPath));
             }
         }
         file.delete();
@@ -67,8 +69,8 @@ public class AndroidModulePathScanner extends ModulePathScanner {
 
     @Override
     public void scan(ModuleRegistry registry, Collection<File> paths) {
-        if (moduleDexesCache.exists()) {
-            deleteModuleDexesCache(moduleDexesCache);
+        if (moduleCodeCache.exists()) {
+            deleteModuleCodeCache(moduleCodeCache);
         }
 
         for (File path : paths) {
@@ -89,24 +91,16 @@ public class AndroidModulePathScanner extends ModulePathScanner {
                         continue;
                     }
 
-                    Reflections reflections = new Reflections();
-                    try {
-                        InputStream reflectionsFile = assetManager.open(fullModulePath + "/build/classes/reflections.cache");
-                        reflections.collect(reflectionsFile);
-                    } catch (FileNotFoundException ignore) {
-                        logger.warn("No reflections cache found for module. Is it an asset-only module?");
-                    } catch (Exception e) {
-                        logger.error("Error reading reflections", e);
-                    }
+                    CompoundClassIndex classIndex = new CompoundClassIndex();
 
                     List<File> classpaths = new ArrayList<>();
                     try {
-                        for (String moduleDex : assetManager.list(fullModulePath + "/build/dexes")) {
-                            if (moduleDex.endsWith(".dex")) {
-                                new File(moduleDexesCache, modulePath).mkdirs();
-                                File cachedModuleDex = new File(moduleDexesCache, modulePath + "/" + moduleDex);
-                                try (InputStream inputStream = assetManager.open(fullModulePath + "/build/dexes/" + moduleDex)) {
-                                    try (FileOutputStream outputStream = new FileOutputStream(cachedModuleDex)) {
+                        for (String moduleCode : assetManager.list(fullModulePath + "/build/dexes")) {
+                            if (moduleCode.endsWith(".dex") || moduleCode.endsWith(".jar")) {
+                                new File(moduleCodeCache, modulePath).mkdirs();
+                                File cachedModuleCode = new File(moduleCodeCache, modulePath + "/" + moduleCode);
+                                try (InputStream inputStream = assetManager.open(fullModulePath + "/build/dexes/" + moduleCode)) {
+                                    try (FileOutputStream outputStream = new FileOutputStream(cachedModuleCode)) {
                                         ByteStreams.copy(inputStream, outputStream);
                                     } catch (Exception e) {
                                         e.printStackTrace();
@@ -114,7 +108,13 @@ public class AndroidModulePathScanner extends ModulePathScanner {
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
-                                classpaths.add(cachedModuleDex);
+                                classpaths.add(cachedModuleCode);
+                                if (moduleCode.endsWith(".jar")) {
+                                    classIndex.add(UrlClassIndex.byArchive(cachedModuleCode));
+                                } else {
+                                    logger.warn("Using raw .dex files means that gestalt-di will not work." +
+                                                "Try combining them into a jar containing the META-INF directory.");
+                                }
                             }
                         }
                     } catch (Exception ignore) {
@@ -122,7 +122,7 @@ public class AndroidModulePathScanner extends ModulePathScanner {
 
                     registry.add(new Module(metadata,
                             new AndroidAssetsFileSource(assetManager, fullModulePath),
-                            classpaths, reflections, x -> true));
+                            classpaths, classIndex, x -> true));
                 }
             } catch (Exception ignore) {
             }
