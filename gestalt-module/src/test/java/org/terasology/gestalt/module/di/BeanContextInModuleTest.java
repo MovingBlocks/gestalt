@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.module.TestImplementation1;
+import org.terasology.context.Lifetime;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.ModuleEnvironment;
@@ -24,7 +25,9 @@ public class BeanContextInModuleTest {
 
     @Before
     public void setup() {
-        BeanContext root = new DefaultBeanContext(new ModuleServiceRegistry(new PermitAllPermissionProviderFactory()));
+        ModuleServiceRegistry serviceRegistry = new ModuleServiceRegistry(new PermitAllPermissionProviderFactory());
+        serviceRegistry.with(ModulePathScanner.class).lifetime(Lifetime.Singleton);
+        BeanContext root = new DefaultBeanContext(serviceRegistry);
 
         ModulePathScanner scanner = root.getBean(ModulePathScanner.class);
         ModuleRegistry registry = root.getBean(ModuleRegistry.class);

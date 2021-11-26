@@ -6,9 +6,7 @@ import org.terasology.gestalt.module.sandbox.PermissionProviderFactory;
 
 public class ModuleServiceRegistry extends ServiceRegistry {
     public ModuleServiceRegistry(PermissionProviderFactory permissionProviderFactory) {
-        with(ModulePathScanner.class);
         with(ModuleMetadataJsonAdapter.class);
-        with(ModulePathScanner.class);
         with(ModuleFactory.class);
         with(TableModuleRegistry.class);
         with(DependencyResolver.class);

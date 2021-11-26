@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.module.Test1Scoped;
 import org.module.TestImplementation1;
+import org.terasology.context.Lifetime;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.di.index.UrlClassIndex;
@@ -80,7 +81,9 @@ public class SandboxTest {
         Policy.setPolicy(new ModuleSecurityPolicy());
         System.setSecurityManager(new ModuleSecurityManager());
 
-        root = new DefaultBeanContext(new ModuleServiceRegistry(permissionProviderFactory));
+        ModuleServiceRegistry registry = new ModuleServiceRegistry(permissionProviderFactory);
+        registry.with(ModulePathScanner.class).lifetime(Lifetime.Singleton);
+        root = new DefaultBeanContext(registry);
         root.getBean(ModulePathScanner.class).scan(root.getBean(ModuleRegistry.class), Paths.get("test-modules").toFile());
         resolver = root.getBean(DependencyResolver.class);
     }
