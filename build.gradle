@@ -27,16 +27,16 @@ ext {
     android_annotation_version = "28.0.0"
 
     // Standard Utility
-    guava_version = "27.0.1-android"
-    slf4j_version = "1.7.25"
-    gson_version = "2.8.5"
+    guava_version = "31.1-android"
+    slf4j_version = "1.7.36"
+    gson_version = "2.9.0"
     jcip_annotation_version = "1.0"
 
     // Testing
     junit_version = "4.13.2"
-    jupiter_version = "5.7.1"
-    logback_version = "1.2.3"
-    mockito_version = "3.7.7"
+    jupiter_version = "5.8.2"
+    logback_version = "1.2.9"
+    mockito_version = "3.9.0"
 }
 
 allprojects {
