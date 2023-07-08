@@ -2,5 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 apply plugin: 'java'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+dependencies {
+    annotationProcessor project(":gestalt-inject-java")
+    implementation project(":gestalt-inject")
+}
+
+tasks.compileJava {
+    java.sourceCompatibility JavaVersion.VERSION_1_8
+    java.targetCompatibility JavaVersion.VERSION_1_8
+}

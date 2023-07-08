@@ -24,7 +24,7 @@ test {
     testLogging.showStandardStreams = true
 
     reports {
-        junitXml.enabled = true
+        junitXml.required.set(true)
     }
 
     // Arguments to include while running tests
