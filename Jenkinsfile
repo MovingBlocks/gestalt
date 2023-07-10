@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label "light-java"
+        label "light"
     }
     stages {
         stage('Build') {
