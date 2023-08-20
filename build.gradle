@@ -17,8 +17,7 @@ buildscript {
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.3'
-        classpath 'org.terasology:reflections:0.9.12-MB' // This goes away in v8
+        classpath 'com.android.tools.build:gradle:7.4.1'
     }
 }
 
