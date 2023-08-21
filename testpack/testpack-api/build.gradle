@@ -2,5 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 apply plugin: 'java'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+tasks.compileJava {
+    java.sourceCompatibility JavaVersion.VERSION_1_8
+    java.targetCompatibility JavaVersion.VERSION_1_8
+}
