@@ -10,7 +10,7 @@ dependencies {
     implementation 'org.apache.commons:commons-vfs2:2.2'
     implementation "org.slf4j:slf4j-api:$slf4j_version"
     implementation "com.android.support:support-annotations:$android_annotation_version"
-    implementation "com.github.zafarkhaja:java-semver:0.10.0"
+    implementation "com.github.zafarkhaja:java-semver:0.10.2"
 
     testImplementation project(":testpack:testpack-api")
     testImplementation "junit:junit:$junit_version"
