@@ -87,15 +87,15 @@ public final class Version implements Comparable<Version> {
     }
 
     public int getMajor() {
-        return semver.majorVersion();
+        return (int) semver.majorVersion();
     }
 
     public int getMinor() {
-        return semver.minorVersion();
+        return (int) semver.minorVersion();
     }
 
     public int getPatch() {
-        return semver.patchVersion();
+        return (int) semver.patchVersion();
     }
 
     /**
