@@ -1,27 +1,19 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.assets;
 
 import com.google.common.base.Preconditions;
-
+import com.google.common.collect.Lists;
 import net.jcip.annotations.ThreadSafe;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terasology.context.annotation.API;
 
+import java.lang.ref.WeakReference;
+import java.security.PrivilegedActionException;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -50,11 +42,16 @@ import java.util.Optional;
 @API
 @ThreadSafe
 public abstract class Asset<T extends AssetData> {
+    private static final Logger logger = LoggerFactory.getLogger(Asset.class);
+
+    private final List<WeakReference<Asset<T>>> instances;
+    private Asset<T> parent;
 
     private final ResourceUrn urn;
     private final AssetType<?, T> assetType;
     private final DisposalHook disposalHook = new DisposalHook();
     private volatile boolean disposed;
+
 
     /**
      * The constructor for an asset. It is suggested that implementing classes provide a constructor taking both the urn, and an initial AssetData to load.
@@ -65,9 +62,47 @@ public abstract class Asset<T extends AssetData> {
     protected Asset(ResourceUrn urn, AssetType<?, T> assetType) {
         Preconditions.checkNotNull(urn);
         Preconditions.checkNotNull(assetType);
+        instances = urn.isInstance() ? Collections.emptyList() : Lists.newArrayList();
         this.urn = urn;
         this.assetType = assetType;
         assetType.registerAsset(this, disposalHook);
+    }
+
+    private void appendInstance(Asset<T> asset) {
+        if (parent == null) {
+            Preconditions.checkArgument(!getUrn().isInstance());
+            asset.parent = this;
+            instances.add(new WeakReference<>(asset));
+        } else {
+            asset.parent = parent;
+            parent.instances.add(new WeakReference<>(asset));
+        }
+    }
+
+    /**
+     * return all the instances that are associated with this type of asset.
+     * @return instances
+     */
+    protected final Iterable<WeakReference<Asset<T>>> instances() {
+        if (this.parent != null) {
+            return parent.instances();
+        }
+        return instances;
+    }
+
+    private void compactInstances() {
+        if (this.parent != null) {
+            parent.compactInstances();
+            return;
+        }
+        Iterator<WeakReference<Asset<T>>> iter = instances.iterator();
+        while(iter.hasNext()) {
+            WeakReference<Asset<T>> reference = iter.next();
+            Asset<T> inst = reference.get();
+            if(inst == null || inst.isDisposed()) {
+                iter.remove();
+            }
+        }
     }
 
     /**
@@ -76,8 +111,14 @@ public abstract class Asset<T extends AssetData> {
      *                       this would prevent it being garbage collected. It must be a static inner class, or not contained in the asset class
      *                       (or an anonymous class defined in a static context). A warning will be logged if this is not the case.
      */
-    protected void setDisposableResource(DisposableResource resource) {
-        this.disposalHook.setDisposableResource(resource);
+    public Asset(ResourceUrn urn, AssetType<?, T> assetType, DisposableResource resource) {
+        Preconditions.checkNotNull(urn);
+        Preconditions.checkNotNull(assetType);
+        instances = urn.isInstance() ? Collections.emptyList(): Lists.newArrayList();
+        this.urn = urn;
+        this.assetType = assetType;
+        disposalHook.setDisposableResource(resource);
+        assetType.registerAsset(this, disposalHook);
     }
 
     /**
@@ -113,12 +154,36 @@ public abstract class Asset<T extends AssetData> {
     @SuppressWarnings("unchecked")
     public final <U extends Asset<T>> Optional<U> createInstance() {
         Preconditions.checkState(!disposed);
-        return (Optional<U>) assetType.createInstance(this);
+        ResourceUrn instanceUrn = getUrn().getInstanceUrn();
+
+        Optional<? extends Asset<T>> assetCopy = doCreateCopy(instanceUrn, assetType);
+        if (!assetCopy.isPresent()) {
+            Optional<T> assetData;
+            try {
+                assetData = assetType.fetchAssetData(instanceUrn);
+            } catch (PrivilegedActionException e) {
+                logger.error("Failed to load asset '" + urn + "'", e.getCause());
+                return Optional.empty();
+            }
+            if (assetData.isPresent()) {
+                assetCopy = Optional.ofNullable(assetType.loadAsset(instanceUrn, assetData.get()));
+            }
+        }
+        assetCopy.ifPresent(this::appendInstance);
+        return (Optional<U>) assetCopy;
     }
 
-    final synchronized Optional<? extends Asset<T>> createCopy(ResourceUrn copyUrn) {
-        Preconditions.checkState(!disposed);
-        return doCreateCopy(copyUrn, assetType);
+    /**
+     * return the non-instanced version of this asset. if the asset is already the normal
+     * type then it returns itself. instanced assets are temporary copies from the normal loaded instances.
+     *
+     * @return non-instanced version of this Asset
+     */
+    public final Asset<T> getNormalAsset() {
+        if (parent == null) {
+            return this;
+        }
+        return parent;
     }
 
     /**
@@ -126,9 +191,17 @@ public abstract class Asset<T extends AssetData> {
      */
     public final synchronized void dispose() {
         if (!disposed) {
+            compactInstances();
             disposed = true;
-            assetType.onAssetDisposed(this);
             disposalHook.dispose();
+            if(parent == null) {
+                for (WeakReference<Asset<T>> inst : this.instances()) {
+                    Asset<T> current = inst.get();
+                    if (current != null) {
+                        current.dispose();
+                    }
+                }
+            }
         }
     }
 

@@ -1,37 +1,16 @@
-/*
- * Copyright 2019 MovingBlocks
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2021 The Terasology Foundation
+// SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.assets;
 
 import android.support.annotation.Nullable;
-
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
-
 import net.jcip.annotations.ThreadSafe;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.context.annotation.API;
@@ -43,17 +22,21 @@ import java.io.IOException;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 /**
  * AssetType manages all assets of a particular type/class.  It provides the ability to resolve and load assets by Urn, and caches assets so that there is only
@@ -75,8 +58,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     private final Class<U> assetDataClass;
     private final AssetFactory<T, U> factory;
     private final List<AssetDataProducer<U>> producers = Lists.newCopyOnWriteArrayList();
-    private final Map<ResourceUrn, T> loadedAssets = new MapMaker().concurrencyLevel(4).makeMap();
-    private final ListMultimap<ResourceUrn, WeakReference<T>> instanceAssets = Multimaps.synchronizedListMultimap(ArrayListMultimap.<ResourceUrn, WeakReference<T>>create());
+    private final Map<ResourceUrn, Reference<T>> loadedAssets = new MapMaker().concurrencyLevel(4).makeMap();
 
     // Per-asset locks to deal with situations where multiple threads attempt to obtain or create the same unloaded asset concurrently
     private final Map<ResourceUrn, ResourceLock> locks = new MapMaker().concurrencyLevel(1).makeMap();
@@ -133,12 +115,16 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     @SuppressWarnings("unchecked")
     public void processDisposal() {
-        Reference<? extends Asset<U>> ref = disposalQueue.poll();
-        while (ref != null) {
+        Set<ResourceUrn> urns = new HashSet<>();
+        Reference<? extends Asset<U>> ref = null;
+        while ((ref = disposalQueue.poll()) != null) {
             AssetReference<? extends Asset<U>> assetRef = (AssetReference<? extends Asset<U>>) ref;
+            urns.add(assetRef.parentUrn);
             assetRef.dispose();
             references.remove(assetRef);
-            ref = disposalQueue.poll();
+        }
+        for (ResourceUrn urn : urns) {
+            disposeAsset(urn);
         }
     }
 
@@ -153,23 +139,14 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * Disposes all assets of this type.
      */
     public synchronized void disposeAll() {
-        loadedAssets.values().forEach(T::dispose);
-
-        for (WeakReference<T> assetRef : ImmutableList.copyOf(instanceAssets.values())) {
-            T asset = assetRef.get();
+        loadedAssets.values().forEach(k -> {
+            Asset<U> asset = k.get();
             if (asset != null) {
                 asset.dispose();
             }
-        }
+        });
+        loadedAssets.clear();
         processDisposal();
-        if (!loadedAssets.isEmpty()) {
-            logger.error("Assets remained loaded after disposal - {}", loadedAssets.keySet());
-            loadedAssets.clear();
-        }
-        if (!instanceAssets.isEmpty()) {
-            logger.error("Asset instances remained loaded after disposal - {}", instanceAssets.keySet());
-            instanceAssets.clear();
-        }
     }
 
     /**
@@ -181,12 +158,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     public void refresh() {
         if (!closed) {
-            for (T asset : loadedAssets.values()) {
-                if (!followRedirects(asset.getUrn()).equals(asset.getUrn()) || !reloadFromProducers(asset)) {
+            for (Reference<T> target : loadedAssets.values()) {
+                T asset = target.get();
+                if (asset != null && (!followRedirects(asset.getUrn()).equals(asset.getUrn()) || !reloadFromProducers(asset))) {
                     asset.dispose();
-                    for (WeakReference<T> instanceRef : ImmutableList.copyOf(instanceAssets.get(asset.getUrn().getInstanceUrn()))) {
-                        T instance = instanceRef.get();
-                        if (instance != null) {
+                    for(WeakReference<Asset<U>> it :asset.instances()) {
+                        Asset<U> instance = it.get();
+                        if(instance != null) {
                             instance.dispose();
                         }
                     }
@@ -267,19 +245,6 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     }
 
     /**
-     * Notifies the asset type when an asset is disposed
-     *
-     * @param asset The asset that was disposed.
-     */
-    void onAssetDisposed(Asset<U> asset) {
-        if (asset.getUrn().isInstance()) {
-            instanceAssets.get(asset.getUrn()).remove(new WeakReference<>(assetClass.cast(asset)));
-        } else {
-            loadedAssets.remove(asset.getUrn());
-        }
-    }
-
-    /**
      * Notifies the asset type when an asset is created
      *
      * @param asset The asset that was created
@@ -288,14 +253,39 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         if (closed) {
             throw new IllegalStateException("Cannot create asset for disposed asset type: " + assetClass);
         } else {
-            if (asset.getUrn().isInstance()) {
-                instanceAssets.put(asset.getUrn(), new WeakReference<>(assetClass.cast(asset)));
-            } else {
-                loadedAssets.put(asset.getUrn(), assetClass.cast(asset));
+            if (!asset.getUrn().isInstance()) {
+                loadedAssets.put(asset.getUrn(), new SoftReference<T>(assetClass.cast(asset)));
             }
             references.add(new AssetReference<>(asset, disposalQueue, disposer));
         }
     }
+
+    /**
+     * dispose asset and remove loaded asset from {@link #loadedAssets}
+     * @param target urn to free
+     */
+    private void disposeAsset(ResourceUrn target) {
+        Preconditions.checkArgument(!target.isInstance());
+        if (!loadedAssets.containsKey(target)) {
+            return;
+        }
+
+        Reference<T> reference = loadedAssets.get(target);
+        Asset<U> current = reference.get();
+        if (current == null) {
+            loadedAssets.remove(target);
+        } else if (current.isDisposed()) {
+            for (WeakReference<Asset<U>> it : current.instances()) {
+                Asset<U> instance = it.get();
+                if (instance != null && !instance.isDisposed()) {
+                    logger.warn("non instanced asset is disposed with instances. instances will become orphaned.");
+                    break;
+                }
+            }
+            loadedAssets.remove(target);
+        }
+    }
+
 
     /**
      * Creates and returns an instance of an asset, if possible. The following methods are used to create the copy, in order, with the first technique to succeeed used:
@@ -306,12 +296,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      *
      * @param urn The urn of the asset to create an instance of
      * @return An instance of the desired asset
+     *
      */
     @SuppressWarnings("unchecked")
     public Optional<T> getInstanceAsset(ResourceUrn urn) {
         Optional<? extends T> parentAsset = getAsset(urn.getParentUrn());
-        if (parentAsset.isPresent()) {
-            return createInstance(parentAsset.get());
+        if (parentAsset.isPresent() && !parentAsset.get().isDisposed()) {
+            return parentAsset.get().createInstance();
         } else {
             return Optional.empty();
         }
@@ -324,26 +315,21 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @return The new instance, or {@link Optional#empty} if it could not be created
      */
     Optional<T> createInstance(Asset<U> asset) {
-        Preconditions.checkArgument(assetClass.isAssignableFrom(asset.getClass()));
-        Optional<? extends Asset<U>> result = asset.createCopy(asset.getUrn().getInstanceUrn());
-        if (!result.isPresent()) {
-            try {
-                return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
-                    for (AssetDataProducer<U> producer : producers) {
-                        Optional<U> data = producer.getAssetData(asset.getUrn());
-                        if (data.isPresent()) {
-                            return Optional.of(loadAsset(asset.getUrn().getInstanceUrn(), data.get()));
-                        }
-                    }
-                    return Optional.ofNullable(assetClass.cast(result.get()));
-                });
-            } catch (PrivilegedActionException e) {
-                logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e.getCause());
-            }
-        }
-        return Optional.ofNullable(assetClass.cast(result.get()));
+        return asset.createInstance();
     }
 
+
+    public Optional<U> fetchAssetData(ResourceUrn urn) throws PrivilegedActionException {
+        return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<U>>) () -> {
+            for (AssetDataProducer<U> producer : producers) {
+                Optional<U> data = producer.getAssetData(urn);
+                if (data.isPresent()) {
+                    return data;
+                }
+            }
+            return Optional.empty();
+        });
+    }
     /**
      * Forces a reload of an asset from a data producer, if possible.  The resource urn must not be an instance urn (it doesn't make sense to reload an instance by urn).
      * If there is no available source for the asset (it has no producer) then it will not be reloaded.
@@ -355,15 +341,12 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         Preconditions.checkArgument(!urn.isInstance(), "Cannot reload an asset instance urn");
         ResourceUrn redirectUrn = followRedirects(urn);
         try {
-            return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
-                for (AssetDataProducer<U> producer : producers) {
-                    Optional<U> data = producer.getAssetData(redirectUrn);
-                    if (data.isPresent()) {
-                        return Optional.of(loadAsset(redirectUrn, data.get()));
-                    }
-                }
-                return Optional.ofNullable(loadedAssets.get(redirectUrn));
-            });
+            Optional<U> data = fetchAssetData(urn);
+            if (data.isPresent()) {
+                return Optional.of(loadAsset(redirectUrn, data.get()));
+            }
+            Reference<T>  reference = loadedAssets.get(redirectUrn);
+            return Optional.ofNullable(reference == null ? null : reference.get());
         } catch (PrivilegedActionException e) {
             if (redirectUrn.equals(urn)) {
                 logger.error("Failed to load asset '{}'", redirectUrn, e.getCause());
@@ -375,6 +358,51 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     }
 
     /**
+     * Loads an asset with the given urn and data. If the asset already exists, it is reloaded with the data instead
+     *
+     * @param urn  The urn of the asset
+     * @param data The data to load the asset with
+     * @return The loaded (or reloaded) asset
+     */
+    public T loadAsset(ResourceUrn urn, U data) {
+        if (urn.isInstance()) {
+            return factory.build(urn, this, data);
+        } else {
+            Reference<T> reference = loadedAssets.get(urn);
+            T asset = reference == null ? null : reference.get();
+            if (asset != null) {
+                asset.reload(data);
+            } else {
+                ResourceLock lock;
+                synchronized (locks) {
+                    lock = locks.computeIfAbsent(urn, k -> new ResourceLock(urn));
+                }
+                try {
+                    lock.lock();
+                    if (!closed) {
+                        reference = loadedAssets.get(urn);
+                        asset = reference == null ? null : reference.get();
+                        if (asset == null) {
+                            asset = factory.build(urn, this, data);
+                        } else {
+                            asset.reload(data);
+                        }
+                    }
+                    synchronized (locks) {
+                        if (lock.unlock()) {
+                            locks.remove(urn);
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    logger.error("Failed to load asset - interrupted awaiting lock on resource {}", urn);
+                }
+            }
+
+            return asset;
+        }
+    }
+
+    /**
      * Obtains a non-instance asset
      *
      * @param urn The urn of the asset
@@ -382,9 +410,13 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      */
     private Optional<T> getNormalAsset(ResourceUrn urn) {
         ResourceUrn redirectUrn = followRedirects(urn);
-        T asset = loadedAssets.get(redirectUrn);
+        Reference<T> reference = loadedAssets.get(redirectUrn);
+        T asset = reference == null ? null : reference.get();
         if (asset == null) {
             return reload(redirectUrn);
+        }
+        if (asset.isDisposed()) {
+            return Optional.empty();
         }
         return Optional.ofNullable(asset);
     }
@@ -500,13 +532,12 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         try {
             for (AssetDataProducer<U> producer : producers) {
                 Optional<U> data = producer.getAssetData(asset.getUrn());
-
                 if (data.isPresent()) {
                     asset.reload(data.get());
-                    for (WeakReference<T> assetInstanceRef : instanceAssets.get(asset.getUrn().getInstanceUrn())) {
-                        T assetInstance = assetInstanceRef.get();
-                        if (assetInstance != null) {
-                            assetInstance.reload(data.get());
+                    for(WeakReference<Asset<U>> it :asset.instances()) {
+                        Asset<U> instance = it.get();
+                        if(instance != null) {
+                            instance.reload(data.get());
                         }
                     }
                     return true;
@@ -516,49 +547,6 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             logger.error("Failed to reload asset '{}', disposing", asset.getUrn());
         }
         return false;
-    }
-
-    /**
-     * Loads an asset with the given urn and data. If the asset already exists, it is reloaded with the data instead
-     *
-     * @param urn  The urn of the asset
-     * @param data The data to load the asset with
-     * @return The loaded (or reloaded) asset
-     */
-    public T loadAsset(ResourceUrn urn, U data) {
-        if (urn.isInstance()) {
-            return factory.build(urn, this, data);
-        } else {
-            T asset = loadedAssets.get(urn);
-            if (asset != null) {
-                asset.reload(data);
-            } else {
-                ResourceLock lock;
-                synchronized (locks) {
-                    lock = locks.computeIfAbsent(urn, k -> new ResourceLock(urn));
-                }
-                try {
-                    lock.lock();
-                    if (!closed) {
-                        asset = loadedAssets.get(urn);
-                        if (asset == null) {
-                            asset = factory.build(urn, this, data);
-                        } else {
-                            asset.reload(data);
-                        }
-                    }
-                    synchronized (locks) {
-                        if (lock.unlock()) {
-                            locks.remove(urn);
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    logger.error("Failed to load asset - interrupted awaiting lock on resource {}", urn);
-                }
-            }
-
-            return asset;
-        }
     }
 
     /**
@@ -581,7 +569,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @return A list of all the loaded assets.
      */
     public Set<T> getLoadedAssets() {
-        return ImmutableSet.copyOf(loadedAssets.values());
+        return loadedAssets.values().stream().map(Reference::get).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     /**
@@ -640,15 +628,17 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         public String toString() {
             return "lock(" + urn + ")";
         }
+
     }
 
-    private static final class AssetReference<T> extends PhantomReference<T> {
+    private static final class AssetReference<T extends Asset<?>> extends PhantomReference<T> {
 
         private final DisposalHook disposalHook;
-
+        public final ResourceUrn parentUrn;
         public AssetReference(T asset, ReferenceQueue<T> queue, DisposalHook hook) {
             super(asset, queue);
             this.disposalHook = hook;
+            parentUrn = asset.getUrn().getParentUrn();
         }
 
         public void dispose() {
