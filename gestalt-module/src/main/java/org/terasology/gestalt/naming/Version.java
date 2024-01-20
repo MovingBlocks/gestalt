@@ -48,7 +48,7 @@ public final class Version implements Comparable<Version> {
         }
 
 
-        final com.github.zafarkhaja.semver.Version baseVersion = com.github.zafarkhaja.semver.Version.forIntegers(major, minor, patch);
+        final com.github.zafarkhaja.semver.Version baseVersion = com.github.zafarkhaja.semver.Version.of(major, minor, patch);
         this.semver = snapshot ? baseVersion.setPreReleaseVersion(SNAPSHOT) : baseVersion;
     }
 
@@ -58,7 +58,7 @@ public final class Version implements Comparable<Version> {
      */
     public Version(String version) {
         try {
-            this.semver = com.github.zafarkhaja.semver.Version.valueOf(version);
+            this.semver = com.github.zafarkhaja.semver.Version.parse(version);
         } catch (ParseException e) {
             throw new VersionParseException("Invalid version '" + version + "' - must be of the form MAJOR.minor.patch");
         }
@@ -74,22 +74,22 @@ public final class Version implements Comparable<Version> {
     }
 
     public int getMajor() {
-        return semver.getMajorVersion();
+        return (int) semver.majorVersion();
     }
 
     public int getMinor() {
-        return semver.getMinorVersion();
+        return (int) semver.minorVersion();
     }
 
     public int getPatch() {
-        return semver.getPatchVersion();
+        return (int) semver.patchVersion();
     }
 
     /**
      * @return Whether this version is a snapshot (work in progress)
      */
     public boolean isSnapshot() {
-        return !semver.getPreReleaseVersion().isEmpty();
+        return !semver.preReleaseVersion().isEmpty();
     }
 
     public Version getSnapshot() {
@@ -97,15 +97,15 @@ public final class Version implements Comparable<Version> {
     }
 
     public Version getNextMajorVersion() {
-        return new Version(semver.incrementMajorVersion());
+        return new Version(semver.nextMajorVersion());
     }
 
     public Version getNextMinorVersion() {
-        return new Version(semver.incrementMinorVersion());
+        return new Version(semver.nextMinorVersion());
     }
 
     public Version getNextPatchVersion() {
-        return new Version(semver.incrementPatchVersion());
+        return new Version(semver.nextPatchVersion());
     }
 
     /**
