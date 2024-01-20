@@ -11,8 +11,7 @@ buildscript {
         }
         maven {
             name = "Terasology Artifactory"
-            url = "http://artifactory.terasology.org/artifactory/libs-release-local"
-            allowInsecureProtocol = true  // 😱
+            url = "https://artifactory.terasology.io/artifactory/libs-release-local"
         }
 
     }
@@ -57,8 +56,7 @@ allprojects {
             } else {
                 // Our default is the main virtual repo containing everything except repos for testing Artifactory itself
                 name "Terasology Artifactory"
-                url "http://artifactory.terasology.org/artifactory/virtual-repo-live"
-                allowInsecureProtocol true  // 😱
+                url "https://artifactory.terasology.io/artifactory/virtual-repo-live"
             }
         }
 
