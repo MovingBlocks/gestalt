@@ -5,6 +5,10 @@ apply from: "$rootDir/gradle/common.gradle"
 // Primary dependencies definition
 dependencies {
     api 'org.terasology:reflections:0.9.12-MB'
+    // Additional corrections for old reflections dependencies:
+    constraints {
+        implementation("org.javassist:javassist:3.29.0-GA")
+    }
 
     implementation project(":gestalt-util")
     implementation "com.google.guava:guava:$guava_version"
