@@ -16,11 +16,14 @@
 
 package org.terasology.gestalt.entitysystem.event;
 
+import org.terasology.context.annotation.IndexInherited;
+
 /**
  * Base interface for all events. An event is a notification that sent against an entity -
  * event handlers can then pick up and react to the event based on the components
  * the entity is composed of.
  */
+@IndexInherited
 public interface Event {
 
 }
