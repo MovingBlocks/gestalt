@@ -16,7 +16,7 @@ include(
     "gestalt-entity-system",
     "gestalt-es-perf"
 )
-if (rootProject.projectDir.toPath().resolve("local.properties").toFile().exists()) {
+if (rootProject.projectDir.resolve("local.properties").exists()) {
     include("gestalt-android", "gestalt-android-testbed")
 } else {
     println("No local.properties file found, bypassing Android elements")
