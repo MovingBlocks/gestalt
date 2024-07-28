@@ -1,8 +1,8 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
 plugins {
-    id 'com.android.library'
-    id 'maven-publish'
+    id("com.android.library")
+    id("maven-publish")
 }
 
 android {
@@ -23,7 +23,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
     lintOptions {
@@ -33,38 +33,38 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    api(project(':gestalt-module')) {
-        exclude group: 'org.javassist', module: 'javassist'
+    implementation(fileTree(dir: "libs", include: ["*.jar"]))
+    api(project(":gestalt-module")) {
+        exclude group: "org.javassist", module: "javassist"
     }
-    implementation project(':gestalt-util')
-    implementation "org.slf4j:slf4j-api:$slf4j_version"
-    implementation "com.google.guava:guava:$guava_version"
+    implementation(project(":gestalt-util"))
+    implementation("org.slf4j:slf4j-api:$slf4j_version")
+    implementation("com.google.guava:guava:$guava_version")
 
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    testImplementation "junit:junit:$junit_version"
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation("com.android.support:appcompat-v7:28.0.0")
+    testImplementation("junit:junit:$junit_version")
+    androidTestImplementation("com.android.support.test:runner:1.0.2")
+    androidTestImplementation("com.android.support.test.espresso:espresso-core:3.0.2")
 }
 
 task androidJavadocs(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
     android.libraryVariants.all { variant ->
-        if (variant.name == 'release') {
+        if (variant.name == "release") {
             owner.classpath += variant.javaCompileProvider.get().classpath
         }
     }
-    exclude '**/R.html', '**/R.*.html', '**/index.html'
+    exclude "**/R.html", "**/R.*.html", "**/index.html"
 }
 
 task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-    archiveClassifier = 'javadoc'
+    archiveClassifier = "javadoc"
     from androidJavadocs.destinationDir
 }
 
 task androidSourcesJar(type: Jar) {
-    archiveClassifier = 'sources'
+    archiveClassifier = "sources"
     from android.sourceSets.main.java.srcDirs
 }
 
@@ -72,7 +72,7 @@ project.afterEvaluate {
     publishing {
         repositories {
             maven {
-                name = 'TerasologyOrg'
+                name = "TerasologyOrg"
 
                 if (rootProject.hasProperty("publishRepo")) {
                     // This first option is good for local testing, you can set a full explicit target repo in gradle.properties
@@ -88,7 +88,7 @@ project.afterEvaluate {
                     }
 
                     // Base final publish repo on whether we're building a snapshot or a release
-                    if (project.version.endsWith('SNAPSHOT')) {
+                    if (project.version.endsWith("SNAPSHOT")) {
                         deducedPublishRepo += "-snapshot-local"
                     } else {
                         deducedPublishRepo += "-release-local"
@@ -119,29 +119,29 @@ project.afterEvaluate {
                 artifact androidSourcesJar
 
                 pom.withXml {
-                    final dependenciesNode = asNode().appendNode('dependencies')
+                    final dependenciesNode = asNode().appendNode("dependencies")
 
                     ext.addDependency = { Dependency dep, String scope ->
                         if (dep.group == null || dep.version == null || dep.name == null || dep.name == "unspecified")
                             return // ignore invalid dependencies
 
-                        final dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', dep.group)
-                        dependencyNode.appendNode('artifactId', dep.name)
-                        dependencyNode.appendNode('version', dep.version)
-                        dependencyNode.appendNode('scope', scope)
+                        final dependencyNode = dependenciesNode.appendNode("dependency")
+                        dependencyNode.appendNode("groupId", dep.group)
+                        dependencyNode.appendNode("artifactId", dep.name)
+                        dependencyNode.appendNode("version", dep.version)
+                        dependencyNode.appendNode("scope", scope)
 
                         if (!dep.transitive) {
                             // If this dependency is transitive, we should force exclude all its dependencies them from the POM
-                            final exclusionNode = dependencyNode.appendNode('exclusions').appendNode('exclusion')
-                            exclusionNode.appendNode('groupId', '*')
-                            exclusionNode.appendNode('artifactId', '*')
+                            final exclusionNode = dependencyNode.appendNode("exclusions").appendNode("exclusion")
+                            exclusionNode.appendNode("groupId", "*")
+                            exclusionNode.appendNode("artifactId", "*")
                         } else if (!dep.properties.excludeRules.empty) {
                             // Otherwise add specified exclude rules
-                            final exclusionNode = dependencyNode.appendNode('exclusions').appendNode('exclusion')
+                            final exclusionNode = dependencyNode.appendNode("exclusions").appendNode("exclusion")
                             dep.properties.excludeRules.each { ExcludeRule rule ->
-                                exclusionNode.appendNode('groupId', rule.group ?: '*')
-                                exclusionNode.appendNode('artifactId', rule.module ?: '*')
+                                exclusionNode.appendNode("groupId", rule.group ?: "*")
+                                exclusionNode.appendNode("artifactId", rule.module ?: "*")
                             }
                         }
                     }

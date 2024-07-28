@@ -4,22 +4,22 @@ apply from: "$rootDir/gradle/common.gradle"
 
 // Primary dependencies definition
 dependencies {
-    implementation project(":gestalt-util")
-    implementation project(":gestalt-module")
-    implementation project(":gestalt-asset-core")
-	implementation project(":gestalt-entity-system")
+    implementation(project(":gestalt-util"))
+    implementation(project(":gestalt-module"))
+    implementation(project(":gestalt-asset-core"))
+    implementation(project(":gestalt-entity-system"))
 
-    implementation "com.google.guava:guava:$guava_version"
-    implementation "org.slf4j:slf4j-api:$slf4j_version"
-    implementation "com.android.support:support-annotations:$android_annotation_version"
-    implementation "net.jcip:jcip-annotations:$jcip_annotation_version"
+    implementation("com.google.guava:guava:$guava_version")
+    implementation("org.slf4j:slf4j-api:$slf4j_version")
+    implementation("com.android.support:support-annotations:$android_annotation_version")
+    implementation("net.jcip:jcip-annotations:$jcip_annotation_version")
 
-    testImplementation "junit:junit:$junit_version"
-    testImplementation "ch.qos.logback:logback-classic:$logback_version"
-    testImplementation "org.mockito:mockito-core:$mockito_version"
+    testImplementation("junit:junit:$junit_version")
+    testImplementation("ch.qos.logback:logback-classic:$logback_version")
+    testImplementation("org.mockito:mockito-core:$mockito_version")
 }
 
-description = 'High performance access methods to replace the use of reflections in gestalt-entity-system. Can be used in Java 7+ and Android API 26+.'
+description = "High performance access methods to replace the use of reflections in gestalt-entity-system. Can be used in Java 7+ and Android API 26+."
 
 /***
  * Testpack inclusion

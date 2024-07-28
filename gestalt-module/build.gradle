@@ -4,25 +4,25 @@ apply from: "$rootDir/gradle/common.gradle"
 
 // Primary dependencies definition
 dependencies {
-    implementation "org.javassist:javassist:3.27.0-GA" // TODO REMOVE this. replaces with gestalt's di generator. ( used by ByteCodeInjector)
+    implementation("org.javassist:javassist:3.27.0-GA") // TODO REMOVE this. replaces with gestalt's di generator. ( used by ByteCodeInjector)
 
-    api project(":gestalt-di")
+    api(project(":gestalt-di"))
 
-    implementation project(":gestalt-util")
-    annotationProcessor project(":gestalt-inject-java")
+    implementation(project(":gestalt-util"))
+    annotationProcessor(project(":gestalt-inject-java"))
 
-    implementation "com.google.guava:guava:$guava_version"
-    implementation "com.google.code.gson:gson:$gson_version"
-    implementation 'org.apache.commons:commons-vfs2:2.2'
-    implementation "org.slf4j:slf4j-api:$slf4j_version"
-    implementation "com.android.support:support-annotations:$android_annotation_version"
-    implementation "com.github.zafarkhaja:java-semver:0.10.2"
+    implementation("com.google.guava:guava:$guava_version")
+    implementation("com.google.code.gson:gson:$gson_version")
+    implementation("org.apache.commons:commons-vfs2:2.2")
+    implementation("org.slf4j:slf4j-api:$slf4j_version")
+    implementation("com.android.support:support-annotations:$android_annotation_version")
+    implementation("com.github.zafarkhaja:java-semver:0.10.2")
 
-    testImplementation project(":testpack:testpack-api")
-    testAnnotationProcessor project(":gestalt-inject-java")
-    testImplementation "junit:junit:$junit_version"
-    testImplementation "ch.qos.logback:logback-classic:$logback_version"
-    testImplementation "org.mockito:mockito-core:$mockito_version"
+    testImplementation(project(":testpack:testpack-api"))
+    testAnnotationProcessor(project(":gestalt-inject-java"))
+    testImplementation("junit:junit:$junit_version")
+    testImplementation("ch.qos.logback:logback-classic:$logback_version")
+    testImplementation("org.mockito:mockito-core:$mockito_version")
 }
 
 compileJava {
@@ -36,7 +36,7 @@ compileTestJava {
 
 
 // Library and distribution config
-description = 'Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment'
+description = "Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment"
 
 task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:jar', ':testpack:moduleC:jar', ':testpack:moduleD:jar'], type: Copy)
 task createModuleE(dependsOn: [':gestalt-module:copyModuleEInfo', ':gestalt-module:copyModuleELibs'])
