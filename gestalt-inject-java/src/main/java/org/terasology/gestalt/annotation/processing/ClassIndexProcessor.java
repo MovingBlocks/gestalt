@@ -107,7 +107,7 @@ public class ClassIndexProcessor extends AbstractProcessor {
     private void processAnnotationIndex(RoundEnvironment roundEnv, TypeElement annotation) {
         if (elementUtility.hasStereotype(annotation, Collections.singletonList(Index.class.getName()))) {
             for (Element type : roundEnv.getElementsAnnotatedWith(annotation)) {
-                if (type.getKind() == ElementKind.CLASS) {
+                if (type.getKind() == ElementKind.CLASS || type.getKind() == ElementKind.INTERFACE) {
                     annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), elementUtility.getTypes().erasure(type.asType()).toString());
                 } else if (type.getKind() == ElementKind.PACKAGE) {
                     PackageElement packageType = (PackageElement) type;
