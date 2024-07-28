@@ -1,10 +1,11 @@
 pipeline {
     agent {
-        label "light"
+        label "android"
     }
     stages {
         stage('Build') {
             steps {
+                sh 'echo sdk.dir=/opt/android-sdk > local.properties'
                 sh './gradlew --info --console=plain jar'
             }
         }
