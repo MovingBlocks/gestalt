@@ -5,17 +5,17 @@ apply from: "$rootDir/gradle/common.gradle"
 // Primary dependencies definition
 dependencies {
     implementation(project(":gestalt-util"))
-    implementation("com.google.guava:guava:$guava_version")
-    implementation("com.google.code.gson:gson:$gson_version")
+    implementation(libs.guava)
+    implementation(libs.gson)
     implementation("org.apache.commons:commons-vfs2:2.2")
-    implementation("org.slf4j:slf4j-api:$slf4j_version")
-    implementation("com.android.support:support-annotations:$android_annotation_version")
+    implementation(libs.slf4j.api)
+    implementation(libs.android.annotation)
     implementation("com.github.zafarkhaja:java-semver:0.10.2")
 
     testImplementation(project(":testpack:testpack-api"))
-    testImplementation("junit:junit:$junit_version")
-    testImplementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("org.mockito:mockito-core:$mockito_version")
+    testImplementation(libs.junit)
+    testImplementation(libs.logback)
+    testImplementation(libs.mockito)
 
     implementation("com.squareup:javapoet:1.12.0")
     implementation(group: "javax.inject", name: "javax.inject", version: "1")

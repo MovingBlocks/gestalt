@@ -9,14 +9,14 @@ dependencies {
     implementation(project(":gestalt-asset-core"))
     implementation(project(":gestalt-entity-system"))
 
-    implementation("com.google.guava:guava:$guava_version")
-    implementation("org.slf4j:slf4j-api:$slf4j_version")
-    implementation("com.android.support:support-annotations:$android_annotation_version")
-    implementation("net.jcip:jcip-annotations:$jcip_annotation_version")
+    implementation(libs.guava)
+    implementation(libs.slf4j.api)
+    implementation(libs.android.annotation)
+    implementation(libs.jcip)
 
-    testImplementation("junit:junit:$junit_version")
-    testImplementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("org.mockito:mockito-core:$mockito_version")
+    testImplementation(libs.junit)
+    testImplementation(libs.logback)
+    testImplementation(libs.mockito)
 }
 
 description = "High performance access methods to replace the use of reflections in gestalt-entity-system. Can be used in Java 7+ and Android API 26+."
