@@ -6,19 +6,19 @@ task gatherJarModules(dependsOn: [':testpack:moduleA:jar', ':testpack:moduleB:ja
 
 // Primary dependencies definition
 dependencies {
-    testAnnotationProcessor project(":gestalt-inject-java")
+    testAnnotationProcessor(project(":gestalt-inject-java"))
 
-    implementation "org.slf4j:slf4j-api:$slf4j_version"
-    implementation "com.google.guava:guava:$guava_version"
-    api project(":gestalt-inject")
+    implementation(libs.slf4j.api)
+    implementation(libs.guava)
+    api(project(":gestalt-inject"))
 
-    testImplementation "junit:junit:$junit_version"
-    testImplementation "ch.qos.logback:logback-classic:$logback_version"
-    testImplementation "org.mockito:mockito-core:$mockito_version"
+    testImplementation(libs.junit)
+    testImplementation(libs.logback)
+    testImplementation(libs.mockito)
 
-    testImplementation project(":gestalt-module")
-    testImplementation project(":testpack:testpack-api")
-    testImplementation project(":gestalt-entity-system")
+    testImplementation(project(":gestalt-module"))
+    testImplementation(project(":testpack:testpack-api"))
+    testImplementation(project(":gestalt-entity-system"))
 }
 
 gatherJarModules {
