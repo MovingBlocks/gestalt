@@ -10,12 +10,12 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.1'
+        classpath("com.android.tools.build:gradle:7.4.1")
     }
 }
 
 plugins {
-    id 'idea'
+    id("idea")
 }
 
 allprojects {
@@ -25,24 +25,24 @@ allprojects {
 
         // Terasology Artifactory instance for libs not readily available elsewhere plus our own libs
         maven {
-            def repoViaEnv = System.getenv()["RESOLUTION_REPO"]
+            val repoViaEnv = System.getenv("RESOLUTION_REPO")
             if (rootProject.hasProperty("alternativeResolutionRepo")) {
                 // If the user supplies an alternative repo via gradle.properties then use that
-                name "from alternativeResolutionRepo property"
-                url alternativeResolutionRepo
-            } else if (repoViaEnv != null && repoViaEnv != "") {
-                name "from \$RESOLUTION_REPO"
-                url = repoViaEnv
+                name = "from alternativeResolutionRepo property"
+                url = uri(rootProject.property("alternativeResolutionRepo") as String)
+            } else if (!repoViaEnv.isNullOrEmpty()) {
+                name = "from \$RESOLUTION_REPO"
+                url = uri(repoViaEnv)
             } else {
                 // Our default is the main virtual repo containing everything except repos for testing Artifactory itself
-                name "Terasology Artifactory"
-                url "https://artifactory.terasology.io/artifactory/virtual-repo-live"
+                name = "Terasology Artifactory"
+                url = uri("https://artifactory.terasology.io/artifactory/virtual-repo-live")
             }
         }
 
         // SemVer lib
         maven {
-            url 'https://heisluft.de/maven'
+            url = uri("https://heisluft.de/maven")
         }
     }
 }
