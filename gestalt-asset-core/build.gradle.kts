@@ -1,6 +1,10 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-apply(from: "$rootDir/gradle/common.gradle.kts")
+apply(from = "$rootDir/gradle/common.gradle.kts")
+
+plugins {
+    `java-library`
+}
 
 // Primary dependencies definition
 dependencies {
@@ -20,11 +24,11 @@ dependencies {
     testImplementation(libs.mockito)
 }
 
-compileJava {
-    inputs.files sourceSets.main.resources.srcDirs
-    options.compilerArgs = ["-Aresource=${sourceSets.main.resources.srcDirs.join(File.pathSeparator)}"]
-}
-compileTestJava {
-    inputs.files sourceSets.test.resources.srcDirs
-    options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
+// include resource dirs from main or test, depending if is test compile or not
+tasks.withType<JavaCompile>().configureEach {
+    val resourceDirs = sourceSets[if (name == "compileTestJava") "test" else "main"].resources.srcDirs
+    inputs.files(resourceDirs)
+    options.compilerArgs.addAll(
+        listOf("-Aresource=${resourceDirs.joinToString(File.pathSeparator)}")
+    )
 }
