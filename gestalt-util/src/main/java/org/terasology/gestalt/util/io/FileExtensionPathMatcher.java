@@ -40,6 +40,7 @@ public class FileExtensionPathMatcher implements PathMatcher {
     private final Set<String> extensions;
 
     /**
+     * Creates a PathMatcher.
      * @param extension  One of the extensions that a file must have to match
      * @param extensions Additional extensions that files must have to match
      */
@@ -48,6 +49,7 @@ public class FileExtensionPathMatcher implements PathMatcher {
     }
 
     /**
+     * Creates a PathMatcher.
      * @param extensions The extensions that files must have to match. Must not be empty
      */
     public FileExtensionPathMatcher(Collection<String> extensions) {
@@ -56,6 +58,11 @@ public class FileExtensionPathMatcher implements PathMatcher {
         this.extensions = Sets.newHashSet(extensions);
     }
 
+    /**
+     * Returns true if the path has the desired extension.
+     * @param path the path
+     * @return true if extension matches
+     */
     @Override
     public boolean matches(Path path) {
         Path fileName = path.getFileName();

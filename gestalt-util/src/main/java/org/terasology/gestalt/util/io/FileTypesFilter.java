@@ -37,6 +37,7 @@ public class FileTypesFilter implements DirectoryStream.Filter<Path> {
     private final ImmutableList<String> fileTypes;
 
     /**
+     * Creates a filter for file name extensions.
      * @param fileType  The first file type
      * @param fileTypes Zero or more additional file types
      */

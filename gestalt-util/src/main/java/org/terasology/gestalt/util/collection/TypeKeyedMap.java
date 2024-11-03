@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.terasology.gestalt.util.collection;
 
 import android.support.annotation.NonNull;
@@ -28,8 +27,10 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * TypeKeyedMap is a specialized map wrapper for use when the key of the map is a the class that the value implements. It more strongly enforces that values must be
- * instances of their respective key, and provides a nicer interface for retrieving values.
+ * TypeKeyedMap is a specialized map wrapper for use when the key of the map is the class that the value implements.
+ * It more strongly enforces that values must be instances of their respective key, and provides a nicer interface for
+ * retrieving values.
+ * @param <T> the type.
  */
 public class TypeKeyedMap<T> {
     @SuppressWarnings("unchecked")
@@ -45,6 +46,7 @@ public class TypeKeyedMap<T> {
     }
 
     /**
+     * Returns an empty immutable TypeKeyedMap.
      * @param <T> The type that the empty TypeKeyedMap would hold
      * @return An immutable empty TypeKeyedMap
      */
@@ -81,20 +83,23 @@ public class TypeKeyedMap<T> {
     }
 
     /**
-     * @return The number of entries in the map. Greater or equal to 0
+     * Returns the number of entries in the map.
+     * @return Greater or equal to 0
      */
     public int size() {
         return inner.size();
     }
 
     /**
-     * @return Whether them map is empty (size == 0)
+     * Returns whether or not the map is empty.
+     * @return true if size == 0, false otherwise.
      */
     public boolean isEmpty() {
         return inner.isEmpty();
     }
 
     /**
+     * Returns if the map contains a key.
      * @param key The key to check for the existence of
      * @return Whether the map contains the provided key
      */
@@ -103,6 +108,7 @@ public class TypeKeyedMap<T> {
     }
 
     /**
+     * Returns if the map contains a value.
      * @param value The value to check for the existence of
      * @param <U> The type of the value
      * @return Whether the map contains the provided value
@@ -112,6 +118,7 @@ public class TypeKeyedMap<T> {
     }
 
     /**
+     * Returns the value of the key.
      * @param key The type to return the value of
      * @param <U> The type to return the value of
      * @return The value associated with the provided key, or null if there is no such value
@@ -163,27 +170,34 @@ public class TypeKeyedMap<T> {
     }
 
     /**
-     * @return A set of all keys in the map. This is a live view - changes to the set will change the map.
+     * Returns a live view of the map's keys. Changes to the set will change the map.
+     * @return A set of all keys in the map.
      */
     public Set<Class<? extends T>> keySet() {
         return inner.keySet();
     }
 
     /**
-     * @return A collection of all values in the map. This is a live view - changes to the collection will change the map.
+     * Returns a live view of the map's values. Changes to the collection will change the map.
+     * @return A collection of all values in the map.
      */
     public Collection<T> values() {
         return inner.values();
     }
 
     /**
-     * @return A collection of all entries in the map. This is a live view - changes to the set will change the map.
+     * Returns a live view of the map's entries. Changes to the set will change the map.
+     * @return A collection of all entries in the map.
      */
     @SuppressWarnings("unchecked")
     public Set<Entry<? extends T>> entrySet() {
         return new EntrySet(inner.entrySet());
     }
 
+    /**
+     * Loops through and invokes the action for each element.
+     * @param action the action to be performed.
+     */
     public void forEach(EntryConsumer<T> action) {
         for (Entry<? extends T> entry : entrySet()) {
             entry.handle(action);
@@ -191,24 +205,43 @@ public class TypeKeyedMap<T> {
     }
 
     /**
+     * Returns the map of keys.
      * @return The internal map
      */
     public Map<Class<? extends T>, T> getInner() {
         return inner;
     }
 
+    /**
+     * Inserts the elements of the provided map into the TypedKeyMap.
+     * @param other map to be added.
+     */
     public void putAll(TypeKeyedMap<T> other) {
         inner.putAll(other.inner);
     }
 
+    /**
+     * Adds the elements of a collection into the TypedKeyMap.
+     * @param other collection to be added.
+     */
     public void putAll(Collection<T> other) {
         for (T item : other) {
             put(item);
         }
     }
 
+    /**
+     * Functional interface.
+     * @param <T> the type
+     */
     @FunctionalInterface
     public interface EntryConsumer<T> {
+        /**
+         * Handles an action for an entry.
+         * @param type the type
+         * @param value the value
+         * @param <U> extended type
+         */
         <U extends T> void accept(Class<U> type, U value);
     }
 
@@ -322,10 +355,18 @@ public class TypeKeyedMap<T> {
             this.innerEntry = innerEntry;
         }
 
+        /**
+         * Returns the key of an entry.
+         * @return the key
+         */
         public Class<T> getKey() {
             return innerEntry.getKey();
         }
 
+        /**
+         * Returns the value of an entry.
+         * @return the value
+         */
         public T getValue() {
             return innerEntry.getValue();
         }
@@ -334,6 +375,10 @@ public class TypeKeyedMap<T> {
             return innerEntry;
         }
 
+        /**
+         * Handle an action on an entry.
+         * @param action the action
+         */
         public void handle(EntryConsumer<? super T> action) {
             action.accept(getKey(), getValue());
         }

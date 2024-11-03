@@ -26,6 +26,7 @@ import java.util.Optional;
 public interface ParameterProvider {
 
     /**
+     * Returns an object of desired type, if one is available.
      * @param type The desired type
      * @param <T>  The desired type
      * @return An optional with a value of the desired type, or empty if no such object is available
