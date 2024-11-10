@@ -1,3 +1,10 @@
+# gestalt specific files to be excluded
+/gestalt-di/test-modules/
+# used to test if a module.jar is loaded correctly, so part of repo
+# despite it is recreated.
+/gestalt-es-perf/test-modules/moduleF.jar
+/gestalt-module/test-modules/*
+
 # Ignore general
 /.*
 !.gitignore
@@ -12,7 +19,6 @@
 #*.jar
 *.war
 *.ear
-/gestalt-module/test-modules/*
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
@@ -45,4 +51,3 @@ Icon
 ehthumbs.db
 Thumbs.db
 
-gestalt-di/test-modules/
