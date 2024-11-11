@@ -29,6 +29,7 @@ import java.util.Set;
 
 /**
  * An implementation of TopologicalSorter that uses the Kahn algorithm.
+ * @param <T> the type
  */
 public class KahnSorter<T> implements TopologicalSorter<T> {
 

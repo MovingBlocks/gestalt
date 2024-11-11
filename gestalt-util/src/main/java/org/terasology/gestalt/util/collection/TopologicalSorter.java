@@ -26,20 +26,25 @@ import java.util.List;
  * <p>
  * If a graph contains cycles (e.g. a -&gt; b -&gt; c -&gt; a) then a linear ordering is not possible - instead
  * a {@link CircularDependencyException} will be thrown.
+ *
+ * @param <T> the type
  */
 public interface TopologicalSorter<T> {
 
     /**
+     * Adds a node.
      * @param node A node to add to be sorted
      */
     void addNode(T node);
 
     /**
+     * Sorts the nodes in the collection.
      * @param nodes A collection of nodes to add to be sorted
      */
     void addNodes(Collection<T> nodes);
 
     /**
+     * Sorts the nodes passed.
      * @param nodes A series of nodes to add to be sorted
      */
     default void addNodes(T... nodes) {
@@ -55,6 +60,7 @@ public interface TopologicalSorter<T> {
     void addEdge(T fromNode, T toNode);
 
     /**
+     * Sorts the nodes in a directed acyclic graph.
      * @return A new, sorted list respecting the ordering of the edges, such that the origin of each edge will appear before the target.
      * @throws CircularDependencyException If there is a circular dependency in the edges.
      */

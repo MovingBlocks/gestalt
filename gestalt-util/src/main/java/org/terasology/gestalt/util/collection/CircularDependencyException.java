@@ -21,21 +21,44 @@ package org.terasology.gestalt.util.collection;
  * and thus no linear ordering exists.
  */
 public class CircularDependencyException extends RuntimeException {
+    /**
+     * Constructs a CircularDependencyException.
+     */
     public CircularDependencyException() {
     }
 
+    /**
+     * Constructs a CircularDependencyException.
+     * @param message The message associated with the exception.
+     */
     public CircularDependencyException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs a CircularDependencyException with a given message and cause.
+     * @param message The message associated with the exception.
+     * @param cause The underlying exception that is the cause of this exception.
+     */
     public CircularDependencyException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs a CircularDependencyException with a given cause.
+     * @param cause The underlying exception that is the cause of this exception.
+     */
     public CircularDependencyException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Constructs a CircularDependencyException with a given message and cause, stating if it can be suppressed and if the stacktrace is to be written.
+     * @param message The message associated with the exception.
+     * @param cause The underlying exception that is the cause of this exception.
+     * @param enableSuppression Whether the exception can it be suppressed.
+     * @param writableStackTrace Whether the exception stacktrace is to be written.
+     */
     public CircularDependencyException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

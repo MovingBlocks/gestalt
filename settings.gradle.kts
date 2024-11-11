@@ -21,7 +21,6 @@ include(
     "gestalt-di",
     "gestalt-inject-java",
     "gestalt-inject",
-    "gestalt-annotation",
     "testpack:testpack-api",
     "gestalt-module",
     "testpack:moduleA",
