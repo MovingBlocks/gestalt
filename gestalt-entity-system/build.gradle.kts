@@ -1,8 +1,11 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-apply(from: "$rootDir/gradle/common.gradle.kts")
+apply(from = "$rootDir/gradle/common.gradle.kts")
 
-// Primary dependencies definition
+plugins {
+    `java-library`
+}
+
 dependencies {
     implementation(project(":gestalt-util"))
     implementation(project(":gestalt-module"))
@@ -23,11 +26,12 @@ dependencies {
     testImplementation(libs.mockito)
 }
 
-compileJava {
-    inputs.files sourceSets.main.resources.srcDirs
-    options.compilerArgs = ["-Aresource=${sourceSets.main.resources.srcDirs.join(File.pathSeparator)}"]
+tasks.named<JavaCompile>("compileJava") {
+    inputs.files(sourceSets.main.get().resources.srcDirs)
+    options.compilerArgs.add("-Aresource=${sourceSets.main.get().resources.srcDirs.joinToString(File.pathSeparator)}")
 }
-compileTestJava {
-    inputs.files sourceSets.test.resources.srcDirs
-    options.compilerArgs = ["-Aresource=${sourceSets.test.resources.srcDirs.join(File.pathSeparator)}"]
+
+tasks.named<JavaCompile>("compileTestJava") {
+    inputs.files(sourceSets.test.get().resources.srcDirs)
+    options.compilerArgs.add("-Aresource=${sourceSets.test.get().resources.srcDirs.joinToString(File.pathSeparator)}")
 }
