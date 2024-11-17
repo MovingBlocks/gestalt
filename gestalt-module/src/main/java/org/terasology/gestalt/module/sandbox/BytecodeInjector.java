@@ -26,6 +26,7 @@ import javassist.CtClass;
 public interface BytecodeInjector {
 
     /**
+     * Injects a class during the load process.
      * @param cc The class being loaded.
      */
     void inject(CtClass cc);

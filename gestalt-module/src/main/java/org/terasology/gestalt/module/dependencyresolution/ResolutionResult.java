@@ -31,20 +31,27 @@ public class ResolutionResult {
     private final boolean success;
     private final Set<Module> modules;
 
+    /**
+     * Constructs a new ResolutionResult instance with given success value and modules.
+     * @param success   true if resolution succeeded.
+     * @param modules   set of compatible modules.
+     */
     public ResolutionResult(boolean success, Set<Module> modules) {
         this.success = success;
         this.modules = modules;
     }
 
     /**
-     * @return Whether resolution succeeded
+     * Whether resolution succeeded
+     * @return true if resolution succeeded
      */
     public boolean isSuccess() {
         return success;
     }
 
     /**
-     * @return A set of compatible modules with all dependencies resolved
+     * Gets compatible modules with all dependencies resolved
+     * @return A set of compatible modules
      */
     public Set<Module> getModules() {
         Preconditions.checkState(success, "Modules only available if resolution was successful");

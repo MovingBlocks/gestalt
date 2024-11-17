@@ -39,6 +39,7 @@ public class CompositeFileSource implements ModuleFileSource {
     private final List<ModuleFileSource> sources;
 
     /**
+     * Creates a class combining multiple file sources to act as a single ModuleFileSource.
      * @param source  The first (mandatory) file source
      * @param sources Any additional file sources
      */
@@ -47,6 +48,7 @@ public class CompositeFileSource implements ModuleFileSource {
     }
 
     /**
+     * Creates a class combining multiple file sources to act as a single ModuleFileSource.
      * @param sources A non-empty list of file sources
      */
     public CompositeFileSource(List<ModuleFileSource> sources) {

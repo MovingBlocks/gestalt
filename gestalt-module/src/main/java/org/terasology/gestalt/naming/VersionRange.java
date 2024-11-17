@@ -43,17 +43,26 @@ public class VersionRange {
         this.upperBound = upperBound;
     }
 
+    /**
+     * Get lower bound version of range.
+     * @return  the lower bound
+     */
     public Version getLowerBound() {
         return lowerBound;
     }
 
+    /**
+     * Get upper bound of range.
+     * @return  the upper bound
+     */
     public Version getUpperBound() {
         return upperBound;
     }
 
     /**
+     * Tests whether version falls within the range
      * @param version The version to check
-     * @return Whether version falls within the range
+     * @return true if version falls within the range
      */
     public boolean contains(Version version) {
         return version.compareTo(lowerBound.getSnapshot()) >= 0 && version.compareTo(upperBound.getSnapshot()) < 0;

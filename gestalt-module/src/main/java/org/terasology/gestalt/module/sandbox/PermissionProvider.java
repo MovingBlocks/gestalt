@@ -26,15 +26,17 @@ import java.security.Permission;
 public interface PermissionProvider {
 
     /**
+     * Whether access to the given class is permitted
      * @param type The class to check
-     * @return Whether access to the given class is permitted
+     * @return true if  access to the given class is permitted
      */
     boolean isPermitted(Class<?> type);
 
     /**
+     * Whether access to the given permission is permitted
      * @param permission The permission to check
      * @param context    The type invoking the permission check
-     * @return Whether access to the given permission is permitted
+     * @return true if access to the given permission is permitted
      */
     boolean isPermitted(Permission permission, Class<?> context);
 }

@@ -22,21 +22,45 @@ package org.terasology.gestalt.naming.exception;
  * @author Immortius
  */
 public class VersionParseException extends RuntimeException {
+
+    /**
+     * Default constructor.
+     */
     public VersionParseException() {
     }
 
+    /**
+     * Constructor with message.
+     * @param message   the message
+     */
     public VersionParseException(String message) {
         super(message);
     }
 
+    /**
+     * Constructor with message and throwable.
+     * @param message   the message
+     * @param cause     the cause
+     */
     public VersionParseException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructor with cause.
+     * @param cause     the cause
+     */
     public VersionParseException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Constructor with message, cause, if suppression is enabled, and if stack trace can be written.
+     * @param message               the message
+     * @param cause                 the cause
+     * @param enableSuppression     true if exception can be suppressed
+     * @param writableStackTrace    true if exception stacktrace can be written
+     */
     public VersionParseException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

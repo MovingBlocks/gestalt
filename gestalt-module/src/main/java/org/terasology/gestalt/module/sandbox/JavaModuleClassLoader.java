@@ -61,6 +61,8 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
     private final List<BytecodeInjector> bytecodeInjectors;
 
     /**
+     * Constructor.
+     *
      * @param module             The name of the module this classloader belongs to
      * @param urls               The urls where the module classes can be found
      * @param parent             The parent classloader, where the API classes can be found
@@ -71,6 +73,8 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
     }
 
     /**
+     * Constructor.
+     *
      * @param module             The name of the module this classloader belongs to
      * @param urls               The urls where the module classes can be found
      * @param parent             The parent classloader, where the API classes can be found
@@ -97,6 +101,14 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
         }
     }
 
+    /**
+     * Creates a classloader for the module.
+     *
+     * @param module                the module
+     * @param parent                the parent classloader
+     * @param permissionProvider    pmerission provider
+     * @return  the moodule classloader
+     */
     public static ModuleClassLoader create(Module module, ClassLoader parent, PermissionProvider permissionProvider) {
         URL[] urls = module.getClasspaths().stream().map(x -> {
             try {
@@ -110,6 +122,8 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
     }
 
     /**
+     * Get module id this classloader belongs to.
+     *
      * @return The id of the module this ClassLoader belongs to
      */
     @Override
@@ -117,12 +131,18 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
         return moduleId;
     }
 
+    /**
+     * Get classloader
+     * @return  the classloader.
+     */
     @Override
     public ClassLoader getClassLoader() {
         return this;
     }
 
     /**
+     * Get the permission provider for this classloader.
+     *
      * @return The permission provider for this ModuleClassLoader
      */
     @Override
@@ -131,6 +151,8 @@ public class JavaModuleClassLoader extends URLClassLoader implements ModuleClass
     }
 
     /**
+     * Returns the base classloader of this modules classloader.
+     *
      * @return The non-ModuleClassLoader that the module classloader chain is based on
      */
     private ClassLoader getBaseClassLoader() {

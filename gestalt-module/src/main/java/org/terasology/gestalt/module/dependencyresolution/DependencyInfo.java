@@ -34,9 +34,16 @@ public class DependencyInfo {
     private Version maxVersion;
     private boolean optional;
 
+    /**
+     * Creates a class to describe a dependency on a module.
+     */
     public DependencyInfo() {
     }
 
+    /**
+     * Creates a class to describe a dependency on a module, using the values of other DependencyInfo.
+     * @param other DependencyInfo to copy over the values from.
+     */
     public DependencyInfo(DependencyInfo other) {
         this.id = other.id;
         this.minVersion = other.minVersion;
@@ -45,7 +52,7 @@ public class DependencyInfo {
     }
 
     /**
-     * @return The id of the module
+     * {@return The id of the module}
      */
     public Name getId() {
         return id;
@@ -61,7 +68,7 @@ public class DependencyInfo {
     }
 
     /**
-     * @return The minimum supported version
+     * {@return The minimum supported version}
      */
     public Version getMinVersion() {
         return minVersion;
@@ -120,7 +127,7 @@ public class DependencyInfo {
     }
 
     /**
-     * @return The range of supported versions
+     * {@return The range of supported versions}
      */
     public VersionRange versionRange() {
         return new VersionRange(getMinVersion(), getMaxVersion());

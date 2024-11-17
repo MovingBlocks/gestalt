@@ -34,10 +34,20 @@ public class APIScanner {
     private final StandardPermissionProviderFactory permissionProviderFactory;
     private final ClassLoader forClassLoader;
 
+    /**
+     * Creates an APIScanner instance to scan reflection manifests for API annotated classes using the system classloader.
+     * @param permissionProviderFactory a factory that provides permissions granted to discovered modules.
+     */
     public APIScanner(StandardPermissionProviderFactory permissionProviderFactory) {
         this(permissionProviderFactory, ClassLoader.getSystemClassLoader());
     }
 
+    /**
+     * Creates an APIScanner instance to scan reflection manifests for API annotated classes
+     * using the given classloader.
+     * @param permissionProviderFactory a factory that provides permissions granted to discovered modules.
+     * @param forClassLoader classloader to be used.
+     */
     public APIScanner(StandardPermissionProviderFactory permissionProviderFactory, ClassLoader forClassLoader) {
         this.permissionProviderFactory = permissionProviderFactory;
         this.forClassLoader = forClassLoader;

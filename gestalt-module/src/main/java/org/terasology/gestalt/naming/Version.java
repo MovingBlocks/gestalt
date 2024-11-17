@@ -66,6 +66,7 @@ public final class Version implements Comparable<Version> {
     }
 
     /**
+     * Constructor.
      * @param version The string of the version
      * @throws VersionParseException If the version string is not a valid version.
      */
@@ -86,37 +87,67 @@ public final class Version implements Comparable<Version> {
         this.semver = semver;
     }
 
+    /**
+     * Returns the major version.
+     * @return i.e. 5 out of 5.1.3
+     */
     public int getMajor() {
         return (int) semver.majorVersion();
     }
 
+    /**
+     * Returns the minor version.
+     * @return i.e. 1 out of 5.1.3
+     */
     public int getMinor() {
         return (int) semver.minorVersion();
     }
 
+    /**
+     * Returns the patch version.
+     * @return i.e. 3 out of 5.1.3
+     */
     public int getPatch() {
         return (int) semver.patchVersion();
     }
 
     /**
-     * @return Whether this version is a snapshot (work in progress)
+     * Whether this version is a snapshot (work in progress)
+     * @return true if this version is a snapshot
      */
     public boolean isSnapshot() {
         return !semver.preReleaseVersion().isEmpty();
     }
 
+    /**
+     * Gets current snapshot version.
+     * @return the snapshot version
+     */
     public Version getSnapshot() {
         return new Version(semver.setPreReleaseVersion(SNAPSHOT));
     }
 
+    /**
+     * Gets next major version.
+     * @return  i.e. 6 if version is 5.1.3
+     */
     public Version getNextMajorVersion() {
         return new Version(semver.nextMajorVersion());
     }
 
+
+    /**
+     * Gets next minor version.
+     * @return  i.e. 2 if version is 5.1.3
+     */
     public Version getNextMinorVersion() {
         return new Version(semver.nextMinorVersion());
     }
 
+    /**
+     * Gets next patch version.
+     * @return  i.e. 4 if version is 5.1.3
+     */
     public Version getNextPatchVersion() {
         return new Version(semver.nextPatchVersion());
     }

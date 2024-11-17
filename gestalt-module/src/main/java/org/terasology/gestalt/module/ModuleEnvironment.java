@@ -84,6 +84,9 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     private final ModuleFileSource resources;
 
     /**
+     * Creates a ModuleEnvironment with a given bean context, modules and permissionProviderFactory.
+     *
+     * @param beanContext               The bean context.
      * @param modules                   The modules this environment should encompass.
      * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
      * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
@@ -93,6 +96,9 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * Creates a ModuleEnvironment with a given bean context, modules, permissionProviderFactory, and classLoaderSupplier.
+     *
+     * @param beanContext               The bean context.
      * @param modules                   The modules this environment should encompass.
      * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
      * @param classLoaderSupplier       A supplier for producing a ModuleClassLoader for a module
@@ -103,14 +109,19 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * Creates a ModuleEnvironment with a given bean context, modules, permissionProviderFactory,
+     * classLoaderSupplier and apiClassLoader.
+     *
+     * @param beanContext               The bean context.
      * @param modules                   The modules this environment should encompass.
-     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module
-     * @param classLoaderSupplier       A supplier for producing a ModuleClassLoader for a module
+     * @param permissionProviderFactory A factory for producing a PermissionProvider for each loaded module.
+     * @param classLoaderSupplier       A supplier for producing a ModuleClassLoader for a module.
      * @param apiClassLoader            The base classloader the module environment should build upon.
      * @throws java.lang.IllegalArgumentException if the Iterable contains multiple modules with the same id.
      */
-    public ModuleEnvironment(BeanContext beanContext, Iterable<Module> modules, final PermissionProviderFactory permissionProviderFactory, ClassLoaderSupplier classLoaderSupplier, ClassLoader apiClassLoader) {
-
+    public ModuleEnvironment(BeanContext beanContext, Iterable<Module> modules,
+                             final PermissionProviderFactory permissionProviderFactory,
+                             ClassLoaderSupplier classLoaderSupplier, ClassLoader apiClassLoader) {
         this.modules = buildModuleMap(modules);
         this.apiClassLoader = apiClassLoader;
         this.modulesOrderByDependencies = calculateModulesOrderedByDependencies();
@@ -243,6 +254,8 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * Gets the module with the specified id.
+     *
      * @param id The id of the module to return
      * @return The desired module, or null if it is not part of the environment
      */
@@ -261,6 +274,9 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * List of module ids sorted so that dependencies appear before modules that depend on them. Additionally,
+     * modules are alphabetically ordered where there are no dependencies.
+     *
      * @return A list of modules in the environment, sorted so any dependencies appear before a module
      */
     public final List<Name> getModuleIdsOrderedByDependencies() {
@@ -287,6 +303,8 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * Get the ids of the dependencies of the desired module.
+     *
      * @param moduleId The id of the module to get the dependencies
      * @return The ids of the dependencies of the desired module
      */
@@ -295,13 +313,17 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
-     * @return The available resources across all modules
+     * Get available resources across all modules.
+     *
+     * @return The available resources
      */
     public ModuleFileSource getResources() {
         return resources;
     }
 
     /**
+     * Get an iterable over all subtypes of the type that appears in the module environment.
+     *
      * @param type The type to find subtypes of
      * @param <U>  The type to find subtypes of
      * @return A Iterable over all subtypes of type that appear in the module environment
@@ -316,10 +338,12 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * Get an iterable over all subtypes of the type that appears in the module environment, filtered.
+     *
      * @param type   The type to find subtypes of
      * @param <U>    The type to find subtypes of
      * @param filter A filter to apply to the returned subtypes
-     * @return A Iterable over all subtypes of type that appear in the module environment
+     * @return A Iterable over all subtypes of type
      */
     public <U> Iterable<Class<? extends U>> getSubtypesOf(Class<U> type, Predicate<Class<?>> filter) {
         return classIndexByModule.entrySet().stream()
@@ -332,9 +356,11 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * Get all types in the environment that are either marked by the given annotation, or are subtypes of a type marked
+     * with the annotation if the annotation is marked as @Inherited.
+     *
      * @param annotation The annotation of interest
-     * @return All types in the environment that are either marked by the given annotation, or are subtypes of a type marked with the annotation if the annotation is marked
-     * as @Inherited
+     * @return  All types that are marked by the given annotation, or are subtypes
      */
     public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation) {
         return classIndexByModule.entrySet().stream()
@@ -346,10 +372,12 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
     /**
+     * Get all types in the environment that are either marked by the given annotation, or are subtypes of a type marked
+     * with the annotation if the annotation is marked as @Inherited, filtered.
+     *
      * @param annotation The annotation of interest
      * @param filter     Further filter on the returned types
-     * @return All types in the environment that are either marked by the given annotation, or are subtypes of a type marked with the annotation if the annotation is marked
-     * as @Inherited
+     * @return All types in the environment marked by the given annotation or are subtypes
      */
     public Iterable<Class<?>> getTypesAnnotatedWith(Class<? extends Annotation> annotation, Predicate<Class<?>> filter) {
         return classIndexByModule.entrySet().stream()
@@ -367,6 +395,13 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
         return modules.values().iterator();
     }
 
+    /**
+     * Get beans implementing this interface.
+     *
+     * @param <T>               the type to extend
+     * @param interfaceClass    the interface class
+     * @return beans for this interface.
+     */
     public <T> List<? extends T> getBeans(Class<T> interfaceClass) {
         return finalBeanContext.getBeans(interfaceClass);
     }
@@ -384,8 +419,18 @@ public class ModuleEnvironment implements AutoCloseable, Iterable<Module> {
     }
 
 
+    /**
+     * Functional interface.
+     */
     @FunctionalInterface
     public interface ClassLoaderSupplier {
+        /**
+         * Creates a module class loader
+         * @param module                the module
+         * @param parent                the parent classloader
+         * @param permissionProvider    the permission provider
+         * @return  the module classloader
+         */
         ModuleClassLoader create(Module module, ClassLoader parent, PermissionProvider permissionProvider);
     }
 

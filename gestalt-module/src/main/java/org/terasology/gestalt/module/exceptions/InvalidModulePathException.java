@@ -23,21 +23,46 @@ package org.terasology.gestalt.module.exceptions;
  */
 public class InvalidModulePathException extends RuntimeException {
 
+    /**
+     * Default constructor.
+     */
     public InvalidModulePathException() {
     }
 
+    /**
+     * Constructor with message.
+     * @param message   the message
+     */
     public InvalidModulePathException(String message) {
         super(message);
     }
 
+    /**
+     * Constructor with message and cause.
+     *
+     * @param message   the message
+     * @param cause     the cause
+     */
     public InvalidModulePathException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructor with cause.
+     *
+     * @param cause the cause
+     */
     public InvalidModulePathException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Constructor.
+     * @param message               the message
+     * @param cause                 the cause
+     * @param enableSuppression     enable to suppress
+     * @param writableStackTrace    enable if stactrace can be written
+     */
     public InvalidModulePathException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

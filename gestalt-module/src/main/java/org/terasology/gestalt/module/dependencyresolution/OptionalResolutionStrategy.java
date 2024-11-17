@@ -46,14 +46,16 @@ public enum OptionalResolutionStrategy {
     }
 
     /**
-     * @return Whether an optional dependency must be provided
+     * Whether an optional dependency must be provided
+     * @return true if dependency must be provided
      */
     public boolean isRequired() {
         return required;
     }
 
     /**
-     * @return Whether an optional dependency will be included if available
+     * Whether an optional dependency will be included if available
+     * @return true if dependency will be included
      */
     public boolean isDesired() {
         return desired;

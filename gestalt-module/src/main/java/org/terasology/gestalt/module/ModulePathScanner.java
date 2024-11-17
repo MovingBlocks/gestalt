@@ -36,11 +36,19 @@ public class ModulePathScanner {
     private static final Logger logger = LoggerFactory.getLogger(ModulePathScanner.class);
     private final ModuleFactory moduleFactory;
 
+    /**
+     * Constructor.
+     * @param factory the module factory
+     */
     @Inject
     public ModulePathScanner(ModuleFactory factory) {
         this.moduleFactory = factory;
     }
 
+    /**
+     * Gets the module factory.
+     * @return  the module factory.
+     */
     public ModuleFactory getModuleFactory() {
         return moduleFactory;
     }

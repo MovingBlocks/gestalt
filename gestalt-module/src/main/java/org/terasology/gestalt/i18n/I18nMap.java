@@ -67,6 +67,8 @@ public class I18nMap implements Iterable<Map.Entry<Locale, String>> {
     }
 
     /**
+     * The most appropriate value to use based on the system default locale.
+     *
      * @return The most appropriate string value to use based on the system default Locale
      */
     public String value() {
@@ -84,6 +86,8 @@ public class I18nMap implements Iterable<Map.Entry<Locale, String>> {
     }
 
     /**
+     * Get the string value for the locale passed.
+     *
      * @param locale The locale to get the string value for
      * @return The most appropriate string value for the given locale.
      */
@@ -104,6 +108,8 @@ public class I18nMap implements Iterable<Map.Entry<Locale, String>> {
     }
 
     /**
+     * Convert to string.
+     *
      * @return The most appropriate string value based on the system default locale.
      */
     @Override

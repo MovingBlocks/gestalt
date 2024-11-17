@@ -152,11 +152,19 @@ public class DirectoryFileSource implements ModuleFileSource {
         return new DirectoryIterator(rootDirectory, rootDirectory, filter, true);
     }
 
+    /**
+     * A handle describing and providing access to a directory from a {@link ModuleFileSource}.
+     */
     public static class DirectoryFileReference implements FileReference {
 
         private final File baseDirectory;
         private final File file;
 
+        /**
+         * Creates a handle to access a directory in {@link ModuleFileSource}
+         * @param file a file in the ModuleFileSource.
+         * @param baseDirectory the location of this this file.
+         */
         public DirectoryFileReference(File file, File baseDirectory) {
             this.file = file;
             this.baseDirectory = baseDirectory;
