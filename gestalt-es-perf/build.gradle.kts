@@ -1,8 +1,11 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-apply(from: "$rootDir/gradle/common.gradle.kts")
+apply(from = "$rootDir/gradle/common.gradle.kts")
 
-// Primary dependencies definition
+plugins {
+    `java-library`
+}
+
 dependencies {
     implementation(project(":gestalt-util"))
     implementation(project(":gestalt-module"))
@@ -25,13 +28,20 @@ description = "High performance access methods to replace the use of reflections
  * Testpack inclusion
  */
 
-task gatherJarModules(dependsOn: [':testpack:moduleF:jar'], type: Copy)
-task gatherModules(dependsOn: [':gestalt-es-perf:gatherJarModules'])
-
-gatherJarModules {
-    from '../testpack/moduleF/build/libs/'
-    into 'test-modules'
-    include('*.jar')
+// Register the gatherJarModules task
+val gatherJarModules by tasks.registering(Copy::class) {
+    dependsOn(":testpack:moduleF:jar")
+    from("../testpack/moduleF/build/libs/")
+    into("test-modules")
+    include("*.jar")
 }
 
-test.dependsOn gatherModules
+// Register the gatherModules task
+val gatherModules by tasks.registering {
+    dependsOn(":gestalt-es-perf:gatherJarModules")
+}
+
+// Make the test task depend on gatherModules
+tasks.named("test") {
+    dependsOn(gatherModules)
+}

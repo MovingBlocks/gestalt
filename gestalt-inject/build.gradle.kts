@@ -1,10 +1,13 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-apply(from: "$rootDir/gradle/common.gradle.kts")
+apply(from = "$rootDir/gradle/common.gradle.kts")
 
-// Primary dependencies definition
+plugins {
+    `java-library`
+}
+
 dependencies {
-    api(group: 'javax.inject', name: 'javax.inject', version: '1')
+    api("javax.inject:javax.inject:1")
     implementation(libs.slf4j.api)
     implementation(libs.guava)
 }

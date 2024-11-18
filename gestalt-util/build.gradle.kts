@@ -1,6 +1,10 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-apply(from: "$rootDir/gradle/common.gradle.kts")
+apply(from = "$rootDir/gradle/common.gradle.kts")
+
+plugins {
+    `java-library`
+}
 
 // Primary dependencies definition
 dependencies {

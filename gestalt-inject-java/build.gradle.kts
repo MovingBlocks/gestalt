@@ -1,8 +1,11 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-apply(from: "$rootDir/gradle/common.gradle.kts")
+apply(from = "$rootDir/gradle/common.gradle.kts")
 
-// Primary dependencies definition
+plugins {
+    `java-library`
+}
+
 dependencies {
     implementation(project(":gestalt-util"))
     implementation(libs.guava)
@@ -18,6 +21,6 @@ dependencies {
     testImplementation(libs.mockito)
 
     implementation("com.squareup:javapoet:1.12.0")
-    implementation(group: "javax.inject", name: "javax.inject", version: "1")
+    implementation("javax.inject:javax.inject:1")
     implementation(project(":gestalt-inject"))
 }
