@@ -27,11 +27,15 @@ import java.io.IOException;
 public interface ModuleClassLoader {
 
     /**
+     * Get the id of the module producing this class loader
+     *
      * @return The id of the module producing this class loader
      */
     Name getModuleId();
 
     /**
+     * Get the classloader.
+     *
      * @return The class loader itself
      */
     ClassLoader getClassLoader();
@@ -44,8 +48,10 @@ public interface ModuleClassLoader {
     void close() throws IOException;
 
     /**
-     * @return The PermissionProvider determining what classes from this module
+     * Get the permission provider determining what classes from this module
      * are allowed to do and access
+     *
+     * @return The PermissionProvider
      */
     PermissionProvider getPermissionProvider();
 }

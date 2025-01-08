@@ -40,10 +40,19 @@ public class ModuleSecurityPermission extends BasicPermission {
      */
     public static final String UPDATE_API_CLASSES = "updateAPIClasses";
 
+    /**
+     * Constructor by name
+     * @param name the name
+     */
     public ModuleSecurityPermission(String name) {
         super(name);
     }
 
+    /**
+     * Constructor by name and actions.
+     * @param name      the name
+     * @param actions   actions
+     */
     public ModuleSecurityPermission(String name, String actions) {
         super(name, actions);
     }

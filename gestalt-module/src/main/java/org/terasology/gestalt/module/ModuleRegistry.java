@@ -33,23 +33,30 @@ import java.util.Set;
 public interface ModuleRegistry extends Collection<Module> {
 
     /**
+     * A list of all versions of the module with the given id.
+     *
      * @param id The name of the modules to return
      * @return A list of all versions of the module with the given id
      */
     Collection<Module> getModuleVersions(Name id);
 
     /**
-     * @return A complete collection of all available module names
+     * A complete collection of all available module names
+     * @return collection of all available module names
      */
     Set<Name> getModuleIds();
 
     /**
+     * The most recent version of the desired module.
+     *
      * @param id The name of the module to return
      * @return The most recent version of the desired module, or null if there is no matching module
      */
     Module getLatestModuleVersion(Name id);
 
     /**
+     * Get the most recent version of desired module within the bounds.
+     *
      * @param id         The name of the module to return
      * @param minVersion The lower bound (inclusive) on the version desired
      * @param maxVersion The upper bound (exclusive) on the version desired

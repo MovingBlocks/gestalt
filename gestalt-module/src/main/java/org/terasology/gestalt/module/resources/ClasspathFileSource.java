@@ -39,12 +39,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * ModuleFileSource that exposes the content from the classpath, using a
+ * ModuleFileSource that exposes content from the classpath stored under a given prefix, using an (optional) classloader.
  */
 public class ClasspathFileSource implements ModuleFileSource {
 
     private static final Logger logger = LoggerFactory.getLogger(ClasspathFileSource.class);
 
+    /**
+     * Path to the index file used for listing resources.
+     */
     public static final String RESOURCES = "META-INF/resources";
     private static final String CLASS_PATH_SEPARATOR = "/";
     private static final Joiner CLASS_PATH_JOINER = Joiner.on(CLASS_PATH_SEPARATOR);
@@ -52,11 +55,15 @@ public class ClasspathFileSource implements ModuleFileSource {
     private final ClassLoader classLoader;
     private final List<String> files;
 
+    /**
+     * Creates a ClasspathFileSource instance to expose resources in the system classpath.
+     */
     public ClasspathFileSource() {
         this(CLASS_PATH_SEPARATOR, ClassLoader.getSystemClassLoader());
     }
 
     /**
+     * Creates a ClasspathFileSource instance for a subpath in the system classpath to expose resources from.
      * @param basePath A subpath in the classpath to expose resources from
      */
     public ClasspathFileSource(String basePath) {
@@ -64,6 +71,7 @@ public class ClasspathFileSource implements ModuleFileSource {
     }
 
     /**
+     * Creates a ClasspathFileSource instance for a subpath in the given classpath to expose resources from.
      * @param basePath    A subpath in the classpath to expose resources from
      * @param classLoader The classloader to use to access resources
      */

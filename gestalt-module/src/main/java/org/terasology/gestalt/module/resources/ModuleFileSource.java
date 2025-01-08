@@ -68,7 +68,7 @@ public interface ModuleFileSource extends Iterable<FileReference> {
     Optional<FileReference> getFile(List<String> filepath);
 
     /**
-     * @return A collection of all files provided by this ModuleFileSource
+     * {@return A collection of all files provided by this ModuleFileSource.}
      */
     default Collection<FileReference> getFiles() {
         return getFilesInPath(true);
@@ -113,7 +113,7 @@ public interface ModuleFileSource extends Iterable<FileReference> {
     Set<String> getSubpaths(List<String> fromPath);
 
     /**
-     * @return A list of all the root paths of this file source, that
+     * {@return A list of all the root paths of this file source.}
      */
     @RequiresApi(26)
     default List<Path> getRootPaths() {

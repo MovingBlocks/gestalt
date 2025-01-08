@@ -81,6 +81,9 @@ public class ModuleMetadataJsonAdapter implements ModuleMetadataLoader {
     private final Map<String, Type> extensionMap = Maps.newHashMap();
     private volatile Gson cachedGson;
 
+    /**
+     * Constructor.
+     */
     @Inject
     public ModuleMetadataJsonAdapter() {
         this.builder = new GsonBuilder()
@@ -145,6 +148,8 @@ public class ModuleMetadataJsonAdapter implements ModuleMetadataLoader {
     }
 
     /**
+     * Write module metadata.
+     *
      * @param writer A writer that receives the json metadata
      * @param data   the module metadata that should be written
      * @throws com.google.gson.JsonIOException if there was a problem writing to the Writer

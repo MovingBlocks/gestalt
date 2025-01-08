@@ -34,11 +34,20 @@ import java.security.Permission;
  */
 public class ModuleSecurityManager extends SecurityManager {
 
+    /**
+     * Allows permissions to be granted and revoked to the module sandbox
+     */
     public static final Permission UPDATE_ALLOWED_PERMISSIONS = new ModuleSecurityPermission(ModuleSecurityPermission.UPDATE_ALLOWED_PERMISSIONS);
+    /**
+     * Allows for updating classes and packages available to the module sandbox.
+     */
     public static final Permission UPDATE_API_CLASSES = new ModuleSecurityPermission(ModuleSecurityPermission.UPDATE_API_CLASSES);
 
     private ThreadLocal<Boolean> calculatingPermission = new ThreadLocal<>();
 
+    /**
+     * Constructs a new ModuleSecurityManager instance.
+     */
     public ModuleSecurityManager() {
     }
 

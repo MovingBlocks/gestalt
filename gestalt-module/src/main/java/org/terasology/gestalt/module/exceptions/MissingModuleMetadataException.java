@@ -21,13 +21,26 @@ package org.terasology.gestalt.module.exceptions;
  */
 public class MissingModuleMetadataException extends RuntimeException {
 
+    /**
+     * Constructor.
+     */
     public MissingModuleMetadataException() {
     }
 
+    /**
+     * Constructor with message.
+     *
+     * @param s the message.
+     */
     public MissingModuleMetadataException(String s) {
         super(s);
     }
 
+    /**
+     * Constructor with message and throwable.
+     * @param s             the message
+     * @param throwable     the throwable
+     */
     public MissingModuleMetadataException(String s, Throwable throwable) {
         super(s, throwable);
     }

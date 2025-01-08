@@ -35,6 +35,7 @@ public class WarnOnlyProviderFactory implements PermissionProviderFactory {
     private PermissionProviderFactory wrappedFactory;
 
     /**
+     * Constructor.
      * @param wrappedFactory Another permission factory to wrap.
      */
     public WarnOnlyProviderFactory(PermissionProviderFactory wrappedFactory) {

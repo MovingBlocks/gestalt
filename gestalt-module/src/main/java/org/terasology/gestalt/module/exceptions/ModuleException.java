@@ -23,21 +23,46 @@ package org.terasology.gestalt.module.exceptions;
  */
 public abstract class ModuleException extends Exception {
 
+    /**
+     * Creates a ModuleException.
+     */
     public ModuleException() {
     }
 
+    /**
+     * Creates a ModuleException with message.
+     * @param message the message
+     */
     public ModuleException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a ModuleException with message and cause.
+     *
+     * @param message   the message
+     * @param cause     the cause
+     */
     public ModuleException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Creates a ModuleException with cause.
+     * @param cause     the cause
+     */
     public ModuleException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Creates a ModuleException message, cause, whether suppresssion is enabled, whether stacktrace can be written.
+     *
+     * @param message               the message
+     * @param cause                 the cause
+     * @param enableSuppression     if true, suppression is enabled
+     * @param writableStackTrace    if true, stacktrace can be written
+     */
     public ModuleException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

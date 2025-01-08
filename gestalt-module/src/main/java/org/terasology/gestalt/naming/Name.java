@@ -42,6 +42,10 @@ public final class Name implements Comparable<Name> {
     private final String originalName;
     private final String normalisedName;
 
+    /**
+     * Constructor by name.
+     * @param name  the name
+     */
     public Name(String name) {
         Preconditions.checkNotNull(name);
         this.originalName = name;
@@ -49,7 +53,8 @@ public final class Name implements Comparable<Name> {
     }
 
     /**
-     * @return Whether this name is empty (equivalent to an empty string)
+     * Whether this name is empty (equivalent to an empty string)
+     * @return true if empty
      */
     public boolean isEmpty() {
         return normalisedName.isEmpty();

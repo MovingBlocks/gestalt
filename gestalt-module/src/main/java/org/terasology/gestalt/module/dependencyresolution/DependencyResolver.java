@@ -52,6 +52,7 @@ public class DependencyResolver {
     }
 
     /**
+     * Creates a DependencyResolver using the given registry and resolution strategy.
      * @param registry                   The registry to resolve modules from
      * @param optionalResolutionStrategy The strategy for handling optional dependencies
      */
@@ -61,24 +62,24 @@ public class DependencyResolver {
     }
 
     /**
+     * {@return A set of compatible modules based on the required modules.}
      * @param rootModule        The first root module
      * @param additionalModules Any further root modules
-     * @return A set of compatible modules based on the required modules.
      */
     public ResolutionResult resolve(Name rootModule, Name... additionalModules) {
         return builder().require(rootModule).requireAll(additionalModules).build();
     }
 
     /**
+     * {@return A set of compatible modules based on the required modules.}
      * @param moduleIds The set of module ids to build a set of compatible modules from
-     * @return A set of compatible modules based on the required modules.
      */
     public ResolutionResult resolve(Iterable<Name> moduleIds) {
         return builder().requireAll(moduleIds).build();
     }
 
     /**
-     * @return A builder to resolve a set of compatible modules based on the required modules.
+     * {@return A builder to resolve a set of compatible modules based on the required modules.}
      */
     public ResolutionBuilder builder() {
         return new ResolutionBuilder();
