@@ -34,6 +34,7 @@ public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> imp
     private Predicate<FileReference> fileMatcher;
 
     /**
+     * Creates a AssetAlterationFileFormat that will handle files with given extensions.
      * @param fileExtension  A file extension that this file format will handle
      * @param fileExtensions Additional file extensions that this file format will handle
      */
@@ -41,10 +42,18 @@ public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> imp
         this.fileMatcher = FileUtil.createFileExtensionPredicate(Varargs.combineToList(fileExtension, fileExtensions));
     }
 
+    /**
+     * Creates a AssetAlterationFileFormat that will handle files with specified file extension.
+     * @param fileMatcher matcher for this file format.
+     */
     public AbstractAssetAlterationFileFormat(Predicate<FileReference> fileMatcher) {
         this.fileMatcher = fileMatcher;
     }
 
+    /**
+     * {@return the asset of the given filename}
+     * @param filename The filename of an asset, including extension
+     */
     @Override
     public Name getAssetName(String filename) {
         int extensionStart = filename.lastIndexOf('.');
@@ -54,6 +63,9 @@ public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> imp
         return new Name(filename);
     }
 
+    /**
+     * {@return the current file matcher}
+     */
     @Override
     public Predicate<FileReference> getFileMatcher() {
         return fileMatcher;

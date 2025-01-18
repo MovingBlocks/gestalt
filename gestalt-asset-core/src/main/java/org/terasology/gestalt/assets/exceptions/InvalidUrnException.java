@@ -23,21 +23,44 @@ package org.terasology.gestalt.assets.exceptions;
  */
 public class InvalidUrnException extends RuntimeException {
 
+    /**
+     * creates an exception to be thrown if asset URI was not valid.
+     */
     public InvalidUrnException() {
     }
 
+    /**
+     * creates an exception to be thrown if asset URI was not valid.
+     * @param message the message to be thrown.
+     */
     public InvalidUrnException(String message) {
         super(message);
     }
 
+    /**
+     * creates an exception to be thrown if asset URI was not valid.
+     * @param message the message to be thrown.
+     * @param cause throwable causing the exception.
+     */
     public InvalidUrnException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * creates an exception to be thrown if asset URI was not valid.
+     * @param cause throwable causing the exception.
+     */
     public InvalidUrnException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * creates an exception to be thrown if asset URI was not valid.
+     * @param message the message to be thrown.
+     * @param cause throwable causing the exception.
+     * @param enableSuppression true if exception can be suppressed.
+     * @param writableStackTrace true if exception stacktrace can be written.
+     */
     public InvalidUrnException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

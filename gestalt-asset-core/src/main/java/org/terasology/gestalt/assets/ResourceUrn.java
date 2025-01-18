@@ -42,8 +42,17 @@ import java.util.regex.Pattern;
 @API
 public final class ResourceUrn implements Comparable<ResourceUrn> {
 
+    /**
+     * separator character for resources.
+     */
     public static final String RESOURCE_SEPARATOR = ":";
+    /**
+     * separator character for fragments.
+     */
     public static final String FRAGMENT_SEPARATOR = "#";
+    /**
+     * separator character for instances.
+     */
     public static final String INSTANCE_INDICATOR = "!instance";
     private static final Pattern URN_PATTERN = Pattern.compile("([^:]+):([^#!]+)(?:#([^!]+))?(!instance)?");
 

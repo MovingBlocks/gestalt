@@ -47,17 +47,25 @@ public class AutoReloadAssetTypeManager implements ModuleAwareAssetTypeManager {
     private ModuleAwareAssetTypeManager assetTypeManager;
     private AssetReloadOnChangeHandler reloadOnChangeHandler;
 
+    /**
+     * Creates a wrapper around ModuleAwareAssetTypeManager that integrates auto asset reloading.
+     */
     public AutoReloadAssetTypeManager() {
         this.assetTypeManager = new ModuleAwareAssetTypeManagerImpl();
     }
 
     /**
+     * Creates a wrapper around ModuleAwareAssetTypeManager that integrates auto asset reloading.
      * @param classFactory The factory to use to instantiate classes for automatic registration.
      */
     public AutoReloadAssetTypeManager(ClassFactory classFactory) {
         this.assetTypeManager = new ModuleAwareAssetTypeManagerImpl(classFactory);
     }
 
+    /**
+     * Creates a wrapper around ModuleAwareAssetTypeManager that integrates auto asset reloading.
+     * @param assetTypeManager The assedTypemanager to use to instantiate classes for automatic registration.
+     */
     public AutoReloadAssetTypeManager(ModuleAwareAssetTypeManager assetTypeManager) {
         this.assetTypeManager = assetTypeManager;
     }
