@@ -48,6 +48,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Annotation processor to create bean classes for type elements.
+ */
 @SupportedOptions({"org.terasology.gestalt.annotation.processing"})
 public class BeanDefinitionProcessor extends AbstractProcessor {
 
@@ -66,13 +69,22 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     };
     private final Set<String> processed = new HashSet<>();
     private final Set<String> beanDefinitions = new HashSet<>();
+    /**
+     * The  javax.lang.model.util.Elements. It is a set of utilities for manipulating Java syntax elements,
+     */
     protected Elements elementUtils;
+    /**
+     * The javax.lang.model.util.Types. It is a set of utilities for manipulating Java types,
+     */
     protected Types typeUtils;
     private Filer filer;
     private ServiceTypeWriter writer;
     private ElementUtility utility;
     private Messager messager;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
@@ -86,11 +98,17 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         this.utility = new ElementUtility(processingEnvironment.getElementUtils(), processingEnvironment.getTypeUtils());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         return Collections.singleton("*");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment environment) {
 
@@ -154,9 +172,21 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
         return false;
     }
 
+    /**
+     * Class that writes the definition.
+     */
     public class DefinitionWriter extends ElementScanner8<Object, String> {
+        /**
+         * The base package containing gestalt annotations.
+         */
         public static final String BASE_PACKAGE = "org.terasology.context";
+        /**
+         * Argument field placeholder.
+         */
         public static final String ARGUMENT_FIELD = "$ARGUMENT";
+        /**
+         * Class metadata field placeholder.
+         */
         public static final String CLASS_METADATA_FIELD = "$CLASS_METADATA";
         private final TypeElement concreteClass;
         private final List<CodeBlock> arguments = new ArrayList<>();

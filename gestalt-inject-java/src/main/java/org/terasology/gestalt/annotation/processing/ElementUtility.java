@@ -11,23 +11,41 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.List;
 
+/**
+ * Utilities for discovering and distinguishing element types.
+ */
 public class ElementUtility {
     private final Elements elements;
     private final Types types;
 
+    /**
+     * Creates an ElementUtility, with given elements and types.
+     * @param elements the elements.
+     * @param types the types.
+     */
     public ElementUtility(Elements elements, Types types) {
         this.elements = elements;
         this.types = types;
     }
 
+    /**
+     * {@return the types}
+     */
     public Types getTypes() {
         return types;
     }
 
+    /**
+     * {@return the elements}
+     */
     public Elements getElements() {
         return elements;
     }
 
+    /**
+     * {@return the enclosing TypeElement}
+     * @param element the element
+     */
     public final TypeElement classElementFor(Element element) {
         ElementKind kind = element.getKind();
         while (element != null && !(kind == ElementKind.CLASS || kind == ElementKind.INTERFACE || kind == ElementKind.ENUM)) {
@@ -40,7 +58,11 @@ public class ElementUtility {
         return null;
     }
 
-
+    /**
+     * {@return true, if stereotype contains element, false otherwise.}
+     * @param element the element.
+     * @param stereotype the stereotype.
+     */
     public boolean hasStereotype(Element element, List<String> stereotype) {
         if (element == null) {
             return false;

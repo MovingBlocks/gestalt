@@ -20,6 +20,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Annotation processor to list resources for types.
+ */
 @SupportedOptions("resource")
 public class ResourceProcessor extends AbstractProcessor {
     private static final String FILE = "META-INF/resources";
