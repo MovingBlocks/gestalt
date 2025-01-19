@@ -22,21 +22,44 @@ package org.terasology.gestalt.assets.exceptions;
  * @author Immortius
  */
 public class InvalidAssetDataException extends RuntimeException {
+    /**
+     * creates an exception to be thrown if asset data was not valid.
+     */
     public InvalidAssetDataException() {
     }
 
+    /**
+     * creates an exception to be thrown if asset data was not valid.
+     * @param message the message to be thrown.
+     */
     public InvalidAssetDataException(String message) {
         super(message);
     }
 
+    /**
+     * creates an exception to be thrown if asset data was not valid.
+     * @param message the message to be thrown.
+     * @param cause throwable causing the exception.
+     */
     public InvalidAssetDataException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * creates an exception to be thrown if asset data was not valid.
+     * @param cause throwable causing the exception.
+     */
     public InvalidAssetDataException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * creates an exception to be thrown if asset data was not valid.
+     * @param message the message to be thrown.
+     * @param cause throwable causing the exception.
+     * @param enableSuppression true if exception can be suppressed.
+     * @param writableStackTrace true if exception stacktrace can be written.
+     */
     public InvalidAssetDataException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

@@ -42,6 +42,10 @@ public abstract class AbstractAssetFileFormat<T extends AssetData> implements As
         this.fileMatcher = FileUtil.createFileExtensionPredicate(Varargs.combineToList(fileExtension, fileExtensions));
     }
 
+    /**
+     * Creates an AssetFileformat that will handle files with name matching the given file matcher.
+     * @param fileMatcher condition files should match.
+     */
     public AbstractAssetFileFormat(Predicate<FileReference> fileMatcher) {
         this.fileMatcher = fileMatcher;
     }
