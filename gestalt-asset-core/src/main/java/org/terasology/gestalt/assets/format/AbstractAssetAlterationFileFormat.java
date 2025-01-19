@@ -43,7 +43,7 @@ public abstract class AbstractAssetAlterationFileFormat<T extends AssetData> imp
     }
 
     /**
-     * Creates a AssetAlterationFileFormat that will handle files with specified file extension.
+     * Creates a AssetAlterationFileFormat that will handle files matching the given predicate.
      * @param fileMatcher matcher for this file format.
      */
     public AbstractAssetAlterationFileFormat(Predicate<FileReference> fileMatcher) {
