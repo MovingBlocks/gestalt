@@ -64,7 +64,7 @@ public class AutoReloadAssetTypeManager implements ModuleAwareAssetTypeManager {
 
     /**
      * Creates a wrapper around ModuleAwareAssetTypeManager that integrates auto asset reloading.
-     * @param assetTypeManager The assedTypemanager to use to instantiate classes for automatic registration.
+     * @param assetTypeManager The AssetTypeManager to use to instantiate classes for automatic registration.
      */
     public AutoReloadAssetTypeManager(ModuleAwareAssetTypeManager assetTypeManager) {
         this.assetTypeManager = assetTypeManager;
