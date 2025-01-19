@@ -24,6 +24,9 @@ import java.util.Collections;
 import java.util.Queue;
 import java.util.Set;
 
+/**
+ * Records all types annotated with `@Index` or `@IndexInherited`, as well as all descendants of a type annotated with `@IndexInherited`.
+ */
 public class ClassIndexProcessor extends AbstractProcessor {
 
     private Filer filer;
