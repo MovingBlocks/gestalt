@@ -45,7 +45,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
-import java.security.AccessController;
+import java.security.AccessController; // marked for removal(deprecated)
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
@@ -54,6 +54,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+
+import javax.annotation.Nonnull;
 
 /**
  * AssetType manages all assets of a particular type/class.  It provides the ability to resolve and load assets by Urn, and caches assets so that there is only
@@ -67,6 +69,8 @@ import java.util.concurrent.Semaphore;
  */
 @API
 @ThreadSafe
+@SuppressWarnings({ "unchecked", "removal" })
+
 public final class AssetType<T extends Asset<U>, U extends AssetData> implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetType.class);
@@ -101,7 +105,6 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @param assetClass The class of asset this AssetType will manage.
      * @param factory    The factory used to convert AssetData to Assets for this type
      */
-    @SuppressWarnings("unchecked")
     public AssetType(Class<T> assetClass, AssetFactory<T, U> factory) {
         Preconditions.checkNotNull(assetClass);
         Preconditions.checkNotNull(factory);
@@ -131,7 +134,6 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     /**
      * Disposes any assets queued for disposal. This occurs if an asset is no longer referenced by anything.
      */
-    @SuppressWarnings("unchecked")
     public void processDisposal() {
         Reference<? extends Asset<U>> ref = disposalQueue.poll();
         while (ref != null) {
@@ -298,7 +300,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     }
 
     /**
-     * Creates and returns an instance of an asset, if possible. The following methods are used to create the copy, in order, with the first technique to succeeed used:
+     * Creates and returns an instance of an asset, if possible. The following methods are used to create the copy, in order, with the first technique to succeed used:
      * <ol>
      * <li>Delegate to the parent asset to create the copy</li>
      * <li>Loads the AssetData of the parent asset and create a new instance from that</li>
@@ -307,7 +309,6 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @param urn The urn of the asset to create an instance of
      * @return An instance of the desired asset
      */
-    @SuppressWarnings("unchecked")
     public Optional<T> getInstanceAsset(ResourceUrn urn) {
         Optional<? extends T> parentAsset = getAsset(urn.getParentUrn());
         if (parentAsset.isPresent()) {
@@ -323,6 +324,8 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @param asset The asset to create an instance of
      * @return The new instance, or {@link Optional#empty} if it could not be created
      */
+    
+    @SuppressWarnings({ "deprecation" })
     Optional<T> createInstance(Asset<U> asset) {
         Preconditions.checkArgument(assetClass.isAssignableFrom(asset.getClass()));
         Optional<? extends Asset<U>> result = asset.createCopy(asset.getUrn().getInstanceUrn());
@@ -351,6 +354,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @param urn The urn of the resource to reload.
      * @return The asset if it exists (regardless of whether it was reloaded or not)
      */
+    @SuppressWarnings({ "deprecation" })
     public Optional<T> reload(ResourceUrn urn) {
         Preconditions.checkArgument(!urn.isInstance(), "Cannot reload an asset instance urn");
         ResourceUrn redirectUrn = followRedirects(urn);
@@ -484,7 +488,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         return Sets.newLinkedHashSet(Collections2.transform(possibleModules, new Function<Name, ResourceUrn>() {
             @Nullable
             @Override
-            public ResourceUrn apply(Name input) {
+            public ResourceUrn apply(@Nonnull Name input) {
                 return new ResourceUrn(input, resourceName, fragmentName, instance);
             }
         }));
@@ -601,6 +605,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             return true;
         }
         if (obj instanceof AssetType) {
+            @SuppressWarnings("rawtypes")
             AssetType other = (AssetType) obj;
             return assetClass.equals(other.assetClass);
         }

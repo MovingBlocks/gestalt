@@ -1,8 +1,8 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
 plugins {
-    id("com.android.application")
-    id("project-report")
+    id 'com.android.application'
+    id 'project-report'
 }
 
 android {
@@ -16,8 +16,8 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     packagingOptions {
         merge "META-INF/annotations/*"
@@ -34,21 +34,36 @@ android {
 }
 
 dependencies {
-    implementation(fileTree(dir: "libs", include: ["*.jar"]))
-    implementation("com.android.support:appcompat-v7:28.0.0")
-    implementation("com.android.support.constraint:constraint-layout:1.1.3")
-    implementation(project(":gestalt-android"))
-    implementation(project(":gestalt-asset-core"))
-    implementation(project(":gestalt-entity-system"))
-    implementation(libs.guava)
-    implementation(libs.slf4j.api)
-    implementation("com.github.tony19:logback-android:1.3.0-3")
-    implementation(project(":testpack:testpack-api"))
-    testImplementation(libs.junit)
-    androidTestImplementation("com.android.support.test:runner:1.0.2")
-    androidTestImplementation("com.android.support.test.espresso:espresso-core:3.0.2")
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation "com.android.support:appcompat-v7:28.0.0"
+    implementation "com.android.support.constraint:constraint-layout:1.1.3"
+    implementation project(":gestalt-android")
+    implementation project(":gestalt-asset-core")
+    implementation project(":gestalt-entity-system")
+    implementation libs.guava
+    implementation libs.slf4j.api
+    implementation "com.github.tony19:logback-android:1.3.0-3"
+    implementation project(":testpack:testpack-api")
+    testImplementation libs.junit
+    androidTestImplementation "com.android.support.test:runner:1.0.2"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:3.0.2"
 
-    annotationProcessor(project(":gestalt-inject-java"))
+    annotationProcessor project(":gestalt-inject-java")
+}
+
+configurations {
+    // Apply constraints to enforce specific versions
+    all {
+        resolutionStrategy {
+            force(
+                "com.android.support:appcompat-v7:28.0.0",
+                "com.android.support.constraint:constraint-layout:1.1.3",
+                "com.github.tony19:logback-android:1.3.0-3",
+                "com.android.support.test:runner:1.0.2",
+                "com.android.support.test.espresso:espresso-core:3.0.2"
+            )
+        }
+    }
 }
 
 // Android projects don't provide direct access to compileJava but this seems to work.
@@ -56,8 +71,8 @@ dependencies {
 gradle.projectsEvaluated {
     tasks.withType(JavaCompile) {
         // Adds Resources as parameter for AnnotationProcessor (gather ResourceIndex,
-        // also add resource as input for compilejava, for re-gathering ResourceIndex, when resource was changed.
+        // also add resource as input for compileJava, for re-gathering ResourceIndex, when resource was changed.
         inputs.files android.sourceSets.main.resources.srcDirs
-        options.compilerArgs = ["-Aresource=${android.sourceSets.main.resources.srcDirs.join(File.pathSeparator)}"]
+        options.compilerArgs.add("-Aresource=${android.sourceSets.main.resources.srcDirs.join(File.pathSeparator)}")
     }
 }

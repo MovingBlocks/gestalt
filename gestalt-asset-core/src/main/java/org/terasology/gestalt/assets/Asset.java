@@ -172,6 +172,7 @@ public abstract class Asset<T extends AssetData> {
             return true;
         }
         if (obj instanceof Asset) {
+            @SuppressWarnings("rawtypes")
             Asset other = (Asset) obj;
             return !urn.isInstance() && !other.urn.isInstance() && other.urn.equals(urn);
         }
