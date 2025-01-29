@@ -16,7 +16,7 @@
 
 package org.terasology.gestalt.assets;
 
-import android.support.annotation.NonNull;
+
 import android.support.annotation.Nullable;
 
 import com.google.common.base.Function;
@@ -55,6 +55,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+
+import javax.annotation.Nonnull;
 
 /**
  * AssetType manages all assets of a particular type/class.  It provides the ability to resolve and load assets by Urn, and caches assets so that there is only
@@ -485,7 +487,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         return Sets.newLinkedHashSet(Collections2.transform(possibleModules, new Function<Name, ResourceUrn>() {
             @Nullable
             @Override
-            public ResourceUrn apply(@NonNull Name input) {
+            public ResourceUrn apply(@Nonnull Name input) {
                 return new ResourceUrn(input, resourceName, fragmentName, instance);
             }
         }));
