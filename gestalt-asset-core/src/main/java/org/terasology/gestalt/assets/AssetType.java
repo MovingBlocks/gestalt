@@ -16,6 +16,7 @@
 
 package org.terasology.gestalt.assets;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.common.base.Function;
@@ -45,9 +46,9 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+
+//import java.security.PrivilegedActionException;  //should i even remove these???(not sure)
+//import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +132,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     /**
      * Disposes any assets queued for disposal. This occurs if an asset is no longer referenced by anything.
      */
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
     public void processDisposal() {
         Reference<? extends Asset<U>> ref = disposalQueue.poll();
         while (ref != null) {
@@ -298,7 +299,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     }
 
     /**
-     * Creates and returns an instance of an asset, if possible. The following methods are used to create the copy, in order, with the first technique to succeeed used:
+     * Creates and returns an instance of an asset, if possible. The following methods are used to create the copy, in order, with the first technique to succeed used:
      * <ol>
      * <li>Delegate to the parent asset to create the copy</li>
      * <li>Loads the AssetData of the parent asset and create a new instance from that</li>
@@ -307,7 +308,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
      * @param urn The urn of the asset to create an instance of
      * @return An instance of the desired asset
      */
-    @SuppressWarnings("unchecked")
+   // @SuppressWarnings("unchecked")
     public Optional<T> getInstanceAsset(ResourceUrn urn) {
         Optional<? extends T> parentAsset = getAsset(urn.getParentUrn());
         if (parentAsset.isPresent()) {
@@ -328,7 +329,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         Optional<? extends Asset<U>> result = asset.createCopy(asset.getUrn().getInstanceUrn());
         if (!result.isPresent()) {
             try {
-                return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
+                
                     for (AssetDataProducer<U> producer : producers) {
                         Optional<U> data = producer.getAssetData(asset.getUrn());
                         if (data.isPresent()) {
@@ -336,8 +337,8 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                         }
                     }
                     return Optional.ofNullable(assetClass.cast(result.get()));
-                });
-            } catch (PrivilegedActionException e) {
+                
+            } catch (Exception e) {
                 logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e.getCause());
             }
         }
@@ -355,7 +356,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         Preconditions.checkArgument(!urn.isInstance(), "Cannot reload an asset instance urn");
         ResourceUrn redirectUrn = followRedirects(urn);
         try {
-            return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
+             
                 for (AssetDataProducer<U> producer : producers) {
                     Optional<U> data = producer.getAssetData(redirectUrn);
                     if (data.isPresent()) {
@@ -363,8 +364,8 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                     }
                 }
                 return Optional.ofNullable(loadedAssets.get(redirectUrn));
-            });
-        } catch (PrivilegedActionException e) {
+            
+        } catch (Exception e) {
             if (redirectUrn.equals(urn)) {
                 logger.error("Failed to load asset '{}'", redirectUrn, e.getCause());
             } else {
@@ -484,7 +485,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
         return Sets.newLinkedHashSet(Collections2.transform(possibleModules, new Function<Name, ResourceUrn>() {
             @Nullable
             @Override
-            public ResourceUrn apply(Name input) {
+            public ResourceUrn apply(@NonNull Name input) {
                 return new ResourceUrn(input, resourceName, fragmentName, instance);
             }
         }));
@@ -601,7 +602,7 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             return true;
         }
         if (obj instanceof AssetType) {
-            AssetType other = (AssetType) obj;
+            AssetType<?, ?> other = (AssetType<?, ?>) obj;
             return assetClass.equals(other.assetClass);
         }
         return false;
