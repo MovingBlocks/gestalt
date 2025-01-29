@@ -69,7 +69,6 @@ public abstract class AbstractFragmentDataProducer<T extends AssetData, U extend
     public Set<Name> getModulesProviding(Name resourceName) {
         if (resolveModuleFromRoot) {
             return ImmutableSet.copyOf(Collections2.transform(assetManager.resolve(resourceName.toString(), rootAssetType), new Function<ResourceUrn, Name>() {
-                @SuppressWarnings("null")
                 @Nullable
                 @Override
                 public Name apply(ResourceUrn input) {
