@@ -171,8 +171,8 @@ public abstract class Asset<T extends AssetData> {
         if (obj == this) {
             return true;
         }
-        if (obj instanceof Asset) {
-            Asset other = (Asset) obj;
+        if (obj instanceof Asset<?>) {
+            Asset<?> other = (Asset<?>) obj;
             return !urn.isInstance() && !other.urn.isInstance() && other.urn.equals(urn);
         }
         return false;

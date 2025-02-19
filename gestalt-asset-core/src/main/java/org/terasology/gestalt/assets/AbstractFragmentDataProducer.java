@@ -31,6 +31,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 /**
  * An abstract implementation of AssetDataProducer aimed to ease the creation of producers that provide fragments from other assets.
  * <p>
@@ -71,7 +73,7 @@ public abstract class AbstractFragmentDataProducer<T extends AssetData, U extend
             return ImmutableSet.copyOf(Collections2.transform(assetManager.resolve(resourceName.toString(), rootAssetType), new Function<ResourceUrn, Name>() {
                 @Nullable
                 @Override
-                public Name apply(ResourceUrn input) {
+                public Name apply(@Nonnull ResourceUrn input) {
                     return input.getModuleName();
                 }
             }));

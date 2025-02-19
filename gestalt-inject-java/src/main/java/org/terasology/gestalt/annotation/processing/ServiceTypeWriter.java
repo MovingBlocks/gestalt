@@ -6,7 +6,6 @@ import javax.annotation.processing.Filer;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,8 +16,7 @@ public class ServiceTypeWriter {
 
     private final Filer filer;
     private final Map<String, HashSet<String>> results = new HashMap<>();
-    private final Map<String, FileObject> files = new HashMap<>();
-
+    
     public ServiceTypeWriter(Filer filer) {
         this.filer = filer;
     }

@@ -50,6 +50,20 @@ dependencies {
 
     annotationProcessor(project(":gestalt-inject-java"))
 }
+configurations {
+    // Apply constraints to enforce specific versions
+    all {
+        resolutionStrategy {
+            force(
+                "com.android.support:appcompat-v7:28.0.0",
+                "com.android.support.constraint:constraint-layout:1.1.3",
+                "com.github.tony19:logback-android:1.3.0-3",
+                "com.android.support.test:runner:1.0.2",
+                "com.android.support.test.espresso:espresso-core:3.0.2"
+            )
+        }
+    }
+}
 
 // Android projects don't provide direct access to compileJava but this seems to work.
 // https://stackoverflow.com/a/42297051
