@@ -358,7 +358,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     @Override
     public void close() throws Exception {
         for (Object o : this.boundObjects.values()) {
-            if (o instanceof AutoCloseable) {
+            if (o instanceof AutoCloseable && o != this) {
                 try {
                     ((AutoCloseable) o).close();
                 } catch (Exception e) {
