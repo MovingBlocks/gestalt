@@ -116,7 +116,7 @@ public final class Version implements Comparable<Version> {
      * @return true if this version is a snapshot
      */
     public boolean isSnapshot() {
-        return !semver.preReleaseVersion().isEmpty();
+        return semver.preReleaseVersion().isPresent();
     }
 
     /**
