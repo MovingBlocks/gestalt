@@ -104,8 +104,7 @@ public class ClasspathFileSource implements ModuleFileSource {
         }
         String fullpath = buildPathString(filepath, false);
         if (classLoader.getResource(fullpath) != null) {
-            return Optional
-                    .of(new ClasspathSourceFileReference(fullpath, extractSubpath(basePath, fullpath), classLoader));
+            return Optional.of(new ClasspathSourceFileReference(fullpath, extractSubpath(basePath, fullpath), classLoader));
         } else {
             return Optional.empty();
         }
