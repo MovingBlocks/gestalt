@@ -39,6 +39,7 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
     private final Multimap<Qualifier, BeanKey> qualifierMapping = HashMultimap.create();
     private final Multimap<Class, BeanKey> interfaceMapping = HashMultimap.create();
     private final Multimap<Class, BeanKey> abstractMapping = HashMultimap.create();
+    private boolean isClosing; // Help avoid StackOverflowError
 
     private final BeanContext parent;
     private final BeanEnvironment environment;
@@ -357,6 +358,10 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     @Override
     public void close() throws Exception {
+        if (isClosing) {
+            return;
+        }
+        isClosing = true;
         for (Object o : this.boundObjects.values()) {
             if (o instanceof AutoCloseable && o != this) {
                 try {

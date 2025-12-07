@@ -46,3 +46,6 @@ ehthumbs.db
 Thumbs.db
 
 gestalt-di/test-modules/
+
+generated_tests/
+generated/
