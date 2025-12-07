@@ -100,16 +100,30 @@ public class ModuleEnvironmentWatcherTest {
         Files.createDirectories(tempDirectory.resolve("assets").resolve("text"));
         watcher.checkForChanges();
         Files.createFile(tempDirectory.resolve("assets").resolve("text").resolve("test.txt"));
-        SetMultimap<AssetType<?, ?>, ResourceUrn> changed = watcher.checkForChanges();
-        assertTrue(changed.containsEntry(assetType, new ResourceUrn(module.getId(), new Name("test.txt"))));
+        waitForChange(watcher, assetType, new ResourceUrn(module.getId(), new Name("test.txt")));
+
         try (Writer writer = Files.newBufferedWriter(tempDirectory.resolve("assets").resolve("text").resolve("test.txt"))) {
             writer.write("This is my text");
         }
-        changed = watcher.checkForChanges();
-        assertTrue(changed.containsEntry(assetType, new ResourceUrn(module.getId(), new Name("test.txt"))));
+        waitForChange(watcher, assetType, new ResourceUrn(module.getId(), new Name("test.txt")));
+
         FilesUtil.recursiveDelete(tempDirectory);
         watcher.checkForChanges();
-
     }
 
+    private void waitForChange(ModuleEnvironmentWatcher watcher, AssetType<?, ?> type, ResourceUrn urn) {
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < 10000) {
+            SetMultimap<AssetType<?, ?>, ResourceUrn> changed = watcher.checkForChanges();
+            if (changed.containsEntry(type, urn)) {
+                return;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        throw new AssertionError("Timed out waiting for change " + urn);
+    }
 }

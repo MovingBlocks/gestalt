@@ -20,8 +20,11 @@ test {
     // ignoreFailures: Specifies whether the build should break when the verifications performed by this task fail.
     ignoreFailures = true
 
-    // showStandardStreams: makes the standard streams (err and out) visible at console when running tests
-    testLogging.showStandardStreams = true
+    // Makes the standard streams (err and out) visible at console when running tests, along with better test event details
+    testLogging {
+        showStandardStreams = true
+        events "passed", "skipped", "failed"
+    }
 
     reports {
         junitXml.required.set(true)
