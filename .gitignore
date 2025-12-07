@@ -52,3 +52,5 @@ Icon
 ehthumbs.db
 Thumbs.db
 
+generated_tests/
+generated/
