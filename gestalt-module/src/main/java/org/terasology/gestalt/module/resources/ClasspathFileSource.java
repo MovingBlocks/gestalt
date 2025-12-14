@@ -110,7 +110,7 @@ public class ClasspathFileSource implements ModuleFileSource {
         if (filepath.stream().anyMatch(s -> s.equals(".."))) {
             return Optional.empty();
         }
-        String fullpath = buildPathString(filepath);
+        String fullpath = buildPathString(filepath, false);
         if (classLoader.getResource(fullpath) != null) {
             return Optional.of(new ClasspathSourceFileReference(fullpath, extractSubpath(basePath, fullpath), classLoader));
         } else {
@@ -120,7 +120,7 @@ public class ClasspathFileSource implements ModuleFileSource {
 
     @Override
     public Collection<FileReference> getFilesInPath(boolean recursive, List<String> path) {
-        String fullPath = buildPathString(path);
+        String fullPath = buildPathString(path, true);
         Stream<String> candidates = files
                 .stream()
                 .filter(file -> file.startsWith(fullPath))
@@ -137,7 +137,7 @@ public class ClasspathFileSource implements ModuleFileSource {
 
     @Override
     public Set<String> getSubpaths(List<String> path) {
-        String fullPath = buildPathString(path);
+        String fullPath = buildPathString(path, true);
         return files
                 .stream()
                 .filter(file -> file.startsWith(fullPath))
@@ -149,12 +149,15 @@ public class ClasspathFileSource implements ModuleFileSource {
                 .collect(Collectors.toSet());
     }
 
-    private String buildPathString(List<String> path) {
+    private String buildPathString(List<String> path, boolean isDirectory) {
         String fullPath;
         if (path.isEmpty() || (path.size() == 1 && path.get(0).isEmpty())) {
             fullPath = basePath;
         } else {
-            fullPath = basePath + CLASS_PATH_JOINER.join(path) + CLASS_PATH_SEPARATOR;
+            fullPath = basePath + CLASS_PATH_JOINER.join(path);
+            if (isDirectory) {
+                fullPath += CLASS_PATH_SEPARATOR;
+            }
         }
         return fullPath;
     }
