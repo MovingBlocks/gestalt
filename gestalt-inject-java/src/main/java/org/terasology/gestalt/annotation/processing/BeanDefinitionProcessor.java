@@ -244,7 +244,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     ExecutableElement executableElement = entry.getKey();
                     AnnotationValue value = entry.getValue();
                     if (value != null) {
-                        values.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(executableElement.asType(), value.getValue())));
+                        values.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(executableElement.getReturnType(), value.getValue())));
                     }
                 }
 
