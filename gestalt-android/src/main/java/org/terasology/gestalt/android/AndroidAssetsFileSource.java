@@ -17,7 +17,7 @@
 package org.terasology.gestalt.android;
 
 import android.content.res.AssetManager;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import org.terasology.gestalt.module.resources.FileReference;
 import org.terasology.gestalt.module.resources.ModuleFileSource;
 
