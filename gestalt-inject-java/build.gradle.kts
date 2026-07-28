@@ -20,7 +20,7 @@ dependencies {
     testImplementation(libs.logback)
     testImplementation(libs.mockito)
 
-    implementation("com.squareup:javapoet:1.12.0")
+    implementation("com.squareup:javapoet:1.13.0")
     implementation("javax.inject:javax.inject:1")
     implementation(project(":gestalt-inject"))
 }

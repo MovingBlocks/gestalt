@@ -205,15 +205,22 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
             return super.visitType(e, className);
         }
 
-        private Object getValue(Object target) {
+        private Object getValue(TypeMirror type, Object target) {
             Object result;
             if (target instanceof String) {
                 result = String.format("\"%s\"", target);
+            } else if (target instanceof List) {
+                if (((List<?>) target).isEmpty()) {
+                    result = "new " + type + "{}";
+                } else {
+                    result = target;
+                }
+            } else if (type.getKind() == TypeKind.DECLARED && ((DeclaredType) type).asElement().getKind() == ElementKind.ENUM) {
+                result = type + "." + target;
             } else {
                 result = target;
             }
             return result;
-
         }
 
         private List<CodeBlock> buildAnnotationValues(List<? extends AnnotationMirror> mirrors) {
@@ -228,7 +235,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                         ExecutableElement executableElement = (ExecutableElement) element;
                         AnnotationValue value = executableElement.getDefaultValue();
                         if (value != null) {
-                            defaults.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(value.getValue())));
+                            defaults.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(executableElement.getReturnType(), value.getValue())));
                         }
                     }
                 }
@@ -237,7 +244,7 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
                     ExecutableElement executableElement = entry.getKey();
                     AnnotationValue value = entry.getValue();
                     if (value != null) {
-                        values.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(value.getValue())));
+                        values.add(CodeBlock.of("$S,$L", executableElement.getSimpleName(), getValue(executableElement.getReturnType(), value.getValue())));
                     }
                 }
 
