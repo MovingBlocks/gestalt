@@ -21,6 +21,7 @@ import org.terasology.gestalt.di.instance.SupplierProvider;
 
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,9 +81,6 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
             bindExpression(expression);
         }
         this.beanInterceptMapping.putAll(registry.intercepts);
-
-        // register self as a singleton instance that is scoped to current context
-        bindExpression(new ServiceRegistry.InstanceExpression<>(BeanContext.class).lifetime(Lifetime.Singleton).use(() -> this));
     }
 
     private <T> void loadAbstract(BeanKey<?> key, Class<T> clazz) {
@@ -135,6 +133,13 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     @Override
     public <T> Optional<T> findBean(BeanKey<T> identifier) {
+        // Resolve "give me the current context" directly instead of registering `this` as a
+        // provided singleton (bindRegistry() used to do that): a self-reference isn't a bean
+        // this context owns/creates, so it shouldn't be cached in boundObjects, where close()
+        // would try to dispose of it - closing itself as one of its own children.
+        if (identifier.getBaseType() == BeanContext.class && identifier.qualifier == null) {
+            return Optional.of((T) this);
+        }
         Optional<BeanContext> cntx = Optional.of(this);
         while (cntx.isPresent()) {
             BeanContext beanContext = cntx.get();
@@ -274,6 +279,9 @@ public class DefaultBeanContext implements AutoCloseable, BeanContext {
 
     @Override
     public <T> List<T> getBeans(BeanKey<T> identifier) {
+        if (identifier.getBaseType() == BeanContext.class && identifier.qualifier == null) {
+            return Collections.singletonList((T) this);
+        }
         Optional<BeanContext> cntx = Optional.of(this);
         Stream<T> all = Stream.of();
         while (cntx.isPresent()) {
