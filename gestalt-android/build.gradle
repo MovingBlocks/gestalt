@@ -6,24 +6,25 @@ plugins {
 }
 
 android {
-    compileSdkVersion 28
+    namespace "org.terasology.gestalt.android"
+    compileSdkVersion 36
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 28
+        targetSdkVersion 36
         versionCode 1
         versionName "1.0"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
     lintOptions {
@@ -41,21 +42,21 @@ dependencies {
     implementation(libs.slf4j.api)
     implementation(libs.guava)
 
-    implementation("com.android.support:appcompat-v7:28.0.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
     testImplementation(libs.junit)
-    androidTestImplementation("com.android.support.test:runner:1.0.2")
-    androidTestImplementation("com.android.support.test.espresso:espresso-core:3.0.2")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
 
 task androidJavadocs(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    android.libraryVariants.all { variant ->
-        if (variant.name == "release") {
-            owner.classpath += variant.javaCompileProvider.get().classpath
-        }
-    }
     exclude "**/R.html", "**/R.*.html", "**/index.html"
+}
+
+def androidComponents = project.extensions.getByType(com.android.build.api.variant.LibraryAndroidComponentsExtension)
+afterEvaluate {
+    androidJavadocs.classpath += files(configurations.getByName("releaseCompileClasspath"))
+    androidJavadocs.classpath += files(androidComponents.sdkComponents.bootClasspath)
 }
 
 task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {

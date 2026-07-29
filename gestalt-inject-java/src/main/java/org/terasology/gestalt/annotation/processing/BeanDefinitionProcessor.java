@@ -33,6 +33,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.util.ElementScanner8;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -104,6 +105,14 @@ public class BeanDefinitionProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         return Collections.singleton("*");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
     }
 
     /**

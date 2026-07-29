@@ -11,7 +11,7 @@ dependencyResolutionManagement {
             // testing
             library("junit", "junit:junit:4.12")
             library("logback", "ch.qos.logback:logback-classic:1.2.3")
-            library("mockito", "org.mockito:mockito-core:1.10.19")
+            library("mockito", "org.mockito:mockito-core:5.23.0")
         }
     }
 }
