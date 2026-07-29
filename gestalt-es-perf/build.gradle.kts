@@ -1,9 +1,7 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-apply(from = "$rootDir/gradle/common.gradle.kts")
-
 plugins {
-    `java-library`
+    id("gestalt-library-common")
 }
 
 dependencies {
@@ -29,7 +27,7 @@ description = "High performance access methods to replace the use of reflections
  */
 
 // Register the gatherJarModules task
-val gatherJarModules by tasks.registering(Copy::class) {
+val gatherJarModules = tasks.register<Copy>("gatherJarModules") {
     dependsOn(":testpack:moduleF:jar")
     from("../testpack/moduleF/build/libs/")
     into("test-modules")
@@ -37,7 +35,7 @@ val gatherJarModules by tasks.registering(Copy::class) {
 }
 
 // Register the gatherModules task
-val gatherModules by tasks.registering {
+val gatherModules = tasks.register("gatherModules") {
     dependsOn(":gestalt-es-perf:gatherJarModules")
 }
 
