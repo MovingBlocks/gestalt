@@ -3,6 +3,7 @@
 plugins {
     id("com.android.library")
     id("maven-publish")
+    id("ru.vyarus.animalsniffer") version "2.0.1"
 }
 
 android {
@@ -30,7 +31,14 @@ android {
     lintOptions {
         lintConfig file("lintconfig.xml")
     }
+    lint {
+        // Somehow, AndroidAssetsFileSource.java breaks this lint.
+        disable "BidiSpoofing"
+    }
+}
 
+tasks.withType(AnimalSniffer) {
+    ignoreFailures = false
 }
 
 dependencies {
@@ -46,6 +54,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+
+    signature("com.toasttab.android:gummy-bears-api-24:0.15.0:coreLib2@signature")
 }
 
 task androidJavadocs(type: Javadoc) {
