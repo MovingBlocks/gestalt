@@ -10,4 +10,5 @@ repositories {
 }
 
 dependencies {
+    implementation("ru.vyarus:gradle-animalsniffer-plugin:2.0.1")
 }

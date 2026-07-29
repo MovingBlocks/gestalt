@@ -27,3 +27,8 @@ dependencies {
 tasks.withType<AbstractTestTask>().configureEach {
     failOnNoDiscoveredTests = false
 }
+
+tasks.withType<ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer> {
+    // The gestalt-inject-java annotation processor is only used at compile-time and not intended for use on Android.
+    exclude("**/*")
+}

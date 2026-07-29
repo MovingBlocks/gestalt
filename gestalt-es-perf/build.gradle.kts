@@ -43,3 +43,8 @@ val gatherModules = tasks.register("gatherModules") {
 tasks.named("test") {
     dependsOn(gatherModules)
 }
+
+tasks.withType<ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer> {
+    // The gestalt-es-perf library is not intended for use on Android.
+    exclude("**/*")
+}

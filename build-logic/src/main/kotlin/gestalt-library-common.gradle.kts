@@ -5,6 +5,11 @@
 plugins {
     `java-library`
     `maven-publish`
+    id("ru.vyarus.animalsniffer")
+}
+
+dependencies {
+    add("signature", "com.toasttab.android:gummy-bears-api-24:0.15.0:coreLib2@signature")
 }
 
 extensions.configure<JavaPluginExtension> {
@@ -13,6 +18,11 @@ extensions.configure<JavaPluginExtension> {
 
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+}
+
+extensions.configure<ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension> {
+    // java.nio.* APIs can be desugared by D8. java.io.File.toPath() also needs to be excluded.
+    ignore = listOf("java.nio.file.*", "java.io.File")
 }
 
 // Extra details provided for unit tests
