@@ -1,9 +1,7 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
-apply(from = "$rootDir/gradle/common.gradle.kts")
-
 plugins {
-    `java-library`
+    id("gestalt-library-common")
 }
 
 dependencies {

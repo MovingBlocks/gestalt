@@ -1,9 +1,11 @@
-// Copyright 2021 The Terasology Foundation
+// Copyright 2026 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
 
 // Most typical common config, but not quite global
-apply(plugin = "java-library")
-apply(plugin = "maven-publish")
+plugins {
+    `java-library`
+    `maven-publish`
+}
 
 extensions.configure<JavaPluginExtension> {
     withSourcesJar()

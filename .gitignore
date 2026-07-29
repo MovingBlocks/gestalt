@@ -25,6 +25,7 @@ hs_err_pid*
 
 # Ignore Gradle
 /.gradle/
+/build-logic/.gradle
 build/
 local.properties
 

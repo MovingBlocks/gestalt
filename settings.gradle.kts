@@ -16,6 +16,10 @@ dependencyResolutionManagement {
     }
 }
 
+pluginManagement {
+    includeBuild("build-logic")
+}
+
 include(
     "gestalt-util",
     "gestalt-di",
