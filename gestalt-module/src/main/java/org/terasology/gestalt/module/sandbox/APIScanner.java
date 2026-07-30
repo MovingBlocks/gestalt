@@ -78,7 +78,7 @@ public class APIScanner {
                     }
                 }
             } catch (ClassNotFoundException e) {
-                logger.warn("Class not found", e);
+                logger.info("Class {} not found on classloader {} - expected if it belongs to a module's own classloader instead", apiClass, forClassLoader);
             }
         }
     }
