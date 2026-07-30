@@ -1,10 +1,14 @@
 pipeline {
     agent {
-        label "light && java17"
+        kubernetes {
+            label 'android'
+            defaultContainer 'builder' // Use actual container with Android SDK present
+        }
     }
     stages {
         stage('Build') {
             steps {
+                sh 'echo sdk.dir=/opt/android-sdk > local.properties'
                 sh './gradlew --info --console=plain jar'
             }
         }
