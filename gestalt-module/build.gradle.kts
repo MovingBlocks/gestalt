@@ -42,7 +42,7 @@ tasks.named<JavaCompile>("compileTestJava") {
 description = "Provides support for modules - java libraries that can be activated at runtime and run in a sandboxed environment"
 
 // Task registrations
-val gatherJarModules by tasks.registering(Copy::class) {
+val gatherJarModules = tasks.register<Copy>("gatherJarModules") {
     dependsOn(":testpack:moduleA:jar", ":testpack:moduleB:jar", ":testpack:moduleC:jar", ":testpack:moduleD:jar")
     from("../testpack/moduleA/build/libs/")
     from("../testpack/moduleB/build/libs/")
@@ -52,7 +52,7 @@ val gatherJarModules by tasks.registering(Copy::class) {
     include("*.jar")
 }
 
-val copyModuleELibs by tasks.registering(Copy::class) {
+val copyModuleELibs = tasks.register<Copy>("copyModuleELibs") {
     dependsOn(":testpack:moduleA:jar", ":testpack:moduleD:jar")
     from("../testpack/moduleA/build/libs")
     from("../testpack/moduleD/build/libs")
@@ -60,17 +60,17 @@ val copyModuleELibs by tasks.registering(Copy::class) {
     include("*.jar")
 }
 
-val copyModuleEInfo by tasks.registering(Copy::class) {
+val copyModuleEInfo = tasks.register<Copy>("copyModuleEInfo") {
     from("../testpack/moduleE")
     into("test-modules/moduleE")
     include("*.json")
 }
 
-val createModuleE by tasks.registering {
+val createModuleE = tasks.register("createModuleE") {
     dependsOn(":gestalt-module:copyModuleEInfo", ":gestalt-module:copyModuleELibs")
 }
 
-val gatherModules by tasks.registering {
+val gatherModules = tasks.register("gatherModules") {
     dependsOn(":gestalt-module:gatherJarModules", ":gestalt-module:createModuleE")
 }
 
