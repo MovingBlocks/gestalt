@@ -189,6 +189,22 @@ public class AssetTypeTest {
         assertFalse(assetType.isLoaded(URN));
     }
 
+    /**
+     * A producer/format may reject malformed source data with an unchecked exception (e.g. a JSON parser's
+     * JsonParseException) rather than the checked IOException above. That must be isolated to this one asset
+     * the same way - not propagate out and take down whatever triggered the load.
+     */
+    @Test
+    public void getAssetWhenProducerThrowsUnchecked() throws Exception {
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer.getAssetData(URN)).thenThrow(new IllegalStateException("malformed asset"));
+
+        assertFalse(assetType.getAsset(URN).isPresent());
+        assertFalse(assetType.isLoaded(URN));
+    }
+
     @Test
     public void followRedirectsGettingAssets() throws Exception {
         AssetDataProducer producer = mock(AssetDataProducer.class);
