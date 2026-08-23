@@ -529,6 +529,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             }
         } catch (IOException e) {
             logger.error("Failed to reload asset '{}', disposing", asset.getUrn());
+        } catch (RuntimeException e) {
+            // See the matching catch in createInstance()/reload() above - an AssetDataProducer/AssetFileFormat
+            // may throw unchecked exceptions; without this, one would abort refresh() for every asset still
+            // to be processed, instead of just disposing this one.
+            logger.error("Failed to reload asset '{}', disposing", asset.getUrn(), e);
         }
         return false;
     }

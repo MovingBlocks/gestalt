@@ -318,6 +318,34 @@ public class AssetTypeTest {
         assertTrue(asset.get().isDisposed());
     }
 
+    /**
+     * reloadFromProducers only caught the checked IOException, so an unchecked failure from one asset's
+     * producer would abort refresh()'s loop entirely and leave every asset after it unprocessed - not just
+     * fail to isolate the one asset, the same way createInstance/reload had to be fixed above.
+     */
+    @Test
+    public void disposeAssetOnRefreshWhenProducerThrowsUnchecked() throws Exception {
+        ResourceUrn urn2 = new ResourceUrn("test", "example2");
+
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
+        when(producer.getAssetData(urn2)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
+
+        Optional<Text> asset = assetType.getAsset(URN);
+        Optional<Text> asset2 = assetType.getAsset(urn2);
+
+        when(producer.getAssetData(URN)).thenThrow(new IllegalStateException("malformed asset"));
+        when(producer.getAssetData(urn2)).thenReturn(Optional.of(new TextData(TEXT_VALUE_2)));
+
+        assetType.refresh();
+
+        assertTrue(asset.get().isDisposed());
+        assertFalse(asset2.get().isDisposed());
+        assertEquals(TEXT_VALUE_2, asset2.get().getValue());
+    }
+
     @Test
     public void reloadAvailableAssetsOnRefresh() throws Exception {
         AssetDataProducer producer = mock(AssetDataProducer.class);
