@@ -205,6 +205,28 @@ public class AssetTypeTest {
         assertFalse(assetType.isLoaded(URN));
     }
 
+    /**
+     * createInstance falls back to the producers when the parent asset can't just be copied (see
+     * {@link Text#doCreateCopy}). That fallback must isolate an unchecked failure the same way {@link #getAsset}
+     * does, rather than propagating it - or worse, masking it behind a {@link java.util.NoSuchElementException}
+     * from reading an already-known-empty copy result.
+     */
+    @Test
+    public void createInstanceWhenProducerThrowsUnchecked() throws Exception {
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetType.addProducer(producer);
+        when(producer.getAssetData(URN)).thenThrow(new IllegalStateException("malformed asset"));
+
+        Text parent = new Text(URN, new TextData(TEXT_VALUE), assetType) {
+            @Override
+            protected Optional<? extends Asset<TextData>> doCreateCopy(ResourceUrn copyUrn, AssetType<?, TextData> parentAssetType) {
+                return Optional.empty();
+            }
+        };
+
+        assertFalse(assetType.createInstance(parent).isPresent());
+    }
+
     @Test
     public void followRedirectsGettingAssets() throws Exception {
         AssetDataProducer producer = mock(AssetDataProducer.class);

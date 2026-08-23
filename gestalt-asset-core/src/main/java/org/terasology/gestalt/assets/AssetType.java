@@ -326,28 +326,29 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     Optional<T> createInstance(Asset<U> asset) {
         Preconditions.checkArgument(assetClass.isAssignableFrom(asset.getClass()));
         Optional<? extends Asset<U>> result = asset.createCopy(asset.getUrn().getInstanceUrn());
-        if (!result.isPresent()) {
-            try {
-                return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
-                    for (AssetDataProducer<U> producer : producers) {
-                        Optional<U> data = producer.getAssetData(asset.getUrn());
-                        if (data.isPresent()) {
-                            return Optional.of(loadAsset(asset.getUrn().getInstanceUrn(), data.get()));
-                        }
-                    }
-                    return Optional.ofNullable(assetClass.cast(result.get()));
-                });
-            } catch (PrivilegedActionException e) {
-                logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e.getCause());
-            } catch (RuntimeException e) {
-                // An AssetDataProducer/AssetFileFormat may throw unchecked exceptions (e.g. a malformed source
-                // file rejected by a JSON/XML parser). PrivilegedActionException above only wraps *checked*
-                // exceptions, so without this an unchecked one would propagate past this per-asset isolation
-                // and abort whatever triggered the load, instead of just failing this one asset.
-                logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e);
-            }
+        if (result.isPresent()) {
+            return Optional.of(assetClass.cast(result.get()));
         }
-        return Optional.ofNullable(assetClass.cast(result.get()));
+        try {
+            return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
+                for (AssetDataProducer<U> producer : producers) {
+                    Optional<U> data = producer.getAssetData(asset.getUrn());
+                    if (data.isPresent()) {
+                        return Optional.of(loadAsset(asset.getUrn().getInstanceUrn(), data.get()));
+                    }
+                }
+                return Optional.empty();
+            });
+        } catch (PrivilegedActionException e) {
+            logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e.getCause());
+        } catch (RuntimeException e) {
+            // An AssetDataProducer/AssetFileFormat may throw unchecked exceptions (e.g. a malformed source
+            // file rejected by a JSON/XML parser). PrivilegedActionException above only wraps *checked*
+            // exceptions, so without this an unchecked one would propagate past this per-asset isolation
+            // and abort whatever triggered the load, instead of just failing this one asset.
+            logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e);
+        }
+        return Optional.empty();
     }
 
     /**
