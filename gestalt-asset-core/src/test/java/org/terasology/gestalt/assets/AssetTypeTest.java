@@ -319,9 +319,9 @@ public class AssetTypeTest {
     }
 
     /**
-     * reloadFromProducers only caught the checked IOException, so an unchecked failure from one asset's
-     * producer would abort refresh()'s loop entirely and leave every asset after it unprocessed - not just
-     * fail to isolate the one asset, the same way createInstance/reload had to be fixed above.
+     * reloadFromProducers most not only catch checked IOExceptions, so an unchecked failure from one asset's
+     * producer does not abort refresh()'s loop entirely and leave every asset after it unprocessed -
+     * failing to isolate the one asset.
      */
     @Test
     public void disposeAssetOnRefreshWhenProducerThrowsUnchecked() throws Exception {
