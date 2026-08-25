@@ -12,6 +12,9 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:9.3.1")
     }
+    configurations.classpath {
+        resolutionStrategy.activateDependencyLocking()
+    }
 }
 
 plugins {
@@ -43,6 +46,22 @@ allprojects {
         // SemVer lib
         maven {
             url = uri("https://heisluft.de/maven")
+        }
+    }
+}
+
+// Pass -PnoLock to resolve every dependency range fresh against whatever version satisfies it right now,
+// ignoring gradle.lockfile entirely for that one build - useful for trying out an update locally before
+// committing to it via --write-locks. Locking isn't activated at all in that case, so nothing gets
+// checked against or written to the lockfile either.
+//
+// Locks every resolvable configuration, not just compileClasspath - otherwise dependencies unique to
+// other configurations (testCompileClasspath, animalsniffer signature configs, etc.) could still
+// silently float to a newer version picked up from their declared range.
+if (!project.hasProperty("noLock")) {
+    subprojects {
+        dependencyLocking {
+            lockAllConfigurations()
         }
     }
 }

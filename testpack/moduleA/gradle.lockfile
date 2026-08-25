@@ -1,0 +1,22 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :testpack:moduleA:dependencies --write-locks
+com.android.support:support-annotations:28.0.0=annotationProcessor
+com.github.zafarkhaja:java-semver:0.10.2=annotationProcessor
+com.google.code.findbugs:jsr305:3.0.2=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+com.google.code.gson:gson:2.8.5=annotationProcessor
+com.google.errorprone:error_prone_annotations:2.2.0=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+com.google.guava:failureaccess:1.0.1=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+com.google.guava:guava:27.0.1-android=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+com.google.j2objc:j2objc-annotations:1.1=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+com.googlecode.gentyref:gentyref:1.2.0=annotationProcessor
+com.squareup:javapoet:1.13.0=annotationProcessor
+commons-logging:commons-logging:1.2=annotationProcessor
+javax.inject:javax.inject:1=annotationProcessor,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.apache.commons:commons-vfs2:2.2=annotationProcessor
+org.checkerframework:checker-compat-qual:2.5.2=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+org.codehaus.mojo:animal-sniffer-annotations:1.17=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+org.slf4j:slf4j-api:1.7.25=annotationProcessor,runtimeClasspath,testRuntimeClasspath
+empty=testAnnotationProcessor
