@@ -189,6 +189,44 @@ public class AssetTypeTest {
         assertFalse(assetType.isLoaded(URN));
     }
 
+    /**
+     * A producer/format may reject malformed source data with an unchecked exception (e.g. a JSON parser's
+     * JsonParseException) rather than the checked IOException above. That must be isolated to this one asset
+     * the same way - not propagate out and take down whatever triggered the load.
+     */
+    @Test
+    public void getAssetWhenProducerThrowsUnchecked() throws Exception {
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer.getAssetData(URN)).thenThrow(new IllegalStateException("malformed asset"));
+
+        assertFalse(assetType.getAsset(URN).isPresent());
+        assertFalse(assetType.isLoaded(URN));
+    }
+
+    /**
+     * createInstance falls back to the producers when the parent asset can't just be copied (see
+     * {@link Text#doCreateCopy}). That fallback must isolate an unchecked failure the same way {@link #getAsset}
+     * does, rather than propagating it - or worse, masking it behind a {@link java.util.NoSuchElementException}
+     * from reading an already-known-empty copy result.
+     */
+    @Test
+    public void createInstanceWhenProducerThrowsUnchecked() throws Exception {
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetType.addProducer(producer);
+        when(producer.getAssetData(URN)).thenThrow(new IllegalStateException("malformed asset"));
+
+        Text parent = new Text(URN, new TextData(TEXT_VALUE), assetType) {
+            @Override
+            protected Optional<? extends Asset<TextData>> doCreateCopy(ResourceUrn copyUrn, AssetType<?, TextData> parentAssetType) {
+                return Optional.empty();
+            }
+        };
+
+        assertFalse(assetType.createInstance(parent).isPresent());
+    }
+
     @Test
     public void followRedirectsGettingAssets() throws Exception {
         AssetDataProducer producer = mock(AssetDataProducer.class);
@@ -278,6 +316,34 @@ public class AssetTypeTest {
         when(producer.getAssetData(URN)).thenReturn(Optional.empty());
         assetType.refresh();
         assertTrue(asset.get().isDisposed());
+    }
+
+    /**
+     * reloadFromProducers most not only catch checked IOExceptions, so an unchecked failure from one asset's
+     * producer does not abort refresh()'s loop entirely and leave every asset after it unprocessed -
+     * failing to isolate the one asset.
+     */
+    @Test
+    public void disposeAssetOnRefreshWhenProducerThrowsUnchecked() throws Exception {
+        ResourceUrn urn2 = new ResourceUrn("test", "example2");
+
+        AssetDataProducer producer = mock(AssetDataProducer.class);
+        assetType.addProducer(producer);
+        when(producer.redirect(any(ResourceUrn.class))).thenAnswer(Return.firstArgument());
+        when(producer.getAssetData(URN)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
+        when(producer.getAssetData(urn2)).thenReturn(Optional.of(new TextData(TEXT_VALUE)));
+
+        Optional<Text> asset = assetType.getAsset(URN);
+        Optional<Text> asset2 = assetType.getAsset(urn2);
+
+        when(producer.getAssetData(URN)).thenThrow(new IllegalStateException("malformed asset"));
+        when(producer.getAssetData(urn2)).thenReturn(Optional.of(new TextData(TEXT_VALUE_2)));
+
+        assetType.refresh();
+
+        assertTrue(asset.get().isDisposed());
+        assertFalse(asset2.get().isDisposed());
+        assertEquals(TEXT_VALUE_2, asset2.get().getValue());
     }
 
     @Test
