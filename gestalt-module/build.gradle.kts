@@ -15,7 +15,6 @@ dependencies {
 
     implementation(libs.guava)
     implementation(libs.gson)
-    implementation("org.apache.commons:commons-vfs2:2.2")
     implementation(libs.slf4j.api)
     implementation(libs.android.annotation)
     implementation("com.github.zafarkhaja:java-semver:0.10.2")
