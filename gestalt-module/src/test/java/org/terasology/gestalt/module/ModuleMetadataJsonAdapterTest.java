@@ -66,4 +66,22 @@ public class ModuleMetadataJsonAdapterTest {
 
         Assert.assertEquals(meta, parsedMeta);
     }
+
+    @Test
+    public void testTrailingCommaInDependenciesDoesNotProduceNullElement() {
+        // Gson's lenient reader accepts this invalid JSON (trailing comma) and would
+        // otherwise leave a null element in the dependencies list. See #133.
+        String json = "{"
+                + "\"id\": \"ModuleNameId\","
+                + "\"dependencies\": ["
+                + "{\"id\": \"myDependency\", \"minVersion\": \"1.0.0\", \"maxVersion\": \"2.0.0\"},"
+                + "]"
+                + "}";
+
+        ModuleMetadataJsonAdapter adapter = new ModuleMetadataJsonAdapter();
+        ModuleMetadata parsedMeta = adapter.read(new StringReader(json));
+
+        Assert.assertEquals(1, parsedMeta.getDependencies().size());
+        Assert.assertFalse(parsedMeta.getDependencies().contains(null));
+    }
 }
