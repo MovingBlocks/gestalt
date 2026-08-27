@@ -51,7 +51,6 @@ dependencies {
     implementation(libs.guava)
 
     implementation("androidx.appcompat:appcompat:1.7.0")
-    testImplementation(libs.junit)
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 

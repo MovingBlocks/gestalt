@@ -9,7 +9,6 @@ dependencyResolutionManagement {
             library("jcip", "net.jcip:jcip-annotations:1.0")
             library("slf4j-api", "org.slf4j:slf4j-api:1.7.25")
             // testing
-            library("junit", "junit:junit:4.12") // still used by the (unmigrated) Android modules
             library("junit-jupiter-api", "org.junit.jupiter:junit-jupiter-api:6.1.3")
             library("junit-jupiter-engine", "org.junit.jupiter:junit-jupiter-engine:6.1.3")
             library("junit-jupiter-params", "org.junit.jupiter:junit-jupiter-params:6.1.3")
