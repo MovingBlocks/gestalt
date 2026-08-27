@@ -15,5 +15,5 @@ org.codehaus.mojo:animal-sniffer-annotations:1.17=compileClasspath,runtimeClassp
 org.codehaus.mojo:animal-sniffer-annotations:1.24=animalsniffer
 org.codehaus.mojo:animal-sniffer:1.24=animalsniffer
 org.ow2.asm:asm:9.7=animalsniffer
-org.slf4j:slf4j-api:1.7.25=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.slf4j:slf4j-api:2.0.18=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 empty=annotationProcessor,testAnnotationProcessor
