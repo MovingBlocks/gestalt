@@ -16,7 +16,7 @@
 
 package org.terasology.gestalt.entitysystem.prefab;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.assets.AssetType;
 import org.terasology.gestalt.assets.ResourceUrn;
 import org.terasology.gestalt.assets.management.AssetManager;
@@ -33,9 +33,9 @@ import modules.test.components.Reference;
 import modules.test.components.Sample;
 import modules.test.components.Second;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *

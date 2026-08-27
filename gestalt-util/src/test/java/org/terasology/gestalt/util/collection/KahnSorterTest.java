@@ -18,9 +18,10 @@ package org.terasology.gestalt.util.collection;
 
 import com.google.common.collect.Lists;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *
@@ -48,11 +49,11 @@ public class KahnSorterTest {
         assertEquals(Lists.newArrayList(3, 2, 1), sorter.sort());
     }
 
-    @Test(expected = CircularDependencyException.class)
+    @Test
     public void circularDependency() {
         sorter.addNodes(1, 2, 3);
         sorter.addEdge(2, 1);
         sorter.addEdge(1, 2);
-        sorter.sort();
+        assertThrows(CircularDependencyException.class, () -> sorter.sort());
     }
 }

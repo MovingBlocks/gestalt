@@ -16,13 +16,13 @@
 
 package org.terasology.gestalt.module.resources;
 
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 
 public class ClasspathFileSourceTest extends BaseFileSourceTest {
 
     private static ClasspathFileSource source;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         source = new ClasspathFileSource("content");
     }

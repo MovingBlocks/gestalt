@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.di.beans.Dep2;
 import org.terasology.gestalt.di.beans.ParentDep;
 import org.terasology.gestalt.di.beans.TestRegistry;
@@ -17,22 +17,22 @@ public class TestRegistryTests {
     @Test
     public void checkDirectResolving() {
         Optional<Dep2> dep = beanContext.findBean(Dep2.class);
-        Assert.assertTrue(dep.isPresent());
-        Assert.assertTrue(dep.get() instanceof Dep2);
+        Assertions.assertTrue(dep.isPresent());
+        Assertions.assertTrue(dep.get() instanceof Dep2);
     }
 
     @Test
     public void checkChildBeanContextResolving() {
         BeanContext childBeanContext = new DefaultBeanContext(beanContext);
         Optional<Dep2> dep = childBeanContext.findBean(Dep2.class);
-        Assert.assertTrue(dep.isPresent());
-        Assert.assertTrue(dep.get() instanceof Dep2);
+        Assertions.assertTrue(dep.isPresent());
+        Assertions.assertTrue(dep.get() instanceof Dep2);
     }
 
     @Test
     public void checkDependencyBean() {
         Optional<ParentDep> dep = beanContext.findBean(ParentDep.class);
-        Assert.assertTrue(dep.isPresent());
-        Assert.assertNotNull(dep.get().getDep());
+        Assertions.assertTrue(dep.isPresent());
+        Assertions.assertNotNull(dep.get().getDep());
     }
 }

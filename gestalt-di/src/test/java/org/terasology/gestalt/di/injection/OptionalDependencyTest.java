@@ -1,6 +1,6 @@
 package org.terasology.gestalt.di.injection;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.context.Lifetime;
 import org.terasology.context.annotation.Service;
 import org.terasology.gestalt.di.BeanContext;
@@ -10,8 +10,8 @@ import org.terasology.gestalt.di.ServiceRegistry;
 import javax.inject.Inject;
 import java.util.Optional;
 
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OptionalDependencyTest {
     @Service

@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.context.Lifetime;
 import org.terasology.gestalt.di.beans.ContextDep;
 
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BeanContextResolutionTest {
     @Test

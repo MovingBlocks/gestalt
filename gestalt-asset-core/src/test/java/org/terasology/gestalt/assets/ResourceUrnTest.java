@@ -16,14 +16,15 @@
 
 package org.terasology.gestalt.assets;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.assets.exceptions.InvalidUrnException;
 import org.terasology.gestalt.naming.Name;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Immortius
@@ -42,7 +43,7 @@ public class ResourceUrnTest {
     @Test
     public void moduleAndResourceConstructor() {
         ResourceUrn urn = new ResourceUrn(TEST_MODULE, TEST_RESOURCE);
-        Assert.assertEquals(new Name(TEST_MODULE), urn.getModuleName());
+        Assertions.assertEquals(new Name(TEST_MODULE), urn.getModuleName());
         assertEquals(new Name(TEST_RESOURCE), urn.getResourceName());
         assertTrue(urn.getFragmentName().isEmpty());
         assertEquals(URN_STRING, urn.toString());
@@ -105,9 +106,9 @@ public class ResourceUrnTest {
         assertEquals(URN_FRAGMENT_INSTANCE_STRING, urn.toString());
     }
 
-    @Test(expected = InvalidUrnException.class)
+    @Test
     public void invalidUrnStringConstructor() {
-        new ResourceUrn("blerg");
+        assertThrows(InvalidUrnException.class, () -> new ResourceUrn("blerg"));
     }
 
     @Test

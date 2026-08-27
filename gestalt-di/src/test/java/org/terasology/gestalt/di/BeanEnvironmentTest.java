@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.module.TestImplementation1;
 import org.terasology.context.BeanDefinition;
 import org.terasology.gestalt.module.Module;
@@ -27,7 +27,7 @@ public class BeanEnvironmentTest {
     private BeanEnvironment environment ;
     private TableModuleRegistry registry;
 
-    @Before
+    @BeforeEach
     public void setup() {
         environment = new BeanEnvironment();
         registry = new TableModuleRegistry();
@@ -52,7 +52,7 @@ public class BeanEnvironmentTest {
         for(BeanDefinition<?> it:  environment.byInterface(TestImplementation1.class)){
             results.add(it.targetClass().getName());
         }
-        Assert.assertArrayEquals(Arrays.asList(
+        Assertions.assertArrayEquals(Arrays.asList(
             "org.module.b.DepByInterface"
         ).toArray(),results.toArray());
     }
@@ -64,7 +64,7 @@ public class BeanEnvironmentTest {
             results.add(it.targetClass().getName());
         }
         results.sort(Comparator.naturalOrder());
-        Assert.assertArrayEquals(Arrays.asList(
+        Assertions.assertArrayEquals(Arrays.asList(
             "org.module.a.DepA",
             "org.module.a.DepB",
             "org.module.a.DepC"

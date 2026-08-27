@@ -18,7 +18,7 @@ package org.terasology.gestalt.entitysystem.event;
 
 import com.google.common.collect.ImmutableSet;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.entitysystem.component.store.ArrayComponentStore;
 import org.terasology.gestalt.entitysystem.component.store.ComponentStore;

@@ -16,7 +16,7 @@
 
 package org.terasology.gestalt.assets.module;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.assets.AssetData;
 import org.terasology.gestalt.assets.AssetDataProducer;
 import org.terasology.gestalt.assets.AssetFactory;
@@ -41,9 +41,9 @@ import virtualModules.test.stubs.text.Text;
 import virtualModules.test.stubs.text.TextData;
 import virtualModules.test.stubs.text.TextFactory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

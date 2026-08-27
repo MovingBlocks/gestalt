@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.terasology.context.Lifetime;
 import org.terasology.context.annotation.Service;
 
@@ -24,8 +24,8 @@ public class CollectionResolveTest {
         BeanContext cntx = new DefaultBeanContext(registry);
 
         List<SomeThing> result = cntx.getBeans(SomeThing.class);
-        Assert.assertFalse(result.isEmpty());
-        Assert.assertArrayEquals(
+        Assertions.assertFalse(result.isEmpty());
+        Assertions.assertArrayEquals(
                 new Object[]{Impl1.class, Impl2.class},
                 result.stream()
                         .map(Object::getClass)
@@ -43,8 +43,8 @@ public class CollectionResolveTest {
         BeanContext cntx = new DefaultBeanContext(registry);
 
         ListUsageBean result = cntx.getBean(ListUsageBean.class);
-        Assert.assertFalse(result.list.isEmpty());
-        Assert.assertArrayEquals(
+        Assertions.assertFalse(result.list.isEmpty());
+        Assertions.assertArrayEquals(
                 new Object[]{Impl1.class, Impl2.class},
                 result.list.stream()
                         .map(Object::getClass)
@@ -62,8 +62,8 @@ public class CollectionResolveTest {
         BeanContext cntx = new DefaultBeanContext(registry);
 
         SetUsageBean result = cntx.getBean(SetUsageBean.class);
-        Assert.assertFalse(result.set.isEmpty());
-        Assert.assertArrayEquals(
+        Assertions.assertFalse(result.set.isEmpty());
+        Assertions.assertArrayEquals(
                 new Object[]{Impl1.class, Impl2.class},
                 result.set.stream()
                         .map(Object::getClass)
@@ -81,8 +81,8 @@ public class CollectionResolveTest {
         BeanContext cntx = new DefaultBeanContext(registry);
 
         CollectionUsageBean result = cntx.getBean(CollectionUsageBean.class);
-        Assert.assertFalse(result.collection.isEmpty());
-        Assert.assertArrayEquals(
+        Assertions.assertFalse(result.collection.isEmpty());
+        Assertions.assertArrayEquals(
                 new Object[]{Impl1.class, Impl2.class},
                 result.collection.stream()
                         .map(Object::getClass)

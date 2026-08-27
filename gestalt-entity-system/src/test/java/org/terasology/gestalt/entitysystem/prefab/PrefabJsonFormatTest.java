@@ -18,7 +18,7 @@ package org.terasology.gestalt.entitysystem.prefab;
 
 import modules.test.components.Reference;
 import modules.test.components.Sample;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.assets.AssetType;
 import org.terasology.gestalt.assets.ResourceUrn;
 import org.terasology.gestalt.assets.format.producer.AssetFileDataProducer;
@@ -38,8 +38,8 @@ import org.terasology.gestalt.module.sandbox.PermitAllPermissionProviderFactory;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *

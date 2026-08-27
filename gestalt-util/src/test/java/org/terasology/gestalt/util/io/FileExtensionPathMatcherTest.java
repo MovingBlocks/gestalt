@@ -16,46 +16,37 @@
 
 package org.terasology.gestalt.util.io;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Immortius
  */
-@RunWith(Parameterized.class)
 public class FileExtensionPathMatcherTest {
-    private FileExtensionPathMatcher matcher;
-    private Path testPath;
-    private boolean shouldMatch;
 
-    public FileExtensionPathMatcherTest(List<String> extensions, Path testPath, boolean shouldMatch) {
-        this.matcher = new FileExtensionPathMatcher(extensions);
-        this.testPath = testPath;
-        this.shouldMatch = shouldMatch;
+    static Stream<Arguments> data() {
+        return Stream.of(
+                Arguments.of(Arrays.asList("txt"), Paths.get("shroud.dat"), false),
+                Arguments.of(Arrays.asList("txt"), Paths.get("shroud.txt"), true),
+                Arguments.of(Arrays.asList("txt", "rbl"), Paths.get("shroud.txt"), true),
+                Arguments.of(Arrays.asList("txt", "rbl"), Paths.get("shroud.rbl"), true),
+                Arguments.of(Arrays.asList("txt", "rbl"), Paths.get("shroud.mrr"), false)
+        );
     }
 
-    @Parameterized.Parameters
-    public static Collection data() {
-        return Arrays.asList(new Object[][]{
-                {Arrays.asList("txt"), Paths.get("shroud.dat"), false},
-                {Arrays.asList("txt"), Paths.get("shroud.txt"), true},
-                {Arrays.asList("txt", "rbl"), Paths.get("shroud.txt"), true},
-                {Arrays.asList("txt", "rbl"), Paths.get("shroud.rbl"), true},
-                {Arrays.asList("txt", "rbl"), Paths.get("shroud.mrr"), false}
-        });
-    }
-
-    @Test
-    public void test() {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void test(List<String> extensions, Path testPath, boolean shouldMatch) {
+        FileExtensionPathMatcher matcher = new FileExtensionPathMatcher(extensions);
         assertEquals(shouldMatch, matcher.matches(testPath));
     }
 }

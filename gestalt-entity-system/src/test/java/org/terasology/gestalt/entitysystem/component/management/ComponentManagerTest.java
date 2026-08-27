@@ -16,8 +16,8 @@
 
 package org.terasology.gestalt.entitysystem.component.management;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.entitysystem.component.Component;
 
 import java.util.Arrays;
@@ -28,11 +28,11 @@ import modules.test.components.BasicComponent;
 import modules.test.components.Empty;
 import modules.test.components.PublicAttributeComponent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *
@@ -41,7 +41,7 @@ public abstract class ComponentManagerTest {
 
     private ComponentManager componentManager;
 
-    @Before
+    @BeforeEach
     public void before() {
         componentManager = new ComponentManager(getComponentTypeFactory());
     }

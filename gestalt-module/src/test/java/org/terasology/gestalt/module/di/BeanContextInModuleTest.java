@@ -1,8 +1,8 @@
 package org.terasology.gestalt.module.di;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.module.TestImplementation1;
 import org.terasology.context.Lifetime;
 import org.terasology.gestalt.di.BeanContext;
@@ -23,7 +23,7 @@ public class BeanContextInModuleTest {
 
     private ModuleEnvironment environment;
 
-    @Before
+    @BeforeEach
     public void setup() {
         ModuleServiceRegistry serviceRegistry = new ModuleServiceRegistry(new PermitAllPermissionProviderFactory());
         serviceRegistry.with(ModulePathScanner.class).lifetime(Lifetime.Singleton);
@@ -41,8 +41,8 @@ public class BeanContextInModuleTest {
     @Test
     public void findByInterface() {
         List<? extends TestImplementation1> list = environment.getBeans(TestImplementation1.class);
-        Assert.assertFalse(list.isEmpty());
-        Assert.assertEquals(
+        Assertions.assertFalse(list.isEmpty());
+        Assertions.assertArrayEquals(
                 new String[]{"org.module.b.DepByInterface"},
                 list.stream().map(o -> o.getClass().getName()).toArray(String[]::new)
         );

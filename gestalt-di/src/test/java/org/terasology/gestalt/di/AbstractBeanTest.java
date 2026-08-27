@@ -1,7 +1,7 @@
 package org.terasology.gestalt.di;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.terasology.context.Lifetime;
 import org.terasology.context.annotation.Service;
 
@@ -18,8 +18,8 @@ public class AbstractBeanTest {
         BeanContext cntx = new DefaultBeanContext(registry);
         ConcreteImplementationFromAbs c1 = cntx.getBean(ConcreteImplementationFromAbs.class);
 
-        Assert.assertNotNull(c1.impl);
-        Assert.assertNotNull(c1.Impl2);
+        Assertions.assertNotNull(c1.impl);
+        Assertions.assertNotNull(c1.Impl2);
 
     }
 
@@ -33,7 +33,7 @@ public class AbstractBeanTest {
         BeanContext cntx = new DefaultBeanContext(registry);
         MyAbstractImplementation c1 = cntx.getBean(MyAbstractImplementation.class);
 
-        Assert.assertNotNull(c1.impl);
+        Assertions.assertNotNull(c1.impl);
     }
 
 

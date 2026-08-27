@@ -15,7 +15,9 @@ dependencies {
     implementation(libs.android.annotation)
     implementation(libs.jcip)
 
-    testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.logback)
     testImplementation(libs.mockito)
 }
