@@ -18,7 +18,7 @@ package org.terasology.gestalt.entitysystem.event;
 
 import com.google.common.collect.Sets;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.terasology.gestalt.entitysystem.entity.EntityRef;
 import org.terasology.gestalt.entitysystem.event.impl.EventReceiverMethodSupport;
@@ -31,7 +31,7 @@ import modules.test.components.Sample;
 import modules.test.components.Second;
 import modules.test.TestEvent;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;

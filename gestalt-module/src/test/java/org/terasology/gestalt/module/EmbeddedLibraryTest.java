@@ -17,8 +17,8 @@
 package org.terasology.gestalt.module;
 
 import com.google.common.collect.Sets;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.module.Test1Scoped;
 import org.module.TestImplementation1;
 import org.terasology.gestalt.di.DefaultBeanContext;
@@ -36,7 +36,7 @@ import java.nio.file.Paths;
 import java.security.Policy;
 import java.util.LinkedHashSet;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  *
@@ -46,7 +46,7 @@ public class EmbeddedLibraryTest {
     private ModuleRegistry registry;
     private StandardPermissionProviderFactory permissionProviderFactory = new StandardPermissionProviderFactory();
 
-    @Before
+    @BeforeEach
     public void setup() {
         registry = new TableModuleRegistry();
         new ModulePathScanner(new ModuleFactory()).scan(registry, Paths.get("test-modules").toFile());

@@ -17,7 +17,7 @@
 package org.terasology.gestalt.entitysystem.component.management;
 
 import modules.test.components.Sample;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.assets.ResourceUrn;
 import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.Module;
@@ -29,7 +29,7 @@ import org.terasology.gestalt.naming.Name;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  *

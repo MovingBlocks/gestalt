@@ -21,8 +21,8 @@ import com.google.common.collect.Sets;
 import modules.test.components.BasicComponent;
 import modules.test.components.Empty;
 import modules.test.components.Second;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.entitysystem.component.Component;
 import org.terasology.gestalt.entitysystem.component.management.ComponentManager;
@@ -45,11 +45,11 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FullSetupExample {
 
@@ -58,7 +58,7 @@ public class FullSetupExample {
     public static final String NEW_NAME = "Jerry";
     private EntityManager entityManager;
 
-    @Before
+    @BeforeEach
     public void setup() {
         // Define/obtain modules
         ModuleRegistry moduleRegistry = new TableModuleRegistry();

@@ -18,8 +18,8 @@ package org.terasology.gestalt.module;
 
 import com.google.common.collect.ImmutableMap;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.i18n.I18nMap;
 import org.terasology.gestalt.module.dependencyresolution.DependencyInfo;
 import org.terasology.gestalt.naming.Name;
@@ -64,6 +64,6 @@ public class ModuleMetadataJsonAdapterTest {
 
         ModuleMetadata parsedMeta = adapter.read(new StringReader(jsonString));
 
-        Assert.assertEquals(meta, parsedMeta);
+        Assertions.assertEquals(meta, parsedMeta);
     }
 }

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.scanner.standard;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.di.ServiceRegistry;
@@ -22,9 +22,9 @@ public class StandardScannerTest {
 
         Optional<SingletonBean> bean = beanContext.findBean(SingletonBean.class);
         Optional<SingletonBean> bean2 = beanContext.findBean(SingletonBean.class);
-        Assert.assertTrue(bean.isPresent());
-        Assert.assertTrue(bean2.isPresent());
-        Assert.assertSame(bean.get(), bean2.get());
+        Assertions.assertTrue(bean.isPresent());
+        Assertions.assertTrue(bean2.isPresent());
+        Assertions.assertSame(bean.get(), bean2.get());
     }
 
 }

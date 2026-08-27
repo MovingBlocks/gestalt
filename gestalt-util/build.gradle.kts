@@ -13,7 +13,10 @@ dependencies {
     implementation(libs.android.annotation)
 
     // These dependencies are only needed for running tests
-    testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.jupiter.params)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.logback)
     testImplementation(libs.mockito)
 }

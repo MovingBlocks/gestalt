@@ -16,10 +16,11 @@
 
 package org.terasology.gestalt.naming;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Immortius
@@ -59,9 +60,9 @@ public class VersionRangeTest {
         assertFalse(range.contains(new Version("3.0.0")));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void errorIfUpperBoundLowerThanLowerBound() {
-        new VersionRange(new Version("2.0.0"), new Version("1.0.0"));
+        assertThrows(IllegalArgumentException.class, () -> new VersionRange(new Version("2.0.0"), new Version("1.0.0")));
     }
 
     @Test

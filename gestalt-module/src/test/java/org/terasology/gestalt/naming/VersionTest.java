@@ -15,13 +15,14 @@
  */
 package org.terasology.gestalt.naming;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.naming.exception.VersionParseException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Immortius
@@ -73,34 +74,34 @@ public class VersionTest {
         assertEquals(new Version(1, 2, 4), version.getNextPatchVersion());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void exceptionCreatingWithNegativeMajorVersion() {
-        new Version(-1, 0, 0);
+        assertThrows(IllegalArgumentException.class, () -> new Version(-1, 0, 0));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void exceptionCreatingWithNegativeMinorVersion() {
-        new Version(0, -1, 0);
+        assertThrows(IllegalArgumentException.class, () -> new Version(0, -1, 0));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void exceptionCreatingWithNegativePatchVersion() {
-        new Version(0, 0, -1);
+        assertThrows(IllegalArgumentException.class, () -> new Version(0, 0, -1));
     }
 
-    @Test(expected = VersionParseException.class)
+    @Test
     public void exceptionParsingMalformedString() {
-        new Version("hello");
+        assertThrows(VersionParseException.class, () -> new Version("hello"));
     }
 
-    @Test(expected = VersionParseException.class)
+    @Test
     public void exceptionParsingMalformedSeparator() {
-        new Version("1,2,3");
+        assertThrows(VersionParseException.class, () -> new Version("1,2,3"));
     }
 
-    @Test(expected = VersionParseException.class)
+    @Test
     public void exceptionParsingInvalidNumbers() {
-        new Version("1.1.6a");
+        assertThrows(VersionParseException.class, () -> new Version("1.1.6a"));
     }
 
     @Test

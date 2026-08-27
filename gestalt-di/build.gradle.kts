@@ -29,7 +29,9 @@ dependencies {
     implementation(libs.guava)
     api(project(":gestalt-inject"))
 
-    testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.logback)
     testImplementation(libs.mockito)
 

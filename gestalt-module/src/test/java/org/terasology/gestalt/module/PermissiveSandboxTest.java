@@ -16,8 +16,8 @@
 
 package org.terasology.gestalt.module;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.di.DefaultBeanContext;
 import org.terasology.gestalt.module.dependencyresolution.DependencyResolver;
 import org.terasology.gestalt.module.sandbox.ModuleSecurityManager;
@@ -42,7 +42,7 @@ public class PermissiveSandboxTest {
     private ModuleRegistry registry;
     private PermissionProviderFactory permissionProviderFactory;
 
-    @Before
+    @BeforeEach
     public void setup() {
         registry = new TableModuleRegistry();
         new ModulePathScanner(new ModuleFactory()).scan(registry, Paths.get("test-modules").toFile());

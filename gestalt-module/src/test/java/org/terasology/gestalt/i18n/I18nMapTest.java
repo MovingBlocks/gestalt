@@ -18,14 +18,14 @@ package org.terasology.gestalt.i18n;
 
 import com.google.common.collect.ImmutableMap;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Immortius
@@ -39,13 +39,13 @@ public class I18nMapTest {
 
     private static Locale originalDefault;
 
-    @BeforeClass
+    @BeforeAll
     public static void before() {
         originalDefault = Locale.getDefault(Locale.Category.DISPLAY);
         Locale.setDefault(Locale.Category.DISPLAY, DEFAULT_LOCALE);
     }
 
-    @AfterClass
+    @AfterAll
     public static void after() {
         Locale.setDefault(Locale.Category.DISPLAY, originalDefault);
     }

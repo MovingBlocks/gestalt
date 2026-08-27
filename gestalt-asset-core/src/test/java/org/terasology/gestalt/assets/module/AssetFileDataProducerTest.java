@@ -16,7 +16,7 @@
 
 package org.terasology.gestalt.assets.module;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.assets.ResourceUrn;
 import org.terasology.gestalt.assets.format.producer.AssetFileDataProducer;
 import org.terasology.gestalt.module.ModuleEnvironment;
@@ -30,9 +30,9 @@ import virtualModules.test.stubs.text.TextDeltaFileFormat;
 import virtualModules.test.stubs.text.TextFileFormat;
 import virtualModules.test.stubs.text.TextMetadataFileFormat;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Immortius

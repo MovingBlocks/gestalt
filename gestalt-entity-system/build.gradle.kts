@@ -19,7 +19,9 @@ dependencies {
     implementation(libs.gson)
 
     testAnnotationProcessor(project(":gestalt-inject-java"))
-    testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.logback)
     testImplementation(libs.mockito)
 }

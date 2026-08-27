@@ -1,8 +1,8 @@
 package org.terasology.gestalt.di;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terasology.context.AnnotationMetadata;
 import org.terasology.context.AnnotationValue;
 import org.terasology.context.BeanDefinition;
@@ -32,7 +32,7 @@ public class AnnotationTest {
     public static class AnnotationWithNestedStereotype {
 
     }
-    @Before
+    @BeforeEach
     public void  setup() {
         environment = new BeanEnvironment();
     }
@@ -43,10 +43,10 @@ public class AnnotationTest {
         AnnotationMetadata metadata = def.getAnnotationMetadata();
 
         List<AnnotationValue<Annotation>> annotations = metadata.getAnnotationsByStereotype(Qualifier.class);
-        Assert.assertEquals(annotations.size(), 2);
+        Assertions.assertEquals(annotations.size(), 2);
 
-        Assert.assertEquals(annotations.get(0).getAnnotationType(), TestQualifier1.class);
-        Assert.assertEquals(annotations.get(1).getAnnotationType(), TestQualifier2.class);
+        Assertions.assertEquals(annotations.get(0).getAnnotationType(), TestQualifier1.class);
+        Assertions.assertEquals(annotations.get(1).getAnnotationType(), TestQualifier2.class);
     }
 
     @Test
@@ -55,9 +55,9 @@ public class AnnotationTest {
         AnnotationMetadata metadata = def.getAnnotationMetadata();
 
         List<AnnotationValue<Annotation>> annotations = metadata.getAnnotationsByStereotype(Qualifier.class);
-        Assert.assertEquals(annotations.size(), 1);
+        Assertions.assertEquals(annotations.size(), 1);
 
-        Assert.assertEquals(annotations.get(0).getAnnotationType(), TestQualifier1.class);
+        Assertions.assertEquals(annotations.get(0).getAnnotationType(), TestQualifier1.class);
     }
 
     @Test
@@ -66,19 +66,19 @@ public class AnnotationTest {
         AnnotationMetadata metadata = def.getAnnotationMetadata();
 
         List<AnnotationValue<TestQualifier2>> annotations = metadata.findAnnotations(TestQualifier2.class);
-        Assert.assertEquals(annotations.size(), 1);
+        Assertions.assertEquals(annotations.size(), 1);
         AnnotationValue[] withProperties = annotations.get(0).getAnnotation(WithProperties.class);
-        Assert.assertEquals(withProperties.length, 1);
+        Assertions.assertEquals(withProperties.length, 1);
 
         AnnotationValue value = withProperties[0];
 
         Optional<String> p1 = value.stringValue("p1");
-        Assert.assertTrue(p1.isPresent());
-        Assert.assertEquals(p1.get(), "Hello");
+        Assertions.assertTrue(p1.isPresent());
+        Assertions.assertEquals(p1.get(), "Hello");
 
         OptionalDouble p2 = value.doubleValue("p4");
-        Assert.assertTrue(p2.isPresent());
-        Assert.assertEquals(p2.getAsDouble(), 5.0,0.001);
+        Assertions.assertTrue(p2.isPresent());
+        Assertions.assertEquals(p2.getAsDouble(), 5.0,0.001);
     }
 
 }

@@ -18,15 +18,16 @@ package org.terasology.gestalt.util.reflection;
 
 import com.google.common.base.Predicate;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 
-import static junit.framework.TestCase.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Immortius
@@ -69,16 +70,16 @@ public class GenericsUtilTest {
         assertEquals(String.class, result.get());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void exceptionIfParameterIsOutOfBounds() throws Exception {
         Type t = GenericsUtilTest.class.getDeclaredField("boundInterface").getGenericType();
-        GenericsUtil.getTypeParameterBinding(t, 1);
+        assertThrows(IndexOutOfBoundsException.class, () -> GenericsUtil.getTypeParameterBinding(t, 1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void exceptionIfSuperClassIsNotParameterized() throws Exception {
         Type t = GenericsUtilTest.class.getDeclaredField("nonGenericInterface").getGenericType();
-        GenericsUtil.getTypeParameterBinding(t, 0);
+        assertThrows(IllegalArgumentException.class, () -> GenericsUtil.getTypeParameterBinding(t, 0));
     }
 
     @Test

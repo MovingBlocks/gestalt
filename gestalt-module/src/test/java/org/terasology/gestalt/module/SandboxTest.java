@@ -17,8 +17,8 @@
 package org.terasology.gestalt.module;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.module.Test1Scoped;
 import org.module.TestImplementation1;
 import org.terasology.context.Lifetime;
@@ -43,8 +43,9 @@ import java.security.Policy;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Immortius
@@ -55,7 +56,7 @@ public class SandboxTest {
     private StandardPermissionProviderFactory permissionProviderFactory = new StandardPermissionProviderFactory();
     private BeanContext root;
 
-    @Before
+    @BeforeEach
     public void setup() {
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.lang");
         permissionProviderFactory.getBasePermissionSet().addAPIPackage("java.util");
@@ -99,20 +100,24 @@ public class SandboxTest {
     }
 
     // Ensure access to disallowed classes fails
-    @Test(expected = InvocationTargetException.class)
-    public void deniedAccessToRestrictedClassInMethod() throws Exception {
-        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
+    @Test
+    public void deniedAccessToRestrictedClassInMethod() {
+        assertThrows(InvocationTargetException.class, () -> {
+            ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleB")).getModules(), permissionProviderFactory);
 
-        Class<?> type = findClass("ModuleBClass", environment);
-        Object instance = type.newInstance();
-        type.getMethod("illegalMethod").invoke(instance);
+            Class<?> type = findClass("ModuleBClass", environment);
+            Object instance = type.newInstance();
+            type.getMethod("illegalMethod").invoke(instance);
+        });
     }
 
-    @Test(expected = ClassNotFoundException.class)
-    public void deniedAccessToClassImplementingRestrictedInterface() throws Exception {
-        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory);
+    @Test
+    public void deniedAccessToClassImplementingRestrictedInterface() {
+        assertThrows(ClassNotFoundException.class, () -> {
+            ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleD")).getModules(), permissionProviderFactory);
 
-        findClass("ModuleDRestrictedClass", environment);
+            findClass("ModuleDRestrictedClass", environment);
+        });
     }
 
     @Test
@@ -135,13 +140,15 @@ public class SandboxTest {
     }
 
     // Ensure that a module doesn't gain accesses required by the parent but not by itself
-    @Test(expected = InvocationTargetException.class)
+    @Test
     public void deniedAccessToClassPermittedToParent() throws Exception {
-        ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
+        assertThrows(InvocationTargetException.class, () -> {
+            ModuleEnvironment environment = new ModuleEnvironment(root, resolver.resolve(new Name("moduleC")).getModules(), permissionProviderFactory);
 
-        Class<?> type = findClass("ModuleCClass", environment);
-        Object instance = type.newInstance();
-        type.getMethod("requiresIoMethod").invoke(instance);
+            Class<?> type = findClass("ModuleCClass", environment);
+            Object instance = type.newInstance();
+            type.getMethod("requiresIoMethod").invoke(instance);
+        });
     }
 
     @Test

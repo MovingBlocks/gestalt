@@ -9,7 +9,10 @@ dependencyResolutionManagement {
             library("jcip", "net.jcip:jcip-annotations:1.0")
             library("slf4j-api", "org.slf4j:slf4j-api:1.7.25")
             // testing
-            library("junit", "junit:junit:4.12")
+            library("junit-jupiter-api", "org.junit.jupiter:junit-jupiter-api:6.1.3")
+            library("junit-jupiter-engine", "org.junit.jupiter:junit-jupiter-engine:6.1.3")
+            library("junit-jupiter-params", "org.junit.jupiter:junit-jupiter-params:6.1.3")
+            library("junit-platform-launcher", "org.junit.platform:junit-platform-launcher:6.1.3")
             library("logback", "ch.qos.logback:logback-classic:1.2.3")
             library("mockito", "org.mockito:mockito-core:5.23.0")
         }

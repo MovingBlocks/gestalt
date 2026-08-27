@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terasology.context.Lifetime;
 import org.terasology.context.annotation.Service;
 import org.terasology.gestalt.di.beans.Dep1;
@@ -10,8 +10,8 @@ import org.terasology.gestalt.di.beans.Dep1;
 import javax.inject.Inject;
 import java.util.Optional;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SupplierInjectionTest {
 

@@ -27,7 +27,7 @@ extensions.configure<ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtensio
 
 // Extra details provided for unit tests
 tasks.withType<Test> {
-    useJUnit()
+    useJUnitPlatform()
 
     // ignoreFailures: Specifies whether the build should break when the verifications performed by this task fail.
     ignoreFailures = true

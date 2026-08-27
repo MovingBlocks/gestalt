@@ -20,7 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terasology.gestalt.entitysystem.component.management.ComponentManager;
 import org.terasology.gestalt.entitysystem.component.store.ArrayComponentStore;
 import org.terasology.gestalt.entitysystem.component.store.ComponentStore;
@@ -38,7 +39,7 @@ import modules.test.components.Second;
 import modules.test.TestChildEvent;
 import modules.test.TestEvent;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -65,7 +66,7 @@ public class EventProcessorTest {
         entityManager = new CoreEntityManager(componentStores);
     }
 
-    @org.junit.Before
+    @BeforeEach
     public void startup() {
         testEntity = entityManager.createEntity();
         Sample comp = new Sample();

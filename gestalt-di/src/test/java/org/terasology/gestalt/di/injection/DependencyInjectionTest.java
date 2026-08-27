@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.terasology.gestalt.di.injection;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.terasology.context.injection.Qualifiers;
 import org.terasology.gestalt.di.BeanContext;
 import org.terasology.gestalt.di.DefaultBeanContext;
@@ -37,11 +37,11 @@ public class DependencyInjectionTest {
         ICounter c1 = beanContext.getBean(ICounter.class, Qualifiers.byName("Counter1"));
         ICounter c2 = beanContext.getBean(ICounter.class, Qualifiers.byName("Counter2"));
 
-        Assert.assertTrue(test.isPresent());
+        Assertions.assertTrue(test.isPresent());
 
         test.get().addToCounter1();
 
-        Assert.assertEquals(0, c2.getCount());
-        Assert.assertEquals(1, c1.getCount());
+        Assertions.assertEquals(0, c2.getCount());
+        Assertions.assertEquals(1, c1.getCount());
     }
 }

@@ -13,7 +13,9 @@ dependencies {
     implementation("com.github.zafarkhaja:java-semver:0.10.2")
 
     testImplementation(project(":testpack:testpack-api"))
-    testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.logback)
     testImplementation(libs.mockito)
 
