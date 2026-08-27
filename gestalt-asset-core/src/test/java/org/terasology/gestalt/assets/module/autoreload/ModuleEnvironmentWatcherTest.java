@@ -41,10 +41,12 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ModuleEnvironmentWatcherTest {
 
@@ -95,21 +97,45 @@ public class ModuleEnvironmentWatcherTest {
             }
         };
         AssetType<Text, TextData> assetType = new AssetType<>(Text.class, new TextFactory());
+        ResourceUrn urn = new ResourceUrn(module.getId(), new Name("test.txt"));
         watcher.register("text", subscriber, assetType);
         watcher.checkForChanges();
         Files.createDirectories(tempDirectory.resolve("assets").resolve("text"));
         watcher.checkForChanges();
         Files.createFile(tempDirectory.resolve("assets").resolve("text").resolve("test.txt"));
-        SetMultimap<AssetType<?, ?>, ResourceUrn> changed = watcher.checkForChanges();
-        assertTrue(changed.containsEntry(assetType, new ResourceUrn(module.getId(), new Name("test.txt"))));
+        awaitChange(watcher, assetType, urn);
         try (Writer writer = Files.newBufferedWriter(tempDirectory.resolve("assets").resolve("text").resolve("test.txt"))) {
             writer.write("This is my text");
         }
-        changed = watcher.checkForChanges();
-        assertTrue(changed.containsEntry(assetType, new ResourceUrn(module.getId(), new Name("test.txt"))));
+        awaitChange(watcher, assetType, urn);
         FilesUtil.recursiveDelete(tempDirectory);
         watcher.checkForChanges();
 
+    }
+
+    /**
+     * checkForChanges() does a single non-blocking WatchService poll - the OS delivers file
+     * events asynchronously (inotify/FSEvents/etc.), so a change made just before calling it can
+     * still be in flight and not show up in that one poll, especially under CI's slower/virtualized
+     * filesystems. Retries for up to 5s instead of asserting on a single poll's result, so the test
+     * doesn't flake on delivery timing while still failing for real if the change never arrives.
+     */
+    private static void awaitChange(ModuleEnvironmentWatcher watcher, AssetType<?, ?> assetType, ResourceUrn urn) throws IOException {
+        Instant deadline = Instant.now().plus(Duration.ofSeconds(5));
+        SetMultimap<AssetType<?, ?>, ResourceUrn> changed;
+        do {
+            changed = watcher.checkForChanges();
+            if (changed.containsEntry(assetType, urn)) {
+                return;
+            }
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while waiting for a file change to be detected", e);
+            }
+        } while (Instant.now().isBefore(deadline));
+        fail("Expected " + urn + " to show up as changed within 5s, last poll's result: " + changed);
     }
 
 }
