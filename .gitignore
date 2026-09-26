@@ -52,3 +52,8 @@ Icon
 ehthumbs.db
 Thumbs.db
 
+gestalt-di/test-modules/
+gestalt-es-perf/test-modules/
+
+generated_tests/
+generated/
