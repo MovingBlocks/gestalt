@@ -30,12 +30,18 @@ public class SetUnionPermissionProvider implements PermissionProvider {
     private final ImmutableList<PermissionProvider> permissionSets;
 
     /**
+     * Constructor.
      * @param permissionProviders A collection of PermissionProviders to use
      */
     public SetUnionPermissionProvider(Iterable<PermissionProvider> permissionProviders) {
         this.permissionSets = ImmutableList.copyOf(permissionProviders);
     }
 
+    /**
+     * Whether class is permitted.
+     * @param type The class to check
+     * @return true if one of the providers grants.
+     */
     @Override
     public boolean isPermitted(Class<?> type) {
         for (PermissionProvider set : permissionSets) {
@@ -46,6 +52,12 @@ public class SetUnionPermissionProvider implements PermissionProvider {
         return false;
     }
 
+    /**
+     * Whether permission is permitted in this context.
+     * @param permission The permission to check
+     * @param context    The type invoking the permission check
+     * @return  true if one of the providers grants.
+     */
     @Override
     public boolean isPermitted(Permission permission, Class<?> context) {
         for (PermissionProvider set : permissionSets) {

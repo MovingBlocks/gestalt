@@ -326,22 +326,29 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
     Optional<T> createInstance(Asset<U> asset) {
         Preconditions.checkArgument(assetClass.isAssignableFrom(asset.getClass()));
         Optional<? extends Asset<U>> result = asset.createCopy(asset.getUrn().getInstanceUrn());
-        if (!result.isPresent()) {
-            try {
-                return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
-                    for (AssetDataProducer<U> producer : producers) {
-                        Optional<U> data = producer.getAssetData(asset.getUrn());
-                        if (data.isPresent()) {
-                            return Optional.of(loadAsset(asset.getUrn().getInstanceUrn(), data.get()));
-                        }
-                    }
-                    return Optional.ofNullable(assetClass.cast(result.get()));
-                });
-            } catch (PrivilegedActionException e) {
-                logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e.getCause());
-            }
+        if (result.isPresent()) {
+            return Optional.of(assetClass.cast(result.get()));
         }
-        return Optional.ofNullable(assetClass.cast(result.get()));
+        try {
+            return AccessController.doPrivileged((PrivilegedExceptionAction<Optional<T>>) () -> {
+                for (AssetDataProducer<U> producer : producers) {
+                    Optional<U> data = producer.getAssetData(asset.getUrn());
+                    if (data.isPresent()) {
+                        return Optional.of(loadAsset(asset.getUrn().getInstanceUrn(), data.get()));
+                    }
+                }
+                return Optional.empty();
+            });
+        } catch (PrivilegedActionException e) {
+            logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e.getCause());
+        } catch (RuntimeException e) {
+            // An AssetDataProducer/AssetFileFormat may throw unchecked exceptions (e.g. a malformed source
+            // file rejected by a JSON/XML parser). PrivilegedActionException above only wraps *checked*
+            // exceptions, so without this an unchecked one would propagate past this per-asset isolation
+            // and abort whatever triggered the load, instead of just failing this one asset.
+            logger.error("Failed to load asset '" + asset.getUrn().getInstanceUrn() + "'", e);
+        }
+        return Optional.empty();
     }
 
     /**
@@ -369,6 +376,14 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
                 logger.error("Failed to load asset '{}'", redirectUrn, e.getCause());
             } else {
                 logger.error("Failed to load asset '{}' redirected from '{}'", redirectUrn, urn, e.getCause());
+            }
+        } catch (RuntimeException e) {
+            // See the matching catch in createInstance() above - PrivilegedActionException only wraps checked
+            // exceptions, so an unchecked one from a producer/format would otherwise skip this isolation.
+            if (redirectUrn.equals(urn)) {
+                logger.error("Failed to load asset '{}'", redirectUrn, e);
+            } else {
+                logger.error("Failed to load asset '{}' redirected from '{}'", redirectUrn, urn, e);
             }
         }
         return Optional.empty();
@@ -514,6 +529,11 @@ public final class AssetType<T extends Asset<U>, U extends AssetData> implements
             }
         } catch (IOException e) {
             logger.error("Failed to reload asset '{}', disposing", asset.getUrn());
+        } catch (RuntimeException e) {
+            // See the matching catch in createInstance()/reload() above - an AssetDataProducer/AssetFileFormat
+            // may throw unchecked exceptions; without this, one would abort refresh() for every asset still
+            // to be processed, instead of just disposing this one.
+            logger.error("Failed to reload asset '{}', disposing", asset.getUrn(), e);
         }
         return false;
     }

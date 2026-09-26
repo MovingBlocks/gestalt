@@ -71,6 +71,8 @@ public final class Module {
     }
 
     /**
+     * Get resources for module.
+     *
      * @return A ModuleFileSource providing this module's resources
      */
     public ModuleFileSource getResources() {
@@ -78,6 +80,8 @@ public final class Module {
     }
 
     /**
+     * Get additional classpaths.
+     *
      * @return A list of additional classpaths to load
      */
     public List<File> getClasspaths() {
@@ -85,6 +89,8 @@ public final class Module {
     }
 
     /**
+     * Get the identifier for the module.
+     *
      * @return The identifier for the module
      */
     public Name getId() {
@@ -92,6 +98,8 @@ public final class Module {
     }
 
     /**
+     * Get the version of the module.
+     *
      * @return The version of the module
      */
     public Version getVersion() {
@@ -99,6 +107,8 @@ public final class Module {
     }
 
     /**
+     * Get the permissions required by the module.
+     *
      * @return The list of permission sets required by this module
      */
     public ImmutableSet<String> getRequiredPermissions() {
@@ -106,6 +116,8 @@ public final class Module {
     }
 
     /**
+     * Get the metadata of the module.
+     *
      * @return Metadata describing the module
      */
     public ModuleMetadata getMetadata() {
@@ -113,6 +125,8 @@ public final class Module {
     }
 
     /**
+     * Get information on the contents on this module.
+     *
      * @return Information on the contents on this module
      */
     public ClassIndex getClassIndex() {
@@ -120,8 +134,10 @@ public final class Module {
     }
 
     /**
-     * @return A predicate that specifies whether a given class from the main classloader is a
-     * member of this module
+     * Gets a predicate that specifies whether a given class from the main classloader is a
+     * member of this module.
+     *
+     * @return A predicate
      */
     public Predicate<Class<?>> getClassPredicate() {
         return classPredicate;

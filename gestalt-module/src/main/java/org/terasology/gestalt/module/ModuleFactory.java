@@ -69,12 +69,17 @@ public class ModuleFactory {
     private String defaultLibsSubpath;
     private boolean scanningForClasses = true;
 
+
+    /**
+     * Default constructor.
+     */
     @Inject // TODO use another constructor.
     public ModuleFactory() {
         this(Thread.currentThread().getContextClassLoader());
     }
 
     /**
+     * Creates a module using a module.json file from the standard library path.
      * @param classLoader The classloader to use for classpath and package modules
      */
     public ModuleFactory(ClassLoader classLoader) {
@@ -82,6 +87,8 @@ public class ModuleFactory {
     }
 
     /**
+     * Constructor with code libs subpath.
+     *
      * @param defaultCodeSubpath The default subpath in a path module that contains code (compiled class files)
      * @param defaultLibsSubpath The default subpath in a path module that contains libraries (jars)
      */
@@ -90,6 +97,7 @@ public class ModuleFactory {
     }
 
     /**
+     * Constructor with classLoader, code, module subpath, metadata loaders.
      * @param classLoader        The classloader that modules should be loaded atop of
      * @param defaultCodeSubpath The default subpath in a path module that contains code (compiled class files)
      * @param defaultLibsSubpath The default subpath in a path module that contains libraries (jars)
@@ -103,6 +111,8 @@ public class ModuleFactory {
     }
 
     /**
+     * Get the modules code subpath.
+     *
      * @return The subpath of a path module that contains compiled code
      */
     public String getDefaultCodeSubpath() {
@@ -119,20 +129,26 @@ public class ModuleFactory {
     }
 
     /**
-     * @return Whether the module factory will scan modules for class files if a manifest isn't available
+     * Whether the module factory will scan modules for class files if a manifest isn't available.
+     *
+     * @return The module factory will scan modules for class files if true and a manifest isn't available
      */
     public boolean isScanningForClasses() {
         return scanningForClasses;
     }
 
     /**
-     * @param scanForClasses Whether the module factory should scan modules for class files if a manifest isn't present
+     * Set if the module factory should scan modules for class files if a manifest isn't present.
+     *
+     * @param scanForClasses when true, the module factory scans modules for class files if a manifest isn't present
      */
     public void setScanningForClasses(boolean scanForClasses) {
         this.scanningForClasses = scanForClasses;
     }
 
     /**
+     * Gets the modules subpath that contains libraries.
+     *
      * @return The subpath of a path module that contains libraries
      */
     public String getDefaultLibsSubpath() {
@@ -149,7 +165,8 @@ public class ModuleFactory {
     }
 
     /**
-     * @return The map of paths to module metadata loaders used for loading metadata describing modules
+     * Get a map of paths to module metadata loaders used for loading metadata describing modules.
+     * @return The map of paths to module metadata loaders used for loading metadata
      */
     public Map<String, ModuleMetadataLoader> getModuleMetadataLoaderMap() {
         return moduleMetadataLoaderMap;

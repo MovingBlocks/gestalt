@@ -8,6 +8,7 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
@@ -24,6 +25,9 @@ import java.util.Collections;
 import java.util.Queue;
 import java.util.Set;
 
+/**
+ * Records all types annotated with `@Index` or `@IndexInherited`, as well as all descendants of a type annotated with `@IndexInherited`.
+ */
 public class ClassIndexProcessor extends AbstractProcessor {
 
     private Filer filer;
@@ -94,8 +98,12 @@ public class ClassIndexProcessor extends AbstractProcessor {
                         TypeMirror candidate = supers.poll();
                         if (candidate.getKind() != TypeKind.NONE) {
                             if (elementUtility.hasStereotype(elementUtility.getTypes().asElement(candidate),
-                                    Collections.singletonList(IndexInherited.class.getName())))
-                                subtypesTypeWriter.writeSubType(elementUtility.getTypes().erasure(candidate).toString(), elementUtility.getTypes().erasure(type.asType()).toString());
+                                    Collections.singletonList(IndexInherited.class.getName()))) {
+                                TypeElement candidateElement = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(candidate));
+                                TypeElement erasedType = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(type.asType()));
+                                subtypesTypeWriter.writeSubType(elementUtility.getElements().getBinaryName(candidateElement).toString(),
+                                        elementUtility.getElements().getBinaryName(erasedType).toString());
+                            }
                             supers.addAll(elementUtility.getTypes().directSupertypes(candidate));
                         }
                     }
@@ -108,7 +116,8 @@ public class ClassIndexProcessor extends AbstractProcessor {
         if (elementUtility.hasStereotype(annotation, Collections.singletonList(Index.class.getName()))) {
             for (Element type : roundEnv.getElementsAnnotatedWith(annotation)) {
                 if (type.getKind() == ElementKind.CLASS || type.getKind() == ElementKind.INTERFACE) {
-                    annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), elementUtility.getTypes().erasure(type.asType()).toString());
+                    TypeElement erasedType = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(type.asType()));
+                    annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), elementUtility.getElements().getBinaryName(erasedType).toString());
                 } else if (type.getKind() == ElementKind.PACKAGE) {
                     PackageElement packageType = (PackageElement) type;
                     annotationTypeWriter.writeAnnotation(annotation.getQualifiedName().toString(), packageType.getQualifiedName().toString() + ".package-info");
@@ -133,5 +142,10 @@ public class ClassIndexProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         return Collections.singleton("*");
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
     }
 }

@@ -1,0 +1,19 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :gestalt-inject:dependencies --write-locks
+com.google.code.findbugs:jsr305:3.0.2=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.errorprone:error_prone_annotations:2.2.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.guava:failureaccess:1.0.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.guava:guava:27.0.1-android=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.j2objc:j2objc-annotations:1.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.toasttab.android:gummy-bears-api-24:0.15.0=signature
+javax.inject:javax.inject:1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.checkerframework:checker-compat-qual:2.5.2=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.codehaus.mojo:animal-sniffer-annotations:1.17=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.codehaus.mojo:animal-sniffer-annotations:1.24=animalsniffer
+org.codehaus.mojo:animal-sniffer:1.24=animalsniffer
+org.ow2.asm:asm:9.7=animalsniffer
+org.slf4j:slf4j-api:1.7.25=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+empty=annotationProcessor,testAnnotationProcessor

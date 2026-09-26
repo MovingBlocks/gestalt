@@ -42,11 +42,29 @@ public class ModuleMetadata {
     /*
      * Constants for the names of each of the core metadata attributes.
      */
+    /**
+     * The module's id key
+     */
     public static final String ID = "id";
+    /**
+     * The module's version key
+     */
     public static final String VERSION = "version";
+    /**
+     * The module's display name key
+     */
     public static final String DISPLAY_NAME = "displayName";
+    /**
+     * The module's description key
+     */
     public static final String DESCRIPTION = "description";
+    /**
+     * The module's dependencies key
+     */
     public static final String DEPENDENCIES = "dependencies";
+    /**
+     * The module's required permissions key
+     */
     public static final String REQUIRED_PERMISSIONS = "requiredPermissions";
 
     /**
@@ -62,9 +80,17 @@ public class ModuleMetadata {
     private Set<String> requiredPermissions = Sets.newLinkedHashSet();
     private List<DependencyInfo> dependencies = Lists.newArrayList();
 
+    /**
+     * Constructs a new ModuleMetadata instance
+     */
     public ModuleMetadata() {
     }
 
+    /**
+     * Constructs a new ModuleMetadata instance with a given id and version
+     * @param id        module id
+     * @param version   module version
+     */
     public ModuleMetadata(Name id, Version version) {
         this.id = id;
         this.version = version;
@@ -72,6 +98,7 @@ public class ModuleMetadata {
 
 
     /**
+     * Get the identifier of the module
      * @return The identifier of the module
      */
     public Name getId() {
@@ -88,6 +115,7 @@ public class ModuleMetadata {
     }
 
     /**
+     * Get the version of the moodule
      * @return The version of the module
      */
     public Version getVersion() {
@@ -104,6 +132,7 @@ public class ModuleMetadata {
     }
 
     /**
+     * Get the display name of the module
      * @return A displayable name of the module
      */
     public I18nMap getDisplayName() {
@@ -111,6 +140,7 @@ public class ModuleMetadata {
     }
 
     /**
+     * Set the display name of the module
      * @param displayName The new human-readable name of the module
      */
     public void setDisplayName(I18nMap displayName) {
@@ -118,6 +148,7 @@ public class ModuleMetadata {
     }
 
     /**
+     * Get the description of the module
      * @return A human readable description of the module
      */
     public I18nMap getDescription() {
@@ -125,6 +156,7 @@ public class ModuleMetadata {
     }
 
     /**
+     * Sets the description of the module
      * @param description The new human-readable description of the module
      */
     public void setDescription(I18nMap description) {
@@ -132,13 +164,17 @@ public class ModuleMetadata {
     }
 
     /**
-     * @return A list of the permissions required by this module, corresponding to permission sets installed in the security manager.
+     * Get the permissions required by this module. They correspond to permission sets installed in the security
+     * mananger.
+     *
+     * @return A list of the permissions required by this module,
      */
     public Set<String> getRequiredPermissions() {
         return requiredPermissions;
     }
 
     /**
+     * Get the dependencies of the module.
      * @return A list of dependencies of the module
      */
     public List<DependencyInfo> getDependencies() {
@@ -149,6 +185,8 @@ public class ModuleMetadata {
     }
 
     /**
+     * Get the information on dependencies for a module
+     *
      * @param dependencyId The id of the module to get dependency information on
      * @return The depdendency information for a specific module, or null if no such dependency exists
      */
@@ -162,6 +200,8 @@ public class ModuleMetadata {
     }
 
     /**
+     * Get the extension object by id, type.
+     *
      * @param extensionId  The identifier of the extension
      * @param expectedType The expected type of the extension
      * @param <T>          The expected type of the extension

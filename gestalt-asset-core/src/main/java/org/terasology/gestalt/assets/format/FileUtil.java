@@ -21,11 +21,18 @@ import org.terasology.gestalt.module.resources.FileReference;
 import java.util.List;
 import java.util.function.Predicate;
 
+/**
+ * Helps to create a predicate for file extensions.
+ */
 public final class FileUtil {
 
     private FileUtil() {
     }
 
+    /**
+     * {@return a PredicateFileReference}
+     * @param extensions list of extensions the predicate should match.
+     */
     public static Predicate<FileReference> createFileExtensionPredicate(List<String> extensions) {
         return extensions.stream().map(x -> "." + x).map(x -> (Predicate<FileReference>) moduleFile -> moduleFile.getName().endsWith(x)).reduce(x -> false, Predicate::or);
     }

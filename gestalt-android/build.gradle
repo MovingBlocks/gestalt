@@ -1,70 +1,81 @@
 // Copyright 2021 The Terasology Foundation
 // SPDX-License-Identifier: Apache-2.0
 plugins {
-    id 'com.android.library'
-    id 'maven-publish'
+    id("com.android.library")
+    id("maven-publish")
+    id("ru.vyarus.animalsniffer") version "2.0.1"
 }
 
 android {
-    compileSdkVersion 28
+    namespace "org.terasology.gestalt.android"
+    compileSdkVersion 36
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 28
+        targetSdkVersion 36
         versionCode 1
         versionName "1.0"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
     lintOptions {
         lintConfig file("lintconfig.xml")
     }
+    lint {
+        // Somehow, AndroidAssetsFileSource.java breaks this lint.
+        disable "BidiSpoofing"
+    }
+}
 
+tasks.withType(AnimalSniffer) {
+    ignoreFailures = false
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    api(project(':gestalt-module')) {
-        exclude group: 'org.javassist', module: 'javassist'
+    implementation(fileTree(dir: "libs", include: ["*.jar"]))
+    api(project(":gestalt-module")) {
+        exclude group: "org.javassist", module: "javassist"
     }
-    implementation project(':gestalt-util')
-    implementation "org.slf4j:slf4j-api:$slf4j_version"
-    implementation "com.google.guava:guava:$guava_version"
+    implementation(project(":gestalt-util"))
+    implementation(libs.slf4j.api)
+    implementation(libs.guava)
 
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    testImplementation "junit:junit:$junit_version"
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    testImplementation(libs.junit)
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+
+    signature("com.toasttab.android:gummy-bears-api-24:0.15.0:coreLib2@signature")
 }
 
 task androidJavadocs(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    android.libraryVariants.all { variant ->
-        if (variant.name == 'release') {
-            owner.classpath += variant.javaCompileProvider.get().classpath
-        }
-    }
-    exclude '**/R.html', '**/R.*.html', '**/index.html'
+    exclude "**/R.html", "**/R.*.html", "**/index.html"
+}
+
+def androidComponents = project.extensions.getByType(com.android.build.api.variant.LibraryAndroidComponentsExtension)
+afterEvaluate {
+    androidJavadocs.classpath += files(configurations.getByName("releaseCompileClasspath"))
+    androidJavadocs.classpath += files(androidComponents.sdkComponents.bootClasspath)
 }
 
 task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-    archiveClassifier = 'javadoc'
+    archiveClassifier = "javadoc"
     from androidJavadocs.destinationDir
 }
 
 task androidSourcesJar(type: Jar) {
-    archiveClassifier = 'sources'
+    archiveClassifier = "sources"
     from android.sourceSets.main.java.srcDirs
 }
 
@@ -72,7 +83,7 @@ project.afterEvaluate {
     publishing {
         repositories {
             maven {
-                name = 'TerasologyOrg'
+                name = "TerasologyOrg"
 
                 if (rootProject.hasProperty("publishRepo")) {
                     // This first option is good for local testing, you can set a full explicit target repo in gradle.properties
@@ -88,7 +99,7 @@ project.afterEvaluate {
                     }
 
                     // Base final publish repo on whether we're building a snapshot or a release
-                    if (project.version.endsWith('SNAPSHOT')) {
+                    if (project.version.endsWith("SNAPSHOT")) {
                         deducedPublishRepo += "-snapshot-local"
                     } else {
                         deducedPublishRepo += "-release-local"
@@ -119,35 +130,33 @@ project.afterEvaluate {
                 artifact androidSourcesJar
 
                 pom.withXml {
-                    final dependenciesNode = asNode().appendNode('dependencies')
+                    final dependenciesNode = asNode().appendNode("dependencies")
 
                     ext.addDependency = { Dependency dep, String scope ->
                         if (dep.group == null || dep.version == null || dep.name == null || dep.name == "unspecified")
                             return // ignore invalid dependencies
 
-                        final dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', dep.group)
-                        dependencyNode.appendNode('artifactId', dep.name)
-                        dependencyNode.appendNode('version', dep.version)
-                        dependencyNode.appendNode('scope', scope)
+                        final dependencyNode = dependenciesNode.appendNode("dependency")
+                        dependencyNode.appendNode("groupId", dep.group)
+                        dependencyNode.appendNode("artifactId", dep.name)
+                        dependencyNode.appendNode("version", dep.version)
+                        dependencyNode.appendNode("scope", scope)
 
                         if (!dep.transitive) {
                             // If this dependency is transitive, we should force exclude all its dependencies them from the POM
-                            final exclusionNode = dependencyNode.appendNode('exclusions').appendNode('exclusion')
-                            exclusionNode.appendNode('groupId', '*')
-                            exclusionNode.appendNode('artifactId', '*')
+                            final exclusionNode = dependencyNode.appendNode("exclusions").appendNode("exclusion")
+                            exclusionNode.appendNode("groupId", "*")
+                            exclusionNode.appendNode("artifactId", "*")
                         } else if (!dep.properties.excludeRules.empty) {
                             // Otherwise add specified exclude rules
-                            final exclusionNode = dependencyNode.appendNode('exclusions').appendNode('exclusion')
+                            final exclusionNode = dependencyNode.appendNode("exclusions").appendNode("exclusion")
                             dep.properties.excludeRules.each { ExcludeRule rule ->
-                                exclusionNode.appendNode('groupId', rule.group ?: '*')
-                                exclusionNode.appendNode('artifactId', rule.module ?: '*')
+                                exclusionNode.appendNode("groupId", rule.group ?: "*")
+                                exclusionNode.appendNode("artifactId", rule.module ?: "*")
                             }
                         }
                     }
 
-                    // List all "compile" dependencies (for old Gradle)
-                    configurations.compile.getDependencies().each { dep -> addDependency(dep, "compile") }
                     // List all "api" dependencies (for new Gradle) as "compile" dependencies
                     configurations.api.getDependencies().each { dep -> addDependency(dep, "compile") }
                     // List all "implementation" dependencies (for new Gradle) as "runtime" dependencies

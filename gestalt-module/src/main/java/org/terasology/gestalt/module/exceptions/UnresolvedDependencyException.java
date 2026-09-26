@@ -23,21 +23,44 @@ package org.terasology.gestalt.module.exceptions;
  */
 public class UnresolvedDependencyException extends ModuleException {
 
+    /**
+     * Default constructor.
+     */
     public UnresolvedDependencyException() {
     }
 
+    /**
+     * Constructor with message.
+     * @param message   the message
+     */
     public UnresolvedDependencyException(String message) {
         super(message);
     }
 
+    /**
+     * Constructor with message and cause.
+     * @param message   the msssage
+     * @param cause     the cause
+     */
     public UnresolvedDependencyException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructor with cause
+     * @param cause     the cause
+     */
     public UnresolvedDependencyException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Constructor with message, cause, permits suppression of message, and a property if stacktrace can be written.
+     * @param message               the mssage
+     * @param cause                 the cause
+     * @param enableSuppression     true if suppression is enabled
+     * @param writableStackTrace    true if stacktrace is writeable
+     */
     public UnresolvedDependencyException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

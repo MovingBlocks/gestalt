@@ -45,6 +45,9 @@ public class TableModuleRegistry implements ModuleRegistry {
     private final Table<Name, Version, Module> modules = HashBasedTable.create();
     private final Map<Name, Module> latestModules = Maps.newHashMap();
 
+    /**
+     * Constructs a new TableModuleRegistry instance.
+     */
     @Inject
     public TableModuleRegistry() {
 

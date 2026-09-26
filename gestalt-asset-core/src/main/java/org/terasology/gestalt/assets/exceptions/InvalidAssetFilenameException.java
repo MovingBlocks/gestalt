@@ -23,21 +23,44 @@ package org.terasology.gestalt.assets.exceptions;
  */
 public class InvalidAssetFilenameException extends Exception {
 
+    /**
+     * creates an exception to be thrown if asset file name was not valid.
+     */
     public InvalidAssetFilenameException() {
     }
 
+    /**
+     * creates an exception to be thrown if asset file name was not valid.
+     * @param message the message to be thrown.
+     */
     public InvalidAssetFilenameException(String message) {
         super(message);
     }
 
+    /**
+     * creates an exception to be thrown if asset file name was not valid.
+     * @param message the message to be thrown.
+     * @param cause throwable causing the exception.
+     */
     public InvalidAssetFilenameException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * creates an exception to be thrown if asset file name was not valid.
+     * @param cause throwable causing the exception.
+     */
     public InvalidAssetFilenameException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * creates an exception to be thrown if asset file name was not valid.
+     * @param message the message to be thrown.
+     * @param cause throwable causing the exception.
+     * @param enableSuppression true if exception can be suppressed.
+     * @param writableStackTrace true if exception stacktrace can be written.
+     */
     public InvalidAssetFilenameException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

@@ -32,6 +32,12 @@ public class FromModule implements Predicate<Class<?>> {
     private final ModuleEnvironment environment;
     private final Name moduleId;
 
+    /**
+     * Constructor to create class to filter classes to those from a specific module.
+     *
+     * @param environment   the environment
+     * @param moduleId      the module id
+     */
     public FromModule(ModuleEnvironment environment, Name moduleId) {
         this.environment = environment;
         this.moduleId = moduleId;

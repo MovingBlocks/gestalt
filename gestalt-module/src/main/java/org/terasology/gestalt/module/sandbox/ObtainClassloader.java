@@ -27,6 +27,7 @@ public class ObtainClassloader implements PrivilegedAction<ClassLoader> {
     private final Class<?> type;
 
     /**
+     * Constructor
      * @param forType The type to obtain the ClassLoader of.
      */
     public ObtainClassloader(Class<?> forType) {

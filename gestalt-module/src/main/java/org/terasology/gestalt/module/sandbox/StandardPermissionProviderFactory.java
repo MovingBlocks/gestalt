@@ -35,15 +35,22 @@ import java.util.function.Predicate;
  */
 public class StandardPermissionProviderFactory implements PermissionProviderFactory {
 
+    /**
+     * The set of permissions which all modules are granted.
+     */
     public static final String BASE_PERMISSION_SET = "";
     private static final Logger logger = LoggerFactory.getLogger(StandardPermissionProviderFactory.class);
     private final Map<String, PermissionSet> permissionSets = Maps.newHashMap();
 
+    /**
+     * Constructs a factory with empty base permisison set.
+     */
     public StandardPermissionProviderFactory() {
         permissionSets.put(BASE_PERMISSION_SET, new PermissionSet());
     }
 
     /**
+     * Gets the base permission set, which all modules are granted.
      * @return The base permission set, which all modules are granted
      */
     public PermissionSet getBasePermissionSet() {
@@ -51,6 +58,8 @@ public class StandardPermissionProviderFactory implements PermissionProviderFact
     }
 
     /**
+     * Gets the permission set with the given name
+     *
      * @param name The name of the permission set
      * @return The permission set with the given name, or null
      */

@@ -28,6 +28,8 @@ import java.util.function.Predicate;
 public interface PermissionProviderFactory {
 
     /**
+     * Creates a permissionprovider suitable for the given module.
+     *
      * @param module The module to create a permission provider for.
      * @param classpathModuleClasses A predicate that determines what classes on the classpath belong to the module
      * @return A permission provider suitable for the given module

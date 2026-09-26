@@ -29,15 +29,28 @@ public class NameVersion {
     private final Name name;
     private final Version version;
 
+    /**
+     * Constructor
+     * @param name      the name
+     * @param version   the version
+     */
     public NameVersion(Name name, Version version) {
         this.name = name;
         this.version = version;
     }
 
+    /**
+     * Get the namm
+     * @return the name
+     */
     public Name getName() {
         return name;
     }
 
+    /**
+     * Get the version
+     * @return  the version
+     */
     public Version getVersion() {
         return version;
     }

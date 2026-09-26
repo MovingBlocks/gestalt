@@ -26,6 +26,10 @@ public class PredicatePermissionProvider implements PermissionProvider {
 
     private final Predicate<Class<?>> predicate;
 
+    /**
+     * Creates a PredicatePermissionProvider
+     * @param predicate a predicate that determines permitted classes.
+     */
     public PredicatePermissionProvider(Predicate<Class<?>> predicate) {
         this.predicate = predicate;
     }

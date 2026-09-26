@@ -73,6 +73,9 @@ public class ModuleAwareAssetTypeManagerImpl implements ModuleAwareAssetTypeMana
 
     private final Map<AssetType<?, ?>, AssetTypeInfo> assetTypeInfo = Maps.newHashMap();
 
+    /**
+     * Creates an asset type.
+     */
     public ModuleAwareAssetTypeManagerImpl() {
         this.classFactory = new SimpleClassFactory(new ParameterProvider() {
             @Override

@@ -25,6 +25,8 @@ import java.io.Reader;
 public interface ModuleMetadataLoader {
 
     /**
+     * Read module metadata from file.
+     *
      * @param reader Metadata to load
      * @return The loaded module metadata.
      * @throws IOException If there was an error reading the ModuleMetadata

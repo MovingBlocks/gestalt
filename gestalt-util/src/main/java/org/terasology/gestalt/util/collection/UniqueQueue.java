@@ -27,6 +27,7 @@ import java.util.Set;
 
 /**
  * A queue that ensures its contents are unique - an attempt to add an element to the queue that is already in the queue will be ignored.
+ * @param <T> the type
  *
  * @author Immortius
  */
@@ -36,7 +37,7 @@ public class UniqueQueue<T> implements Queue<T> {
     private final Queue<T> internalQueue;
 
     /**
-     * Creates a new, empty queue
+     * Creates a new, empty queue.
      */
     public UniqueQueue() {
         this(Sets.<T>newHashSet(), Queues.<T>newArrayDeque());
@@ -48,6 +49,7 @@ public class UniqueQueue<T> implements Queue<T> {
     }
 
     /**
+     * Returns a new, empty UniqueQueue.
      * @param <T> The type that can be contained in the queue
      * @return A new, empty queue
      */
@@ -56,6 +58,7 @@ public class UniqueQueue<T> implements Queue<T> {
     }
 
     /**
+     * Create a UniqueQueue of certain size.
      * @param size The expected size of the queue
      * @param <T>  The type that can be contained in the queue
      * @return A new, empty queue.
@@ -64,6 +67,9 @@ public class UniqueQueue<T> implements Queue<T> {
         return new UniqueQueue<>(Sets.<T>newHashSetWithExpectedSize(size), Queues.<T>newArrayDeque());
     }
 
+    /**
+     * Returns the size of the contained queue.
+     */
     @Override
     public int size() {
         return containedSet.size();

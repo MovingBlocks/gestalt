@@ -71,6 +71,7 @@ public final class FileScanning {
         private PathMatcher fileFilter;
 
         /**
+         * Creates a file visitor.
          * @param directoryFilter A filter determining which directories to visit
          * @param fileFilter      A filter determining which files match
          */

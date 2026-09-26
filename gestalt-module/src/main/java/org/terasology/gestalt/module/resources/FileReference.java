@@ -26,17 +26,17 @@ import java.util.List;
 public interface FileReference {
 
     /**
-     * @return The name of the file
+     * {@return The name of the file}
      */
     String getName();
 
     /**
-     * @return The path to the file (within the file source)
+     * {@return The path to the file (within the file source)}
      */
     List<String> getPath();
 
     /**
-     * @return An new InputStream for reading the file. Closing the stream is the duty of the caller
+     * {@return An new InputStream for reading the file. Closing the stream is the duty of the caller}
      * @throws IOException If there is an exception opening the file
      */
     InputStream open() throws IOException;

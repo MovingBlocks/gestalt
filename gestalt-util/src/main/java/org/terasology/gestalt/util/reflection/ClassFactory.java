@@ -25,6 +25,7 @@ import java.util.Optional;
  */
 public interface ClassFactory {
     /**
+     * Creates an instance of a class.
      * @param type The type to instantiate.
      * @param <T>  The type to return the instantiated object as
      * @return An optional that contains the instantiated object if successful
