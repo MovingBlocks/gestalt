@@ -42,6 +42,7 @@ import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -183,7 +184,12 @@ public class ModuleMetadataJsonAdapter implements ModuleMetadataLoader {
                         metadata.setDescription(context.<I18nMap>deserialize(entry.getValue(), I18nMap.class));
                         break;
                     case ModuleMetadata.DEPENDENCIES:
-                        metadata.getDependencies().addAll((List<DependencyInfo>) context.deserialize(entry.getValue(), DEPENDENCY_LIST_TYPE));
+                        // Trailing comma -> Gson emits a phantom null element; strip it (#133).
+                        List<DependencyInfo> dependencyInfos = context.deserialize(entry.getValue(), DEPENDENCY_LIST_TYPE);
+                        if (dependencyInfos != null) {
+                            dependencyInfos.removeIf(Objects::isNull);
+                            metadata.getDependencies().addAll(dependencyInfos);
+                        }
                         break;
                     case ModuleMetadata.REQUIRED_PERMISSIONS:
                         metadata.getRequiredPermissions().addAll((Set<String>) context.deserialize(entry.getValue(), STRING_SET_TYPE));
