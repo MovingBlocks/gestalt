@@ -1,6 +1,9 @@
 package org.terasology.gestalt.annotation.processing;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Queues;
+import org.terasology.context.annotation.BindAnnotationFor;
 import org.terasology.context.annotation.Index;
 import org.terasology.context.annotation.IndexInherited;
 
@@ -9,6 +12,7 @@ import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
@@ -20,8 +24,11 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
@@ -35,6 +42,8 @@ public class ClassIndexProcessor extends AbstractProcessor {
     private SubtypesTypeWriter subtypesTypeWriter;
     private ElementUtility elementUtility;
 
+    private Multimap<TypeMirror, Class<? extends Annotation>> boundAnnotations;
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
@@ -42,10 +51,25 @@ public class ClassIndexProcessor extends AbstractProcessor {
         annotationTypeWriter = new AnnotationTypeWriter(filer);
         subtypesTypeWriter = new SubtypesTypeWriter(filer);
         elementUtility = new ElementUtility(processingEnv.getElementUtils(), processingEnv.getTypeUtils());
+        boundAnnotations = HashMultimap.create();
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        for (TypeElement annotation : annotations) {
+            if (annotation.asType().toString().equals(BindAnnotationFor.class.getName())) {
+                for (Element type : roundEnv.getElementsAnnotatedWith(annotation)) {
+                    TypeMirror foreighElement = getBindAnnotationFor(type);
+                    if (elementUtility.hasStereotype(type, Collections.singletonList(IndexInherited.class.getName()))) {
+                        boundAnnotations.put(foreighElement, IndexInherited.class);
+                    }
+                    if (elementUtility.hasStereotype(type, Collections.singletonList(Index.class.getName()))) {
+                        boundAnnotations.put(foreighElement, Index.class);
+                    }
+                }
+            }
+        }
+
         for (TypeElement annotation : annotations) {
             // Annotation Index
             processAnnotationIndex(roundEnv, annotation);
@@ -75,7 +99,7 @@ public class ClassIndexProcessor extends AbstractProcessor {
                 TypeMirror candidate = supers.poll();
                 if (candidate.getKind() != TypeKind.NONE) {
                     if (elementUtility.hasStereotype(elementUtility.getTypes().asElement(candidate),
-                            Collections.singletonList(IndexInherited.class.getName()))) {
+                                Collections.singletonList(IndexInherited.class.getName())) || boundAnnotations.containsEntry(candidate, IndexInherited.class)) {
                         TypeElement candidateElement = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(candidate));
                         TypeElement erasedType = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(type.asType()));
                         subtypesTypeWriter.writeSubType(elementUtility.getElements().getBinaryName(candidateElement).toString(),
@@ -98,7 +122,7 @@ public class ClassIndexProcessor extends AbstractProcessor {
                         TypeMirror candidate = supers.poll();
                         if (candidate.getKind() != TypeKind.NONE) {
                             if (elementUtility.hasStereotype(elementUtility.getTypes().asElement(candidate),
-                                    Collections.singletonList(IndexInherited.class.getName()))) {
+                                    Collections.singletonList(IndexInherited.class.getName())) || boundAnnotations.containsEntry(candidate, IndexInherited.class)) {
                                 TypeElement candidateElement = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(candidate));
                                 TypeElement erasedType = (TypeElement) elementUtility.getTypes().asElement(elementUtility.getTypes().erasure(type.asType()));
                                 subtypesTypeWriter.writeSubType(elementUtility.getElements().getBinaryName(candidateElement).toString(),
@@ -124,6 +148,27 @@ public class ClassIndexProcessor extends AbstractProcessor {
                 }
             }
         }
+    }
+
+    private TypeMirror getBindAnnotationFor(Element element) {
+        return (TypeMirror) getAnnotationValue(element, BindAnnotationFor.class, "value").orElse(null);
+    }
+
+    private Optional<Object> getAnnotationValue(Element element, Class<?> annotation, String fieldName) {
+        return element
+                .getAnnotationMirrors()
+                .stream()
+                .filter(am -> am.getAnnotationType().toString().equals(annotation.getName()))
+                .map(am -> am.getElementValues()
+                        .entrySet()
+                        .stream()
+                        .filter(kv -> kv.getKey().getSimpleName().toString().equals(fieldName))
+                        .map(Map.Entry::getValue)
+                        .findFirst())
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(AnnotationValue::getValue)
+                .findFirst();
     }
 
     private void writeIndexes() {
